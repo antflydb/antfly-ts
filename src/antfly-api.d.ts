@@ -421,7 +421,7 @@ export interface components {
         CreateIndexRequest: {
             field?: string;
             template?: string;
-            mem_only: boolean;
+            mem_only?: boolean;
             dimension: number;
             summarizer_config?: components["schemas"]["SummarizerConfig"];
             embedder_config: components["schemas"]["EmbedderConfig"];
