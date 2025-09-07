@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & Discussions
+    url: https://github.com/antfly/antfly-sdk-ts/discussions
+    about: Please ask and answer questions in GitHub Discussions
+  - name: Antfly Documentation
+    url: https://docs.antfly.io
+    about: Check the official Antfly documentation
