@@ -45,12 +45,12 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antfly/antfly-ts.git"
+    "url": "git+https://github.com/antflydb/antfly-ts.git"
   },
   "bugs": {
-    "url": "https://github.com/antfly/antfly-ts/issues"
+    "url": "https://github.com/antflydb/antfly-ts/issues"
   },
-  "homepage": "https://github.com/antfly/antfly-ts#readme",
+  "homepage": "https://github.com/antflydb/antfly-ts#readme",
   "devDependencies": {
     "@eslint/js": "^9.35.0",
     "@types/jest": "^30.0.0",
