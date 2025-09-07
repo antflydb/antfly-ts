@@ -45,7 +45,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/antfly/antfly-ts"
+    "url": "git+https://github.com/antfly/antfly-ts.git"
   },
   "bugs": {
     "url": "https://github.com/antfly/antfly-ts/issues"
