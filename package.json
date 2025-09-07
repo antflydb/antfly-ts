@@ -1,7 +1,7 @@
 {
   "name": "@antfly/sdk",
-  "version": "0.1.0",
-  "description": "TypeScript SDK for Antfly API - works in both frontend and backend",
+  "version": "0.0.1",
+  "description": "TypeScript SDK for Antfly API",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -45,12 +45,12 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/antfly/antfly-sdk-ts.git"
+    "url": "https://github.com/antfly/antfly-ts"
   },
   "bugs": {
-    "url": "https://github.com/antfly/antfly-sdk-ts/issues"
+    "url": "https://github.com/antfly/antfly-ts/issues"
   },
-  "homepage": "https://github.com/antfly/antfly-sdk-ts#readme",
+  "homepage": "https://github.com/antfly/antfly-ts#readme",
   "devDependencies": {
     "@eslint/js": "^9.35.0",
     "@types/jest": "^30.0.0",
