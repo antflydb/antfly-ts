@@ -1,30 +1,51 @@
 /**
  * Unit tests for the Antfly SDK client
  */
+import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+import type { Client } from "openapi-fetch";
+import type { paths } from "../src/antfly-api.js";
+// NOTE: We only import the type here to avoid loading the module too early
+import type { AntflyClient } from "../src/client.js";
+import type { QueryRequest, CreateTableRequest, TableStatus } from "../src/types.js";
 
-import { AntflyClient } from "../src/client.js";
-import type { QueryRequest, CreateTableRequest } from "../src/types.js";
+const mockApi: jest.Mocked<Client<paths>> = {
+  GET: jest.fn() as any,
+  POST: jest.fn() as any,
+  PUT: jest.fn() as any,
+  DELETE: jest.fn() as any,
+  OPTIONS: jest.fn() as any,
+  HEAD: jest.fn() as any,
+  PATCH: jest.fn() as any,
+  TRACE: jest.fn() as any,
+  request: jest.fn() as any,
+  use: jest.fn() as any,
+  eject: jest.fn() as any,
+};
 
-// Mock the openapi-fetch module
-jest.mock("openapi-fetch", () => ({
+jest.unstable_mockModule("openapi-fetch", () => ({
   __esModule: true,
-  default: jest.fn(() => ({
-    GET: jest.fn(),
-    POST: jest.fn(),
-    PUT: jest.fn(),
-    DELETE: jest.fn(),
-  })),
+  default: jest.fn().mockImplementation(() => mockApi),
 }));
 
 describe("AntflyClient", () => {
+  // Use the type for the declaration
   let client: AntflyClient;
-  let mockClient: any;
+  // Store the class constructor for `instanceof` checks
+  let AntflyClient: new (...args: any[]) => AntflyClient;
 
-  beforeEach(() => {
-    // Clear all mocks
-    jest.clearAllMocks();
-    
-    // Create the client
+  beforeEach(async () => {
+    // Dynamically import the client inside beforeEach
+    const clientModule = await import("../src/client.js");
+    AntflyClient = clientModule.AntflyClient;
+
+    // Clear mocks
+    Object.values(mockApi).forEach((mockFn) => {
+      if (typeof mockFn.mockClear === "function") {
+        mockFn.mockClear();
+      }
+    });
+
+    // Create the client instance
     client = new AntflyClient({
       baseUrl: "http://localhost:8080",
       auth: {
@@ -32,9 +53,6 @@ describe("AntflyClient", () => {
         password: "test",
       },
     });
-    
-    // Get the mocked client
-    mockClient = client.getRawClient();
   });
 
   describe("constructor", () => {
@@ -63,7 +81,7 @@ describe("AntflyClient", () => {
         ],
       };
 
-      mockClient.POST.mockResolvedValueOnce({
+      mockApi.POST.mockResolvedValueOnce({
         data: mockResponse,
         error: undefined,
       });
@@ -75,7 +93,7 @@ describe("AntflyClient", () => {
 
       const result = await client.query(request);
       expect(result).toEqual(mockResponse.responses[0]);
-      expect(mockClient.POST).toHaveBeenCalledWith("/query", {
+      expect(mockApi.POST).toHaveBeenCalledWith("/query", {
         body: request,
       });
     });
@@ -83,25 +101,35 @@ describe("AntflyClient", () => {
 
   describe("tables", () => {
     it("should list tables", async () => {
-      const mockTables = [
-        { name: "table1", indexes: {}, shards: {} },
-        { name: "table2", indexes: {}, shards: {} },
+      const mockTables: TableStatus[] = [
+        {
+          name: "table1",
+          indexes: {},
+          shards: {},
+          storage_status: { disk_usage: 1024, empty: false },
+        },
+        {
+          name: "table2",
+          indexes: {},
+          shards: {},
+          storage_status: { disk_usage: 2048, empty: true },
+        },
       ];
 
-      mockClient.GET.mockResolvedValueOnce({
+      mockApi.GET.mockResolvedValueOnce({
         data: mockTables,
         error: undefined,
       });
 
       const tables = await client.tables.list();
       expect(tables).toEqual(mockTables);
-      expect(mockClient.GET).toHaveBeenCalledWith("/table", {});
+      expect(mockApi.GET).toHaveBeenCalledWith("/table", {});
     });
 
     it("should create a table", async () => {
       const mockTable = { name: "new_table", indexes: {}, shards: {} };
 
-      mockClient.POST.mockResolvedValueOnce({
+      mockApi.POST.mockResolvedValueOnce({
         data: mockTable,
         error: undefined,
       });
@@ -116,7 +144,7 @@ describe("AntflyClient", () => {
 
       const result = await client.tables.create("new_table", config);
       expect(result).toEqual(mockTable);
-      expect(mockClient.POST).toHaveBeenCalledWith("/table/{tableName}", {
+      expect(mockApi.POST).toHaveBeenCalledWith("/table/{tableName}", {
         params: { path: { tableName: "new_table" } },
         body: config,
       });
