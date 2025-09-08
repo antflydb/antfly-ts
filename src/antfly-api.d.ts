@@ -365,8 +365,12 @@ export interface components {
             term: string;
             count: number;
         };
-        DateRangeResult: unknown;
-        NumericRangeResult: unknown;
+        DateRangeResult: components["schemas"]["DateRange"] & {
+            count: number;
+        };
+        NumericRangeResult: components["schemas"]["NumericRange"] & {
+            count: number;
+        };
         FacetOption: {
             field?: string;
             size?: number;
@@ -393,7 +397,14 @@ export interface components {
                 [key: string]: unknown;
             };
         };
-        IndexStatus: unknown;
+        IndexStatus: components["schemas"]["IndexConfig"] & {
+            shard_status: {
+                [key: string]: Record<string, never>;
+            };
+            status: {
+                [key: string]: unknown;
+            };
+        };
         StorageStatus: {
             /**
              * Format: uint64
@@ -403,7 +414,9 @@ export interface components {
             /** @description Whether the table has received data. */
             empty?: boolean;
         };
-        TableStatus: unknown;
+        TableStatus: components["schemas"]["Table"] & {
+            storage_status: components["schemas"]["StorageStatus"];
+        };
         EmbedderConfig: {
             provider: string;
             model: string;
@@ -520,12 +533,12 @@ export interface components {
         };
         QueryHit: {
             /** @description ID of the record. */
-            _id?: string;
+            _id: string;
             /**
              * Format: float
              * @description Relevance score of the hit.
              */
-            _score?: number;
+            _score: number;
             /** @description Scores partitioned by index when using RRF search. */
             _index_scores?: {
                 [key: string]: unknown;
@@ -656,24 +669,6 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description Unauthorized */
-        Unauthorized: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
-        /** @description Forbidden */
-        Forbidden: {
-            headers: {
-                [name: string]: unknown;
-            };
-            content: {
-                "application/json": components["schemas"]["Error"];
-            };
-        };
     };
     parameters: {
         /** @description The username. */
@@ -750,6 +745,7 @@ export interface operations {
                     "application/json": components["schemas"]["Table"][];
                 };
             };
+            400: components["responses"]["BadRequest"];
             500: components["responses"]["InternalServerError"];
         };
     };
@@ -1007,6 +1003,7 @@ export interface operations {
                     "application/json": components["schemas"]["IndexStatus"][];
                 };
             };
+            404: components["responses"]["NotFound"];
             500: components["responses"]["InternalServerError"];
         };
     };
@@ -1087,6 +1084,7 @@ export interface operations {
                 };
                 content?: never;
             };
+            400: components["responses"]["BadRequest"];
             500: components["responses"]["InternalServerError"];
         };
     };
