@@ -36,6 +36,8 @@
 // Main client export
 export { AntflyClient } from "./client.js";
 
+export { providers } from "./types.js";
+
 // Type exports
 export type {
   // Configuration
@@ -46,7 +48,7 @@ export type {
   QueryRequest,
   QueryResult,
   QueryHit,
-  BatchRequest,  // Now using our custom type
+  BatchRequest, // Now using our custom type
 
   // Table types
   Table,
@@ -79,7 +81,11 @@ export type {
   // Search and facet types
   FacetOption,
   FacetResult,
-  Reranker,
+
+  // Model and reranker types
+  ModelConfig,
+  RerankerConfig,
+  Provider,
 
   // Error type
   AntflyError,

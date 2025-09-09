@@ -47,7 +47,17 @@ export type DocumentSchema = components["schemas"]["DocumentSchema"];
 // Search and facet types
 export type FacetOption = components["schemas"]["FacetOption"];
 export type FacetResult = components["schemas"]["FacetResult"];
-export type Reranker = components["schemas"]["Reranker"];
+
+// Model and reranker types
+export type ModelConfig = components["schemas"]["ModelConfig"];
+export type RerankerConfig = components["schemas"]["RerankerConfig"];
+export type Provider = components["schemas"]["Provider"];
+export const providers: components["schemas"]["Provider"][] = [
+  "ollama",
+  "gemini",
+  "openai",
+  "bedrock",
+];
 
 // Error type
 export type AntflyError = components["schemas"]["Error"];
