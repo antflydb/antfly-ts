@@ -256,28 +256,14 @@ export interface components {
     TableStatus: components["schemas"]["Table"] & {
       storage_status: components["schemas"]["StorageStatus"];
     };
-    EmbedderConfig: {
-      provider: string;
-      model: string;
-      model_provider?: string;
-      /** Format: uri */
-      url?: string;
-    };
-    SummarizerConfig: {
-      provider: string;
-      model: string;
-      model_provider?: string;
-      /** Format: uri */
-      url?: string;
-    };
     CreateIndexRequest: {
       field?: string;
       template?: string;
       mem_only?: boolean;
       /** @description Dimension of the embedding vectors (if not set Antfly generates a test embedding to configure the value). */
       dimension?: number;
-      summarizer_config?: components["schemas"]["SummarizerConfig"];
-      embedder_config: components["schemas"]["EmbedderConfig"];
+      summarizer_config?: components["schemas"]["ModelConfig"];
+      embedder_config: components["schemas"]["ModelConfig"];
     };
     /**
      * @example {
@@ -348,16 +334,7 @@ export interface components {
        */
       distance_over?: number;
       count?: boolean;
-      reranker?: components["schemas"]["Reranker"];
-    };
-    Reranker: {
-      field?: string;
-      template?: string;
-      model: string;
-      provider: string;
-      model_provider?: string;
-      /** Format: uri */
-      url?: string;
+      reranker?: components["schemas"]["RerankerConfig"];
     };
     QueryHit: {
       /** @description ID of the record. */
@@ -405,6 +382,104 @@ export interface components {
       status: number;
       /** @description Error message if the query failed. */
       error?: string;
+    };
+    /** @description Configuration for the Google embedding provider. */
+    GoogleConfig: {
+      /** @description The Google Cloud project ID. */
+      project_id?: string;
+      /** @description The Google Cloud location (e.g., 'us-central1'). */
+      location?: string;
+      /**
+       * @description The name of the embedding model to use (e.g., 'text-embedding-004').
+       * @default text-embedding-004
+       */
+      model: string;
+      /**
+       * @description The dimension of the embedding.
+       * @default 1024
+       */
+      dimension?: number;
+      /** @description The Google API key. */
+      api_key?: string;
+      /**
+       * Format: uri
+       * @description The URL of the Google API endpoint.
+       */
+      url?: string;
+    };
+    /** @description Configuration for the Ollama embedding provider. */
+    OllamaConfig: {
+      /** @description The name of the Ollama model to use. */
+      model: string;
+      /**
+       * Format: uri
+       * @description The URL of the Ollama API endpoint.
+       */
+      url?: string;
+    };
+    /** @description Configuration for the OpenAI embedding provider. */
+    OpenAIConfig: {
+      /** @description The name of the OpenAI model to use. */
+      model: string;
+      /**
+       * Format: uri
+       * @description The URL of the OpenAI API endpoint.
+       */
+      url?: string;
+      /** @description The OpenAI API key. */
+      api_key?: string;
+    };
+    /** @description Configuration for the Bedrock embedding provider. */
+    BedrockConfig: {
+      /**
+       * @description The name of the Bedrock model to use.
+       * @example amazon.titan-embed-text-v1
+       */
+      model: string;
+      /** @description The AWS region for the Bedrock service. */
+      region?: string;
+      /** @description Whether to strip new lines from the input text. */
+      strip_new_lines?: boolean;
+      /** @description The batch size for embedding requests. */
+      batch_size?: number;
+    };
+    /**
+     * @description The embedding provider to use.
+     * @enum {string}
+     */
+    Provider: "gemini" | "ollama" | "openai" | "bedrock";
+    /**
+     * @description A unified configuration for an embedding provider.
+     * @example {
+     *   "provider": "openai",
+     *   "model": "text-embedding-004",
+     *   "field": "content"
+     * }
+     */
+    RerankerConfig: (
+      | components["schemas"]["GoogleConfig"]
+      | components["schemas"]["OllamaConfig"]
+      | components["schemas"]["OpenAIConfig"]
+      | components["schemas"]["BedrockConfig"]
+    ) & {
+      provider: components["schemas"]["Provider"];
+      field?: string;
+      template?: string;
+    };
+    /**
+     * @description A unified configuration for an embedding provider.
+     * @example {
+     *   "provider": "openai",
+     *   "model": "text-embedding-004"
+     * }
+     */
+    ModelConfig: (
+      | components["schemas"]["GoogleConfig"]
+      | components["schemas"]["OllamaConfig"]
+      | components["schemas"]["OpenAIConfig"]
+      | components["schemas"]["BedrockConfig"]
+    ) & {
+      provider: components["schemas"]["Provider"];
     };
     User: {
       /** @example johndoe */
