@@ -9,6 +9,7 @@ import type { components, operations } from "./antfly-api.js";
 export type QueryRequest = components["schemas"]["QueryRequest"];
 export type QueryResult = components["schemas"]["QueryResult"];
 export type QueryHit = components["schemas"]["QueryHit"];
+export type QueryResponses = components["schemas"]["QueryResponses"];
 
 // Fix BatchRequest to allow any object for inserts
 export interface BatchRequest {

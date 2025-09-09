@@ -45,6 +45,7 @@ export type {
   QueryOptions,
 
   // Core types
+  QueryResponses,
   QueryRequest,
   QueryResult,
   QueryHit,

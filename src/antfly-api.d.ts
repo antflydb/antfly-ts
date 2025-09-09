@@ -335,6 +335,15 @@ export interface components {
       distance_over?: number;
       count?: boolean;
       reranker?: components["schemas"]["RerankerConfig"];
+      analyses?: components["schemas"]["Analyses"];
+    };
+    Analyses: {
+      pca?: boolean;
+      tsne?: boolean;
+    };
+    AnalysesResult: {
+      pca?: number[];
+      tsne?: number[];
     };
     QueryHit: {
       /** @description ID of the record. */
@@ -370,6 +379,8 @@ export interface components {
     QueryResult: {
       hits?: components["schemas"]["QueryHits"];
       facets?: { [key: string]: components["schemas"]["FacetResult"] };
+      /** @description Analysis results like PCA and t-SNE per index embeddings. */
+      analyses?: { [key: string]: components["schemas"]["AnalysesResult"] };
       /**
        * Format: int64
        * @description Duration of the query in milliseconds.
@@ -673,7 +684,7 @@ export interface operations {
       /** Query successful */
       200: {
         content: {
-          "application/json": components["schemas"]["QueryResult"];
+          "application/json": components["schemas"]["QueryResponses"];
         };
       };
       400: components["responses"]["BadRequest"];
@@ -683,6 +694,7 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["QueryRequest"];
+        "application/x-ndjson": components["schemas"]["QueryRequest"];
       };
     };
   };
