@@ -13,7 +13,7 @@ import type {
   BatchRequest,
   BackupRequest,
   RestoreRequest,
-  CreateIndexRequest,
+  IndexConfig,
   CreateUserRequest,
   Permission,
   ResourceType,
@@ -212,9 +212,9 @@ export class AntflyClient {
     /**
      * Create a new index
      */
-    create: async (tableName: string, indexName: string, config: CreateIndexRequest) => {
+    create: async (tableName: string, config: IndexConfig) => {
       const { error } = await this.client.POST("/table/{tableName}/index/{indexName}", {
-        params: { path: { tableName, indexName } },
+        params: { path: { tableName, indexName: config.name } },
         body: config,
       });
       if (error) throw new Error(`Failed to create index: ${error.error}`);

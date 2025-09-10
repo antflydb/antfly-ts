@@ -147,7 +147,7 @@ export interface components {
     CreateTableRequest: {
       /** Format: uint */
       num_shards?: number;
-      indexes?: { [key: string]: components["schemas"]["CreateIndexRequest"] };
+      indexes?: { [key: string]: components["schemas"]["IndexConfig"] };
       schema?: components["schemas"]["TableSchema"];
     };
     Table: {
@@ -235,12 +235,8 @@ export interface components {
       | "embedding"
       | "link"
       | "blob";
-    IndexConfig: {
-      name: string;
-      type: string;
-      config: { [key: string]: unknown };
-    };
-    IndexStatus: components["schemas"]["IndexConfig"] & {
+    IndexStatus: {
+      config: components["schemas"]["IndexConfig"];
       shard_status: { [key: string]: { [key: string]: unknown } };
       status: { [key: string]: unknown };
     };
@@ -255,15 +251,6 @@ export interface components {
     };
     TableStatus: components["schemas"]["Table"] & {
       storage_status: components["schemas"]["StorageStatus"];
-    };
-    CreateIndexRequest: {
-      field?: string;
-      template?: string;
-      mem_only?: boolean;
-      /** @description Dimension of the embedding vectors (if not set Antfly generates a test embedding to configure the value). */
-      dimension?: number;
-      summarizer_config?: components["schemas"]["ModelConfig"];
-      embedder_config: components["schemas"]["ModelConfig"];
     };
     /**
      * @example {
@@ -477,6 +464,10 @@ export interface components {
       field?: string;
       template?: string;
     };
+    BleveIndexV2Config: {
+      /** @description Whether to use memory-only storage */
+      mem_only?: boolean;
+    };
     /**
      * @description A unified configuration for an embedding provider.
      * @example {
@@ -491,6 +482,37 @@ export interface components {
       | components["schemas"]["BedrockConfig"]
     ) & {
       provider: components["schemas"]["Provider"];
+    };
+    EmbeddingIndexConfig: {
+      /** @description Vector dimension */
+      dimension: number;
+      /** @description Field to extract embeddings from */
+      field?: string;
+      /**
+       * @description Go string template for generating prompts. See https://pkg.go.dev/text/template for more information.
+       * @example Hello, {{if eq .Name "John"}}Johnathan{{else}}{{.Name}}{{end}}! You are {{.Age}} years old.
+       */
+      template?: string;
+      /** @description Whether to use in-memory only storage */
+      mem_only?: boolean;
+      /** @description Configuration for the embeddings plugin */
+      embedder_config?: components["schemas"]["ModelConfig"];
+      /** @description Configuration for the summarizer plugin */
+      summarizer_config?: components["schemas"]["ModelConfig"];
+    };
+    /**
+     * @description The type of the index.
+     * @enum {string}
+     */
+    IndexType: "bleve_v2" | "vector_v2";
+    /** @description Configuration for an index */
+    IndexConfig: (
+      | components["schemas"]["BleveIndexV2Config"]
+      | components["schemas"]["EmbeddingIndexConfig"]
+    ) & {
+      /** @description Name of the index */
+      name: string;
+      type: components["schemas"]["IndexType"];
     };
     User: {
       /** @example johndoe */
@@ -854,7 +876,7 @@ export interface operations {
     };
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateIndexRequest"];
+        "application/json": components["schemas"]["IndexConfig"];
       };
     };
   };

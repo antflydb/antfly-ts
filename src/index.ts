@@ -60,7 +60,6 @@ export type {
   // Index types
   IndexConfig,
   IndexStatus,
-  CreateIndexRequest,
 
   // User and permission types
   User,

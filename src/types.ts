@@ -26,7 +26,6 @@ export type TableStatus = components["schemas"]["TableStatus"];
 // Index types
 export type IndexConfig = components["schemas"]["IndexConfig"];
 export type IndexStatus = components["schemas"]["IndexStatus"];
-export type CreateIndexRequest = components["schemas"]["CreateIndexRequest"];
 
 // User and permission types
 export type User = components["schemas"]["User"];
