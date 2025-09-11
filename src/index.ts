@@ -96,6 +96,7 @@ export type {
 
 // Re-export the generated types for advanced users
 export type { paths, components, operations } from "./antfly-api.js";
+export type { components as bleve_components } from "./bleve-query.js";
 
 // Default export for convenience
 import { AntflyClient } from "./client.js";
