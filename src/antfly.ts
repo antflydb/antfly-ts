@@ -40,13 +40,15 @@ async function createTable() {
     schema: {
       key: "id",
       default_type: "product",
-      document_types: {
+      document_schemas: {
         product: {
-          fields: {
-            name: { type: "string" },
-            price: { type: "float" },
-            description: { type: "string" },
-            tags: { type: "array" },
+          schema: {
+            fields: {
+              name: { type: "string" },
+              price: { type: "float" },
+              description: { type: "string" },
+              tags: { type: "array" },
+            },
           },
         },
       },

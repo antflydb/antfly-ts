@@ -35,10 +35,20 @@ export interface paths {
     };
   };
   "/table/{tableName}/batch": {
-    post: operations["batchTableOperations"];
+    post: operations["batch"];
     parameters: {
       path: {
         /** Name of the table for batch operation */
+        tableName: string;
+      };
+    };
+  };
+  "/table/{tableName}/insert": {
+    /** Inserts a single document or multiple documents in bulk. A default document key must be defined for the table to use this endpoint. */
+    post: operations["insertDocuments"];
+    parameters: {
+      path: {
+        /** Name of the table for insert operation */
         tableName: string;
       };
     };
@@ -490,23 +500,19 @@ export interface components {
       name: string;
       type: components["schemas"]["IndexType"];
     };
-    /**
-     * @description A valid JSON Schema defining the document's structure.
-     * This is used to infer indexing rules.
-     */
-    DocumentSchema: { [key: string]: unknown };
+    DocumentSchema: {
+      /** @description The field to use as the document ID (optional). */
+      key?: string;
+      /**
+       * @description A valid JSON Schema defining the document's structure.
+       * This is used to infer indexing rules.
+       */
+      schema?: { [key: string]: unknown };
+    };
     TableSchema: {
       key?: string;
       /** @description Default type to use from the document_types. */
       default_type?: string;
-      /**
-       * @description A map of type names to their content schemas.
-       * The key is the type name, and the value is the schema for that document type.
-       * This allows for flexible content types per field.
-       */
-      document_types?: {
-        [key: string]: components["schemas"]["DocumentSchema"];
-      };
       /** @description A map of type names to their document json schemas. */
       document_schemas?: {
         [key: string]: components["schemas"]["DocumentSchema"];
@@ -718,7 +724,7 @@ export interface operations {
       };
     };
   };
-  batchTableOperations: {
+  batch: {
     parameters: {
       path: {
         /** Name of the table for batch operation */
@@ -742,6 +748,35 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["BatchRequest"];
+      };
+    };
+  };
+  /** Inserts a single document or multiple documents in bulk. A default document key must be defined for the table to use this endpoint. */
+  insertDocuments: {
+    parameters: {
+      path: {
+        /** Name of the table for insert operation */
+        tableName: string;
+      };
+    };
+    responses: {
+      /** Documents inserted successfully */
+      201: {
+        content: {
+          "application/json": {
+            /** @example successful */
+            insert?: string;
+          };
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalServerError"];
+    };
+    requestBody: {
+      content: {
+        "application/json": { [key: string]: unknown };
+        "application/x-ndjson": { [key: string]: unknown };
       };
     };
   };
