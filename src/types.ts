@@ -40,13 +40,12 @@ export type BackupRequest = components["schemas"]["BackupRequest"];
 export type RestoreRequest = components["schemas"]["RestoreRequest"];
 
 // Schema types
-export type ValueType = components["schemas"]["ValueType"];
-export type ValueSchema = components["schemas"]["ValueSchema"];
 export type DocumentSchema = components["schemas"]["DocumentSchema"];
 
 // Search and facet types
 export type FacetOption = components["schemas"]["FacetOption"];
 export type FacetResult = components["schemas"]["FacetResult"];
+export type AntflyType = components["schemas"]["AntflyType"];
 
 // Model and reranker types
 export type ModelConfig = components["schemas"]["ModelConfig"];

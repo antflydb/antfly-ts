@@ -74,13 +74,12 @@ export type {
   RestoreRequest,
 
   // Schema types
-  ValueType,
-  ValueSchema,
   DocumentSchema,
 
   // Search and facet types
   FacetOption,
   FacetResult,
+  AntflyType,
 
   // Model and reranker types
   ModelConfig,
