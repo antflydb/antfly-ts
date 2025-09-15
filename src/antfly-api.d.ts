@@ -4,1159 +4,1542 @@
  */
 
 export interface paths {
-  "/query": {
-    /**
-     * Executes a query across all relevant tables and shards based on the query content.
-     * IMPORTANT: The final line of data must end with a newline character \n. Each newline character may be preceded by a carriage return \r. When sending requests to this endpoint the Content-Type header should be set to application/x-ndjson.
-     */
-    post: operations["globalQuery"];
-  };
-  "/table": {
-    get: operations["listTables"];
-  };
-  "/table/{tableName}": {
-    get: operations["getTable"];
-    post: operations["createTable"];
-    delete: operations["dropTable"];
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-      };
+    "/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Perform a global query
+         * @description Executes a query across all relevant tables and shards based on the query content.
+         *     IMPORTANT: The final line of data must end with a newline character \n. Each newline character may be preceded by a carriage return \r. When sending requests to this endpoint the Content-Type header should be set to application/x-ndjson.
+         */
+        post: operations["globalQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/table/{tableName}/query": {
-    post: operations["queryTable"];
-    parameters: {
-      path: {
-        /** Name of the table to query */
-        tableName: string;
-      };
+    "/table": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all tables */
+        get: operations["listTables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/table/{tableName}/batch": {
-    post: operations["batchTableOperations"];
-    parameters: {
-      path: {
-        /** Name of the table for batch operation */
-        tableName: string;
-      };
+    "/table/{tableName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        /** Get table details */
+        get: operations["getTable"];
+        put?: never;
+        /** Create a new table */
+        post: operations["createTable"];
+        /** Drop a table */
+        delete: operations["dropTable"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/table/{tableName}/backup": {
-    post: operations["backupTable"];
-    parameters: {
-      path: {
-        /** Name of the table to backup */
-        tableName: string;
-      };
+    "/table/{tableName}/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to query */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query a specific table */
+        post: operations["queryTable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/table/{tableName}/restore": {
-    post: operations["restoreTable"];
-    parameters: {
-      path: {
-        /** Name of the table to restore into */
-        tableName: string;
-      };
+    "/table/{tableName}/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table for batch operation */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Perform batch inserts and deletes on a table */
+        post: operations["batchTableOperations"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/table/{tableName}/key/{key}": {
-    get: operations["lookupKey"];
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-        /** Key of the record to lookup */
-        key: string;
-      };
+    "/table/{tableName}/backup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to backup */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Backup a table */
+        post: operations["backupTable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/table/{tableName}/index": {
-    get: operations["listIndexes"];
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-      };
+    "/table/{tableName}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to restore into */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore a table from backup */
+        post: operations["restoreTable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/table/{tableName}/index/{indexName}": {
-    get: operations["getIndex"];
-    post: operations["createIndex"];
-    delete: operations["dropIndex"];
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-        /** Name of the index */
-        indexName: string;
-      };
+    "/table/{tableName}/key/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Key of the record to lookup */
+                key: string;
+            };
+            cookie?: never;
+        };
+        /** Lookup a key in a table */
+        get: operations["lookupKey"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/user/{userName}": {
-    /** Retrieves details for a specific user. */
-    get: operations["getUserByName"];
-    /** Creates a new user with the given username and password. Username in path takes precedence. */
-    post: operations["createUser"];
-    /** Deletes a specific user. */
-    delete: operations["deleteUser"];
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
+    "/table/{tableName}/index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        /** List all indexes for a table */
+        get: operations["listIndexes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/user/{userName}/password": {
-    /** Updates the password for a specific user. */
-    put: operations["updateUserPassword"];
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
+    "/table/{tableName}/index/{indexName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Name of the index */
+                indexName: string;
+            };
+            cookie?: never;
+        };
+        /** Get index details */
+        get: operations["getIndex"];
+        put?: never;
+        /** Add an index to a table */
+        post: operations["createIndex"];
+        /** Drop an index from a table */
+        delete: operations["dropIndex"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
-  "/user/{userName}/permission": {
-    /** Retrieves all permissions for a specific user. */
-    get: operations["getUserPermissions"];
-    /** Adds a new permission to a specific user. */
-    post: operations["addPermissionToUser"];
-    /** Removes a specific permission rule from a user based on resource name and type. */
-    delete: operations["removePermissionFromUser"];
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
+    "/user/{userName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get user details
+         * @description Retrieves details for a specific user.
+         */
+        get: operations["getUserByName"];
+        put?: never;
+        /**
+         * Create a new user
+         * @description Creates a new user with the given username and password. Username in path takes precedence.
+         */
+        post: operations["createUser"];
+        /**
+         * Delete a user
+         * @description Deletes a specific user.
+         */
+        delete: operations["deleteUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-  };
+    "/user/{userName}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update user password
+         * @description Updates the password for a specific user.
+         */
+        put: operations["updateUserPassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/user/{userName}/permission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get user permissions
+         * @description Retrieves all permissions for a specific user.
+         */
+        get: operations["getUserPermissions"];
+        put?: never;
+        /**
+         * Add permission to user
+         * @description Adds a new permission to a specific user.
+         */
+        post: operations["addPermissionToUser"];
+        /**
+         * Remove permission from user
+         * @description Removes a specific permission rule from a user based on resource name and type.
+         */
+        delete: operations["removePermissionFromUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
-
+export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    Error: {
-      /** @example An error message */
-      error: string;
+    schemas: {
+        Error: {
+            /** @example An error message */
+            error: string;
+        };
+        ByteRange: string[];
+        ShardConfig: {
+            byte_range: components["schemas"]["ByteRange"];
+        };
+        CreateTableRequest: {
+            /** Format: uint */
+            num_shards?: number;
+            indexes?: {
+                [key: string]: components["schemas"]["IndexConfig"];
+            };
+            schema?: components["schemas"]["TableSchema"];
+        };
+        Table: {
+            name: string;
+            indexes: {
+                [key: string]: components["schemas"]["IndexConfig"];
+            };
+            shards: {
+                [key: string]: components["schemas"]["ShardConfig"];
+            };
+            schema?: components["schemas"]["TableSchema"];
+        };
+        DateRange: {
+            name: string;
+            from?: string;
+            to?: string;
+        };
+        NumericRange: {
+            name: string;
+            /** Format: float */
+            from?: number;
+            /** Format: float */
+            to?: number;
+        };
+        TermFacetResult: {
+            term: string;
+            count: number;
+        };
+        DateRangeResult: components["schemas"]["DateRange"] & {
+            count: number;
+        };
+        NumericRangeResult: components["schemas"]["NumericRange"] & {
+            count: number;
+        };
+        FacetOption: {
+            field?: string;
+            size?: number;
+            date_ranges?: components["schemas"]["DateRange"][];
+            numeric_ranges?: components["schemas"]["NumericRange"][];
+        };
+        FacetResult: {
+            field?: string;
+            total?: number;
+            missing?: number;
+            terms?: components["schemas"]["TermFacetResult"][];
+            date_ranges?: components["schemas"]["DateRangeResult"][];
+            numeric_ranges?: components["schemas"]["NumericRangeResult"][];
+        };
+        IndexStatus: {
+            config: components["schemas"]["IndexConfig"];
+            shard_status: {
+                [key: string]: Record<string, never>;
+            };
+            status: {
+                [key: string]: unknown;
+            };
+        };
+        StorageStatus: {
+            /**
+             * Format: uint64
+             * @description Disk usage in bytes.
+             */
+            disk_usage?: number;
+            /** @description Whether the table has received data. */
+            empty?: boolean;
+        };
+        TableStatus: components["schemas"]["Table"] & {
+            storage_status: components["schemas"]["StorageStatus"];
+        };
+        /** @example {
+         *       "inserts": {
+         *         "user:123": {
+         *           "name": "John Doe",
+         *           "email": "john@example.com",
+         *           "age": 30,
+         *           "tags": [
+         *             "customer",
+         *             "premium"
+         *           ]
+         *         },
+         *         "user:456": {
+         *           "name": "Jane Smith",
+         *           "email": "jane@example.com",
+         *           "age": 25,
+         *           "tags": [
+         *             "customer"
+         *           ]
+         *         }
+         *       },
+         *       "deletes": [
+         *         "user:789",
+         *         "user:old_account"
+         *       ]
+         *     } */
+        BatchRequest: {
+            inserts?: {
+                [key: string]: Record<string, never>;
+            };
+            /** @description List of keys to delete. */
+            deletes?: string[];
+        };
+        BackupRequest: {
+            backup_id: string;
+            /** @description Location for the backup (e.g., file:///path/to/backup, s3://bucket/path) */
+            location: string;
+        };
+        RestoreRequest: components["schemas"]["BackupRequest"];
+        QueryRequest: {
+            table?: string;
+            /** @description Full JSON Bleve search queries */
+            full_text_search?: {
+                [key: string]: unknown;
+            };
+            semantic_search?: string;
+            indexes?: string[];
+            /** Format: byte */
+            filter_prefix?: string;
+            /** @description Full JSON Bleve search queries */
+            filter_query?: {
+                [key: string]: unknown;
+            };
+            /** @description Full JSON Bleve search queries */
+            exclusion_query?: {
+                [key: string]: unknown;
+            };
+            facets?: {
+                [key: string]: components["schemas"]["FacetOption"];
+            };
+            embeddings?: {
+                [key: string]: number[];
+            };
+            fields?: string[];
+            /** @description Maximum number of results to return or topk for semantic_search. */
+            limit?: number;
+            /** @description Number of results to skip for pagination, only available for full_text_search queries. */
+            offset?: number;
+            order_by?: {
+                [key: string]: boolean;
+            };
+            /**
+             * Format: float
+             * @description Maximum distance for semantic similarity search.
+             */
+            distance_under?: number;
+            /**
+             * Format: float
+             * @description Minimum distance for semantic similarity search.
+             */
+            distance_over?: number;
+            count?: boolean;
+            reranker?: components["schemas"]["RerankerConfig"];
+            analyses?: components["schemas"]["Analyses"];
+        };
+        Analyses: {
+            pca?: boolean;
+            tsne?: boolean;
+        };
+        AnalysesResult: {
+            pca?: number[];
+            tsne?: number[];
+        };
+        QueryHit: {
+            /** @description ID of the record. */
+            _id: string;
+            /**
+             * Format: float
+             * @description Relevance score of the hit.
+             */
+            _score: number;
+            /** @description Scores partitioned by index when using RRF search. */
+            _index_scores?: {
+                [key: string]: unknown;
+            };
+            _source?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description A list of query hits. */
+        QueryHits: {
+            /**
+             * Format: uint64
+             * @description Total number of hits available.
+             */
+            total?: number;
+            hits?: components["schemas"]["QueryHit"][];
+            /**
+             * Format: float
+             * @description Maximum score of the results.
+             */
+            max_score?: number;
+        };
+        /** @description Responses from multiple query operations. */
+        QueryResponses: {
+            responses?: components["schemas"]["QueryResult"][];
+        };
+        /** @description Result of a query operation as an array of results and a count. */
+        QueryResult: {
+            hits?: components["schemas"]["QueryHits"];
+            facets?: {
+                [key: string]: components["schemas"]["FacetResult"];
+            };
+            /** @description Analysis results like PCA and t-SNE per index embeddings. */
+            analyses?: {
+                [key: string]: components["schemas"]["AnalysesResult"];
+            };
+            /**
+             * Format: int64
+             * @description Duration of the query in milliseconds.
+             */
+            took: number;
+            /**
+             * Format: int32
+             * @description HTTP status code of the query operation.
+             */
+            status: number;
+            /** @description Error message if the query failed. */
+            error?: string;
+        };
+        /** @description Configuration for the Google embedding provider. */
+        GoogleConfig: {
+            /** @description The Google Cloud project ID. */
+            project_id?: string;
+            /** @description The Google Cloud location (e.g., 'us-central1'). */
+            location?: string;
+            /**
+             * @description The name of the embedding model to use (e.g., 'text-embedding-004').
+             * @default text-embedding-004
+             */
+            model: string;
+            /**
+             * @description The dimension of the embedding.
+             * @default 1024
+             */
+            dimension: number;
+            /** @description The Google API key. */
+            api_key?: string;
+            /**
+             * Format: uri
+             * @description The URL of the Google API endpoint.
+             */
+            url?: string;
+        };
+        /** @description Configuration for the Ollama embedding provider. */
+        OllamaConfig: {
+            /** @description The name of the Ollama model to use. */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Ollama API endpoint.
+             */
+            url?: string;
+        };
+        /** @description Configuration for the OpenAI embedding provider. */
+        OpenAIConfig: {
+            /** @description The name of the OpenAI model to use. */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the OpenAI API endpoint.
+             */
+            url?: string;
+            /** @description The OpenAI API key. */
+            api_key?: string;
+        };
+        /** @description Configuration for the Bedrock embedding provider. */
+        BedrockConfig: {
+            /**
+             * @description The name of the Bedrock model to use.
+             * @example amazon.titan-embed-text-v1
+             */
+            model: string;
+            /** @description The AWS region for the Bedrock service. */
+            region?: string;
+            /** @description Whether to strip new lines from the input text. */
+            strip_new_lines?: boolean;
+            /** @description The batch size for embedding requests. */
+            batch_size?: number;
+        };
+        /**
+         * @description The embedding provider to use.
+         * @enum {string}
+         */
+        Provider: "gemini" | "ollama" | "openai" | "bedrock";
+        /**
+         * @description A unified configuration for an embedding provider.
+         * @example {
+         *       "provider": "openai",
+         *       "model": "text-embedding-004",
+         *       "field": "content"
+         *     }
+         */
+        RerankerConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
+            provider: components["schemas"]["Provider"];
+            field?: string;
+            template?: string;
+        };
+        BleveIndexV2Config: {
+            /** @description Whether to use memory-only storage */
+            mem_only?: boolean;
+        };
+        /**
+         * @description A unified configuration for an embedding provider.
+         * @example {
+         *       "provider": "openai",
+         *       "model": "text-embedding-004"
+         *     }
+         */
+        ModelConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
+            provider: components["schemas"]["Provider"];
+        };
+        EmbeddingIndexConfig: {
+            /** @description Vector dimension */
+            dimension: number;
+            /** @description Field to extract embeddings from */
+            field?: string;
+            /**
+             * @description Go string template for generating prompts. See https://pkg.go.dev/text/template for more information.
+             * @example Hello, {{if eq .Name "John"}}Johnathan{{else}}{{.Name}}{{end}}! You are {{.Age}} years old.
+             */
+            template?: string;
+            /** @description Whether to use in-memory only storage */
+            mem_only?: boolean;
+            /** @description Configuration for the embeddings plugin */
+            embedder_config?: components["schemas"]["ModelConfig"];
+            /** @description Configuration for the summarizer plugin */
+            summarizer_config?: components["schemas"]["ModelConfig"];
+        };
+        /**
+         * @description The type of the index.
+         * @enum {string}
+         */
+        IndexType: "bleve_v2" | "vector_v2";
+        /** @description Configuration for an index */
+        IndexConfig: {
+            /** @description Name of the index */
+            name: string;
+            type: components["schemas"]["IndexType"];
+        } & (components["schemas"]["BleveIndexV2Config"] | components["schemas"]["EmbeddingIndexConfig"]);
+        /** @description A valid JSON Schema defining the document's structure.
+         *     This is used to infer indexing rules.
+         *      */
+        DocumentSchema: {
+            [key: string]: unknown;
+        };
+        TableSchema: {
+            key?: string;
+            /** @description Default type to use from the document_types.
+             *      */
+            default_type?: string;
+            /** @description A map of type names to their content schemas.
+             *     The key is the type name, and the value is the schema for that document type.
+             *     This allows for flexible content types per field.
+             *      */
+            document_types?: {
+                [key: string]: components["schemas"]["DocumentSchema"];
+            };
+            /** @description A map of type names to their document json schemas.
+             *      */
+            document_schemas?: {
+                [key: string]: components["schemas"]["DocumentSchema"];
+            };
+        };
+        User: {
+            /** @example johndoe */
+            username: string;
+            /**
+             * Format: byte
+             * @description Base64 encoded password hash. Exposing this is a security risk.
+             * @example JGFyZ29uMm...
+             */
+            password_hash: string;
+        };
+        /**
+         * @description Type of the resource, e.g., table, user, or global ('*').
+         * @example table
+         * @enum {string}
+         */
+        ResourceType: "table" | "user" | "*";
+        /**
+         * @description Type of permission.
+         * @example read
+         * @enum {string}
+         */
+        PermissionType: "read" | "write" | "admin";
+        Permission: {
+            /**
+             * @description Resource name (e.g., table name, target username, or '*' for global).
+             * @example orders_table
+             */
+            resource: string;
+            resource_type: components["schemas"]["ResourceType"];
+            type: components["schemas"]["PermissionType"];
+        };
+        CreateUserRequest: {
+            /**
+             * @description Username for the new user. If provided in the path, this field can be omitted or must match the path parameter.
+             * @example johndoe
+             */
+            username?: string;
+            /**
+             * Format: password
+             * @example s3cr3tP@sswOrd
+             */
+            password: string;
+            /** @description Optional list of initial permissions for the user. */
+            initial_policies?: components["schemas"]["Permission"][] | null;
+        };
+        UpdatePasswordRequest: {
+            /**
+             * Format: password
+             * @example newS3cr3tP@sswOrd
+             */
+            new_password: string;
+        };
+        SuccessMessage: {
+            /** @example Operation completed successfully */
+            message?: string;
+        };
     };
-    ByteRange: string[];
-    ShardConfig: {
-      byte_range: components["schemas"]["ByteRange"];
+    responses: {
+        /** @description Bad request */
+        BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Resource not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Internal server error */
+        InternalServerError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
     };
-    CreateTableRequest: {
-      /** Format: uint */
-      num_shards?: number;
-      indexes?: { [key: string]: components["schemas"]["IndexConfig"] };
-      schema?: components["schemas"]["TableSchema"];
+    parameters: {
+        /** @description The username. */
+        UserNamePathParameter: string;
     };
-    Table: {
-      name: string;
-      indexes: { [key: string]: components["schemas"]["IndexConfig"] };
-      shards: { [key: string]: components["schemas"]["ShardConfig"] };
-      schema?: components["schemas"]["TableSchema"];
-    };
-    ValueSchema: {
-      type: components["schemas"]["ValueType"];
-      /**
-       * @description For object types, this schema defines the structure of the content.
-       * For other types, this field is ignored.
-       */
-      schema?: components["schemas"]["DocumentSchema"];
-    };
-    DocumentSchema: {
-      /**
-       * @description A map of field names to their value schema (type, defaults, configuration etc.).
-       * This allows for flexible content types per field.
-       * The key is the field name, and the value is the value type schema.
-       */
-      fields?: { [key: string]: components["schemas"]["ValueSchema"] };
-    };
-    TableSchema: {
-      key?: string;
-      /** @description Default type to use from the document_types. */
-      default_type?: string;
-      document_types?: {
-        [key: string]: components["schemas"]["DocumentSchema"];
-      };
-    };
-    DateRange: {
-      name: string;
-      from?: string;
-      to?: string;
-    };
-    NumericRange: {
-      name: string;
-      /** Format: float */
-      from?: number;
-      /** Format: float */
-      to?: number;
-    };
-    TermFacetResult: {
-      term: string;
-      count: number;
-    };
-    DateRangeResult: components["schemas"]["DateRange"] & {
-      count: number;
-    };
-    NumericRangeResult: components["schemas"]["NumericRange"] & {
-      count: number;
-    };
-    FacetOption: {
-      field?: string;
-      size?: number;
-      date_ranges?: components["schemas"]["DateRange"][];
-      numeric_ranges?: components["schemas"]["NumericRange"][];
-    };
-    FacetResult: {
-      field?: string;
-      total?: number;
-      missing?: number;
-      terms?: components["schemas"]["TermFacetResult"][];
-      date_ranges?: components["schemas"]["DateRangeResult"][];
-      numeric_ranges?: components["schemas"]["NumericRangeResult"][];
-    };
-    /**
-     * @description Field type (e.g., string, int, float)
-     * @enum {string}
-     */
-    ValueType:
-      | "float"
-      | "uint"
-      | "int"
-      | "bool"
-      | "time"
-      | "geopoint"
-      | "geoshape"
-      | "string"
-      | "keyword"
-      | "array"
-      | "object"
-      | "embedding"
-      | "link"
-      | "blob";
-    IndexStatus: {
-      config: components["schemas"]["IndexConfig"];
-      shard_status: { [key: string]: { [key: string]: unknown } };
-      status: { [key: string]: unknown };
-    };
-    StorageStatus: {
-      /**
-       * Format: uint64
-       * @description Disk usage in bytes.
-       */
-      disk_usage?: number;
-      /** @description Whether the table has received data. */
-      empty?: boolean;
-    };
-    TableStatus: components["schemas"]["Table"] & {
-      storage_status: components["schemas"]["StorageStatus"];
-    };
-    /**
-     * @example {
-     *   "inserts": {
-     *     "user:123": {
-     *       "name": "John Doe",
-     *       "email": "john@example.com",
-     *       "age": 30,
-     *       "tags": [
-     *         "customer",
-     *         "premium"
-     *       ]
-     *     },
-     *     "user:456": {
-     *       "name": "Jane Smith",
-     *       "email": "jane@example.com",
-     *       "age": 25,
-     *       "tags": [
-     *         "customer"
-     *       ]
-     *     }
-     *   },
-     *   "deletes": [
-     *     "user:789",
-     *     "user:old_account"
-     *   ]
-     * }
-     */
-    BatchRequest: {
-      inserts?: { [key: string]: { [key: string]: unknown } };
-      /** @description List of keys to delete. */
-      deletes?: string[];
-    };
-    BackupRequest: {
-      backup_id: string;
-      /** @description Location for the backup (e.g., file:///path/to/backup, s3://bucket/path) */
-      location: string;
-    };
-    RestoreRequest: components["schemas"]["BackupRequest"];
-    QueryRequest: {
-      table?: string;
-      /** @description Full JSON Bleve search queries */
-      full_text_search?: { [key: string]: unknown };
-      semantic_search?: string;
-      indexes?: string[];
-      /** Format: byte */
-      filter_prefix?: string;
-      /** @description Full JSON Bleve search queries */
-      filter_query?: { [key: string]: unknown };
-      /** @description Full JSON Bleve search queries */
-      exclusion_query?: { [key: string]: unknown };
-      facets?: { [key: string]: components["schemas"]["FacetOption"] };
-      embeddings?: { [key: string]: number[] };
-      fields?: string[];
-      /** @description Maximum number of results to return or topk for semantic_search. */
-      limit?: number;
-      /** @description Number of results to skip for pagination, only available for full_text_search queries. */
-      offset?: number;
-      order_by?: { [key: string]: boolean };
-      /**
-       * Format: float
-       * @description Maximum distance for semantic similarity search.
-       */
-      distance_under?: number;
-      /**
-       * Format: float
-       * @description Minimum distance for semantic similarity search.
-       */
-      distance_over?: number;
-      count?: boolean;
-      reranker?: components["schemas"]["RerankerConfig"];
-      analyses?: components["schemas"]["Analyses"];
-    };
-    Analyses: {
-      pca?: boolean;
-      tsne?: boolean;
-    };
-    AnalysesResult: {
-      pca?: number[];
-      tsne?: number[];
-    };
-    QueryHit: {
-      /** @description ID of the record. */
-      _id: string;
-      /**
-       * Format: float
-       * @description Relevance score of the hit.
-       */
-      _score: number;
-      /** @description Scores partitioned by index when using RRF search. */
-      _index_scores?: { [key: string]: unknown };
-      _source?: { [key: string]: unknown };
-    };
-    /** @description A list of query hits. */
-    QueryHits: {
-      /**
-       * Format: uint64
-       * @description Total number of hits available.
-       */
-      total?: number;
-      hits?: components["schemas"]["QueryHit"][];
-      /**
-       * Format: float
-       * @description Maximum score of the results.
-       */
-      max_score?: number;
-    };
-    /** @description Responses from multiple query operations. */
-    QueryResponses: {
-      responses?: components["schemas"]["QueryResult"][];
-    };
-    /** @description Result of a query operation as an array of results and a count. */
-    QueryResult: {
-      hits?: components["schemas"]["QueryHits"];
-      facets?: { [key: string]: components["schemas"]["FacetResult"] };
-      /** @description Analysis results like PCA and t-SNE per index embeddings. */
-      analyses?: { [key: string]: components["schemas"]["AnalysesResult"] };
-      /**
-       * Format: int64
-       * @description Duration of the query in milliseconds.
-       */
-      took: number;
-      /**
-       * Format: int32
-       * @description HTTP status code of the query operation.
-       */
-      status: number;
-      /** @description Error message if the query failed. */
-      error?: string;
-    };
-    /** @description Configuration for the Google embedding provider. */
-    GoogleConfig: {
-      /** @description The Google Cloud project ID. */
-      project_id?: string;
-      /** @description The Google Cloud location (e.g., 'us-central1'). */
-      location?: string;
-      /**
-       * @description The name of the embedding model to use (e.g., 'text-embedding-004').
-       * @default text-embedding-004
-       */
-      model: string;
-      /**
-       * @description The dimension of the embedding.
-       * @default 1024
-       */
-      dimension?: number;
-      /** @description The Google API key. */
-      api_key?: string;
-      /**
-       * Format: uri
-       * @description The URL of the Google API endpoint.
-       */
-      url?: string;
-    };
-    /** @description Configuration for the Ollama embedding provider. */
-    OllamaConfig: {
-      /** @description The name of the Ollama model to use. */
-      model: string;
-      /**
-       * Format: uri
-       * @description The URL of the Ollama API endpoint.
-       */
-      url?: string;
-    };
-    /** @description Configuration for the OpenAI embedding provider. */
-    OpenAIConfig: {
-      /** @description The name of the OpenAI model to use. */
-      model: string;
-      /**
-       * Format: uri
-       * @description The URL of the OpenAI API endpoint.
-       */
-      url?: string;
-      /** @description The OpenAI API key. */
-      api_key?: string;
-    };
-    /** @description Configuration for the Bedrock embedding provider. */
-    BedrockConfig: {
-      /**
-       * @description The name of the Bedrock model to use.
-       * @example amazon.titan-embed-text-v1
-       */
-      model: string;
-      /** @description The AWS region for the Bedrock service. */
-      region?: string;
-      /** @description Whether to strip new lines from the input text. */
-      strip_new_lines?: boolean;
-      /** @description The batch size for embedding requests. */
-      batch_size?: number;
-    };
-    /**
-     * @description The embedding provider to use.
-     * @enum {string}
-     */
-    Provider: "gemini" | "ollama" | "openai" | "bedrock";
-    /**
-     * @description A unified configuration for an embedding provider.
-     * @example {
-     *   "provider": "openai",
-     *   "model": "text-embedding-004",
-     *   "field": "content"
-     * }
-     */
-    RerankerConfig: (
-      | components["schemas"]["GoogleConfig"]
-      | components["schemas"]["OllamaConfig"]
-      | components["schemas"]["OpenAIConfig"]
-      | components["schemas"]["BedrockConfig"]
-    ) & {
-      provider: components["schemas"]["Provider"];
-      field?: string;
-      template?: string;
-    };
-    BleveIndexV2Config: {
-      /** @description Whether to use memory-only storage */
-      mem_only?: boolean;
-    };
-    /**
-     * @description A unified configuration for an embedding provider.
-     * @example {
-     *   "provider": "openai",
-     *   "model": "text-embedding-004"
-     * }
-     */
-    ModelConfig: (
-      | components["schemas"]["GoogleConfig"]
-      | components["schemas"]["OllamaConfig"]
-      | components["schemas"]["OpenAIConfig"]
-      | components["schemas"]["BedrockConfig"]
-    ) & {
-      provider: components["schemas"]["Provider"];
-    };
-    EmbeddingIndexConfig: {
-      /** @description Vector dimension */
-      dimension: number;
-      /** @description Field to extract embeddings from */
-      field?: string;
-      /**
-       * @description Go string template for generating prompts. See https://pkg.go.dev/text/template for more information.
-       * @example Hello, {{if eq .Name "John"}}Johnathan{{else}}{{.Name}}{{end}}! You are {{.Age}} years old.
-       */
-      template?: string;
-      /** @description Whether to use in-memory only storage */
-      mem_only?: boolean;
-      /** @description Configuration for the embeddings plugin */
-      embedder_config?: components["schemas"]["ModelConfig"];
-      /** @description Configuration for the summarizer plugin */
-      summarizer_config?: components["schemas"]["ModelConfig"];
-    };
-    /**
-     * @description The type of the index.
-     * @enum {string}
-     */
-    IndexType: "bleve_v2" | "vector_v2";
-    /** @description Configuration for an index */
-    IndexConfig: (
-      | components["schemas"]["BleveIndexV2Config"]
-      | components["schemas"]["EmbeddingIndexConfig"]
-    ) & {
-      /** @description Name of the index */
-      name: string;
-      type: components["schemas"]["IndexType"];
-    };
-    User: {
-      /** @example johndoe */
-      username: string;
-      /**
-       * Format: byte
-       * @description Base64 encoded password hash. Exposing this is a security risk.
-       * @example JGFyZ29uMm...
-       */
-      password_hash: string;
-    };
-    /**
-     * @description Type of the resource, e.g., table, user, or global ('*').
-     * @example table
-     * @enum {string}
-     */
-    ResourceType: "table" | "user" | "*";
-    /**
-     * @description Type of permission.
-     * @example read
-     * @enum {string}
-     */
-    PermissionType: "read" | "write" | "admin";
-    Permission: {
-      /**
-       * @description Resource name (e.g., table name, target username, or '*' for global).
-       * @example orders_table
-       */
-      resource: string;
-      resource_type: components["schemas"]["ResourceType"];
-      type: components["schemas"]["PermissionType"];
-    };
-    CreateUserRequest: {
-      /**
-       * @description Username for the new user. If provided in the path, this field can be omitted or must match the path parameter.
-       * @example johndoe
-       */
-      username?: string;
-      /**
-       * Format: password
-       * @example s3cr3tP@sswOrd
-       */
-      password: string;
-      /** @description Optional list of initial permissions for the user. */
-      initial_policies?: components["schemas"]["Permission"][] | null;
-    };
-    UpdatePasswordRequest: {
-      /**
-       * Format: password
-       * @example newS3cr3tP@sswOrd
-       */
-      new_password: string;
-    };
-    SuccessMessage: {
-      /** @example Operation completed successfully */
-      message?: string;
-    };
-  };
-  responses: {
-    /** Bad request */
-    BadRequest: {
-      content: {
-        "application/json": components["schemas"]["Error"];
-      };
-    };
-    /** Resource not found */
-    NotFound: {
-      content: {
-        "application/json": components["schemas"]["Error"];
-      };
-    };
-    /** Internal server error */
-    InternalServerError: {
-      content: {
-        "application/json": components["schemas"]["Error"];
-      };
-    };
-  };
-  parameters: {
-    /** @description The username. */
-    UserNamePathParameter: string;
-  };
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
-
+export type $defs = Record<string, never>;
 export interface operations {
-  /**
-   * Executes a query across all relevant tables and shards based on the query content.
-   * IMPORTANT: The final line of data must end with a newline character \n. Each newline character may be preceded by a carriage return \r. When sending requests to this endpoint the Content-Type header should be set to application/x-ndjson.
-   */
-  globalQuery: {
-    responses: {
-      /** Query successful */
-      200: {
-        content: {
-          "application/json": components["schemas"]["QueryResponses"];
+    globalQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-      /** Invalid query request */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryRequest"];
+                "application/x-ndjson": components["schemas"]["QueryRequest"];
+            };
         };
-      };
-      /** Internal server error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["Error"];
+        responses: {
+            /** @description Query successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResponses"];
+                };
+            };
+            /** @description Invalid query request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
-      };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["QueryRequest"];
-        "application/x-ndjson": components["schemas"]["QueryRequest"];
-      };
-    };
-  };
-  listTables: {
-    responses: {
-      /** A list of tables */
-      200: {
-        content: {
-          "application/json": components["schemas"]["TableStatus"][];
+    listTables: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
         };
-      };
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  getTable: {
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-      };
-    };
-    responses: {
-      /** Table details */
-      200: {
-        content: {
-          "application/json": components["schemas"]["TableStatus"];
+        requestBody?: never;
+        responses: {
+            /** @description A list of tables */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TableStatus"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
         };
-      };
-      404: components["responses"]["NotFound"];
     };
-  };
-  createTable: {
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-      };
-    };
-    responses: {
-      /** Table created successfully */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Table"];
+    getTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
         };
-      };
-      400: components["responses"]["BadRequest"];
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CreateTableRequest"];
-      };
-    };
-  };
-  dropTable: {
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-      };
-    };
-    responses: {
-      /** Table dropped successfully */
-      204: never;
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  queryTable: {
-    parameters: {
-      path: {
-        /** Name of the table to query */
-        tableName: string;
-      };
-    };
-    responses: {
-      /** Query successful */
-      200: {
-        content: {
-          "application/json": components["schemas"]["QueryResponses"];
+        requestBody?: never;
+        responses: {
+            /** @description Table details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TableStatus"];
+                };
+            };
+            404: components["responses"]["NotFound"];
         };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["QueryRequest"];
-        "application/x-ndjson": components["schemas"]["QueryRequest"];
-      };
-    };
-  };
-  batchTableOperations: {
-    parameters: {
-      path: {
-        /** Name of the table for batch operation */
-        tableName: string;
-      };
-    };
-    responses: {
-      /** Batch operation successful */
-      201: {
-        content: {
-          "application/json": {
-            /** @example successful */
-            batch?: string;
-          };
+    createTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
         };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["BatchRequest"];
-      };
-    };
-  };
-  backupTable: {
-    parameters: {
-      path: {
-        /** Name of the table to backup */
-        tableName: string;
-      };
-    };
-    responses: {
-      /** Backup process initiated successfully */
-      201: {
-        content: {
-          "application/json": {
-            /** @example successful */
-            backup?: string;
-          };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTableRequest"];
+            };
         };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["BackupRequest"];
-      };
-    };
-  };
-  restoreTable: {
-    parameters: {
-      path: {
-        /** Name of the table to restore into */
-        tableName: string;
-      };
-    };
-    responses: {
-      /** Restore process triggered successfully */
-      202: {
-        content: {
-          "application/json": {
-            /** @example triggered */
-            restore?: string;
-          };
+        responses: {
+            /** @description Table created successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Table"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
         };
-      };
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["RestoreRequest"];
-      };
-    };
-  };
-  lookupKey: {
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-        /** Key of the record to lookup */
-        key: string;
-      };
-    };
-    responses: {
-      /** Record found */
-      200: {
-        content: {
-          "application/json": { [key: string]: unknown };
+    dropTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
         };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
+        requestBody?: never;
+        responses: {
+            /** @description Table dropped successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-  };
-  listIndexes: {
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-      };
+    queryTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to query */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryRequest"];
+                "application/x-ndjson": components["schemas"]["QueryRequest"];
+            };
+        };
+        responses: {
+            /** @description Query successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResponses"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-    responses: {
-      /** A list of indexes for the table */
-      200: {
-        content: {
-          "application/json": components["schemas"]["IndexStatus"][];
+    batchTableOperations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table for batch operation */
+                tableName: string;
+            };
+            cookie?: never;
         };
-      };
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Batch operation successful */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example successful */
+                        batch?: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-  };
-  getIndex: {
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-        /** Name of the index */
-        indexName: string;
-      };
+    backupTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to backup */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackupRequest"];
+            };
+        };
+        responses: {
+            /** @description Backup process initiated successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example successful */
+                        backup?: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-    responses: {
-      /** Index details */
-      200: {
-        content: {
-          "application/json": components["schemas"]["IndexStatus"];
+    restoreTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to restore into */
+                tableName: string;
+            };
+            cookie?: never;
         };
-      };
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Restore process triggered successfully */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example triggered */
+                        restore?: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-  };
-  createIndex: {
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-        /** Name of the index */
-        indexName: string;
-      };
+    lookupKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Key of the record to lookup */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Record found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-    responses: {
-      /** Index added successfully */
-      201: unknown;
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
+    listIndexes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A list of indexes for the table */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexStatus"][];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["IndexConfig"];
-      };
+    getIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Name of the index */
+                indexName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Index details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexStatus"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-  };
-  dropIndex: {
-    parameters: {
-      path: {
-        /** Name of the table */
-        tableName: string;
-        /** Name of the index */
-        indexName: string;
-      };
+    createIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Name of the index */
+                indexName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IndexConfig"];
+            };
+        };
+        responses: {
+            /** @description Index added successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-    responses: {
-      /** Index dropped successfully */
-      201: unknown;
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
+    dropIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Name of the index */
+                indexName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Index dropped successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
     };
-  };
-  /** Retrieves details for a specific user. */
-  getUserByName: {
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
+    getUserByName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Bad Request (e.g., username is required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
     };
-    responses: {
-      /** Successful operation */
-      200: {
-        content: {
-          "application/json": components["schemas"]["User"];
+    createUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
         };
-      };
-      /** Bad Request (e.g., username is required) */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
+        /** @description User creation details */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUserRequest"];
+            };
         };
-      };
-      /** User not found */
-      404: {
-        content: {
-          "application/json": components["schemas"]["Error"];
+        responses: {
+            /** @description User created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Bad Request (e.g., invalid input, username/password mismatch) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict (e.g., user already exists) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
-      };
-      /** Internal Server Error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
     };
-  };
-  /** Creates a new user with the given username and password. Username in path takes precedence. */
-  createUser: {
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request (e.g., username is required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
     };
-    responses: {
-      /** User created successfully */
-      201: {
-        content: {
-          "application/json": components["schemas"]["User"];
+    updateUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
         };
-      };
-      /** Bad Request (e.g., invalid input, username/password mismatch) */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
+        /** @description New password details */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePasswordRequest"];
+            };
         };
-      };
-      /** Conflict (e.g., user already exists) */
-      409: {
-        content: {
-          "application/json": components["schemas"]["Error"];
+        responses: {
+            /** @description Password updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMessage"];
+                };
+            };
+            /** @description Bad Request (e.g., new password empty, username required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
-      };
-      /** Internal Server Error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
     };
-    /** User creation details */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CreateUserRequest"];
-      };
+    getUserPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Permission"][];
+                };
+            };
+            /** @description Bad Request (e.g., username is required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
     };
-  };
-  /** Deletes a specific user. */
-  deleteUser: {
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
+    addPermissionToUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /** @description Permission details to add */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Permission"];
+            };
+        };
+        responses: {
+            /** @description Permission added successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMessage"];
+                };
+            };
+            /** @description Bad Request (e.g., invalid input, username required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
     };
-    responses: {
-      /** User deleted successfully */
-      204: never;
-      /** Bad Request (e.g., username is required) */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
+    removePermissionFromUser: {
+        parameters: {
+            query: {
+                /** @description The name of the resource for the permission to be removed. */
+                resource: string;
+                /** @description The type of the resource for the permission to be removed. */
+                resourceType: components["schemas"]["ResourceType"];
+            };
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
         };
-      };
-      /** User not found */
-      404: {
-        content: {
-          "application/json": components["schemas"]["Error"];
+        requestBody?: never;
+        responses: {
+            /** @description Permission removed successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request (e.g., missing query parameters, invalid resourceType, username required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found or Role not found for the given resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
-      };
-      /** Internal Server Error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
     };
-  };
-  /** Updates the password for a specific user. */
-  updateUserPassword: {
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-    };
-    responses: {
-      /** Password updated successfully */
-      200: {
-        content: {
-          "application/json": components["schemas"]["SuccessMessage"];
-        };
-      };
-      /** Bad Request (e.g., new password empty, username required) */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** User not found */
-      404: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** Internal Server Error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-    /** New password details */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["UpdatePasswordRequest"];
-      };
-    };
-  };
-  /** Retrieves all permissions for a specific user. */
-  getUserPermissions: {
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-    };
-    responses: {
-      /** Successful operation */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Permission"][];
-        };
-      };
-      /** Bad Request (e.g., username is required) */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** User not found */
-      404: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** Internal Server Error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  /** Adds a new permission to a specific user. */
-  addPermissionToUser: {
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-    };
-    responses: {
-      /** Permission added successfully */
-      201: {
-        content: {
-          "application/json": components["schemas"]["SuccessMessage"];
-        };
-      };
-      /** Bad Request (e.g., invalid input, username required) */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** User not found */
-      404: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** Internal Server Error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-    /** Permission details to add */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["Permission"];
-      };
-    };
-  };
-  /** Removes a specific permission rule from a user based on resource name and type. */
-  removePermissionFromUser: {
-    parameters: {
-      path: {
-        /** The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      query: {
-        /** The name of the resource for the permission to be removed. */
-        resource: string;
-        /** The type of the resource for the permission to be removed. */
-        resourceType: components["schemas"]["ResourceType"];
-      };
-    };
-    responses: {
-      /** Permission removed successfully */
-      204: never;
-      /** Bad Request (e.g., missing query parameters, invalid resourceType, username required) */
-      400: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** User not found or Role not found for the given resource */
-      404: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** Internal Server Error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
 }
-
-export interface external {}
