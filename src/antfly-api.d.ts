@@ -431,7 +431,7 @@ export interface components {
      * @description The embedding provider to use.
      * @enum {string}
      */
-    Provider: "gemini" | "ollama" | "openai" | "bedrock";
+    Provider: "gemini" | "ollama" | "openai" | "bedrock" | "mock";
     /**
      * @description A unified configuration for an embedding provider.
      * @example {
@@ -513,6 +513,13 @@ export interface components {
       key?: string;
       /** @description Default type to use from the document_types. */
       default_type?: string;
+      /**
+       * @description Whether to enforce that documents must match one of the provided document types.
+       * If false, documents not matching any type will be accepted but not indexed.
+       *
+       * @default false
+       */
+      enforce_types?: boolean;
       /** @description A map of type names to their document json schemas. */
       document_schemas?: {
         [key: string]: components["schemas"]["DocumentSchema"];
