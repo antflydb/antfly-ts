@@ -163,14 +163,8 @@ export interface components {
     /** @enum {string} */
     AntflyType:
       | "search_as_you_type"
-      | "float"
-      | "uint"
-      | "int"
-      | "bool"
-      | "time"
       | "geopoint"
       | "geoshape"
-      | "string"
       | "keyword"
       | "embedding"
       | "link"
