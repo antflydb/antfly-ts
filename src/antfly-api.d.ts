@@ -71,6 +71,15 @@ export interface paths {
       };
     };
   };
+  "/table/{tableName}/schema": {
+    put: operations["updateSchema"];
+    parameters: {
+      path: {
+        /** Name of the table */
+        tableName: string;
+      };
+    };
+  };
   "/table/{tableName}/key/{key}": {
     get: operations["lookupKey"];
     parameters: {
@@ -163,16 +172,16 @@ export interface components {
     /** @enum {string} */
     AntflyType:
       | "search_as_you_type"
+      | "keyword"
+      | "text"
+      | "numeric"
+      | "datetime"
+      | "boolean"
+      | "link"
       | "geopoint"
       | "geoshape"
-      | "keyword"
       | "embedding"
-      | "link"
-      | "blob"
-      | "numeric"
-      | "text"
-      | "datetime"
-      | "boolean";
+      | "blob";
     Table: {
       name: string;
       indexes: { [key: string]: components["schemas"]["IndexConfig"] };
@@ -216,9 +225,9 @@ export interface components {
       numeric_ranges?: components["schemas"]["NumericRangeResult"][];
     };
     IndexStatus: {
+      shard_status: { [key: string]: components["schemas"]["IndexStats"] };
       config: components["schemas"]["IndexConfig"];
-      shard_status: { [key: string]: { [key: string]: unknown } };
-      status: { [key: string]: unknown };
+      status: components["schemas"]["IndexStats"];
     };
     StorageStatus: {
       /**
@@ -504,21 +513,71 @@ export interface components {
       schema?: { [key: string]: unknown };
     };
     TableSchema: {
+      /**
+       * Format: uint32
+       * @description Version of the schema. Used for migrations.
+       *
+       * @default 0
+       */
+      version?: number;
+      /**
+       * @description The default field to use as the document ID (optional).
+       * Useful if no type-specific key is defined or if all types share the same key field.
+       *
+       * @example _id
+       */
       key?: string;
-      /** @description Default type to use from the document_types. */
-      default_type?: string;
       /**
        * @description Whether to enforce that documents must match one of the provided document types.
        * If false, documents not matching any type will be accepted but not indexed.
-       *
-       * @default false
        */
       enforce_types?: boolean;
+      /** @description Default type to use from the document_types. */
+      default_type?: string;
       /** @description A map of type names to their document json schemas. */
       document_schemas?: {
         [key: string]: components["schemas"]["DocumentSchema"];
       };
     };
+    BleveIndexV2Stats: {
+      /** @description Error message if stats could not be retrieved */
+      error?: string;
+      /**
+       * Format: uint64
+       * @description Number of documents in the index
+       */
+      total_indexed?: number;
+      /**
+       * Format: uint64
+       * @description Size of the index in bytes
+       */
+      disk_usage?: number;
+      /** @description Whether the index is currently rebuilding */
+      rebuilding?: boolean;
+    };
+    EmbeddingIndexStats: {
+      /** @description Error message if stats could not be retrieved */
+      error?: string;
+      /**
+       * Format: uint64
+       * @description Number of vectors in the index
+       */
+      total_indexed?: number;
+      /**
+       * Format: uint64
+       * @description Size of the index in bytes
+       */
+      disk_usage?: number;
+      /**
+       * Format: uint64
+       * @description Total number of nodes in the index
+       */
+      total_nodes?: number;
+    };
+    /** @description Statistics for an index */
+    IndexStats:
+      | components["schemas"]["BleveIndexV2Stats"]
+      | components["schemas"]["EmbeddingIndexStats"];
     User: {
       /** @example johndoe */
       username: string;
@@ -831,6 +890,30 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["RestoreRequest"];
+      };
+    };
+  };
+  updateSchema: {
+    parameters: {
+      path: {
+        /** Name of the table */
+        tableName: string;
+      };
+    };
+    responses: {
+      /** Schema updated successfully */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Table"];
+        };
+      };
+      400: components["responses"]["BadRequest"];
+      404: components["responses"]["NotFound"];
+      500: components["responses"]["InternalServerError"];
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["TableSchema"];
       };
     };
   };
