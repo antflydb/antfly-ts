@@ -17,6 +17,7 @@ import type {
   CreateUserRequest,
   Permission,
   ResourceType,
+  TableSchema,
 } from "./types.js";
 
 export class AntflyClient {
@@ -120,6 +121,18 @@ export class AntflyClient {
       });
       if (error) throw new Error(`Failed to drop table: ${error.error}`);
       return true;
+    },
+
+    /**
+     * Update schema for a table
+     */
+    updateSchema: async (tableName: string, config: TableSchema = {}) => {
+      const { data, error } = await this.client.PUT("/table/{tableName}/schema", {
+        params: { path: { tableName } },
+        body: config,
+      });
+      if (error) throw new Error(`Failed to update table schema: ${error.error}`);
+      return data;
     },
 
     /**
