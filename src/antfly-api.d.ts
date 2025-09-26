@@ -166,6 +166,11 @@ export interface components {
     CreateTableRequest: {
       /** Format: uint */
       num_shards?: number;
+      /**
+       * @description Optional description of the table.
+       * @example Table for user data
+       */
+      description?: string;
       indexes?: { [key: string]: components["schemas"]["IndexConfig"] };
       schema?: components["schemas"]["TableSchema"];
     };
@@ -184,6 +189,11 @@ export interface components {
       | "blob";
     Table: {
       name: string;
+      /**
+       * @description Optional description of the table.
+       * @example Table for user data
+       */
+      description?: string;
       indexes: { [key: string]: components["schemas"]["IndexConfig"] };
       shards: { [key: string]: components["schemas"]["ShardConfig"] };
       schema?: components["schemas"]["TableSchema"];
@@ -506,6 +516,11 @@ export interface components {
     DocumentSchema: {
       /** @description The field to use as the document ID (optional). */
       key?: string;
+      /**
+       * @description A description of the document type.
+       * @example A user document
+       */
+      description?: string;
       /**
        * @description A valid JSON Schema defining the document's structure.
        * This is used to infer indexing rules.
