@@ -705,7 +705,7 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["QueryRequest"];
-        "application/x-ndjson": components["schemas"]["QueryRequest"];
+        "application/x-ndjson": string;
       };
     };
   };
@@ -795,7 +795,7 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": components["schemas"]["QueryRequest"];
-        "application/x-ndjson": components["schemas"]["QueryRequest"];
+        "application/x-ndjson": string;
       };
     };
   };
@@ -851,7 +851,7 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": { [key: string]: unknown };
-        "application/x-ndjson": { [key: string]: unknown };
+        "application/x-ndjson": string;
       };
     };
   };

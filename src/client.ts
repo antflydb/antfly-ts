@@ -9,6 +9,7 @@ import type {
   AntflyConfig,
   QueryRequest,
   QueryResult,
+  QueryResponses,
   CreateTableRequest,
   BatchRequest,
   BackupRequest,
@@ -74,6 +75,26 @@ export class AntflyClient {
 
     // The global query returns QueryResponses, extract the first result
     return data?.responses?.[0];
+  }
+
+  /**
+   * Execute multiple queries in a single request
+   */
+  async multiquery(requests: QueryRequest[]): Promise<QueryResponses | undefined> {
+    const ndjson = requests.map((request) => JSON.stringify(request)).join("\n");
+
+    const { data, error } = await this.client.POST("/query", {
+      body: ndjson,
+      headers: {
+        "Content-Type": "application/x-ndjson",
+      },
+    });
+
+    if (error) {
+      throw new Error(`Multi-query failed: ${error.error}`);
+    }
+
+    return data;
   }
 
   /**
@@ -144,6 +165,23 @@ export class AntflyClient {
         body: request,
       });
       if (error) throw new Error(`Table query failed: ${error.error}`);
+      return data;
+    },
+
+    /**
+     * Execute multiple queries on a specific table
+     */
+    multiquery: async (tableName: string, requests: QueryRequest[]) => {
+      const ndjson = requests.map((request) => JSON.stringify(request)).join("\n");
+
+      const { data, error } = await this.client.POST("/table/{tableName}/query", {
+        params: { path: { tableName } },
+        body: ndjson,
+        headers: {
+          "Content-Type": "application/x-ndjson",
+        },
+      });
+      if (error) throw new Error(`Table multi-query failed: ${error.error}`);
       return data;
     },
 
