@@ -42,6 +42,14 @@ export class AntflyClient {
     this.client = createClient<paths>({
       baseUrl: config.baseUrl,
       headers,
+      bodySerializer: (body) => {
+        // Check if this is already a string (NDJSON case)
+        if (typeof body === 'string') {
+          return body;
+        }
+        // Otherwise use default JSON serialization
+        return JSON.stringify(body);
+      },
     });
   }
 
@@ -57,6 +65,14 @@ export class AntflyClient {
       headers: {
         ...this.config.headers,
         Authorization: `Basic ${auth}`,
+      },
+      bodySerializer: (body) => {
+        // Check if this is already a string (NDJSON case)
+        if (typeof body === 'string') {
+          return body;
+        }
+        // Otherwise use default JSON serialization
+        return JSON.stringify(body);
       },
     });
   }
@@ -81,7 +97,7 @@ export class AntflyClient {
    * Execute multiple queries in a single request
    */
   async multiquery(requests: QueryRequest[]): Promise<QueryResponses | undefined> {
-    const ndjson = requests.map((request) => JSON.stringify(request)).join("\n");
+    const ndjson = requests.map((request) => JSON.stringify(request)).join("\n") + "\n";
 
     const { data, error } = await this.client.POST("/query", {
       body: ndjson,
@@ -172,7 +188,7 @@ export class AntflyClient {
      * Execute multiple queries on a specific table
      */
     multiquery: async (tableName: string, requests: QueryRequest[]) => {
-      const ndjson = requests.map((request) => JSON.stringify(request)).join("\n");
+      const ndjson = requests.map((request) => JSON.stringify(request)).join("\n") + "\n";
 
       const { data, error } = await this.client.POST("/table/{tableName}/query", {
         params: { path: { tableName } },
