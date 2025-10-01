@@ -79,6 +79,7 @@ export type {
   // Search and facet types
   FacetOption,
   FacetResult,
+  TermFacetResult,
   AntflyType,
 
   // Model and reranker types

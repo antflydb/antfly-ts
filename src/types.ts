@@ -45,6 +45,7 @@ export type DocumentSchema = components["schemas"]["DocumentSchema"];
 // Search and facet types
 export type FacetOption = components["schemas"]["FacetOption"];
 export type FacetResult = components["schemas"]["FacetResult"];
+export type TermFacetResult = components["schemas"]["TermFacetResult"];
 export type AntflyType = components["schemas"]["AntflyType"];
 
 // Model and reranker types
