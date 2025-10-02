@@ -163,7 +163,7 @@ export class AntflyClient {
     /**
      * Update schema for a table
      */
-    updateSchema: async (tableName: string, config: TableSchema = {}) => {
+    updateSchema: async (tableName: string, config: TableSchema = { version: 0 }) => {
       const { data, error } = await this.client.PUT("/table/{tableName}/schema", {
         params: { path: { tableName } },
         body: config,
