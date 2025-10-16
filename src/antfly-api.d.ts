@@ -741,6 +741,21 @@ export interface components {
             /** @description Default type to use from the document_types.
              *      */
             default_type?: string;
+            /**
+             * @description The field containing the timestamp for TTL expiration (optional).
+             *     Defaults to "_timestamp" if ttl_duration is specified but ttl_field is not.
+             *
+             * @default _timestamp
+             * @example created_at
+             */
+            ttl_field: string;
+            /**
+             * @description The duration after which documents should expire, based on the ttl_field timestamp (optional).
+             *     Uses Go duration format (e.g., '24h', '7d', '168h').
+             *
+             * @example 24h
+             */
+            ttl_duration?: string;
             /** @description A map of type names to their document json schemas.
              *      */
             document_schemas?: {
