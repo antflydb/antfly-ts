@@ -1089,8 +1089,17 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @example successful */
-                        batch?: string;
+                        /** @description Number of documents successfully inserted */
+                        inserted?: number;
+                        /** @description Number of documents successfully deleted */
+                        deleted?: number;
+                        /** @description List of failed operations with error details */
+                        failed?: {
+                            /** @description The document ID that failed */
+                            id?: string;
+                            /** @description Error message for this failure */
+                            error?: string;
+                        }[];
                     };
                 };
             };
@@ -1125,8 +1134,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @example successful */
-                        insert?: string;
+                        /** @description Number of documents successfully inserted */
+                        inserted?: number;
+                        /** @description List of failed operations with error details */
+                        failed?: {
+                            /** @description The document ID that failed */
+                            id?: string;
+                            /** @description Error message for this failure */
+                            error?: string;
+                        }[];
                     };
                 };
             };
