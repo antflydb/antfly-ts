@@ -494,9 +494,11 @@ export interface components {
             facets?: {
                 [key: string]: components["schemas"]["FacetOption"];
             };
+            /** @description Raw embeddings to use for semantic searches (the keys are the indexes to use for the queries). */
             embeddings?: {
                 [key: string]: number[];
             };
+            /** @description List of fields to include in the results. */
             fields?: string[];
             /** @description Maximum number of results to return or topk for semantic_search. */
             limit?: number;
@@ -515,6 +517,7 @@ export interface components {
              * @description Minimum distance for semantic similarity search.
              */
             distance_over?: number;
+            merge_strategy?: components["schemas"]["MergeStrategy"];
             count?: boolean;
             reranker?: components["schemas"]["RerankerConfig"];
             analyses?: components["schemas"]["Analyses"];
@@ -584,6 +587,15 @@ export interface components {
             /** @description Error message if the query failed. */
             error?: string;
         };
+        /**
+         * @description Merge strategy for combining results from the semantic_search and full_text_search.
+         *     rrf: Reciprocal Rank Fusion
+         *     failover: Use full_text_search if embedding generation fails
+         *
+         * @default rrf
+         * @enum {string}
+         */
+        MergeStrategy: "rrf" | "failover";
         /** @description Configuration for the Google embedding provider. */
         GoogleConfig: {
             /** @description The Google Cloud project ID. */
@@ -745,10 +757,9 @@ export interface components {
              * @description The field containing the timestamp for TTL expiration (optional).
              *     Defaults to "_timestamp" if ttl_duration is specified but ttl_field is not.
              *
-             * @default _timestamp
              * @example created_at
              */
-            ttl_field: string;
+            ttl_field?: string;
             /**
              * @description The duration after which documents should expire, based on the ttl_field timestamp (optional).
              *     Uses Go duration format (e.g., '24h', '7d', '168h').
