@@ -22,9 +22,12 @@
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "prepare": "npm run build",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
-    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
     "test:ts": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
@@ -53,22 +56,21 @@
   },
   "homepage": "https://github.com/antflydb/antfly-ts#readme",
   "devDependencies": {
-    "@eslint/js": "^9.36.0",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^24.6.2",
-    "@typescript-eslint/eslint-plugin": "^8.45.0",
-    "@typescript-eslint/parser": "^8.45.0",
-    "eslint": "^9.36.0",
-    "jest": "^30.2.0",
-    "openapi-typescript": "^7.9.1",
+    "@eslint/js": "^9.38.0",
+    "@types/node": "^24.8.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "@vitest/ui": "^3.2.4",
+    "eslint": "^9.38.0",
+    "openapi-typescript": "^7.10.1",
     "prettier": "^3.6.2",
-    "ts-jest": "^29.4.4",
     "tsup": "^8.5.0",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
-    "openapi-fetch": "^0.14.0"
+    "openapi-fetch": "^0.15.0"
   },
   "engines": {
     "node": ">=18"

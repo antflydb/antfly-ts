@@ -38,6 +38,7 @@ async function createTable() {
   await client.tables.create("products", {
     num_shards: 3,
     schema: {
+      version: 0,
       key: "id",
       default_type: "product",
       document_schemas: {

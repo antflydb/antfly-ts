@@ -4,9 +4,52 @@
  */
 
 import type { components, operations } from "./antfly-api.js";
+import type { components as BleveComponents } from "./bleve-query.js";
 
-// Request/Response types
-export type QueryRequest = components["schemas"]["QueryRequest"];
+// Bleve Query type for type-safe query construction
+export type BleveQuery = BleveComponents["schemas"]["Query"];
+
+// Export individual Bleve query types for convenience
+export type TermQuery = BleveComponents["schemas"]["TermQuery"];
+export type MatchQuery = BleveComponents["schemas"]["MatchQuery"];
+export type MatchPhraseQuery = BleveComponents["schemas"]["MatchPhraseQuery"];
+export type PhraseQuery = BleveComponents["schemas"]["PhraseQuery"];
+export type MultiPhraseQuery = BleveComponents["schemas"]["MultiPhraseQuery"];
+export type FuzzyQuery = BleveComponents["schemas"]["FuzzyQuery"];
+export type PrefixQuery = BleveComponents["schemas"]["PrefixQuery"];
+export type RegexpQuery = BleveComponents["schemas"]["RegexpQuery"];
+export type WildcardQuery = BleveComponents["schemas"]["WildcardQuery"];
+export type QueryStringQuery = BleveComponents["schemas"]["QueryStringQuery"];
+export type NumericRangeQuery = BleveComponents["schemas"]["NumericRangeQuery"];
+export type TermRangeQuery = BleveComponents["schemas"]["TermRangeQuery"];
+export type DateRangeStringQuery = BleveComponents["schemas"]["DateRangeStringQuery"];
+export type BooleanQuery = BleveComponents["schemas"]["BooleanQuery"];
+export type ConjunctionQuery = BleveComponents["schemas"]["ConjunctionQuery"];
+export type DisjunctionQuery = BleveComponents["schemas"]["DisjunctionQuery"];
+export type MatchAllQuery = BleveComponents["schemas"]["MatchAllQuery"];
+export type MatchNoneQuery = BleveComponents["schemas"]["MatchNoneQuery"];
+export type DocIdQuery = BleveComponents["schemas"]["DocIdQuery"];
+export type BoolFieldQuery = BleveComponents["schemas"]["BoolFieldQuery"];
+export type IPRangeQuery = BleveComponents["schemas"]["IPRangeQuery"];
+export type GeoBoundingBoxQuery = BleveComponents["schemas"]["GeoBoundingBoxQuery"];
+export type GeoDistanceQuery = BleveComponents["schemas"]["GeoDistanceQuery"];
+export type GeoBoundingPolygonQuery = BleveComponents["schemas"]["GeoBoundingPolygonQuery"];
+export type GeoShapeQuery = BleveComponents["schemas"]["GeoShapeQuery"];
+export type Boost = BleveComponents["schemas"]["Boost"];
+export type Fuzziness = BleveComponents["schemas"]["Fuzziness"];
+
+// Request/Response types - Override with proper Bleve query types
+export type QueryRequest = Omit<
+  components["schemas"]["QueryRequest"],
+  "full_text_search" | "filter_query" | "exclusion_query"
+> & {
+  /** Full JSON Bleve search query with proper type checking */
+  full_text_search?: BleveQuery;
+  /** Full JSON Bleve filter query with proper type checking */
+  filter_query?: BleveQuery;
+  /** Full JSON Bleve exclusion query with proper type checking */
+  exclusion_query?: BleveQuery;
+};
 export type QueryResult = components["schemas"]["QueryResult"];
 export type QueryHit = components["schemas"]["QueryHit"];
 export type QueryResponses = components["schemas"]["QueryResponses"];
@@ -81,10 +124,10 @@ export interface AntflyConfig {
   };
 }
 
-// Helper type for query building
+// Helper type for query building with proper Bleve query types
 export interface QueryOptions {
   table?: string;
-  fullTextSearch?: Record<string, unknown>;
+  fullTextSearch?: BleveQuery;
   semanticSearch?: string;
   limit?: number;
   offset?: number;
