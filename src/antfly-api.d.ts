@@ -435,7 +435,8 @@ export interface components {
         TableStatus: components["schemas"]["Table"] & {
             storage_status: components["schemas"]["StorageStatus"];
         };
-        /** @example {
+        /**
+         * @example {
          *       "inserts": {
          *         "user:123": {
          *           "name": "John Doe",
@@ -459,7 +460,8 @@ export interface components {
          *         "user:789",
          *         "user:old_account"
          *       ]
-         *     } */
+         *     }
+         */
         BatchRequest: {
             inserts?: {
                 [key: string]: Record<string, never>;
@@ -591,7 +593,6 @@ export interface components {
          * @description Merge strategy for combining results from the semantic_search and full_text_search.
          *     rrf: Reciprocal Rank Fusion
          *     failover: Use full_text_search if embedding generation fails
-         *
          * @default rrf
          * @enum {string}
          */
@@ -724,9 +725,10 @@ export interface components {
              * @example A user document
              */
             description?: string;
-            /** @description A valid JSON Schema defining the document's structure.
+            /**
+             * @description A valid JSON Schema defining the document's structure.
              *     This is used to infer indexing rules.
-             *      */
+             */
             schema?: {
                 [key: string]: unknown;
             };
@@ -735,40 +737,35 @@ export interface components {
             /**
              * Format: uint32
              * @description Version of the schema. Used for migrations.
-             *
              * @default 0
              */
             version: number;
             /**
              * @description The default field to use as the document ID (optional).
              *     Useful if no type-specific key is defined or if all types share the same key field.
-             *
              * @example _id
              */
             key?: string;
-            /** @description Whether to enforce that documents must match one of the provided document types.
+            /**
+             * @description Whether to enforce that documents must match one of the provided document types.
              *     If false, documents not matching any type will be accepted but not indexed.
-             *      */
+             */
             enforce_types?: boolean;
-            /** @description Default type to use from the document_types.
-             *      */
+            /** @description Default type to use from the document_types. */
             default_type?: string;
             /**
              * @description The field containing the timestamp for TTL expiration (optional).
              *     Defaults to "_timestamp" if ttl_duration is specified but ttl_field is not.
-             *
              * @example created_at
              */
             ttl_field?: string;
             /**
              * @description The duration after which documents should expire, based on the ttl_field timestamp (optional).
              *     Uses Go duration format (e.g., '24h', '7d', '168h').
-             *
              * @example 24h
              */
             ttl_duration?: string;
-            /** @description A map of type names to their document json schemas.
-             *      */
+            /** @description A map of type names to their document json schemas. */
             document_schemas?: {
                 [key: string]: components["schemas"]["DocumentSchema"];
             };
