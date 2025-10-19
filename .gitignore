@@ -7,5 +7,9 @@ dist/
 # AI
 .aider*
 
+# TS
+!antfly.ts
+!antfly-api.d.ts
+
 # OS
 .DS_Store
