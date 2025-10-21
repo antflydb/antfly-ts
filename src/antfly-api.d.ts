@@ -535,6 +535,13 @@ export interface components {
              * @example You are a helpful AI assistant. Summarize the following search results concisely.
              */
             system_prompt?: string;
+            /** @description Enable citations in the summary output */
+            with_citations?: boolean;
+            /**
+             * @description Optional Go template string for rendering document content to the prompt
+             * @example {{.title}}: {{.body}}
+             */
+            document_renderer?: string;
         };
         QueryRequest: {
             table?: string;
@@ -583,7 +590,6 @@ export interface components {
             merge_strategy?: components["schemas"]["MergeStrategy"];
             count?: boolean;
             reranker?: components["schemas"]["RerankerConfig"];
-            summarizer?: components["schemas"]["ModelConfig"];
             analyses?: components["schemas"]["Analyses"];
         };
         Analyses: {
@@ -1050,13 +1056,14 @@ export interface operations {
             };
         };
         responses: {
-            /** @description RAG query successful, streaming summary */
+            /** @description RAG query successful, streaming summary or JSON response with citations */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "text/event-stream": string;
+                    "application/json": string;
                 };
             };
             /** @description Invalid RAG request */
