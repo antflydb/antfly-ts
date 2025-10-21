@@ -45,6 +45,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/rag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Perform RAG (Retrieval-Augmented Generation) query
+         * @description Executes a query and streams a summary of the results using the specified summarizer. The response is streamed as Server-Sent Events (SSE) for real-time updates.
+         */
+        post: operations["ragQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/table": {
         parameters: {
             query?: never;
@@ -507,6 +527,15 @@ export interface components {
             location: string;
         };
         RestoreRequest: components["schemas"]["BackupRequest"];
+        RAGRequest: {
+            query: components["schemas"]["QueryRequest"];
+            summarizer: components["schemas"]["ModelConfig"];
+            /**
+             * @description Optional system prompt to guide the summarization
+             * @example You are a helpful AI assistant. Summarize the following search results concisely.
+             */
+            system_prompt?: string;
+        };
         QueryRequest: {
             table?: string;
             /** @description Full JSON Bleve search queries */
@@ -989,6 +1018,48 @@ export interface operations {
                 };
             };
             /** @description Invalid query request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    ragQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RAGRequest"];
+            };
+        };
+        responses: {
+            /** @description RAG query successful, streaming summary */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                };
+            };
+            /** @description Invalid RAG request */
             400: {
                 headers: {
                     [name: string]: unknown;
