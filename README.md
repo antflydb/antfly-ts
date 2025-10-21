@@ -131,7 +131,7 @@ const indexInfo = await client.indexes.get('products', 'price_index');
 await client.indexes.create('products', 'embeddings_index', {
   field: 'description',
   dimension: 768,
-  embedder_config: {
+  embedder: {
     provider: 'openai',
     model: 'text-embedding-ada-002'
   }

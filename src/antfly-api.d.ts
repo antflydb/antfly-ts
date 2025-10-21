@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get cluster status
+         * @description Returns the current health and status of all stores and shards in the cluster
+         */
+        get: operations["getStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/query": {
         parameters: {
             query?: never;
@@ -346,6 +366,18 @@ export interface components {
             /** @example An error message */
             error: string;
         };
+        /**
+         * @description Overall health status of the cluster
+         * @enum {string}
+         */
+        ClusterHealth: "unknown" | "healthy" | "unhealthy" | "degraded" | "error";
+        ClusterStatus: {
+            health: components["schemas"]["ClusterHealth"];
+            /** @description Optional message providing details about the health status */
+            message?: string;
+        } & {
+            [key: string]: unknown;
+        };
         ByteRange: string[];
         ShardConfig: {
             byte_range: components["schemas"]["ByteRange"];
@@ -522,6 +554,7 @@ export interface components {
             merge_strategy?: components["schemas"]["MergeStrategy"];
             count?: boolean;
             reranker?: components["schemas"]["RerankerConfig"];
+            summarizer?: components["schemas"]["ModelConfig"];
             analyses?: components["schemas"]["Analyses"];
         };
         Analyses: {
@@ -675,10 +708,6 @@ export interface components {
             field?: string;
             template?: string;
         };
-        BleveIndexV2Config: {
-            /** @description Whether to use memory-only storage */
-            mem_only?: boolean;
-        };
         /**
          * @description A unified configuration for an embedding provider.
          * @example {
@@ -688,6 +717,10 @@ export interface components {
          */
         ModelConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
             provider: components["schemas"]["Provider"];
+        };
+        BleveIndexV2Config: {
+            /** @description Whether to use memory-only storage */
+            mem_only?: boolean;
         };
         EmbeddingIndexConfig: {
             /** @description Vector dimension */
@@ -702,9 +735,9 @@ export interface components {
             /** @description Whether to use in-memory only storage */
             mem_only?: boolean;
             /** @description Configuration for the embeddings plugin */
-            embedder_config?: components["schemas"]["ModelConfig"];
+            embedder?: components["schemas"]["ModelConfig"];
             /** @description Configuration for the summarizer plugin */
-            summarizer_config?: components["schemas"]["ModelConfig"];
+            summarizer?: components["schemas"]["ModelConfig"];
         };
         /**
          * @description The type of the index.
@@ -737,9 +770,8 @@ export interface components {
             /**
              * Format: uint32
              * @description Version of the schema. Used for migrations.
-             * @default 0
              */
-            version: number;
+            version?: number;
             /**
              * @description The default field to use as the document ID (optional).
              *     Useful if no type-specific key is defined or if all types share the same key field.
@@ -903,6 +935,36 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cluster status retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterStatus"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
     globalQuery: {
         parameters: {
             query?: never;

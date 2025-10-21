@@ -96,7 +96,7 @@ async function main() {
     };
 
     const results = await client.tables.query("products", searchQuery);
-    console.log("Search results:", JSON.stringify(results?.hits?.hits, null, 2));
+    console.log("Search results:", JSON.stringify(results?.responses?.[0].hits?.hits, null, 2));
 
     // Lookup a specific product
     console.log("\nLooking up SKU001...");
@@ -105,10 +105,12 @@ async function main() {
 
     // Create a semantic search index
     console.log("\nCreating semantic search index...");
-    await client.indexes.create("products", "description_embeddings", {
+    await client.indexes.create("products", {
+      name: "description_embeddings",
+      type: "vector_v2",
       field: "description",
       dimension: 768,
-      embedder_config: {
+      embedder: {
         provider: "ollama",
         model: "nomic-embed-text",
       },
