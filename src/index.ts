@@ -87,6 +87,12 @@ export type {
   RerankerConfig,
   Provider,
 
+  // RAG types
+  RAGRequest,
+  RAGResult,
+  Citation,
+  SummarizeResult,
+
   // Error type
   AntflyError,
 
