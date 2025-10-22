@@ -543,6 +543,11 @@ export interface components {
              */
             document_renderer?: string;
         };
+        /** @description RAG result combining query results with summary and citations */
+        RAGResult: {
+            query_result?: components["schemas"]["QueryResult"];
+            summary_result?: components["schemas"]["SummarizeResult"];
+        };
         QueryRequest: {
             table?: string;
             /** @description Full JSON Bleve search queries */
@@ -600,6 +605,7 @@ export interface components {
             pca?: number[];
             tsne?: number[];
         };
+        /** @description A single query result hit */
         QueryHit: {
             /** @description ID of the record. */
             _id: string;
@@ -752,6 +758,20 @@ export interface components {
          */
         ModelConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
             provider: components["schemas"]["Provider"];
+        };
+        /** @description A reference to a source document used in the summary. */
+        Citation: {
+            /** @description ID of the source document */
+            id: string;
+            /** @description Relevant quote from the document */
+            quote: string;
+        };
+        /** @description Result of a summarization operation with optional citations. */
+        SummarizeResult: {
+            /** @description The generated summary text */
+            summary: string;
+            /** @description List of citations referencing source documents */
+            citations: components["schemas"]["Citation"][];
         };
         BleveIndexV2Config: {
             /** @description Whether to use memory-only storage */
@@ -1056,14 +1076,14 @@ export interface operations {
             };
         };
         responses: {
-            /** @description RAG query successful, streaming summary or JSON response with citations */
+            /** @description RAG query successful, streaming summary or JSON response with citations and query results */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "text/event-stream": string;
-                    "application/json": string;
+                    "application/json": components["schemas"]["RAGResult"];
                 };
             };
             /** @description Invalid RAG request */

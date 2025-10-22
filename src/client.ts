@@ -19,6 +19,8 @@ import type {
   Permission,
   ResourceType,
   TableSchema,
+  RAGRequest,
+  RAGResult,
 } from "./types.js";
 
 export class AntflyClient {
@@ -44,7 +46,7 @@ export class AntflyClient {
       headers,
       bodySerializer: (body) => {
         // Check if this is already a string (NDJSON case)
-        if (typeof body === 'string') {
+        if (typeof body === "string") {
           return body;
         }
         // Otherwise use default JSON serialization
@@ -68,7 +70,7 @@ export class AntflyClient {
       },
       bodySerializer: (body) => {
         // Check if this is already a string (NDJSON case)
-        if (typeof body === 'string') {
+        if (typeof body === "string") {
           return body;
         }
         // Otherwise use default JSON serialization
@@ -111,6 +113,105 @@ export class AntflyClient {
     }
 
     return data;
+  }
+
+  /**
+   * RAG (Retrieval-Augmented Generation) query with streaming or citations
+   * @param request - RAG request with query and summarizer config
+   * @param onChunk - Optional callback for streaming chunks (when with_citations is false)
+   * @returns Promise with RAG result including query hits, summary and citations (when with_citations is true) or AbortController (when streaming)
+   */
+  async rag(
+    request: RAGRequest,
+    onChunk?: (chunk: string) => void
+  ): Promise<RAGResult | AbortController> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream, application/json",
+    };
+
+    // Add auth header if configured
+    if (this.config.auth) {
+      const auth = btoa(`${this.config.auth.username}:${this.config.auth.password}`);
+      headers["Authorization"] = `Basic ${auth}`;
+    }
+
+    // Merge with any additional headers
+    Object.assign(headers, this.config.headers);
+
+    const abortController = new AbortController();
+    const response = await fetch(`${this.config.baseUrl}/rag`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(request),
+      signal: abortController.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`RAG request failed: ${response.status} ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error("Response body is null");
+    }
+
+    // Check content type to determine response format
+    const contentType = response.headers.get("content-type") || "";
+    const isJSON = contentType.includes("application/json");
+
+    // Handle JSON response with citations and query hits
+    if (isJSON) {
+      const ragResult = (await response.json()) as RAGResult;
+      return ragResult;
+    }
+
+    // Handle SSE streaming response
+    if (onChunk) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      // Start reading the stream in the background
+      (async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (!line.trim()) continue;
+
+              if (line.startsWith("data: ")) {
+                const data = line.slice(6).trim();
+                if (data === "[DONE]") return;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  if (parsed.chunk) {
+                    onChunk(parsed.chunk);
+                  } else if (parsed.error) {
+                    throw new Error(parsed.error);
+                  }
+                } catch (e) {
+                  console.warn("Failed to parse SSE data:", data, e);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          if ((error as Error).name !== "AbortError") {
+            console.error("RAG streaming error:", error);
+          }
+        }
+      })();
+    }
+
+    return abortController;
   }
 
   /**

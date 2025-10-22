@@ -54,6 +54,11 @@ export type QueryResult = components["schemas"]["QueryResult"];
 export type QueryHit = components["schemas"]["QueryHit"];
 export type QueryResponses = components["schemas"]["QueryResponses"];
 
+// RAG types - Override QueryRequest with proper types
+export type RAGRequest = Omit<components["schemas"]["RAGRequest"], "query"> & {
+  query: QueryRequest;
+};
+
 // Fix BatchRequest to allow any object for inserts
 export interface BatchRequest {
   inserts?: Record<string, unknown>;
@@ -101,6 +106,11 @@ export const providers: components["schemas"]["Provider"][] = [
   "openai",
   "bedrock",
 ];
+
+// RAG response types
+export type Citation = components["schemas"]["Citation"];
+export type SummarizeResult = components["schemas"]["SummarizeResult"];
+export type RAGResult = components["schemas"]["RAGResult"];
 
 // Error type
 export type AntflyError = components["schemas"]["Error"];
