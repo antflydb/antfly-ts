@@ -124,6 +124,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/table/{tableName}/rag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table for RAG query */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Perform RAG query on a specific table
+         * @description Executes a RAG query on a specific table and streams a summary of the results using the specified summarizer. The response is streamed as Server-Sent Events (SSE) for real-time updates or returns JSON with citations.
+         */
+        post: operations["tableRagQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/table/{tableName}/batch": {
         parameters: {
             query?: never;
@@ -1232,6 +1255,53 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    tableRagQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table for RAG query */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RAGRequest"];
+            };
+        };
+        responses: {
+            /** @description RAG query successful, streaming summary or JSON response with citations and query results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["RAGResult"];
+                };
+            };
+            /** @description Invalid RAG request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     batch: {

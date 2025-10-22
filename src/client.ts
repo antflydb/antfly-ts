@@ -80,17 +80,66 @@ export class AntflyClient {
   }
 
   /**
+   * Private helper for query requests to avoid code duplication
+   */
+  private async performQuery(
+    path: "/query" | "/table/{tableName}/query",
+    request: QueryRequest,
+    tableName?: string
+  ): Promise<QueryResponses | undefined> {
+    if (path === "/table/{tableName}/query" && tableName) {
+      const { data, error } = await this.client.POST("/table/{tableName}/query", {
+        params: { path: { tableName } },
+        body: request,
+      });
+      if (error) throw new Error(`Table query failed: ${error.error}`);
+      return data;
+    } else {
+      const { data, error } = await this.client.POST("/query", {
+        body: request,
+      });
+      if (error) throw new Error(`Query failed: ${error.error}`);
+      return data;
+    }
+  }
+
+  /**
+   * Private helper for multiquery requests to avoid code duplication
+   */
+  private async performMultiquery(
+    path: "/query" | "/table/{tableName}/query",
+    requests: QueryRequest[],
+    tableName?: string
+  ): Promise<QueryResponses | undefined> {
+    const ndjson = requests.map((request) => JSON.stringify(request)).join("\n") + "\n";
+
+    if (path === "/table/{tableName}/query" && tableName) {
+      const { data, error } = await this.client.POST("/table/{tableName}/query", {
+        params: { path: { tableName } },
+        body: ndjson,
+        headers: {
+          "Content-Type": "application/x-ndjson",
+        },
+      });
+      if (error) throw new Error(`Table multi-query failed: ${error.error}`);
+      return data;
+    } else {
+      const { data, error } = await this.client.POST("/query", {
+        body: ndjson,
+        headers: {
+          "Content-Type": "application/x-ndjson",
+        },
+      });
+      if (error) throw new Error(`Multi-query failed: ${error.error}`);
+      return data;
+    }
+  }
+
+  /**
    * Global query operations
    */
   async query(request: QueryRequest): Promise<QueryResult | undefined> {
-    const { data, error } = await this.client.POST("/query", {
-      body: request,
-    });
-
-    if (error) {
-      throw new Error(`Query failed: ${error.error}`);
-    }
-
+    const data = await this.performQuery("/query", request);
     // The global query returns QueryResponses, extract the first result
     return data?.responses?.[0];
   }
@@ -99,29 +148,14 @@ export class AntflyClient {
    * Execute multiple queries in a single request
    */
   async multiquery(requests: QueryRequest[]): Promise<QueryResponses | undefined> {
-    const ndjson = requests.map((request) => JSON.stringify(request)).join("\n") + "\n";
-
-    const { data, error } = await this.client.POST("/query", {
-      body: ndjson,
-      headers: {
-        "Content-Type": "application/x-ndjson",
-      },
-    });
-
-    if (error) {
-      throw new Error(`Multi-query failed: ${error.error}`);
-    }
-
-    return data;
+    return this.performMultiquery("/query", requests);
   }
 
   /**
-   * RAG (Retrieval-Augmented Generation) query with streaming or citations
-   * @param request - RAG request with query and summarizer config
-   * @param onChunk - Optional callback for streaming chunks (when with_citations is false)
-   * @returns Promise with RAG result including query hits, summary and citations (when with_citations is true) or AbortController (when streaming)
+   * Private helper for RAG requests to avoid code duplication
    */
-  async rag(
+  private async performRag(
+    path: string,
     request: RAGRequest,
     onChunk?: (chunk: string) => void
   ): Promise<RAGResult | AbortController> {
@@ -140,7 +174,7 @@ export class AntflyClient {
     Object.assign(headers, this.config.headers);
 
     const abortController = new AbortController();
-    const response = await fetch(`${this.config.baseUrl}/rag`, {
+    const response = await fetch(`${this.config.baseUrl}${path}`, {
       method: "POST",
       headers,
       body: JSON.stringify(request),
@@ -215,6 +249,19 @@ export class AntflyClient {
   }
 
   /**
+   * RAG (Retrieval-Augmented Generation) query with streaming or citations
+   * @param request - RAG request with query and summarizer config
+   * @param onChunk - Optional callback for streaming chunks (when with_citations is false)
+   * @returns Promise with RAG result including query hits, summary and citations (when with_citations is true) or AbortController (when streaming)
+   */
+  async rag(
+    request: RAGRequest,
+    onChunk?: (chunk: string) => void
+  ): Promise<RAGResult | AbortController> {
+    return this.performRag("/rag", request, onChunk);
+  }
+
+  /**
    * Table operations
    */
   tables = {
@@ -277,29 +324,14 @@ export class AntflyClient {
      * Query a specific table
      */
     query: async (tableName: string, request: QueryRequest) => {
-      const { data, error } = await this.client.POST("/table/{tableName}/query", {
-        params: { path: { tableName } },
-        body: request,
-      });
-      if (error) throw new Error(`Table query failed: ${error.error}`);
-      return data;
+      return this.performQuery("/table/{tableName}/query", request, tableName);
     },
 
     /**
      * Execute multiple queries on a specific table
      */
     multiquery: async (tableName: string, requests: QueryRequest[]) => {
-      const ndjson = requests.map((request) => JSON.stringify(request)).join("\n") + "\n";
-
-      const { data, error } = await this.client.POST("/table/{tableName}/query", {
-        params: { path: { tableName } },
-        body: ndjson,
-        headers: {
-          "Content-Type": "application/x-ndjson",
-        },
-      });
-      if (error) throw new Error(`Table multi-query failed: ${error.error}`);
-      return data;
+      return this.performMultiquery("/table/{tableName}/query", requests, tableName);
     },
 
     /**
@@ -348,6 +380,21 @@ export class AntflyClient {
       });
       if (error) throw new Error(`Key lookup failed: ${error.error}`);
       return data;
+    },
+
+    /**
+     * RAG (Retrieval-Augmented Generation) query on a specific table with streaming or citations
+     * @param tableName - Name of the table to query
+     * @param request - RAG request with query and summarizer config
+     * @param onChunk - Optional callback for streaming chunks (when with_citations is false)
+     * @returns Promise with RAG result including query hits, summary and citations (when with_citations is true) or AbortController (when streaming)
+     */
+    rag: async (
+      tableName: string,
+      request: RAGRequest,
+      onChunk?: (chunk: string) => void
+    ): Promise<RAGResult | AbortController> => {
+      return this.performRag(`/table/${tableName}/rag`, request, onChunk);
     },
   };
 

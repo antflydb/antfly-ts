@@ -116,6 +116,50 @@ async function main() {
       },
     });
 
+    // Example: Table-specific RAG query with citations
+    console.log("\nPerforming RAG query on products table...");
+    const ragResult = await client.tables.rag("products", {
+      query: {
+        semantic_search: "high-performance computing devices",
+        limit: 5,
+      },
+      summarizer: {
+        provider: "ollama",
+        model: "llama3",
+      },
+      with_citations: true,
+      system_prompt: "You are a helpful product assistant. Summarize the products that match the query.",
+    });
+
+    if (ragResult && typeof ragResult === "object" && "summary_result" in ragResult) {
+      console.log("RAG Summary:", ragResult.summary_result?.summary);
+      console.log("Citations:", ragResult.summary_result?.citations);
+      console.log("Query hits:", ragResult.query_result?.hits?.total);
+    }
+
+    // Example: Table-specific RAG query with streaming
+    console.log("\nPerforming RAG query with streaming...");
+    let streamedText = "";
+    await client.tables.rag(
+      "products",
+      {
+        query: {
+          semantic_search: "wireless devices",
+          limit: 3,
+        },
+        summarizer: {
+          provider: "ollama",
+          model: "llama3",
+        },
+        with_citations: false,
+      },
+      (chunk) => {
+        streamedText += chunk;
+        process.stdout.write(chunk);
+      }
+    );
+    console.log("\n\nStreamed summary complete!");
+
     // List all tables
     console.log("\nListing all tables...");
     const tables = await client.tables.list();
