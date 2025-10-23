@@ -560,6 +560,8 @@ export interface components {
             system_prompt?: string;
             /** @description Enable citations in the summary output */
             with_citations?: boolean;
+            /** @description Enable SSE streaming of results instead of JSON response */
+            with_streaming?: boolean;
             /**
              * @description Optional Go template string for rendering document content to the prompt
              * @example {{.title}}: {{.body}}

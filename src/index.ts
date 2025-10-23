@@ -90,6 +90,7 @@ export type {
   // RAG types
   RAGRequest,
   RAGResult,
+  RAGStreamCallbacks,
   Citation,
   SummarizeResult,
 

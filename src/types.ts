@@ -134,6 +134,15 @@ export interface AntflyConfig {
   };
 }
 
+// RAG streaming callbacks for structured SSE events
+export interface RAGStreamCallbacks {
+  onHit?: (hit: QueryHit) => void;
+  onSummary?: (chunk: string) => void;
+  onCitation?: (citation: Citation) => void;
+  onDone?: (data?: { complete: boolean }) => void;
+  onError?: (error: string) => void;
+}
+
 // Helper type for query building with proper Bleve query types
 export interface QueryOptions {
   table?: string;

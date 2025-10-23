@@ -21,6 +21,7 @@ import type {
   TableSchema,
   RAGRequest,
   RAGResult,
+  RAGStreamCallbacks,
 } from "./types.js";
 
 export class AntflyClient {
@@ -157,7 +158,7 @@ export class AntflyClient {
   private async performRag(
     path: string,
     request: RAGRequest,
-    onChunk?: (chunk: string) => void
+    callbacks?: RAGStreamCallbacks
   ): Promise<RAGResult | AbortController> {
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -201,10 +202,11 @@ export class AntflyClient {
     }
 
     // Handle SSE streaming response
-    if (onChunk) {
+    if (callbacks) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let currentEvent = "";
 
       // Start reading the stream in the background
       (async () => {
@@ -218,21 +220,53 @@ export class AntflyClient {
             buffer = lines.pop() || "";
 
             for (const line of lines) {
-              if (!line.trim()) continue;
+              if (!line.trim()) {
+                // Empty line marks end of an event
+                currentEvent = "";
+                continue;
+              }
 
-              if (line.startsWith("data: ")) {
+              if (line.startsWith("event: ")) {
+                currentEvent = line.slice(7).trim();
+              } else if (line.startsWith("data: ")) {
                 const data = line.slice(6).trim();
-                if (data === "[DONE]") return;
 
                 try {
-                  const parsed = JSON.parse(data);
-                  if (parsed.chunk) {
-                    onChunk(parsed.chunk);
-                  } else if (parsed.error) {
-                    throw new Error(parsed.error);
+                  // Dispatch based on event type
+                  switch (currentEvent) {
+                    case "hit":
+                      if (callbacks.onHit) {
+                        const hit = JSON.parse(data);
+                        callbacks.onHit(hit);
+                      }
+                      break;
+                    case "summary":
+                      if (callbacks.onSummary) {
+                        const chunk = JSON.parse(data);
+                        callbacks.onSummary(chunk);
+                      }
+                      break;
+                    case "citation":
+                      if (callbacks.onCitation) {
+                        const citation = JSON.parse(data);
+                        callbacks.onCitation(citation);
+                      }
+                      break;
+                    case "done":
+                      if (callbacks.onDone) {
+                        const doneData = JSON.parse(data);
+                        callbacks.onDone(doneData);
+                      }
+                      return;
+                    case "error":
+                      if (callbacks.onError) {
+                        const error = JSON.parse(data);
+                        callbacks.onError(error);
+                      }
+                      throw new Error(data);
                   }
                 } catch (e) {
-                  console.warn("Failed to parse SSE data:", data, e);
+                  console.warn("Failed to parse SSE data:", currentEvent, data, e);
                 }
               }
             }
@@ -250,15 +284,15 @@ export class AntflyClient {
 
   /**
    * RAG (Retrieval-Augmented Generation) query with streaming or citations
-   * @param request - RAG request with query and summarizer config
-   * @param onChunk - Optional callback for streaming chunks (when with_citations is false)
-   * @returns Promise with RAG result including query hits, summary and citations (when with_citations is true) or AbortController (when streaming)
+   * @param request - RAG request with query and summarizer config (set with_streaming: true to enable streaming)
+   * @param callbacks - Optional callbacks for structured SSE events (hit, summary, citation, done, error)
+   * @returns Promise with RAG result (JSON) or AbortController (when streaming)
    */
   async rag(
     request: RAGRequest,
-    onChunk?: (chunk: string) => void
+    callbacks?: RAGStreamCallbacks
   ): Promise<RAGResult | AbortController> {
-    return this.performRag("/rag", request, onChunk);
+    return this.performRag("/rag", request, callbacks);
   }
 
   /**
@@ -385,16 +419,16 @@ export class AntflyClient {
     /**
      * RAG (Retrieval-Augmented Generation) query on a specific table with streaming or citations
      * @param tableName - Name of the table to query
-     * @param request - RAG request with query and summarizer config
-     * @param onChunk - Optional callback for streaming chunks (when with_citations is false)
-     * @returns Promise with RAG result including query hits, summary and citations (when with_citations is true) or AbortController (when streaming)
+     * @param request - RAG request with query and summarizer config (set with_streaming: true to enable streaming)
+     * @param callbacks - Optional callbacks for structured SSE events (hit, summary, citation, done, error)
+     * @returns Promise with RAG result (JSON) or AbortController (when streaming)
      */
     rag: async (
       tableName: string,
       request: RAGRequest,
-      onChunk?: (chunk: string) => void
+      callbacks?: RAGStreamCallbacks
     ): Promise<RAGResult | AbortController> => {
-      return this.performRag(`/table/${tableName}/rag`, request, onChunk);
+      return this.performRag(`/table/${tableName}/rag`, request, callbacks);
     },
   };
 
