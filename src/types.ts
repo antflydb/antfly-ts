@@ -55,8 +55,8 @@ export type QueryHit = components["schemas"]["QueryHit"];
 export type QueryResponses = components["schemas"]["QueryResponses"];
 
 // RAG types - Override QueryRequest with proper types
-export type RAGRequest = Omit<components["schemas"]["RAGRequest"], "query"> & {
-  query: QueryRequest;
+export type RAGRequest = Omit<components["schemas"]["RAGRequest"], "queries"> & {
+  queries: QueryRequest[];
 };
 
 // Fix BatchRequest to allow any object for inserts

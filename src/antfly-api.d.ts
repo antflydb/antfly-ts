@@ -551,7 +551,14 @@ export interface components {
         };
         RestoreRequest: components["schemas"]["BackupRequest"];
         RAGRequest: {
-            query: components["schemas"]["QueryRequest"];
+            /**
+             * @description Array of retrieval queries to execute. Each query must specify a table and can specify its own limit and document_renderer.
+             *     Results from all queries are concatenated together (respecting each query's limit).
+             *     For single table: [{"table": "papers", "semantic_search": "...", "limit": 10}]
+             *     For broadcast: [{"table": "images", "limit": 5, ...}, {"table": "products", "limit": 5, ...}]
+             *     For mixed: [{"table": "papers", "semantic_search": "...", "limit": 10}, {"table": "books", "full_text_search": {...}, "limit": 5}]
+             */
+            queries: components["schemas"]["QueryRequest"][];
             summarizer: components["schemas"]["ModelConfig"];
             /**
              * @description Optional system prompt to guide the summarization
@@ -562,15 +569,11 @@ export interface components {
             with_citations?: boolean;
             /** @description Enable SSE streaming of results instead of JSON response */
             with_streaming?: boolean;
-            /**
-             * @description Optional Go template string for rendering document content to the prompt
-             * @example {{.title}}: {{.body}}
-             */
-            document_renderer?: string;
         };
-        /** @description RAG result combining query results with summary and citations */
+        /** @description RAG result with individual query results and summary */
         RAGResult: {
-            query_result?: components["schemas"]["QueryResult"];
+            /** @description Results from each query. Check each result's status and error fields for failures. */
+            query_results?: components["schemas"]["QueryResult"][];
             summary_result?: components["schemas"]["SummarizeResult"];
         };
         QueryRequest: {
@@ -621,6 +624,11 @@ export interface components {
             count?: boolean;
             reranker?: components["schemas"]["RerankerConfig"];
             analyses?: components["schemas"]["Analyses"];
+            /**
+             * @description Optional Go template string for rendering document content to the prompt
+             * @example {{.title}}: {{.body}}
+             */
+            document_renderer?: string;
         };
         Analyses: {
             pca?: boolean;
@@ -687,6 +695,8 @@ export interface components {
             status: number;
             /** @description Error message if the query failed. */
             error?: string;
+            /** @description Which table this result came from */
+            table?: string;
         };
         /**
          * @description Merge strategy for combining results from the semantic_search and full_text_search.
@@ -696,6 +706,11 @@ export interface components {
          * @enum {string}
          */
         MergeStrategy: "rrf" | "failover";
+        /**
+         * @description The embedding provider to use.
+         * @enum {string}
+         */
+        Provider: "gemini" | "ollama" | "openai" | "bedrock" | "mock";
         /** @description Configuration for the Google embedding provider. */
         GoogleConfig: {
             /** @description The Google Cloud project ID. */
@@ -757,11 +772,6 @@ export interface components {
             batch_size?: number;
         };
         /**
-         * @description The embedding provider to use.
-         * @enum {string}
-         */
-        Provider: "gemini" | "ollama" | "openai" | "bedrock" | "mock";
-        /**
          * @description A unified configuration for an embedding provider.
          * @example {
          *       "provider": "openai",
@@ -769,11 +779,11 @@ export interface components {
          *       "field": "content"
          *     }
          */
-        RerankerConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
+        RerankerConfig: {
             provider: components["schemas"]["Provider"];
             field?: string;
             template?: string;
-        };
+        } & (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]);
         /**
          * @description A unified configuration for an embedding provider.
          * @example {
