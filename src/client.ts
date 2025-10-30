@@ -22,6 +22,7 @@ import type {
   RAGRequest,
   RAGResult,
   RAGStreamCallbacks,
+  QueryHit,
 } from "./types.js";
 
 export class AntflyClient {
@@ -238,6 +239,14 @@ export class AntflyClient {
                       if (callbacks.onHit) {
                         const hit = JSON.parse(data);
                         callbacks.onHit(hit);
+                      }
+                      break;
+                    case "table_result":
+                      // Handle bulk query results containing multiple hits
+                      if (callbacks.onHit) {
+                        const result = JSON.parse(data);
+                        const hits = result?.hits?.hits || [];
+                        hits.forEach((hit: QueryHit) => callbacks.onHit!(hit));
                       }
                       break;
                     case "summary":
