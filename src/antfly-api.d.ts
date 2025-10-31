@@ -559,7 +559,7 @@ export interface components {
              *     For mixed: [{"table": "papers", "semantic_search": "...", "limit": 10}, {"table": "books", "full_text_search": {...}, "limit": 5}]
              */
             queries: components["schemas"]["QueryRequest"][];
-            summarizer: components["schemas"]["ModelConfig"];
+            summarizer: components["schemas"]["EmbedderConfig"];
             /**
              * @description Optional system prompt to guide the summarization
              * @example You are a helpful AI assistant. Summarize the following search results concisely.
@@ -789,7 +789,7 @@ export interface components {
          *       "model": "text-embedding-004"
          *     }
          */
-        ModelConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
+        EmbedderConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
             provider: components["schemas"]["Provider"];
         };
         /** @description Result of a summarization operation. The summary is formatted as markdown with inline document references using [doc_id <id>] or [doc_id <id1>, <id2>] format. */
@@ -800,6 +800,164 @@ export interface components {
         BleveIndexV2Config: {
             /** @description Whether to use memory-only storage */
             mem_only?: boolean;
+        };
+        /** @description Configuration for the Google generative AI provider (Gemini). */
+        GoogleGeneratorConfig: {
+            /** @description The Google Cloud project ID. */
+            project_id?: string;
+            /** @description The Google Cloud location (e.g., 'us-central1'). */
+            location?: string;
+            /**
+             * @description The name of the generative model to use (e.g., 'gemini-2.0-flash-exp', 'gemini-1.5-pro').
+             * @default gemini-2.0-flash-exp
+             */
+            model: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. */
+            top_k?: number;
+            /** @description The Google API key. */
+            api_key?: string;
+            /**
+             * Format: uri
+             * @description The URL of the Google API endpoint.
+             */
+            url?: string;
+        };
+        /** @description Configuration for the Ollama generative AI provider. */
+        OllamaGeneratorConfig: {
+            /** @description The name of the Ollama model to use (e.g., 'llama3.2', 'llava'). */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Ollama API endpoint.
+             */
+            url?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. */
+            top_k?: number;
+        };
+        /** @description Configuration for the OpenAI generative AI provider. */
+        OpenAIGeneratorConfig: {
+            /** @description The name of the OpenAI model to use (e.g., 'gpt-4o', 'gpt-4-turbo'). */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the OpenAI API endpoint.
+             */
+            url?: string;
+            /** @description The OpenAI API key. */
+            api_key?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /**
+             * Format: float
+             * @description Penalty for token frequency (-2.0 to 2.0).
+             */
+            frequency_penalty?: number;
+            /**
+             * Format: float
+             * @description Penalty for token presence (-2.0 to 2.0).
+             */
+            presence_penalty?: number;
+        };
+        /** @description Configuration for the AWS Bedrock generative AI provider. */
+        BedrockGeneratorConfig: {
+            /**
+             * @description The name of the Bedrock model to use.
+             * @example anthropic.claude-3-5-sonnet-20241022-v2:0
+             */
+            model: string;
+            /** @description The AWS region for the Bedrock service. */
+            region?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-1.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. */
+            top_k?: number;
+        };
+        /** @description Configuration for the Anthropic generative AI provider. */
+        AnthropicGeneratorConfig: {
+            /** @description The name of the Anthropic model to use (e.g., 'claude-3-5-sonnet-20241022'). */
+            model: string;
+            /** @description The Anthropic API key. */
+            api_key?: string;
+            /**
+             * Format: uri
+             * @description The URL of the Anthropic API endpoint.
+             */
+            url?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-1.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. */
+            top_k?: number;
+        };
+        /**
+         * @description The generative AI provider to use.
+         * @enum {string}
+         */
+        "schemas-Provider": "gemini" | "ollama" | "openai" | "bedrock" | "anthropic" | "mock";
+        /**
+         * @description A unified configuration for a generative AI provider.
+         * @example {
+         *       "provider": "openai",
+         *       "model": "gpt-4o",
+         *       "temperature": 0.7,
+         *       "max_tokens": 2048
+         *     }
+         */
+        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"]) & {
+            provider: components["schemas"]["schemas-Provider"];
         };
         EmbeddingIndexConfig: {
             /** @description Vector dimension */
@@ -814,9 +972,9 @@ export interface components {
             /** @description Whether to use in-memory only storage */
             mem_only?: boolean;
             /** @description Configuration for the embeddings plugin */
-            embedder?: components["schemas"]["ModelConfig"];
-            /** @description Configuration for the summarizer plugin */
-            summarizer?: components["schemas"]["ModelConfig"];
+            embedder?: components["schemas"]["EmbedderConfig"];
+            /** @description Configuration for the generative AI plugin */
+            summarizer?: components["schemas"]["GeneratorConfig"];
         };
         /**
          * @description The type of the index.

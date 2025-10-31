@@ -83,7 +83,8 @@ export type {
   AntflyType,
 
   // Model and reranker types
-  ModelConfig,
+  EmbedderConfig,
+  GeneratorConfig,
   RerankerConfig,
   Provider,
 

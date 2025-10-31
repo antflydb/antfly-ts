@@ -97,8 +97,9 @@ export type TermFacetResult = components["schemas"]["TermFacetResult"];
 export type AntflyType = components["schemas"]["AntflyType"];
 
 // Model and reranker types
-export type ModelConfig = components["schemas"]["ModelConfig"];
+export type EmbedderConfig = components["schemas"]["EmbedderConfig"];
 export type RerankerConfig = components["schemas"]["RerankerConfig"];
+export type GeneratorConfig = components["schemas"]["GeneratorConfig"];
 export type Provider = components["schemas"]["Provider"];
 export const providers: components["schemas"]["Provider"][] = [
   "ollama",
