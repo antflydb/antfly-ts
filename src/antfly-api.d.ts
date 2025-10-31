@@ -559,7 +559,7 @@ export interface components {
              *     For mixed: [{"table": "papers", "semantic_search": "...", "limit": 10}, {"table": "books", "full_text_search": {...}, "limit": 5}]
              */
             queries: components["schemas"]["QueryRequest"][];
-            summarizer: components["schemas"]["EmbedderConfig"];
+            summarizer: components["schemas"]["GeneratorConfig"];
             /**
              * @description Optional system prompt to guide the summarization
              * @example You are a helpful AI assistant. Summarize the following search results concisely.
@@ -782,25 +782,6 @@ export interface components {
             field?: string;
             template?: string;
         } & (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]);
-        /**
-         * @description A unified configuration for an embedding provider.
-         * @example {
-         *       "provider": "openai",
-         *       "model": "text-embedding-004"
-         *     }
-         */
-        EmbedderConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
-            provider: components["schemas"]["Provider"];
-        };
-        /** @description Result of a summarization operation. The summary is formatted as markdown with inline document references using [doc_id <id>] or [doc_id <id1>, <id2>] format. */
-        SummarizeResult: {
-            /** @description The generated summary text in markdown format with inline document references like [doc_id doc1] or [doc_id doc1, doc2] */
-            summary: string;
-        };
-        BleveIndexV2Config: {
-            /** @description Whether to use memory-only storage */
-            mem_only?: boolean;
-        };
         /** @description Configuration for the Google generative AI provider (Gemini). */
         GoogleGeneratorConfig: {
             /** @description The Google Cloud project ID. */
@@ -958,6 +939,25 @@ export interface components {
          */
         GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"]) & {
             provider: components["schemas"]["schemas-Provider"];
+        };
+        /** @description Result of a summarization operation. The summary is formatted as markdown with inline document references using [doc_id <id>] or [doc_id <id1>, <id2>] format. */
+        SummarizeResult: {
+            /** @description The generated summary text in markdown format with inline document references like [doc_id doc1] or [doc_id doc1, doc2] */
+            summary: string;
+        };
+        BleveIndexV2Config: {
+            /** @description Whether to use memory-only storage */
+            mem_only?: boolean;
+        };
+        /**
+         * @description A unified configuration for an embedding provider.
+         * @example {
+         *       "provider": "openai",
+         *       "model": "text-embedding-004"
+         *     }
+         */
+        EmbedderConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
+            provider: components["schemas"]["Provider"];
         };
         EmbeddingIndexConfig: {
             /** @description Vector dimension */
