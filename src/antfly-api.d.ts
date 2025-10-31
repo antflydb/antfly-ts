@@ -565,8 +565,6 @@ export interface components {
              * @example You are a helpful AI assistant. Summarize the following search results concisely.
              */
             system_prompt?: string;
-            /** @description Enable citations in the summary output */
-            with_citations?: boolean;
             /** @description Enable SSE streaming of results instead of JSON response */
             with_streaming?: boolean;
         };
@@ -794,19 +792,10 @@ export interface components {
         ModelConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
             provider: components["schemas"]["Provider"];
         };
-        /** @description A reference to a source document used in the summary. */
-        Citation: {
-            /** @description ID of the source document */
-            id: string;
-            /** @description Relevant quote from the document */
-            quote: string;
-        };
-        /** @description Result of a summarization operation with optional citations. */
+        /** @description Result of a summarization operation. The summary is formatted as markdown with inline document references using [doc_id <id>] or [doc_id <id1>, <id2>] format. */
         SummarizeResult: {
-            /** @description The generated summary text */
+            /** @description The generated summary text in markdown format with inline document references like [doc_id doc1] or [doc_id doc1, doc2] */
             summary: string;
-            /** @description List of citations referencing source documents */
-            citations: components["schemas"]["Citation"][];
         };
         BleveIndexV2Config: {
             /** @description Whether to use memory-only storage */

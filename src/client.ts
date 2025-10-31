@@ -235,14 +235,26 @@ export class AntflyClient {
                 try {
                   // Dispatch based on event type
                   switch (currentEvent) {
+                    case "hits_start":
+                      if (callbacks.onHitsStart) {
+                        const hitsStartData = JSON.parse(data);
+                        callbacks.onHitsStart(hitsStartData);
+                      }
+                      break;
                     case "hit":
                       if (callbacks.onHit) {
                         const hit = JSON.parse(data);
                         callbacks.onHit(hit);
                       }
                       break;
+                    case "hits_end":
+                      if (callbacks.onHitsEnd) {
+                        const hitsEndData = JSON.parse(data);
+                        callbacks.onHitsEnd(hitsEndData);
+                      }
+                      break;
                     case "table_result":
-                      // Handle bulk query results containing multiple hits
+                      // Keep for backwards compatibility (deprecated)
                       if (callbacks.onHit) {
                         const result = JSON.parse(data);
                         const hits = result?.hits?.hits || [];
@@ -253,12 +265,6 @@ export class AntflyClient {
                       if (callbacks.onSummary) {
                         const chunk = JSON.parse(data);
                         callbacks.onSummary(chunk);
-                      }
-                      break;
-                    case "citation":
-                      if (callbacks.onCitation) {
-                        const citation = JSON.parse(data);
-                        callbacks.onCitation(citation);
                       }
                       break;
                     case "done":

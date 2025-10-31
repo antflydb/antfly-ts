@@ -108,7 +108,6 @@ export const providers: components["schemas"]["Provider"][] = [
 ];
 
 // RAG response types
-export type Citation = components["schemas"]["Citation"];
 export type SummarizeResult = components["schemas"]["SummarizeResult"];
 export type RAGResult = components["schemas"]["RAGResult"];
 
@@ -136,9 +135,10 @@ export interface AntflyConfig {
 
 // RAG streaming callbacks for structured SSE events
 export interface RAGStreamCallbacks {
+  onHitsStart?: (data: { table: string; status: number; error?: string }) => void;
   onHit?: (hit: QueryHit) => void;
+  onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
   onSummary?: (chunk: string) => void;
-  onCitation?: (citation: Citation) => void;
   onDone?: (data?: { complete: boolean }) => void;
   onError?: (error: string) => void;
 }
