@@ -65,6 +65,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer Agent - Intelligent query routing with automatic query generation
+         * @description Uses LLM to classify the query, generate optimal search queries across tables, execute them, and generate an answer (for questions) or return document IDs (for searches). Streams classification, keywords, generated queries, results, and answer as SSE events.
+         */
+        post: operations["answerAgent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/table": {
         parameters: {
             query?: never;
@@ -574,6 +594,58 @@ export interface components {
             query_results?: components["schemas"]["QueryResult"][];
             summary_result?: components["schemas"]["SummarizeResult"];
         };
+        AnswerAgentRequest: {
+            /**
+             * @description User's natural language query
+             * @example What are the best gaming laptops under $2000?
+             */
+            query: string;
+            summarizer: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Optional list of tables to search. If empty, searches all tables.
+             * @example [
+             *       "products",
+             *       "reviews"
+             *     ]
+             */
+            tables?: string[];
+            /**
+             * @description Optional list of indexes to use for each table. If empty, uses all available indexes.
+             * @example [
+             *       "embedding_idx",
+             *       "search_idx"
+             *     ]
+             */
+            indexes?: string[];
+            /**
+             * @description Optional system prompt to guide classification and answer generation
+             * @example You are a helpful shopping assistant.
+             */
+            system_prompt?: string;
+            /**
+             * @description Enable SSE streaming of results (classification, keywords, queries, results, answer) instead of JSON response
+             * @default true
+             */
+            with_streaming: boolean;
+        };
+        /** @description Answer agent result with classification, keywords, and generated answer or document IDs */
+        AnswerAgentResult: {
+            /**
+             * @description Classification of the query type
+             * @enum {string}
+             */
+            classification?: "question" | "search";
+            /** @description Keywords extracted from the query */
+            keywords?: string[];
+            /** @description The queries that were generated and executed */
+            queries_executed?: components["schemas"]["QueryRequest"][];
+            /** @description Results from each generated query */
+            query_results?: components["schemas"]["QueryResult"][];
+            /** @description Generated answer for "question" classification (markdown format with inline document references) */
+            answer?: string;
+            /** @description Document IDs for "search" classification */
+            document_ids?: string[];
+        };
         QueryRequest: {
             table?: string;
             /** @description Full JSON Bleve search queries */
@@ -623,8 +695,9 @@ export interface components {
             reranker?: components["schemas"]["RerankerConfig"];
             analyses?: components["schemas"]["Analyses"];
             /**
-             * @description Optional Go template string for rendering document content to the prompt
-             * @example {{.title}}: {{.body}}
+             * @description Optional Handlebars template string for rendering document content. Template has access to document fields via {{this.fields.fieldName}}
+             * @example Title: {{this.fields.title}}
+             *     Body: {{this.fields.body}}
              */
             document_renderer?: string;
         };
@@ -1269,6 +1342,49 @@ export interface operations {
                 };
             };
             /** @description Invalid RAG request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    answerAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Answer agent successful, streaming events or JSON response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["AnswerAgentResult"];
+                };
+            };
+            /** @description Invalid answer agent request */
             400: {
                 headers: {
                     [name: string]: unknown;
