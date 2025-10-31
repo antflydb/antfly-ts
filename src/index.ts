@@ -91,7 +91,6 @@ export type {
   RAGRequest,
   RAGResult,
   RAGStreamCallbacks,
-  Citation,
   SummarizeResult,
 
   // Error type

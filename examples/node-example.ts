@@ -116,7 +116,7 @@ async function main() {
       },
     });
 
-    // Example: Table-specific RAG query with citations
+    // Example: Table-specific RAG query
     console.log("\nPerforming RAG query on products table...");
     const ragResult = await client.tables.rag("products", {
       query: {
@@ -127,13 +127,12 @@ async function main() {
         provider: "ollama",
         model: "llama3",
       },
-      with_citations: true,
-      system_prompt: "You are a helpful product assistant. Summarize the products that match the query.",
+      system_prompt:
+        "You are a helpful product assistant. Summarize the products that match the query.",
     });
 
     if (ragResult && typeof ragResult === "object" && "summary_result" in ragResult) {
       console.log("RAG Summary:", ragResult.summary_result?.summary);
-      console.log("Citations:", ragResult.summary_result?.citations);
       console.log("Query hits:", ragResult.query_result?.hits?.total);
     }
 
@@ -151,7 +150,6 @@ async function main() {
           provider: "ollama",
           model: "llama3",
         },
-        with_citations: false,
       },
       (chunk) => {
         streamedText += chunk;
