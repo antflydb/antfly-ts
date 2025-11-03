@@ -848,9 +848,9 @@ export interface components {
          * @description The embedding provider to use.
          * @enum {string}
          */
-        Provider: "gemini" | "ollama" | "openai" | "bedrock" | "mock";
+        EmbedderProvider: "gemini" | "ollama" | "openai" | "bedrock" | "mock";
         /** @description Configuration for the Google embedding provider. */
-        GoogleConfig: {
+        GoogleEmbedderConfig: {
             /** @description The Google Cloud project ID. */
             project_id?: string;
             /** @description The Google Cloud location (e.g., 'us-central1'). */
@@ -874,7 +874,7 @@ export interface components {
             url?: string;
         };
         /** @description Configuration for the Ollama embedding provider. */
-        OllamaConfig: {
+        OllamaEmbedderConfig: {
             /** @description The name of the Ollama model to use. */
             model: string;
             /**
@@ -884,7 +884,7 @@ export interface components {
             url?: string;
         };
         /** @description Configuration for the OpenAI embedding provider. */
-        OpenAIConfig: {
+        OpenAIEmbedderConfig: {
             /** @description The name of the OpenAI model to use. */
             model: string;
             /**
@@ -896,7 +896,7 @@ export interface components {
             api_key?: string;
         };
         /** @description Configuration for the Bedrock embedding provider. */
-        BedrockConfig: {
+        BedrockEmbedderConfig: {
             /**
              * @description The name of the Bedrock model to use.
              * @example amazon.titan-embed-text-v1
@@ -918,10 +918,10 @@ export interface components {
          *     }
          */
         RerankerConfig: {
-            provider: components["schemas"]["Provider"];
+            provider: components["schemas"]["EmbedderProvider"];
             field?: string;
             template?: string;
-        } & (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]);
+        } & (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]);
         /** @description Configuration for the Google generative AI provider (Gemini). */
         GoogleGeneratorConfig: {
             /** @description The Google Cloud project ID. */
@@ -1067,7 +1067,7 @@ export interface components {
          * @description The generative AI provider to use.
          * @enum {string}
          */
-        "schemas-Provider": "gemini" | "ollama" | "openai" | "bedrock" | "anthropic" | "mock";
+        GeneratorProvider: "gemini" | "ollama" | "openai" | "bedrock" | "anthropic" | "mock";
         /**
          * @description A unified configuration for a generative AI provider.
          * @example {
@@ -1078,7 +1078,7 @@ export interface components {
          *     }
          */
         GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"]) & {
-            provider: components["schemas"]["schemas-Provider"];
+            provider: components["schemas"]["GeneratorProvider"];
         };
         /** @description Result of a summarization operation. The summary is formatted as markdown with inline document references using [doc_id <id>] or [doc_id <id1>, <id2>] format. */
         SummarizeResult: {
@@ -1096,8 +1096,8 @@ export interface components {
          *       "model": "text-embedding-004"
          *     }
          */
-        EmbedderConfig: (components["schemas"]["GoogleConfig"] | components["schemas"]["OllamaConfig"] | components["schemas"]["OpenAIConfig"] | components["schemas"]["BedrockConfig"]) & {
-            provider: components["schemas"]["Provider"];
+        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]) & {
+            provider: components["schemas"]["EmbedderProvider"];
         };
         EmbeddingIndexConfig: {
             /** @description Vector dimension */
@@ -1120,7 +1120,7 @@ export interface components {
          * @description The type of the index.
          * @enum {string}
          */
-        IndexType: "bleve_v2" | "vector_v2";
+        IndexType: "full_text_v0" | "aknn_v0";
         /** @description Configuration for an index */
         IndexConfig: {
             /** @description Name of the index */

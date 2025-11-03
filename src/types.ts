@@ -100,12 +100,20 @@ export type AntflyType = components["schemas"]["AntflyType"];
 export type EmbedderConfig = components["schemas"]["EmbedderConfig"];
 export type RerankerConfig = components["schemas"]["RerankerConfig"];
 export type GeneratorConfig = components["schemas"]["GeneratorConfig"];
-export type Provider = components["schemas"]["Provider"];
-export const providers: components["schemas"]["Provider"][] = [
+export type EmbedderProvider = components["schemas"]["EmbedderProvider"];
+export const embedderProviders: components["schemas"]["EmbedderProvider"][] = [
   "ollama",
   "gemini",
   "openai",
   "bedrock",
+];
+export type GeneratorProvider = components["schemas"]["GeneratorProvider"];
+export const generatorProviders: components["schemas"]["GeneratorProvider"][] = [
+  "ollama",
+  "gemini",
+  "openai",
+  "bedrock",
+  "anthropic",
 ];
 
 // RAG response types

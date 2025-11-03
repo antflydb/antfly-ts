@@ -36,7 +36,7 @@
 // Main client export
 export { AntflyClient } from "./client.js";
 
-export { providers } from "./types.js";
+export { embedderProviders, generatorProviders } from "./types.js";
 
 // Type exports
 export type {
@@ -86,7 +86,8 @@ export type {
   EmbedderConfig,
   GeneratorConfig,
   RerankerConfig,
-  Provider,
+  EmbedderProvider,
+  GeneratorProvider,
 
   // RAG types
   RAGRequest,
