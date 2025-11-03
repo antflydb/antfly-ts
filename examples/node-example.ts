@@ -107,7 +107,7 @@ async function main() {
     console.log("\nCreating semantic search index...");
     await client.indexes.create("products", {
       name: "description_embeddings",
-      type: "vector_v2",
+      type: "aknn_v0",
       field: "description",
       dimension: 768,
       embedder: {
