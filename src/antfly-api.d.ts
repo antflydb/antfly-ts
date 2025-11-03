@@ -187,12 +187,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/insert": {
+    "/table/{tableName}/merge": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Name of the table for insert operation */
+                /** @description Name of the table */
                 tableName: string;
             };
             cookie?: never;
@@ -200,10 +200,15 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Insert one or more documents into a table
-         * @description Inserts a single document or multiple documents in bulk. A default document key must be defined for the table to use this endpoint.
+         * Linear merge sorted records from external source
+         * @description Performs a stateless linear merge of sorted records from an external source.
+         *     Records are upserted, and any Antfly records in the key range that are absent
+         *     from the input are deleted. Supports progressive pagination for large datasets.
+         *
+         *     WARNING: Not safe for concurrent merge operations with overlapping ranges.
+         *     Designed as a sync/import API for single-client use.
          */
-        post: operations["insertDocuments"];
+        post: operations["linearMerge"];
         delete?: never;
         options?: never;
         head?: never;
@@ -768,6 +773,68 @@ export interface components {
             error?: string;
             /** @description Which table this result came from */
             table?: string;
+        };
+        /**
+         * @description Status of a linear merge page operation:
+         *     - "success": All records in batch processed successfully
+         *     - "partial": Processing stopped at shard boundary, client should retry with next_cursor
+         *     - "error": Fatal error occurred, no records processed successfully
+         * @enum {string}
+         */
+        LinearMergePageStatus: "success" | "partial" | "error";
+        LinearMergeRequest: {
+            /**
+             * @description Map of document ID to document object: {"doc_id_1": {...}, "doc_id_2": {...}}
+             *     Server will sort keys lexicographically before processing.
+             *     This format avoids duplicate IDs (matches Antfly's batch write interface).
+             */
+            records: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description ID of last record from previous merge request.
+             *     Empty string "" for first request.
+             *     Defines lower bound of key range to process.
+             */
+            last_merged_id?: string;
+            /**
+             * @description If true, return what would be deleted without making changes.
+             *     Useful for validating sync behavior before committing.
+             * @default false
+             */
+            dry_run: boolean;
+        };
+        FailedOperation: {
+            id?: string;
+            /** @enum {string} */
+            operation?: "upsert" | "delete";
+            error?: string;
+        };
+        /** @description Key range processed in this request */
+        KeyRange: {
+            from?: string;
+            to?: string;
+        };
+        LinearMergeResult: {
+            status: components["schemas"]["LinearMergePageStatus"];
+            /** @description Records inserted or updated (0 if dry_run=true) */
+            upserted: number;
+            /** @description Records skipped because content hash matched (unchanged) */
+            skipped: number;
+            /** @description Records deleted or would be deleted (if dry_run=true) */
+            deleted: number;
+            /** @description IDs that were deleted (or would be deleted if dry_run=true). Only included if dry_run=true. */
+            deleted_ids?: string[];
+            failed?: components["schemas"]["FailedOperation"][];
+            /** @description ID of last record in this batch (use for next request) */
+            next_cursor: string;
+            key_range?: components["schemas"]["KeyRange"];
+            /** @description Total number of keys scanned from Antfly during range query */
+            keys_scanned?: number;
+            /** @description Additional information (e.g., "stopped at shard boundary", "dry run - no changes made") */
+            message?: string;
+            /** Format: int64 */
+            took?: number;
         };
         /**
          * @description Merge strategy for combining results from the semantic_search and full_text_search.
@@ -1621,42 +1688,29 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
-    insertDocuments: {
+    linearMerge: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                /** @description Name of the table for insert operation */
+                /** @description Name of the table */
                 tableName: string;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": {
-                    [key: string]: unknown;
-                };
-                "application/x-ndjson": string;
+                "application/json": components["schemas"]["LinearMergeRequest"];
             };
         };
         responses: {
-            /** @description Documents inserted successfully */
-            201: {
+            /** @description Merge completed successfully */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Number of documents successfully inserted */
-                        inserted?: number;
-                        /** @description List of failed operations with error details */
-                        failed?: {
-                            /** @description The document ID that failed */
-                            id?: string;
-                            /** @description Error message for this failure */
-                            error?: string;
-                        }[];
-                    };
+                    "application/json": components["schemas"]["LinearMergeResult"];
                 };
             };
             400: components["responses"]["BadRequest"];
