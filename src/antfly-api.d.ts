@@ -464,7 +464,7 @@ export interface components {
             schema?: components["schemas"]["TableSchema"];
         };
         /** @enum {string} */
-        AntflyType: "search_as_you_type" | "keyword" | "text" | "numeric" | "datetime" | "boolean" | "link" | "geopoint" | "geoshape" | "embedding" | "blob";
+        AntflyType: "search_as_you_type" | "keyword" | "text" | "html" | "numeric" | "datetime" | "boolean" | "link" | "geopoint" | "geoshape" | "embedding" | "blob";
         Table: {
             name: string;
             /**
@@ -1105,8 +1105,8 @@ export interface components {
             /** @description Field to extract embeddings from */
             field?: string;
             /**
-             * @description Go string template for generating prompts. See https://pkg.go.dev/text/template for more information.
-             * @example Hello, {{if eq .Name "John"}}Johnathan{{else}}{{.Name}}{{end}}! You are {{.Age}} years old.
+             * @description Handlebars template for generating prompts. See https://handlebarsjs.com/guide/ for more information.
+             * @example Hello, {{#if (eq Name "John")}}Johnathan{{else}}{{Name}}{{/if}}! You are {{Age}} years old.
              */
             template?: string;
             /** @description Whether to use in-memory only storage */
@@ -1127,22 +1127,21 @@ export interface components {
             name: string;
             type: components["schemas"]["IndexType"];
         } & (components["schemas"]["BleveIndexV2Config"] | components["schemas"]["EmbeddingIndexConfig"]);
+        /** @description Defines the structure of a document type */
         DocumentSchema: {
+            /** @description A description of the document type. */
+            description?: string;
             /** @description The field to use as the document ID (optional). */
             key?: string;
             /**
-             * @description A description of the document type.
-             * @example A user document
-             */
-            description?: string;
-            /**
              * @description A valid JSON Schema defining the document's structure.
-             *     This is used to infer indexing rules.
+             *     This is used to infer indexing rules and field types.
              */
             schema?: {
                 [key: string]: unknown;
             };
         };
+        /** @description Schema definition for a table with multiple document types */
         TableSchema: {
             /**
              * Format: uint32
@@ -1152,32 +1151,29 @@ export interface components {
             /**
              * @description The default field to use as the document ID (optional).
              *     Useful if no type-specific key is defined or if all types share the same key field.
-             * @example _id
              */
             key?: string;
+            /** @description Default type to use from the document_types. */
+            default_type?: string;
             /**
              * @description Whether to enforce that documents must match one of the provided document types.
              *     If false, documents not matching any type will be accepted but not indexed.
              */
             enforce_types?: boolean;
-            /** @description Default type to use from the document_types. */
-            default_type?: string;
+            /** @description A map of type names to their document json schemas. */
+            document_schemas?: {
+                [key: string]: components["schemas"]["DocumentSchema"];
+            };
             /**
              * @description The field containing the timestamp for TTL expiration (optional).
              *     Defaults to "_timestamp" if ttl_duration is specified but ttl_field is not.
-             * @example created_at
              */
             ttl_field?: string;
             /**
              * @description The duration after which documents should expire, based on the ttl_field timestamp (optional).
              *     Uses Go duration format (e.g., '24h', '7d', '168h').
-             * @example 24h
              */
             ttl_duration?: string;
-            /** @description A map of type names to their document json schemas. */
-            document_schemas?: {
-                [key: string]: components["schemas"]["DocumentSchema"];
-            };
         };
         BleveIndexV2Stats: {
             /** @description Error message if stats could not be retrieved */
