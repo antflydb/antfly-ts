@@ -1131,8 +1131,6 @@ export interface components {
         DocumentSchema: {
             /** @description A description of the document type. */
             description?: string;
-            /** @description The field to use as the document ID (optional). */
-            key?: string;
             /**
              * @description A valid JSON Schema defining the document's structure.
              *     This is used to infer indexing rules and field types.
@@ -1148,11 +1146,6 @@ export interface components {
              * @description Version of the schema. Used for migrations.
              */
             version?: number;
-            /**
-             * @description The default field to use as the document ID (optional).
-             *     Useful if no type-specific key is defined or if all types share the same key field.
-             */
-            key?: string;
             /** @description Default type to use from the document_types. */
             default_type?: string;
             /**
