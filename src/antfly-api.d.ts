@@ -568,6 +568,15 @@ export interface components {
             };
             /** @description List of keys to delete. */
             deletes?: string[];
+            /**
+             * @description Synchronization level for the batch operation:
+             *     - "propose": Wait for Raft proposal acceptance (fastest, default)
+             *     - "write": Wait for Pebble KV write
+             *     - "full_text": Wait for full-text index WAL write (slowest, most durable)
+             * @default propose
+             * @enum {string}
+             */
+            sync_level: "propose" | "write" | "full_text";
         };
         BackupRequest: {
             backup_id: string;
