@@ -120,6 +120,10 @@ export const generatorProviders: components["schemas"]["GeneratorProvider"][] = 
 export type SummarizeResult = components["schemas"]["SummarizeResult"];
 export type RAGResult = components["schemas"]["RAGResult"];
 
+// Answer Agent types
+export type AnswerAgentRequest = components["schemas"]["AnswerAgentRequest"];
+export type AnswerAgentResult = components["schemas"]["AnswerAgentResult"];
+
 // Error type
 export type AntflyError = components["schemas"]["Error"];
 
@@ -148,6 +152,28 @@ export interface RAGStreamCallbacks {
   onHit?: (hit: QueryHit) => void;
   onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
   onSummary?: (chunk: string) => void;
+  onDone?: (data?: { complete: boolean }) => void;
+  onError?: (error: string) => void;
+}
+
+// Answer Agent streaming callbacks for structured SSE events
+export interface AnswerAgentStreamCallbacks {
+  onClassification?: (data: { route_type: "question" | "search"; confidence: number }) => void;
+  onKeywords?: (data: { keywords: string[] }) => void;
+  onQueryGenerated?: (data: {
+    table: string;
+    semantic_search?: string;
+    full_text_search: boolean;
+    has_filters: boolean;
+    use_hybrid: boolean;
+    limit: number;
+  }) => void;
+  onHitsStart?: (data: { table: string; status: number; error?: string }) => void;
+  onHit?: (hit: QueryHit) => void;
+  onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
+  onReasoning?: (chunk: string) => void;
+  onAnswer?: (chunk: string) => void;
+  onFollowUpQuestion?: (question: string) => void;
   onDone?: (data?: { complete: boolean }) => void;
   onError?: (error: string) => void;
 }

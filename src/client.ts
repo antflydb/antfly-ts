@@ -23,6 +23,9 @@ import type {
   RAGResult,
   RAGStreamCallbacks,
   QueryHit,
+  AnswerAgentRequest,
+  AnswerAgentResult,
+  AnswerAgentStreamCallbacks,
 } from "./types.js";
 
 export class AntflyClient {
@@ -298,6 +301,172 @@ export class AntflyClient {
   }
 
   /**
+   * Private helper for Answer Agent requests to avoid code duplication
+   */
+  private async performAnswerAgent(
+    path: string,
+    request: AnswerAgentRequest,
+    callbacks?: AnswerAgentStreamCallbacks
+  ): Promise<AnswerAgentResult | AbortController> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream, application/json",
+    };
+
+    // Add auth header if configured
+    if (this.config.auth) {
+      const auth = btoa(`${this.config.auth.username}:${this.config.auth.password}`);
+      headers["Authorization"] = `Basic ${auth}`;
+    }
+
+    // Merge with any additional headers
+    Object.assign(headers, this.config.headers);
+
+    const abortController = new AbortController();
+    const response = await fetch(`${this.config.baseUrl}${path}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(request),
+      signal: abortController.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Answer agent request failed: ${response.status} ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error("Response body is null");
+    }
+
+    // Check content type to determine response format
+    const contentType = response.headers.get("content-type") || "";
+    const isJSON = contentType.includes("application/json");
+
+    // Handle JSON response (non-streaming)
+    if (isJSON) {
+      const result = (await response.json()) as AnswerAgentResult;
+      return result;
+    }
+
+    // Handle SSE streaming response
+    if (callbacks) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let currentEvent = "";
+
+      // Start reading the stream in the background
+      (async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (!line.trim()) {
+                // Empty line marks end of an event
+                currentEvent = "";
+                continue;
+              }
+
+              if (line.startsWith("event: ")) {
+                currentEvent = line.slice(7).trim();
+              } else if (line.startsWith("data: ")) {
+                const data = line.slice(6).trim();
+
+                try {
+                  // Dispatch based on event type
+                  switch (currentEvent) {
+                    case "classification":
+                      if (callbacks.onClassification) {
+                        const classData = JSON.parse(data);
+                        callbacks.onClassification(classData);
+                      }
+                      break;
+                    case "keywords":
+                      if (callbacks.onKeywords) {
+                        const keywordsData = JSON.parse(data);
+                        callbacks.onKeywords(keywordsData);
+                      }
+                      break;
+                    case "query_generated":
+                      if (callbacks.onQueryGenerated) {
+                        const queryData = JSON.parse(data);
+                        callbacks.onQueryGenerated(queryData);
+                      }
+                      break;
+                    case "hits_start":
+                      if (callbacks.onHitsStart) {
+                        const hitsStartData = JSON.parse(data);
+                        callbacks.onHitsStart(hitsStartData);
+                      }
+                      break;
+                    case "hit":
+                      if (callbacks.onHit) {
+                        const hit = JSON.parse(data);
+                        callbacks.onHit(hit);
+                      }
+                      break;
+                    case "hits_end":
+                      if (callbacks.onHitsEnd) {
+                        const hitsEndData = JSON.parse(data);
+                        callbacks.onHitsEnd(hitsEndData);
+                      }
+                      break;
+                    case "reasoning":
+                      if (callbacks.onReasoning) {
+                        const chunk = JSON.parse(data);
+                        callbacks.onReasoning(chunk);
+                      }
+                      break;
+                    case "answer":
+                      if (callbacks.onAnswer) {
+                        const chunk = JSON.parse(data);
+                        callbacks.onAnswer(chunk);
+                      }
+                      break;
+                    case "follow_up_question":
+                      if (callbacks.onFollowUpQuestion) {
+                        const question = JSON.parse(data);
+                        callbacks.onFollowUpQuestion(question);
+                      }
+                      break;
+                    case "done":
+                      if (callbacks.onDone) {
+                        const doneData = JSON.parse(data);
+                        callbacks.onDone(doneData);
+                      }
+                      return;
+                    case "error":
+                      if (callbacks.onError) {
+                        const error = JSON.parse(data);
+                        callbacks.onError(error);
+                      }
+                      throw new Error(data);
+                  }
+                } catch (e) {
+                  console.warn("Failed to parse SSE data:", currentEvent, data, e);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          if ((error as Error).name !== "AbortError") {
+            console.error("Answer agent streaming error:", error);
+          }
+        }
+      })();
+    }
+
+    return abortController;
+  }
+
+  /**
    * RAG (Retrieval-Augmented Generation) query with streaming or citations
    * @param request - RAG request with query and summarizer config (set with_streaming: true to enable streaming)
    * @param callbacks - Optional callbacks for structured SSE events (hit, summary, citation, done, error)
@@ -308,6 +477,20 @@ export class AntflyClient {
     callbacks?: RAGStreamCallbacks
   ): Promise<RAGResult | AbortController> {
     return this.performRag("/rag", request, callbacks);
+  }
+
+  /**
+   * Answer Agent - Intelligent query routing and generation
+   * Automatically classifies queries, generates optimal searches, and provides answers
+   * @param request - Answer agent request with query and generator config
+   * @param callbacks - Optional callbacks for SSE events (classification, keywords, query_generated, hits, answer, etc.)
+   * @returns Promise with AnswerAgentResult (JSON) or AbortController (when streaming)
+   */
+  async answerAgent(
+    request: AnswerAgentRequest,
+    callbacks?: AnswerAgentStreamCallbacks
+  ): Promise<AnswerAgentResult | AbortController> {
+    return this.performAnswerAgent("/agents/answer", request, callbacks);
   }
 
   /**
