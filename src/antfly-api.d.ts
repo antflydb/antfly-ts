@@ -36,7 +36,59 @@ export interface paths {
         /**
          * Perform a global query
          * @description Executes a query across all relevant tables and shards based on the query content.
-         *     IMPORTANT: The final line of data must end with a newline character \n. Each newline character may be preceded by a carriage return \r. When sending requests to this endpoint the Content-Type header should be set to application/x-ndjson.
+         *
+         *     ## Query Examples
+         *
+         *     **Full-text search:**
+         *     ```json
+         *     {
+         *       "table": "wikipedia",
+         *       "full_text_search": {"query": "body:computer"},
+         *       "limit": 10
+         *     }
+         *     ```
+         *
+         *     **Semantic search:**
+         *     ```json
+         *     {
+         *       "table": "articles",
+         *       "semantic_search": "artificial intelligence applications",
+         *       "indexes": ["title_body_embedding"],
+         *       "limit": 20
+         *     }
+         *     ```
+         *
+         *     **Hybrid search (RRF):**
+         *     ```json
+         *     {
+         *       "table": "products",
+         *       "full_text_search": {"query": "laptop gaming"},
+         *       "semantic_search": "high performance gaming computers",
+         *       "indexes": ["product_embedding"],
+         *       "filter_query": {"query": "price:<2000 AND in_stock:true"},
+         *       "fields": ["name", "price", "description"],
+         *       "limit": 15
+         *     }
+         *     ```
+         *
+         *     **With filtering:**
+         *     ```json
+         *     {
+         *       "table": "users",
+         *       "filter_prefix": "tenant:acme:",
+         *       "full_text_search": {"query": "active:true"},
+         *       "exclusion_query": {"query": "status:deleted"},
+         *       "limit": 50
+         *     }
+         *     ```
+         *
+         *     **NDJSON format:**
+         *     For bulk queries, send multiple queries as NDJSON with `Content-Type: application/x-ndjson`.
+         *     Each line must end with `\n`:
+         *     ```
+         *     {"table":"wiki","semantic_search":"AI","indexes":["emb"],"limit":5}
+         *     {"table":"docs","full_text_search":{"query":"tutorial"},"limit":10}
+         *     ```
          */
         post: operations["globalQuery"];
         delete?: never;
@@ -115,7 +167,111 @@ export interface paths {
         /** Get table details */
         get: operations["getTable"];
         put?: never;
-        /** Create a new table */
+        /**
+         * Create a new table
+         * @description Creates a new table with optional schema definition, indexes, and configuration.
+         *
+         *     ## Use Cases
+         *
+         *     **Simple table for unstructured data:**
+         *     ```json
+         *     {
+         *       "num_shards": 1
+         *     }
+         *     ```
+         *
+         *     **Table with full-text search:**
+         *     ```json
+         *     {
+         *       "num_shards": 3,
+         *       "schema": {
+         *         "document_schemas": {
+         *           "article": {
+         *             "schema": {
+         *               "type": "object",
+         *               "properties": {
+         *                 "id": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["keyword"]
+         *                 },
+         *                 "title": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["text", "keyword"]
+         *                 },
+         *                 "body": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["text"]
+         *                 }
+         *               },
+         *               "x-antfly-include-in-all": ["title", "body"]
+         *             }
+         *           }
+         *         },
+         *         "default_type": "article"
+         *       },
+         *       "indexes": {
+         *         "search_idx": {
+         *           "type": "full_text_v0"
+         *         }
+         *       }
+         *     }
+         *     ```
+         *
+         *     **Table with vector similarity search:**
+         *     ```json
+         *     {
+         *       "num_shards": 5,
+         *       "description": "Product catalog with semantic search",
+         *       "schema": {
+         *         "document_schemas": {
+         *           "product": {
+         *             "schema": {
+         *               "type": "object",
+         *               "properties": {
+         *                 "product_id": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["keyword"]
+         *                 },
+         *                 "name": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["text", "keyword"]
+         *                 },
+         *                 "description": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["text"]
+         *                 },
+         *                 "price": {
+         *                   "type": "number",
+         *                   "x-antfly-types": ["numeric"]
+         *                 }
+         *               },
+         *               "x-antfly-include-in-all": ["name", "description"]
+         *             }
+         *           }
+         *         },
+         *         "default_type": "product"
+         *       },
+         *       "indexes": {
+         *         "semantic_idx": {
+         *           "type": "aknn_v0",
+         *           "field": "description",
+         *           "embedder": {
+         *             "provider": "ollama",
+         *             "model": "all-minilm",
+         *             "url": "http://localhost:11434"
+         *           }
+         *         }
+         *       }
+         *     }
+         *     ```
+         *
+         *     ## Best Practices
+         *
+         *     - Define schema for core fields to improve performance
+         *     - Start with fewer shards for small datasets (1-3)
+         *     - Use meaningful table names (e.g., "products", "users", "articles")
+         *     - Consider adding both full-text and vector indexes for hybrid search
+         */
         post: operations["createTable"];
         /** Drop a table */
         delete: operations["dropTable"];
@@ -451,16 +607,53 @@ export interface components {
             byte_range: components["schemas"]["ByteRange"];
         };
         CreateTableRequest: {
-            /** Format: uint */
+            /**
+             * Format: uint
+             * @description Number of shards to create for the table. Data is partitioned across shards based on key ranges.
+             *
+             *     Guidelines:
+             *     - Small datasets (<100K docs): 1-3 shards
+             *     - Medium datasets (100K-1M docs): 3-10 shards
+             *     - Large datasets (>1M docs): 10+ shards
+             *
+             *     More shards enable better parallelism but increase overhead. Choose based on expected data size and query patterns.
+             * @example 3
+             */
             num_shards?: number;
             /**
-             * @description Optional description of the table.
-             * @example Table for user data
+             * @description Optional human-readable description of the table and its purpose.
+             *     Useful for documentation and team collaboration.
+             * @example User profiles with embeddings for semantic search
              */
             description?: string;
+            /**
+             * @description Map of index name to index configuration. Indexes enable different query capabilities:
+             *     - Full-text indexes for BM25 search
+             *     - Vector indexes for semantic similarity
+             *     - Multimodal indexes for images/audio/video
+             *
+             *     You can add multiple indexes to support different query patterns.
+             * @example {
+             *       "search_index": {
+             *         "type": "full_text_v0"
+             *       },
+             *       "embedding_index": {
+             *         "type": "aknn_v0",
+             *         "dimension": 384,
+             *         "embedder": {
+             *           "provider": "ollama",
+             *           "model": "all-minilm"
+             *         }
+             *       }
+             *     }
+             */
             indexes?: {
                 [key: string]: components["schemas"]["IndexConfig"];
             };
+            /**
+             * @description Optional schema definition specifying field types and primary key.
+             *     While optional, defining a schema provides type safety, optimized indexing, and better search performance.
+             */
             schema?: components["schemas"]["TableSchema"];
         };
         /** @enum {string} */
@@ -536,6 +729,14 @@ export interface components {
             storage_status: components["schemas"]["StorageStatus"];
         };
         /**
+         * @description Batch insert and delete operations in a single request. All operations are processed atomically within each shard.
+         *
+         *     Benefits:
+         *     - Reduces network overhead compared to individual requests
+         *     - More efficient indexing (updates are batched)
+         *     - Atomic within shard boundaries
+         *
+         *     The inserts are upserts - existing keys are overwritten, new keys are created.
          * @example {
          *       "inserts": {
          *         "user:123": {
@@ -563,10 +764,48 @@ export interface components {
          *     }
          */
         BatchRequest: {
+            /**
+             * @description Map of document IDs to document objects. Each key is the unique identifier for the document.
+             *
+             *     Best practices:
+             *     - Use consistent key naming schemes (e.g., "user:123", "article:456")
+             *     - Key length affects storage and performance - keep them reasonably short
+             *     - Keys are sorted lexicographically, so choose prefixes that support range scans
+             * @example {
+             *       "user:123": {
+             *         "name": "John Doe",
+             *         "email": "john@example.com",
+             *         "age": 30,
+             *         "tags": [
+             *           "customer",
+             *           "premium"
+             *         ]
+             *       },
+             *       "user:456": {
+             *         "name": "Jane Smith",
+             *         "email": "jane@example.com",
+             *         "age": 25,
+             *         "tags": [
+             *           "customer"
+             *         ]
+             *       }
+             *     }
+             */
             inserts?: {
                 [key: string]: Record<string, never>;
             };
-            /** @description List of keys to delete. */
+            /**
+             * @description Array of document IDs to delete. Documents are removed from all indexes.
+             *
+             *     Notes:
+             *     - Non-existent keys are silently ignored
+             *     - Deletions are processed before inserts in the same batch
+             *     - Keys are permanently removed from storage and indexes
+             * @example [
+             *       "user:789",
+             *       "user:old_account"
+             *     ]
+             */
             deletes?: string[];
             /**
              * @description Synchronization level for the batch operation:
@@ -579,8 +818,20 @@ export interface components {
             sync_level: "propose" | "write" | "full_text";
         };
         BackupRequest: {
+            /**
+             * @description Unique identifier for this backup. Used to reference the backup for restore operations.
+             *     Choose a meaningful name that includes date/version information.
+             * @example backup-2025-01-15-v2
+             */
             backup_id: string;
-            /** @description Location for the backup (e.g., file:///path/to/backup, s3://bucket/path) */
+            /**
+             * @description Storage location for the backup. Supports multiple backends:
+             *     - Local filesystem: `file:///path/to/backup`
+             *     - Amazon S3: `s3://bucket-name/path/to/backup`
+             *
+             *     The backup includes all table data, indexes, and metadata for the specified table.
+             * @example s3://mybucket/antfly-backups/users-table/2025-01-15
+             */
             location: string;
         };
         RestoreRequest: components["schemas"]["BackupRequest"];
@@ -599,6 +850,22 @@ export interface components {
              * @example You are a helpful AI assistant. Summarize the following search results concisely.
              */
             system_prompt?: string;
+            /**
+             * @description Optional custom user prompt template for the LLM. If not provided, a default prompt is used.
+             *     The prompt can reference the following variables:
+             *     - {{documents}}: Array of retrieved documents with id and fields
+             *     - {{semantic_search}}: The user's semantic search query (if provided)
+             *     You can use Handlebars template syntax to customize the prompt, including loops and conditionals.
+             *     To generate a comma-separated list of document IDs, use: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
+             * @example Based on these documents, provide a detailed analysis:
+             *
+             *     {{#each documents}}
+             *     Doc {{this.id}}: {{this.fields}}
+             *     {{/each}}
+             *
+             *     Valid IDs: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
+             */
+            prompt?: string;
             /** @description Enable SSE streaming of results instead of JSON response */
             with_streaming?: boolean;
         };
@@ -641,6 +908,16 @@ export interface components {
              * @default true
              */
             with_streaming: boolean;
+            /**
+             * @description Include the LLM's reasoning process as separate events before the answer
+             * @default false
+             */
+            with_reasoning: boolean;
+            /**
+             * @description Include suggested follow-up questions as separate events after the answer
+             * @default false
+             */
+            with_followup: boolean;
         };
         /** @description Answer agent result with classification, keywords, and generated answer or document IDs */
         AnswerAgentResult: {
@@ -655,63 +932,181 @@ export interface components {
             queries_executed?: components["schemas"]["QueryRequest"][];
             /** @description Results from each generated query */
             query_results?: components["schemas"]["QueryResult"][];
+            /** @description LLM's reasoning process (if with_reasoning was enabled) */
+            reasoning?: string;
             /** @description Generated answer for "question" classification (markdown format with inline document references) */
             answer?: string;
+            /** @description Suggested follow-up questions (if with_followup was enabled) */
+            followup_questions?: string[];
             /** @description Document IDs for "search" classification */
             document_ids?: string[];
         };
         QueryRequest: {
+            /**
+             * @description Name of the table to query. Optional for global queries.
+             * @example wikipedia
+             */
             table?: string;
-            /** @description Full JSON Bleve search queries */
+            /**
+             * @description Bleve query for full-text search. Supports field-specific queries, boolean operators, and complex expressions.
+             *
+             *     Examples:
+             *     - Simple: `{"query": "computer"}`
+             *     - Field-specific: `{"query": "body:computer"}`
+             *     - Boolean: `{"query": "artificial AND intelligence"}`
+             *     - Range: `{"query": "year:>2020"}`
+             *     - Phrase: `{"query": "\"exact phrase\""}`
+             * @example {
+             *       "query": "body:computer AND category:technology"
+             *     }
+             */
             full_text_search?: {
                 [key: string]: unknown;
             };
+            /**
+             * @description Natural language query for vector similarity search. Results are ranked by semantic similarity
+             *     to the query and can be combined with full_text_search using Reciprocal Rank Fusion (RRF).
+             *
+             *     The semantic_search string is automatically embedded using the configured embedding model
+             *     for the specified indexes.
+             * @example artificial intelligence and machine learning applications
+             */
             semantic_search?: string;
+            /**
+             * @description List of vector index names to use for semantic search. Required when using semantic_search.
+             *     Multiple indexes can be specified, and their results will be merged using RRF.
+             * @example [
+             *       "title_body_nomic",
+             *       "description_embedding"
+             *     ]
+             */
             indexes?: string[];
-            /** Format: byte */
+            /**
+             * Format: byte
+             * @description Filter results by key prefix. Only returns documents whose keys start with this string.
+             *     Applied before scoring to improve performance.
+             *
+             *     Common use cases:
+             *     - Multi-tenant filtering: `"tenant:acme:"`
+             *     - User-specific data: `"user:123:"`
+             *     - Document type filtering: `"article:"`
+             */
             filter_prefix?: string;
-            /** @description Full JSON Bleve search queries */
+            /**
+             * @description Bleve query applied as an AND condition. Documents must match both the main query
+             *     and this filter. Applied before scoring for better performance.
+             *
+             *     Use for:
+             *     - Status filtering: `"status:published"`
+             *     - Date ranges: `"created_at:>2023-01-01"`
+             *     - Category filtering: `"category:technology AND language:en"`
+             * @example {
+             *       "query": "category:technology AND year:>2020"
+             *     }
+             */
             filter_query?: {
                 [key: string]: unknown;
             };
-            /** @description Full JSON Bleve search queries */
+            /**
+             * @description Bleve query applied as a NOT condition. Documents matching this query are excluded
+             *     from results. Applied before scoring.
+             *
+             *     Use for:
+             *     - Excluding drafts: `"status:draft"`
+             *     - Removing deprecated content: `"deprecated:true"`
+             *     - Filtering out archived items: `"status:archived"`
+             * @example {
+             *       "query": "category:deprecated OR status:archived"
+             *     }
+             */
             exclusion_query?: {
                 [key: string]: unknown;
             };
+            /**
+             * @description Faceting configuration for aggregating results by field values.
+             *     Useful for building faceted navigation and filters.
+             */
             facets?: {
                 [key: string]: components["schemas"]["FacetOption"];
             };
-            /** @description Raw embeddings to use for semantic searches (the keys are the indexes to use for the queries). */
+            /**
+             * @description Pre-computed embeddings to use for semantic searches instead of embedding the semantic_search string.
+             *     The keys are the index names, and values are the embedding vectors.
+             *
+             *     Use when you've already generated embeddings on the client side to avoid redundant embedding calls.
+             */
             embeddings?: {
                 [key: string]: number[];
             };
-            /** @description List of fields to include in the results. */
+            /**
+             * @description List of fields to include in the results. If not specified, all fields are returned.
+             *     Use to reduce response size and improve performance.
+             * @example [
+             *       "title",
+             *       "url",
+             *       "summary",
+             *       "created_at"
+             *     ]
+             */
             fields?: string[];
-            /** @description Maximum number of results to return or topk for semantic_search. */
+            /**
+             * @description Maximum number of results to return. For semantic_search, this is the topk parameter.
+             *     Default varies by query type (typically 10).
+             * @example 20
+             */
             limit?: number;
-            /** @description Number of results to skip for pagination, only available for full_text_search queries. */
+            /**
+             * @description Number of results to skip for pagination. Only available for full_text_search queries.
+             *     Not supported for semantic_search due to vector index limitations.
+             * @example 0
+             */
             offset?: number;
+            /**
+             * @description Sort order for results. Map of field names to boolean (true = descending, false = ascending).
+             *     Only applicable for full_text_search queries. Semantic searches are always sorted by similarity score.
+             * @example {
+             *       "created_at": true,
+             *       "score": true
+             *     }
+             */
             order_by?: {
                 [key: string]: boolean;
             };
             /**
              * Format: float
-             * @description Maximum distance for semantic similarity search.
+             * @description Maximum distance threshold for semantic similarity search. Results with distance
+             *     greater than this value are excluded. Lower distances indicate higher similarity.
+             *
+             *     Useful for filtering out low-confidence matches.
+             * @example 0.5
              */
             distance_under?: number;
             /**
              * Format: float
-             * @description Minimum distance for semantic similarity search.
+             * @description Minimum distance threshold for semantic similarity search. Results with distance
+             *     less than this value are excluded.
+             *
+             *     Useful for excluding near-exact duplicates or finding dissimilar documents.
+             * @example 0.1
              */
             distance_over?: number;
             merge_strategy?: components["schemas"]["MergeStrategy"];
+            /**
+             * @description If true, returns only the total count of matching documents without retrieving the actual documents.
+             *     Useful for pagination and displaying result counts.
+             * @example false
+             */
             count?: boolean;
             reranker?: components["schemas"]["RerankerConfig"];
             analyses?: components["schemas"]["Analyses"];
             /**
-             * @description Optional Handlebars template string for rendering document content. Template has access to document fields via {{this.fields.fieldName}}
+             * @description Optional Handlebars template string for rendering document content in RAG queries.
+             *     Template has access to document fields via `{{this.fields.fieldName}}`.
+             *
+             *     Useful for customizing how documents are presented to LLMs in RAG pipelines.
              * @example Title: {{this.fields.title}}
              *     Body: {{this.fields.body}}
+             *     URL: {{this.fields.url}}
              */
             document_renderer?: string;
         };
@@ -791,25 +1186,67 @@ export interface components {
          * @enum {string}
          */
         LinearMergePageStatus: "success" | "partial" | "error";
+        /**
+         * @description Linear merge operation for syncing sorted records from external sources.
+         *     Use this to keep Antfly in sync with an external database or data source.
+         *
+         *     **How it works:**
+         *     1. Send sorted records from your external source
+         *     2. Server upserts records that exist in your batch
+         *     3. Server deletes Antfly records in the key range that are absent from your batch
+         *     4. If stopped at shard boundary, use next_cursor for next request
+         *
+         *     **WARNING:** Not safe for concurrent operations with overlapping key ranges.
+         */
         LinearMergeRequest: {
             /**
              * @description Map of document ID to document object: {"doc_id_1": {...}, "doc_id_2": {...}}
-             *     Server will sort keys lexicographically before processing.
-             *     This format avoids duplicate IDs (matches Antfly's batch write interface).
+             *
+             *     Requirements:
+             *     - Keys must be sorted lexicographically by your client
+             *     - Server will process keys in sorted order
+             *     - Use consistent key naming (e.g., all start with same prefix)
+             *
+             *     This format avoids duplicate IDs and matches Antfly's batch write interface.
+             * @example {
+             *       "product:001": {
+             *         "name": "Laptop",
+             *         "price": 999.99
+             *       },
+             *       "product:002": {
+             *         "name": "Mouse",
+             *         "price": 29.99
+             *       },
+             *       "product:003": {
+             *         "name": "Keyboard",
+             *         "price": 79.99
+             *       }
+             *     }
              */
             records: {
                 [key: string]: unknown;
             };
             /**
              * @description ID of last record from previous merge request.
-             *     Empty string "" for first request.
-             *     Defines lower bound of key range to process.
+             *     - First request: Use empty string ""
+             *     - Subsequent requests: Use next_cursor from previous response
+             *     - Defines lower bound of key range to process
+             *
+             *     This enables pagination for large datasets.
+             * @example product:003
              */
             last_merged_id?: string;
             /**
-             * @description If true, return what would be deleted without making changes.
-             *     Useful for validating sync behavior before committing.
+             * @description If true, returns what would be deleted without making changes.
+             *
+             *     Use cases:
+             *     - Validate sync behavior before committing
+             *     - Check which records will be removed
+             *     - Test key range boundaries
+             *
+             *     Response includes deleted_ids array when dry_run=true.
              * @default false
+             * @example false
              */
             dry_run: boolean;
         };
@@ -857,7 +1294,7 @@ export interface components {
          * @description The embedding provider to use.
          * @enum {string}
          */
-        EmbedderProvider: "gemini" | "ollama" | "openai" | "bedrock" | "mock";
+        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "mock";
         /** @description Configuration for the Google embedding provider. */
         GoogleEmbedderConfig: {
             /** @description The Google Cloud project ID. */
@@ -881,6 +1318,59 @@ export interface components {
              * @description The URL of the Google API endpoint.
              */
             url?: string;
+        };
+        /**
+         * @description Configuration for Google Cloud Vertex AI embedding models (enterprise-grade).
+         *
+         *     Uses Application Default Credentials (ADC) for authentication by default.
+         *     Suitable for production deployments on Google Cloud Platform.
+         *
+         *     **Authentication Priority:**
+         *     1. credentials_path (path to service account key file)
+         *     2. GOOGLE_APPLICATION_CREDENTIALS environment variable
+         *     3. Application Default Credentials (ADC) - RECOMMENDED
+         *        - In GCP: automatic (Cloud Run, GKE, Compute Engine)
+         *        - Local dev: `gcloud auth application-default login`
+         *
+         *     **Note:** For consistency with the AI generator, credentials_json is not supported.
+         *     Use credentials_path or ADC instead.
+         *
+         *     **Required IAM Permission:** `roles/aiplatform.user`
+         *
+         *     **Supported Models:**
+         *     - text-embedding-004 (latest, 768 dimensions)
+         *     - textembedding-gecko@003, @002, @001 (legacy)
+         *     - textembedding-gecko-multilingual@001 (multilingual support)
+         *     - text-multilingual-embedding-002 (multilingual, 768 dimensions)
+         *     - multimodalembedding (images, audio, video - 128/256/512/1408 dimensions)
+         * @example {
+         *       "provider": "vertex",
+         *       "model": "text-embedding-004",
+         *       "project_id": "my-gcp-project",
+         *       "location": "us-central1",
+         *       "dimension": 768
+         *     }
+         */
+        VertexEmbedderConfig: {
+            /**
+             * @description The name of the Vertex AI embedding model to use.
+             * @example text-embedding-004
+             */
+            model: string;
+            /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
+            project_id?: string;
+            /**
+             * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
+             * @default us-central1
+             */
+            location: string;
+            /** @description Path to service account JSON key file. Alternative to ADC for non-GCP environments. */
+            credentials_path?: string;
+            /**
+             * @description The dimension of the embedding vector. Model-specific (e.g., 768 for text-embedding-004, 128-1408 for multimodalembedding).
+             * @default 768
+             */
+            dimension: number;
         };
         /** @description Configuration for the Ollama embedding provider. */
         OllamaEmbedderConfig: {
@@ -930,16 +1420,16 @@ export interface components {
             provider: components["schemas"]["EmbedderProvider"];
             field?: string;
             template?: string;
-        } & (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]);
-        /** @description Configuration for the Google generative AI provider (Gemini). */
+        } & (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]);
+        /** @description Configuration for the Google generative AI provider (Gemini). Defaults to gemini-2.5-flash if no model is specified. */
         GoogleGeneratorConfig: {
             /** @description The Google Cloud project ID. */
             project_id?: string;
             /** @description The Google Cloud location (e.g., 'us-central1'). */
             location?: string;
             /**
-             * @description The name of the generative model to use (e.g., 'gemini-2.0-flash-exp', 'gemini-1.5-pro').
-             * @default gemini-2.0-flash-exp
+             * @description The name of the generative model to use (e.g., 'gemini-2.5-flash', 'gemini-1.5-pro').
+             * @default gemini-2.5-flash
              */
             model: string;
             /**
@@ -963,6 +1453,71 @@ export interface components {
              * @description The URL of the Google API endpoint.
              */
             url?: string;
+        };
+        /**
+         * @description Configuration for Google Cloud Vertex AI generative models (enterprise-grade).
+         *
+         *     Uses Application Default Credentials (ADC) for authentication by default.
+         *     Suitable for production deployments on Google Cloud Platform.
+         *
+         *     **Authentication Priority:**
+         *     1. credentials_path (path to service account key file)
+         *     2. GOOGLE_APPLICATION_CREDENTIALS environment variable
+         *     3. Application Default Credentials (ADC) - RECOMMENDED
+         *        - In GCP: automatic (Cloud Run, GKE, Compute Engine)
+         *        - Local dev: `gcloud auth application-default login`
+         *
+         *     **Note:** credentials_json is not supported by the genkit VertexAI plugin.
+         *     Use credentials_path or ADC instead.
+         *
+         *     **Required IAM Permission:** `roles/aiplatform.user`
+         *
+         *     **Supported Models:**
+         *     - gemini-2.5-flash (default, fast and efficient)
+         *     - gemini-1.5-pro (balanced performance)
+         *     - gemini-1.5-flash (cost-effective)
+         *     - gemini-2.0-pro (advanced reasoning)
+         *
+         *     Defaults to gemini-2.5-flash if no model is specified.
+         * @example {
+         *       "provider": "vertex",
+         *       "model": "gemini-2.5-flash",
+         *       "project_id": "my-gcp-project",
+         *       "location": "us-central1",
+         *       "temperature": 0.7,
+         *       "max_tokens": 4096
+         *     }
+         */
+        VertexGeneratorConfig: {
+            /**
+             * @description The name of the Vertex AI model to use.
+             * @default gemini-2.5-flash
+             * @example gemini-2.5-flash
+             */
+            model: string;
+            /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
+            project_id?: string;
+            /**
+             * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
+             * @default us-central1
+             */
+            location: string;
+            /** @description Path to service account JSON key file. Sets GOOGLE_APPLICATION_CREDENTIALS environment variable. Alternative to ADC for non-GCP environments. */
+            credentials_path?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0). Higher values make output more random.
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate in the response. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
+            top_k?: number;
         };
         /** @description Configuration for the Ollama generative AI provider. */
         OllamaGeneratorConfig: {
@@ -1046,37 +1601,61 @@ export interface components {
             /** @description Top-k sampling parameter. */
             top_k?: number;
         };
-        /** @description Configuration for the Anthropic generative AI provider. */
+        /**
+         * @description Configuration for the Anthropic generative AI provider (Claude models).
+         *     Uses the firebase/genkit compat_oai/anthropic plugin with OpenAI-compatible API.
+         *
+         *     Defaults to claude-3-7-sonnet-20250219 if no model is specified.
+         *
+         *     API key can be provided via the 'api_key' field or the ANTHROPIC_API_KEY environment variable.
+         *
+         *     Supported models:
+         *     - claude-3-7-sonnet-20250219 (latest, most capable)
+         *     - claude-3-5-haiku-20241022 (fast and efficient)
+         *     - claude-3-5-sonnet-20240620 (balanced performance)
+         *     - claude-3-opus-20240229 (highly capable)
+         *     - claude-3-haiku-20240307 (fastest)
+         * @example {
+         *       "provider": "anthropic",
+         *       "model": "claude-3-7-sonnet-20250219",
+         *       "temperature": 0.7,
+         *       "max_tokens": 4096
+         *     }
+         */
         AnthropicGeneratorConfig: {
-            /** @description The name of the Anthropic model to use (e.g., 'claude-3-5-sonnet-20241022'). */
+            /**
+             * @description The full model ID of the Anthropic model to use (e.g., 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022').
+             * @default claude-3-7-sonnet-20250219
+             * @example claude-3-7-sonnet-20250219
+             */
             model: string;
-            /** @description The Anthropic API key. */
+            /** @description The Anthropic API key. If not provided, falls back to ANTHROPIC_API_KEY environment variable. */
             api_key?: string;
             /**
              * Format: uri
-             * @description The URL of the Anthropic API endpoint.
+             * @description The URL of the Anthropic API endpoint (optional, uses default if not specified).
              */
             url?: string;
             /**
              * Format: float
-             * @description Controls randomness in generation (0.0-1.0).
+             * @description Controls randomness in generation (0.0-1.0). Higher values make output more random.
              */
             temperature?: number;
-            /** @description Maximum number of tokens to generate. */
+            /** @description Maximum number of tokens to generate in the response. */
             max_tokens?: number;
             /**
              * Format: float
-             * @description Nucleus sampling parameter.
+             * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
              */
             top_p?: number;
-            /** @description Top-k sampling parameter. */
+            /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
             top_k?: number;
         };
         /**
          * @description The generative AI provider to use.
          * @enum {string}
          */
-        GeneratorProvider: "gemini" | "ollama" | "openai" | "bedrock" | "anthropic" | "mock";
+        GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "anthropic" | "mock";
         /**
          * @description A unified configuration for a generative AI provider.
          * @example {
@@ -1086,7 +1665,7 @@ export interface components {
          *       "max_tokens": 2048
          *     }
          */
-        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"]) & {
+        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"]) & {
             provider: components["schemas"]["GeneratorProvider"];
         };
         /** @description Result of a summarization operation. The summary is formatted as markdown with inline document references using [doc_id <id>] or [doc_id <id1>, <id2>] format. */
@@ -1105,7 +1684,7 @@ export interface components {
          *       "model": "text-embedding-004"
          *     }
          */
-        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]) & {
+        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
         };
         EmbeddingIndexConfig: {
@@ -1531,7 +2110,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Table created successfully */
+            /** @description Table created successfully with all configured indexes */
             200: {
                 headers: {
                     [name: string]: unknown;
