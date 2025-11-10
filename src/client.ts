@@ -388,17 +388,6 @@ export class AntflyClient {
                         callbacks.onClassification(classData);
                       }
                       break;
-                    case "transformation":
-                      if (callbacks.onQueryGenerated) {
-                        callbacks.onQueryGenerated(data);
-                      }
-                      break;
-                    case "query_generated":
-                      if (callbacks.onQueryGenerated) {
-                        const queryData = JSON.parse(data);
-                        callbacks.onQueryGenerated(queryData);
-                      }
-                      break;
                     case "hits_start":
                       if (callbacks.onHitsStart) {
                         const hitsStartData = JSON.parse(data);
@@ -482,7 +471,7 @@ export class AntflyClient {
    * Answer Agent - Intelligent query routing and generation
    * Automatically classifies queries, generates optimal searches, and provides answers
    * @param request - Answer agent request with query and generator config
-   * @param callbacks - Optional callbacks for SSE events (classification, transformation, query_generated, hits_start, hit, hits_end, reasoning, answer, follow_up_question, done, error)
+   * @param callbacks - Optional callbacks for SSE events (classification, hits_start, hit, hits_end, reasoning, answer, follow_up_question, done, error)
    * @returns Promise with AnswerAgentResult (JSON) or AbortController (when streaming)
    */
   async answerAgent(

@@ -966,13 +966,8 @@ export interface components {
         };
         /** @description Answer agent result with classification and generated answer with inline document references */
         AnswerAgentResult: {
-            /**
-             * @description Classification of the query type
-             * @enum {string}
-             */
-            classification?: "question" | "search";
-            /** @description The transformed semantic search queries optimized by the LLM */
-            transformations?: string[];
+            /** @description Query classification and transformation result */
+            classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
             /** @description Results from each executed query */
             query_results?: components["schemas"]["QueryResult"][];
             /** @description LLM's reasoning process (if with_reasoning was enabled) */
@@ -1710,6 +1705,24 @@ export interface components {
         SummarizeResult: {
             /** @description The generated summary text in markdown format with inline document references like [doc_id doc1] or [doc_id doc1, doc2] */
             summary: string;
+        };
+        /**
+         * @description Classification of query type: question (specific factual query) or search (exploratory query)
+         * @enum {string}
+         */
+        RouteType: "question" | "search";
+        /** @description Query classification and transformation result combining all query enhancements */
+        ClassificationTransformationResult: {
+            route_type: components["schemas"]["RouteType"];
+            /** @description Clarified query with added context for answer generation (human-readable) */
+            improved_query: string;
+            /** @description Optimized query for vector/semantic search (concept extraction with synonyms) */
+            semantic_query: string;
+            /**
+             * Format: float
+             * @description Classification confidence (0.0 to 1.0)
+             */
+            confidence: number;
         };
         BleveIndexV2Config: {
             /** @description Whether to use memory-only storage */

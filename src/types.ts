@@ -158,8 +158,12 @@ export interface RAGStreamCallbacks {
 
 // Answer Agent streaming callbacks for structured SSE events
 export interface AnswerAgentStreamCallbacks {
-  onClassification?: (data: { route_type: "question" | "search"; confidence: number }) => void;
-  onQueryGenerated?: (transformation: string) => void;
+  onClassification?: (data: {
+    route_type: "question" | "search";
+    improved_query: string;
+    semantic_query: string;
+    confidence: number;
+  }) => void;
   onHitsStart?: (data: { table: string; status: number; error?: string }) => void;
   onHit?: (hit: QueryHit) => void;
   onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
