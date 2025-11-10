@@ -95,6 +95,11 @@ export type {
   RAGStreamCallbacks,
   SummarizeResult,
 
+  // Answer Agent types
+  AnswerAgentRequest,
+  AnswerAgentResult,
+  AnswerAgentStreamCallbacks,
+
   // Error type
   AntflyError,
 
