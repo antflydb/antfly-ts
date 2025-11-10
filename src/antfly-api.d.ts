@@ -128,7 +128,7 @@ export interface paths {
         put?: never;
         /**
          * Answer Agent - Intelligent query routing with automatic query generation
-         * @description Uses LLM to classify the query, generate optimal search queries across tables, execute them, and generate an answer (for questions) or return document IDs (for searches). Streams classification, keywords, generated queries, results, and answer as SSE events.
+         * @description Uses LLM to classify and improve the query, transform it for optimal semantic search, execute the provided queries with the transformed text, and generate an answer. Streams classification, query execution, results, and answer as SSE events.
          */
         post: operations["answerAgent"];
         delete?: never;
@@ -917,34 +917,39 @@ export interface components {
         };
         AnswerAgentRequest: {
             /**
-             * @description User's natural language query
+             * @description User's natural language query to be classified and improved
              * @example What are the best gaming laptops under $2000?
              */
             query: string;
             summarizer: components["schemas"]["GeneratorConfig"];
             /**
-             * @description Optional list of tables to search. If empty, searches all tables.
+             * @description Array of query requests to execute. The query text will be transformed for semantic search
+             *     and populated into the semantic_search field of each query.
              * @example [
-             *       "products",
-             *       "reviews"
+             *       {
+             *         "table": "products",
+             *         "indexes": [
+             *           "embedding_idx"
+             *         ],
+             *         "limit": 10
+             *       },
+             *       {
+             *         "table": "reviews",
+             *         "indexes": [
+             *           "embedding_idx"
+             *         ],
+             *         "limit": 5
+             *       }
              *     ]
              */
-            tables?: string[];
-            /**
-             * @description Optional list of indexes to use for each table. If empty, uses all available indexes.
-             * @example [
-             *       "embedding_idx",
-             *       "search_idx"
-             *     ]
-             */
-            indexes?: string[];
+            queries: components["schemas"]["QueryRequest"][];
             /**
              * @description Optional system prompt to guide classification and answer generation
              * @example You are a helpful shopping assistant.
              */
             system_prompt?: string;
             /**
-             * @description Enable SSE streaming of results (classification, keywords, queries, results, answer) instead of JSON response
+             * @description Enable SSE streaming of results (classification, queries, results, answer) instead of JSON response
              * @default true
              */
             with_streaming: boolean;
@@ -959,22 +964,20 @@ export interface components {
              */
             with_followup: boolean;
         };
-        /** @description Answer agent result with classification, keywords, and generated answer or document IDs */
+        /** @description Answer agent result with classification and generated answer with inline document references */
         AnswerAgentResult: {
             /**
              * @description Classification of the query type
              * @enum {string}
              */
             classification?: "question" | "search";
-            /** @description Keywords extracted from the query */
-            keywords?: string[];
-            /** @description The queries that were generated and executed */
-            queries_executed?: components["schemas"]["QueryRequest"][];
-            /** @description Results from each generated query */
+            /** @description The transformed semantic search queries optimized by the LLM */
+            transformations?: string[];
+            /** @description Results from each executed query */
             query_results?: components["schemas"]["QueryResult"][];
             /** @description LLM's reasoning process (if with_reasoning was enabled) */
             reasoning?: string;
-            /** @description Generated answer for "question" classification (markdown format with inline document references) */
+            /** @description Generated answer (markdown format with inline document references) */
             answer?: string;
             /** @description Suggested follow-up questions (if with_followup was enabled) */
             followup_questions?: string[];
