@@ -418,7 +418,7 @@ export class AntflyClient {
                         callbacks.onAnswer(chunk);
                       }
                       break;
-                    case "follow_up_question":
+                    case "followup_question":
                       if (callbacks.onFollowUpQuestion) {
                         const question = JSON.parse(data);
                         callbacks.onFollowUpQuestion(question);
@@ -471,7 +471,7 @@ export class AntflyClient {
    * Answer Agent - Intelligent query routing and generation
    * Automatically classifies queries, generates optimal searches, and provides answers
    * @param request - Answer agent request with query and generator config
-   * @param callbacks - Optional callbacks for SSE events (classification, hits_start, hit, hits_end, reasoning, answer, follow_up_question, done, error)
+   * @param callbacks - Optional callbacks for SSE events (classification, hits_start, hit, hits_end, reasoning, answer, followup_question, done, error)
    * @returns Promise with AnswerAgentResult (JSON) or AbortController (when streaming)
    */
   async answerAgent(
