@@ -639,6 +639,8 @@ export interface components {
             health: components["schemas"]["ClusterHealth"];
             /** @description Optional message providing details about the health status */
             message?: string;
+            /** @description Indicates whether authentication is enabled for the cluster */
+            auth_enabled?: boolean;
         } & {
             [key: string]: unknown;
         };
