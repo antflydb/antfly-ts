@@ -966,7 +966,7 @@ export interface components {
              */
             with_followup: boolean;
         };
-        /** @description Answer agent result with classification and generated answer with inline document references */
+        /** @description Answer agent result with classification and generated answer with inline resource references */
         AnswerAgentResult: {
             /** @description Query classification and transformation result */
             classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
@@ -974,7 +974,7 @@ export interface components {
             query_results?: components["schemas"]["QueryResult"][];
             /** @description LLM's reasoning process (if with_reasoning was enabled) */
             reasoning?: string;
-            /** @description Generated answer (markdown format with inline document references) */
+            /** @description Generated answer (markdown format with inline resource references) */
             answer?: string;
             /** @description Suggested follow-up questions (if with_followup was enabled) */
             followup_questions?: string[];
@@ -1238,7 +1238,7 @@ export interface components {
          */
         LinearMergeRequest: {
             /**
-             * @description Map of document ID to document object: {"doc_id_1": {...}, "doc_id_2": {...}}
+             * @description Map of resource ID to resource object: {"resource_id_1": {...}, "resource_id_2": {...}}
              *
              *     Requirements:
              *     - Keys must be sorted lexicographically by your client
@@ -1703,9 +1703,9 @@ export interface components {
         GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"]) & {
             provider: components["schemas"]["GeneratorProvider"];
         };
-        /** @description Result of a summarization operation. The summary is formatted as markdown with inline document references using [doc_id <id>] or [doc_id <id1>, <id2>] format. */
+        /** @description Result of a summarization operation. The summary is formatted as markdown with inline resource references using [resource_id <id>] or [resource_id <id1>, <id2>] format. */
         SummarizeResult: {
-            /** @description The generated summary text in markdown format with inline document references like [doc_id doc1] or [doc_id doc1, doc2] */
+            /** @description The generated summary text in markdown format with inline resource references like [resource_id res1] or [resource_id res1, res2] */
             summary: string;
         };
         /**
