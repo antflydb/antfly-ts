@@ -854,10 +854,11 @@ export interface components {
              *     - "propose": Wait for Raft proposal acceptance (fastest, default)
              *     - "write": Wait for Pebble KV write
              *     - "full_text": Wait for full-text index WAL write (slowest, most durable)
+             *     - "aknn": Wait for vector index write with best-effort synchronous embedding (falls back to async on timeout)
              * @default propose
              * @enum {string}
              */
-            sync_level: "propose" | "write" | "full_text";
+            sync_level: "propose" | "write" | "full_text" | "aknn";
         };
         BackupRequest: {
             /**
@@ -917,6 +918,37 @@ export interface components {
             query_results?: components["schemas"]["QueryResult"][];
             summary_result?: components["schemas"]["SummarizeResult"];
         };
+        /**
+         * @description Optional user context to customize the content guidance for each section of the answer agent response.
+         *
+         *     **What you can customize**: Style, tone, length, detail level, and focus of content for each section independently.
+         *
+         *     **What is fixed**: The response format is always markdown with consistent structure (## Reasoning, ## Answer, ## Follow-up Questions).
+         *     Markdown formatting (headings, bullets, code blocks, etc.) is always applied and cannot be disabled.
+         *
+         *     **Architecture**: These contexts are passed as template variables to the prompt template. Defaults are set
+         *     at the application layer, and users can override them via this API to customize content guidance.
+         */
+        UserContext: {
+            /**
+             * @description Custom content guidance for the reasoning section. Controls what information to include,
+             *     the level of detail, and the focus of the reasoning process. Does not control markdown formatting.
+             * @example Keep reasoning brief, 1-2 sentences maximum
+             */
+            reasoning_context?: string;
+            /**
+             * @description Custom content guidance for the answer section. Controls the tone, content depth, level of detail,
+             *     and what information to emphasize. Does not control markdown formatting (which is always applied).
+             * @example Provide a comprehensive answer with technical details and examples
+             */
+            answer_context?: string;
+            /**
+             * @description Custom content guidance for follow-up questions. Controls the quantity, focus area, tone,
+             *     and style of follow-up questions. Does not control markdown formatting.
+             * @example Generate 5 follow-up questions focused on technical specifications and pricing
+             */
+            followup_context?: string;
+        };
         AnswerAgentRequest: {
             /**
              * @description User's natural language query to be classified and improved
@@ -965,6 +997,7 @@ export interface components {
              * @default false
              */
             with_followup: boolean;
+            user_context?: components["schemas"]["UserContext"];
         };
         /** @description Answer agent result with classification and generated answer with inline resource references */
         AnswerAgentResult: {
@@ -986,7 +1019,9 @@ export interface components {
              */
             table?: string;
             /**
-             * @description Bleve query for full-text search. Supports field-specific queries, boolean operators, and complex expressions.
+             * @description Bleve query for full-text search. Supports all Bleve query types.
+             *
+             *     See bleve-query-openapi.yaml for complete type definitions.
              *
              *     Examples:
              *     - Simple: `{"query": "computer"}`
@@ -995,12 +1030,11 @@ export interface components {
              *     - Range: `{"query": "year:>2020"}`
              *     - Phrase: `{"query": "\"exact phrase\""}`
              * @example {
-             *       "query": "body:computer AND category:technology"
+             *       "query": "body:computer AND category:technology",
+             *       "boost": 1
              *     }
              */
-            full_text_search?: {
-                [key: string]: unknown;
-            };
+            full_text_search?: components["schemas"]["Query"] & unknown;
             /**
              * @description Natural language query for vector similarity search. Results are ranked by semantic similarity
              *     to the query and can be combined with full_text_search using Reciprocal Rank Fusion (RRF).
@@ -1034,32 +1068,34 @@ export interface components {
              * @description Bleve query applied as an AND condition. Documents must match both the main query
              *     and this filter. Applied before scoring for better performance.
              *
+             *     See bleve-query-openapi.yaml for complete type definitions.
+             *
              *     Use for:
              *     - Status filtering: `"status:published"`
              *     - Date ranges: `"created_at:>2023-01-01"`
              *     - Category filtering: `"category:technology AND language:en"`
              * @example {
-             *       "query": "category:technology AND year:>2020"
+             *       "query": "category:technology AND year:>2020",
+             *       "boost": 1
              *     }
              */
-            filter_query?: {
-                [key: string]: unknown;
-            };
+            filter_query?: components["schemas"]["Query"] & unknown;
             /**
              * @description Bleve query applied as a NOT condition. Documents matching this query are excluded
              *     from results. Applied before scoring.
+             *
+             *     See bleve-query-openapi.yaml for complete type definitions.
              *
              *     Use for:
              *     - Excluding drafts: `"status:draft"`
              *     - Removing deprecated content: `"deprecated:true"`
              *     - Filtering out archived items: `"status:archived"`
              * @example {
-             *       "query": "category:deprecated OR status:archived"
+             *       "query": "category:deprecated OR status:archived",
+             *       "boost": 1
              *     }
              */
-            exclusion_query?: {
-                [key: string]: unknown;
-            };
+            exclusion_query?: components["schemas"]["Query"] & unknown;
             /**
              * @description Faceting configuration for aggregating results by field values.
              *     Useful for building faceted navigation and filters.
@@ -1138,6 +1174,20 @@ export interface components {
             reranker?: components["schemas"]["RerankerConfig"];
             analyses?: components["schemas"]["Analyses"];
             /**
+             * @description Declarative graph queries to execute after full-text/vector searches.
+             *     Results can reference search results using node selectors like $full_text_results.
+             */
+            graph_searches?: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description Strategy for merging graph results with search results:
+             *     - union: Include nodes from both search and graph results
+             *     - intersection: Only include nodes appearing in both
+             * @enum {string}
+             */
+            expand_strategy?: "union" | "intersection";
+            /**
              * @description Optional Handlebars template string for rendering document content in RAG queries.
              *     Template has access to document fields via `{{this.fields.fieldName}}`.
              *
@@ -1200,6 +1250,10 @@ export interface components {
             /** @description Analysis results like PCA and t-SNE per index embeddings. */
             analyses?: {
                 [key: string]: components["schemas"]["AnalysesResult"];
+            };
+            /** @description Results from declarative graph queries. */
+            graph_results?: {
+                [key: string]: unknown;
             };
             /**
              * Format: int64
@@ -1320,14 +1374,364 @@ export interface components {
             /** Format: int64 */
             took?: number;
         };
+        /** @description A typed, weighted connection between documents */
+        Edge: {
+            /**
+             * Format: byte
+             * @description Base64-encoded source document key
+             */
+            source: string;
+            /**
+             * Format: byte
+             * @description Base64-encoded target document key
+             */
+            target: string;
+            /** @description Edge type (e.g., "cites", "similar_to", "authored_by") */
+            type: string;
+            /**
+             * Format: double
+             * @description Edge weight/confidence (0.0 to 1.0)
+             */
+            weight: number;
+            /**
+             * Format: date-time
+             * @description When the edge was created
+             */
+            created_at?: string;
+            /**
+             * Format: date-time
+             * @description When the edge was last updated
+             */
+            updated_at?: string;
+            /** @description Optional edge metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description Direction of edges to query:
+         *     - out: Outgoing edges from the node
+         *     - in: Incoming edges to the node
+         *     - both: Both outgoing and incoming edges
+         * @default out
+         * @enum {string}
+         */
+        EdgeDirection: "out" | "in" | "both";
+        /** @description Rules for graph traversal */
+        TraversalRules: {
+            /** @description Filter edges by type (empty = all types) */
+            edge_types?: string[];
+            /**
+             * Format: double
+             * @description Minimum edge weight filter
+             * @default 0
+             */
+            min_weight: number;
+            /**
+             * Format: double
+             * @description Maximum edge weight filter
+             * @default 1
+             */
+            max_weight: number;
+            direction?: components["schemas"]["EdgeDirection"];
+            /**
+             * @description Maximum traversal depth (0 = unlimited)
+             * @default 3
+             */
+            max_depth: number;
+            /**
+             * @description Maximum results to return (0 = unlimited)
+             * @default 100
+             */
+            max_results: number;
+            /**
+             * @description Include path information in results
+             * @default false
+             */
+            include_paths: boolean;
+            /**
+             * @description Visit each node only once
+             * @default true
+             */
+            deduplicate_nodes: boolean;
+        };
+        /** @description A single result from graph traversal */
+        TraversalResult: {
+            /**
+             * Format: byte
+             * @description Base64-encoded document key
+             */
+            key: string;
+            /** @description Document data (if loaded) */
+            document?: {
+                [key: string]: unknown;
+            };
+            /** @description Distance from start node (0 = start node) */
+            depth: number;
+            /** @description Sequence of keys from start to this node (if include_paths=true) */
+            path?: string[];
+            /** @description Sequence of edges from start to this node (if include_paths=true) */
+            path_edges?: components["schemas"]["Edge"][];
+            /**
+             * Format: double
+             * @description Product of edge weights along the path
+             */
+            total_weight?: number;
+        };
+        EdgesResponse: {
+            edges?: components["schemas"]["Edge"][];
+            /** @description Total number of edges returned */
+            count?: number;
+        };
+        TraverseResponse: {
+            results?: components["schemas"]["TraversalResult"][];
+            /** @description Total number of results */
+            count?: number;
+        };
+        /**
+         * @description Algorithm for path finding:
+         *     - min_hops: Shortest path by hop count (breadth-first search, ignores weights)
+         *     - max_weight: Path with maximum product of edge weights (strongest connection chain)
+         *     - min_weight: Path with minimum sum of edge weights (lowest cost route)
+         * @default min_hops
+         * @enum {string}
+         */
+        PathFindWeightMode: "min_hops" | "max_weight" | "min_weight";
+        PathFindRequest: {
+            /** @description Source node key (base64-encoded) */
+            source: string;
+            /** @description Target node key (base64-encoded) */
+            target: string;
+            /** @description Filter by specific edge types */
+            edge_types?: string[];
+            /** @default 10 */
+            max_depth: number;
+            weight_mode?: components["schemas"]["PathFindWeightMode"];
+            /** @default 1 */
+            k: number;
+            /** Format: double */
+            min_weight?: number;
+            /** Format: double */
+            max_weight?: number;
+            direction?: components["schemas"]["EdgeDirection"];
+        };
+        PathFindResult: {
+            paths?: components["schemas"]["Path"][];
+            source?: string;
+            target?: string;
+            weight_mode?: components["schemas"]["PathFindWeightMode"];
+            paths_found?: number;
+            /** Format: double */
+            search_time_ms?: number;
+        };
+        Path: {
+            /** @description Ordered list of node keys (base64-encoded) */
+            nodes?: string[];
+            edges?: components["schemas"]["PathEdge"][];
+            /** Format: double */
+            total_weight?: number;
+            length?: number;
+        };
+        PathEdge: {
+            source?: string;
+            target?: string;
+            type?: string;
+            /** Format: double */
+            weight?: number;
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * Format: double
+         * @description A floating-point number used to decrease or increase the relevance scores of a query.
+         * @default 1
+         */
+        Boost: number | null;
+        TermQuery: {
+            term: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        /** @description The fuzziness of the query. Can be an integer or "auto". */
+        Fuzziness: number | "auto";
+        MatchQuery: {
+            match: string;
+            field?: string;
+            analyzer?: string;
+            boost?: components["schemas"]["Boost"];
+            /** Format: int32 */
+            prefix_length?: number;
+            fuzziness?: components["schemas"]["Fuzziness"];
+            /** @enum {string} */
+            operator?: "or" | "and";
+        };
+        MatchPhraseQuery: {
+            match_phrase: string;
+            field?: string;
+            analyzer?: string;
+            boost?: components["schemas"]["Boost"];
+            fuzziness?: components["schemas"]["Fuzziness"];
+        };
+        PhraseQuery: {
+            terms: string[];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+            fuzziness?: components["schemas"]["Fuzziness"];
+        };
+        MultiPhraseQuery: {
+            terms: string[][];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+            fuzziness?: components["schemas"]["Fuzziness"];
+        };
+        FuzzyQuery: {
+            term: string;
+            /** Format: int32 */
+            prefix_length?: number;
+            fuzziness?: components["schemas"]["Fuzziness"];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        PrefixQuery: {
+            prefix: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        RegexpQuery: {
+            regexp: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        WildcardQuery: {
+            wildcard: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        QueryStringQuery: {
+            query: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        NumericRangeQuery: {
+            /** Format: double */
+            min?: number | null;
+            /** Format: double */
+            max?: number | null;
+            inclusive_min?: boolean | null;
+            inclusive_max?: boolean | null;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        TermRangeQuery: {
+            min?: string | null;
+            max?: string | null;
+            inclusive_min?: boolean | null;
+            inclusive_max?: boolean | null;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        DateRangeStringQuery: {
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            inclusive_start?: boolean | null;
+            inclusive_end?: boolean | null;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+            datetime_parser?: string;
+        };
+        Query: components["schemas"]["TermQuery"] | components["schemas"]["MatchQuery"] | components["schemas"]["MatchPhraseQuery"] | components["schemas"]["PhraseQuery"] | components["schemas"]["MultiPhraseQuery"] | components["schemas"]["FuzzyQuery"] | components["schemas"]["PrefixQuery"] | components["schemas"]["RegexpQuery"] | components["schemas"]["WildcardQuery"] | components["schemas"]["QueryStringQuery"] | components["schemas"]["NumericRangeQuery"] | components["schemas"]["TermRangeQuery"] | components["schemas"]["DateRangeStringQuery"] | components["schemas"]["BooleanQuery"] | components["schemas"]["ConjunctionQuery"] | components["schemas"]["DisjunctionQuery"] | components["schemas"]["MatchAllQuery"] | components["schemas"]["MatchNoneQuery"] | components["schemas"]["DocIdQuery"] | components["schemas"]["BoolFieldQuery"] | components["schemas"]["IPRangeQuery"] | components["schemas"]["GeoBoundingBoxQuery"] | components["schemas"]["GeoDistanceQuery"] | components["schemas"]["GeoBoundingPolygonQuery"] | components["schemas"]["GeoShapeQuery"];
+        ConjunctionQuery: {
+            conjuncts: components["schemas"]["Query"][];
+            boost?: components["schemas"]["Boost"];
+        };
+        DisjunctionQuery: {
+            disjuncts: components["schemas"]["Query"][];
+            boost?: components["schemas"]["Boost"];
+            /** Format: double */
+            min?: number;
+        };
+        BooleanQuery: {
+            must?: components["schemas"]["ConjunctionQuery"];
+            should?: components["schemas"]["DisjunctionQuery"];
+            must_not?: components["schemas"]["DisjunctionQuery"];
+            filter?: components["schemas"]["Query"];
+            boost?: components["schemas"]["Boost"];
+        };
+        MatchAllQuery: {
+            match_all: Record<string, never>;
+            boost?: components["schemas"]["Boost"];
+        };
+        MatchNoneQuery: {
+            match_none: Record<string, never>;
+            boost?: components["schemas"]["Boost"];
+        };
+        DocIdQuery: {
+            ids: string[];
+            boost?: components["schemas"]["Boost"];
+        };
+        BoolFieldQuery: {
+            bool: boolean;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        IPRangeQuery: {
+            cidr: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        GeoBoundingBoxQuery: {
+            /** @description [lon, lat] */
+            top_left: number[];
+            /** @description [lon, lat] */
+            bottom_right: number[];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        GeoDistanceQuery: {
+            /** @description [lon, lat] */
+            location: number[];
+            /** @example 10km */
+            distance: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        GeoPoint: {
+            /** Format: double */
+            lon?: number;
+            /** Format: double */
+            lat?: number;
+        };
+        GeoBoundingPolygonQuery: {
+            polygon_points: components["schemas"]["GeoPoint"][];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        /** @description A GeoJSON shape object. This is a simplified representation. */
+        GeoShape: {
+            type: string;
+            coordinates: unknown[];
+        };
+        GeoShapeGeometry: {
+            shape: components["schemas"]["GeoShape"];
+            /** @enum {string} */
+            relation: "intersects" | "contains" | "within";
+        };
+        GeoShapeQuery: {
+            geometry: components["schemas"]["GeoShapeGeometry"];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
         /**
          * @description Merge strategy for combining results from the semantic_search and full_text_search.
-         *     rrf: Reciprocal Rank Fusion
+         *     rrf: Reciprocal Rank Fusion - combines scores using reciprocal rank formula
+         *     rsf: Relative Score Fusion - normalizes scores by min/max within a window and combines weighted scores
          *     failover: Use full_text_search if embedding generation fails
          * @default rrf
          * @enum {string}
          */
-        MergeStrategy: "rrf" | "failover";
+        MergeStrategy: "rrf" | "rsf" | "failover";
         /**
          * @description The embedding provider to use.
          * @enum {string}
@@ -1757,17 +2161,50 @@ export interface components {
             /** @description Configuration for the generative AI plugin */
             summarizer?: components["schemas"]["GeneratorConfig"];
         };
+        /** @description Configuration for a specific edge type */
+        EdgeTypeConfig: {
+            /** @description Edge type name (e.g., 'cites', 'similar_to') */
+            name: string;
+            /**
+             * Format: double
+             * @description Maximum allowed edge weight
+             * @default 1
+             */
+            max_weight: number;
+            /**
+             * Format: double
+             * @description Minimum allowed edge weight
+             * @default 0
+             */
+            min_weight: number;
+            /**
+             * @description Whether to allow edges from a node to itself
+             * @default true
+             */
+            allow_self_loops: boolean;
+            /** @description Required metadata fields for this edge type */
+            required_metadata?: string[];
+        };
+        /** @description Configuration for graph_v0 index type */
+        GraphIndexV0Config: {
+            /** @description List of edge types with their configurations */
+            edge_types?: components["schemas"]["EdgeTypeConfig"][];
+            /** @description Maximum number of edges per document (0 = unlimited) */
+            max_edges_per_document?: number;
+        };
         /**
          * @description The type of the index.
          * @enum {string}
          */
-        IndexType: "full_text_v0" | "aknn_v0";
+        IndexType: "full_text_v0" | "aknn_v0" | "graph_v0";
         /** @description Configuration for an index */
         IndexConfig: {
             /** @description Name of the index */
             name: string;
+            /** @description Optional description of the index and its purpose */
+            description?: string;
             type: components["schemas"]["IndexType"];
-        } & (components["schemas"]["BleveIndexV2Config"] | components["schemas"]["EmbeddingIndexConfig"]);
+        } & (components["schemas"]["BleveIndexV2Config"] | components["schemas"]["EmbeddingIndexConfig"] | components["schemas"]["GraphIndexV0Config"]);
         /** @description Defines the structure of a document type */
         DocumentSchema: {
             /** @description A description of the document type. */
@@ -1844,8 +2281,22 @@ export interface components {
              */
             total_nodes?: number;
         };
+        /** @description Statistics for graph_v0 index */
+        GraphIndexV0Stats: {
+            /** @description Error message if stats could not be retrieved */
+            error?: string;
+            /**
+             * Format: uint64
+             * @description Total number of edges in the graph
+             */
+            total_edges?: number;
+            /** @description Count of edges per edge type */
+            edge_types?: {
+                [key: string]: number;
+            };
+        };
         /** @description Statistics for an index */
-        IndexStats: components["schemas"]["BleveIndexV2Stats"] | components["schemas"]["EmbeddingIndexStats"];
+        IndexStats: components["schemas"]["BleveIndexV2Stats"] | components["schemas"]["EmbeddingIndexStats"] | components["schemas"]["GraphIndexV0Stats"];
         User: {
             /** @example johndoe */
             username: string;

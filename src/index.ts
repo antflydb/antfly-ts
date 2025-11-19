@@ -111,6 +111,26 @@ export type {
 export type { paths, components, operations } from "./antfly-api.js";
 export type { components as bleve_components } from "./bleve-query.js";
 
+// Query helper functions
+export {
+  queryString,
+  term,
+  match,
+  matchPhrase,
+  prefix,
+  fuzzy,
+  numericRange,
+  dateRange,
+  matchAll,
+  matchNone,
+  boolean,
+  conjunction,
+  disjunction,
+  docIds,
+  geoDistance,
+  geoBoundingBox
+} from "./query-helpers.js";
+
 // Default export for convenience
 import { AntflyClient } from "./client.js";
 export default AntflyClient;
