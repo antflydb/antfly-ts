@@ -488,8 +488,10 @@ export class AntflyClient {
     /**
      * List all tables
      */
-    list: async () => {
-      const { data, error } = await this.client.GET("/table", {});
+    list: async (params?: { prefix?: string; pattern?: string }) => {
+      const { data, error } = await this.client.GET("/table", {
+        params: params ? { query: params } : undefined,
+      });
       if (error) throw new Error(`Failed to list tables: ${error.error}`);
       return data;
     },
