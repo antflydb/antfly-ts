@@ -137,7 +137,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table": {
+    "/tables": {
         parameters: {
             query?: never;
             header?: never;
@@ -154,7 +154,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}": {
+    "/tables/{tableName}": {
         parameters: {
             query?: never;
             header?: never;
@@ -280,7 +280,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/query": {
+    "/tables/{tableName}/query": {
         parameters: {
             query?: never;
             header?: never;
@@ -300,7 +300,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/rag": {
+    "/tables/{tableName}/rag": {
         parameters: {
             query?: never;
             header?: never;
@@ -323,7 +323,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/batch": {
+    "/tables/{tableName}/batch": {
         parameters: {
             query?: never;
             header?: never;
@@ -343,7 +343,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/merge": {
+    "/tables/{tableName}/merge": {
         parameters: {
             query?: never;
             header?: never;
@@ -371,7 +371,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/backup": {
+    "/tables/{tableName}/backup": {
         parameters: {
             query?: never;
             header?: never;
@@ -391,7 +391,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/restore": {
+    "/tables/{tableName}/restore": {
         parameters: {
             query?: never;
             header?: never;
@@ -411,7 +411,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/schema": {
+    "/tables/{tableName}/schema": {
         parameters: {
             query?: never;
             header?: never;
@@ -431,7 +431,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/key/{key}": {
+    "/tables/{tableName}/lookup/{key}": {
         parameters: {
             query?: never;
             header?: never;
@@ -453,7 +453,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/index": {
+    "/tables/{tableName}/indexes": {
         parameters: {
             query?: never;
             header?: never;
@@ -473,7 +473,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/table/{tableName}/index/{indexName}": {
+    "/tables/{tableName}/indexes/{indexName}": {
         parameters: {
             query?: never;
             header?: never;
@@ -497,7 +497,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/me": {
+    "/users/me": {
         parameters: {
             query?: never;
             header?: never;
@@ -517,7 +517,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user": {
+    "/users": {
         parameters: {
             query?: never;
             header?: never;
@@ -537,7 +537,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/{userName}": {
+    "/users/{userName}": {
         parameters: {
             query?: never;
             header?: never;
@@ -568,7 +568,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/{userName}/password": {
+    "/users/{userName}/password": {
         parameters: {
             query?: never;
             header?: never;
@@ -591,7 +591,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/user/{userName}/permission": {
+    "/users/{userName}/permissions": {
         parameters: {
             query?: never;
             header?: never;
