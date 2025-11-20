@@ -770,8 +770,49 @@ export interface components {
         TableStatus: components["schemas"]["Table"] & {
             storage_status: components["schemas"]["StorageStatus"];
         };
+        TransformOp: {
+            /**
+             * @description MongoDB-style update operator
+             * @enum {string}
+             */
+            op: "$set" | "$unset" | "$inc" | "$push" | "$pull" | "$addToSet" | "$pop" | "$mul" | "$min" | "$max" | "$currentDate" | "$rename";
+            /**
+             * @description JSONPath to field (e.g., "$.user.name", "$.tags", or "user.name")
+             * @example $.views
+             */
+            path: string;
+            /** @description Value for operation (not required for $unset, $currentDate). Type depends on operator (number for $inc/$mul, any for $set, etc.) */
+            value?: unknown;
+        };
         /**
-         * @description Batch insert and delete operations in a single request. All operations are processed atomically within each shard.
+         * @example {
+         *       "key": "article:123",
+         *       "operations": [
+         *         {
+         *           "op": "$inc",
+         *           "path": "$.views",
+         *           "value": 1
+         *         },
+         *         {
+         *           "op": "$currentDate",
+         *           "path": "$.lastViewed"
+         *         }
+         *       ]
+         *     }
+         */
+        Transform: {
+            /** @description Document key (must be a string, not an object like inserts) */
+            key: string;
+            /** @description List of operations to apply in sequence */
+            operations: components["schemas"]["TransformOp"][];
+            /**
+             * @description If true, create document if it doesn't exist (like MongoDB upsert)
+             * @default false
+             */
+            upsert: boolean;
+        };
+        /**
+         * @description Batch insert, delete, and transform operations in a single request. All operations are processed atomically within each shard.
          *
          *     Benefits:
          *     - Reduces network overhead compared to individual requests
@@ -849,6 +890,47 @@ export interface components {
              *     ]
              */
             deletes?: string[];
+            /**
+             * @description Array of transform operations for in-place document updates using MongoDB-style operators.
+             *
+             *     Transform operations allow you to modify documents without read-modify-write races:
+             *     - Operations are applied atomically on the server
+             *     - Multiple operations per document are applied in sequence
+             *     - Supports numeric operations ($inc, $mul), array operations ($push, $pull), and more
+             *
+             *     Common use cases:
+             *     - Increment counters (views, likes, votes)
+             *     - Update timestamps ($currentDate)
+             *     - Manage arrays (add/remove tags, items)
+             *     - Update nested fields without overwriting the entire document
+             * @example [
+             *       {
+             *         "key": "article:123",
+             *         "operations": [
+             *           {
+             *             "op": "$inc",
+             *             "path": "$.views",
+             *             "value": 1
+             *           },
+             *           {
+             *             "op": "$currentDate",
+             *             "path": "$.lastViewed"
+             *           }
+             *         ]
+             *       },
+             *       {
+             *         "key": "user:456",
+             *         "operations": [
+             *           {
+             *             "op": "$push",
+             *             "path": "$.tags",
+             *             "value": "vip"
+             *           }
+             *         ]
+             *       }
+             *     ]
+             */
+            transforms?: components["schemas"]["Transform"][];
             /**
              * @description Synchronization level for the batch operation:
              *     - "propose": Wait for Raft proposal acceptance (fastest, default)
@@ -1034,7 +1116,9 @@ export interface components {
              *       "boost": 1
              *     }
              */
-            full_text_search?: components["schemas"]["Query"] & unknown;
+            full_text_search?: components["schemas"]["Query"] & {
+                [key: string]: unknown;
+            };
             /**
              * @description Natural language query for vector similarity search. Results are ranked by semantic similarity
              *     to the query and can be combined with full_text_search using Reciprocal Rank Fusion (RRF).
@@ -1178,7 +1262,7 @@ export interface components {
              *     Results can reference search results using node selectors like $full_text_results.
              */
             graph_searches?: {
-                [key: string]: unknown;
+                [key: string]: components["schemas"]["GraphQuery"];
             };
             /**
              * @description Strategy for merging graph results with search results:
@@ -1253,7 +1337,7 @@ export interface components {
             };
             /** @description Results from declarative graph queries. */
             graph_results?: {
-                [key: string]: unknown;
+                [key: string]: components["schemas"]["GraphQueryResult"];
             };
             /**
              * Format: int64
@@ -1860,6 +1944,120 @@ export interface components {
             field?: string;
             template?: string;
         } & (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]);
+        /**
+         * @description Type of graph query to execute
+         * @enum {string}
+         */
+        GraphQueryType: "traverse" | "neighbors" | "shortest_path" | "k_shortest_paths";
+        /** @description Defines how to select start/target nodes for graph queries */
+        GraphNodeSelector: {
+            /** @description Explicit list of node keys */
+            keys?: string[];
+            /**
+             * @description Reference to search results to use as nodes:
+             *     - "$full_text_results" - use full-text search results
+             *     - "$aknn_results.index_name" - use vector search results from specific index
+             */
+            result_ref?: string;
+            /** @description Maximum number of nodes to select from the referenced results */
+            limit?: number;
+        };
+        /**
+         * @description Path weighting algorithm for pathfinding:
+         *     - min_hops: Minimize number of edges
+         *     - min_weight: Minimize sum of edge weights
+         *     - max_weight: Maximize product of edge weights
+         * @enum {string}
+         */
+        PathWeightMode: "min_hops" | "min_weight" | "max_weight";
+        /** @description Parameters for graph traversal and pathfinding */
+        GraphQueryParams: {
+            /** @description Filter by edge types */
+            edge_types?: string[];
+            direction?: components["schemas"]["EdgeDirection"];
+            /** @description Maximum traversal depth */
+            max_depth?: number;
+            /**
+             * Format: double
+             * @description Minimum edge weight
+             */
+            min_weight?: number;
+            /**
+             * Format: double
+             * @description Maximum edge weight
+             */
+            max_weight?: number;
+            /** @description Maximum number of results (traversal) */
+            max_results?: number;
+            /** @description Remove duplicate nodes (traversal) */
+            deduplicate_nodes?: boolean;
+            /** @description Include path information (traversal) */
+            include_paths?: boolean;
+            weight_mode?: components["schemas"]["PathWeightMode"];
+            /** @description Number of paths to find (k-shortest-paths) */
+            k?: number;
+            /** @description Graph algorithm to run (e.g., 'pagerank', 'betweenness') */
+            algorithm?: string;
+            /** @description Parameters for the graph algorithm */
+            algorithm_params?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Declarative graph query to execute after full-text/vector searches */
+        GraphQuery: {
+            type: components["schemas"]["GraphQueryType"];
+            /** @description Graph index name (must be graph_v0 type) */
+            index_name: string;
+            /** @description Starting node(s) for the query */
+            start_nodes: components["schemas"]["GraphNodeSelector"];
+            /** @description Target nodes (for pathfinding only) */
+            target_nodes?: components["schemas"]["GraphNodeSelector"];
+            /** @description Traversal/pathfinding parameters */
+            params: components["schemas"]["GraphQueryParams"];
+            /** @description Fetch full documents for graph results */
+            include_documents?: boolean;
+            /** @description Include edge details for each node */
+            include_edges?: boolean;
+            /** @description Which fields to return from documents */
+            fields?: string[];
+        };
+        /** @description A node in graph query results */
+        GraphResultNode: {
+            /** @description Document key */
+            key: string;
+            /** @description Distance from start node */
+            depth?: number;
+            /**
+             * Format: double
+             * @description Weighted distance
+             */
+            distance?: number;
+            /** @description Full document (if include_documents=true) */
+            document?: {
+                [key: string]: unknown;
+            };
+            /** @description Keys in path from start to this node */
+            path?: string[];
+            /** @description Edges in path from start to this node */
+            path_edges?: components["schemas"]["PathEdge"][];
+            /** @description Connected edges (when include_edges=true) */
+            edges?: components["schemas"]["Edge"][];
+        };
+        /** @description Results of a graph query */
+        GraphQueryResult: {
+            type: components["schemas"]["GraphQueryType"];
+            /** @description Result nodes */
+            nodes?: components["schemas"]["GraphResultNode"][];
+            /** @description Result paths (for pathfinding queries) */
+            paths?: components["schemas"]["Path"][];
+            /** @description Total number of results */
+            total: number;
+            /**
+             * Format: int64
+             * @description Query execution time
+             */
+            took?: number;
+        };
         /** @description Configuration for the Google generative AI provider (Gemini). Defaults to gemini-2.5-flash if no model is specified. */
         GoogleGeneratorConfig: {
             /** @description The Google Cloud project ID. */
@@ -2554,7 +2752,18 @@ export interface operations {
     };
     listTables: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description Filter tables by name prefix (e.g., "prod_")
+                 * @example prod_
+                 */
+                prefix?: string;
+                /**
+                 * @description Filter tables by regex pattern (e.g., "^prod_.*_v[0-9]+$")
+                 * @example ^user_.*
+                 */
+                pattern?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
