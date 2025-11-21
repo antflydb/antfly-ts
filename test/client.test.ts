@@ -152,7 +152,9 @@ describe('AntflyClient', () => {
 
       const tables = await client.tables.list();
       expect(tables).toEqual(mockTables);
-      expect(mockGet).toHaveBeenCalledWith('/table', {});
+      expect(mockGet).toHaveBeenCalledWith('/tables', {
+        params: undefined,
+      });
     });
 
     it('should create a table', async () => {
@@ -174,7 +176,7 @@ describe('AntflyClient', () => {
 
       const result = await client.tables.create('new_table', config);
       expect(result).toEqual(mockTable);
-      expect(mockPost).toHaveBeenCalledWith('/table/{tableName}', {
+      expect(mockPost).toHaveBeenCalledWith('/tables/{tableName}', {
         params: { path: { tableName: 'new_table' } },
         body: config,
       });
@@ -208,7 +210,7 @@ describe('AntflyClient', () => {
 
       const result = await client.tables.query('products', request);
       expect(result).toEqual(mockResponse);
-      expect(mockPost).toHaveBeenCalledWith('/table/{tableName}/query', {
+      expect(mockPost).toHaveBeenCalledWith('/tables/{tableName}/query', {
         params: { path: { tableName: 'products' } },
         body: request,
       });

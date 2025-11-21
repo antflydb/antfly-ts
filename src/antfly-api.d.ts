@@ -780,12 +780,13 @@ export interface components {
         TableStatus: components["schemas"]["Table"] & {
             storage_status: components["schemas"]["StorageStatus"];
         };
+        /**
+         * @description MongoDB-style update operator
+         * @enum {string}
+         */
+        TransformOpType: "$set" | "$unset" | "$inc" | "$push" | "$pull" | "$addToSet" | "$pop" | "$mul" | "$min" | "$max" | "$currentDate" | "$rename";
         TransformOp: {
-            /**
-             * @description MongoDB-style update operator
-             * @enum {string}
-             */
-            op: "$set" | "$unset" | "$inc" | "$push" | "$pull" | "$addToSet" | "$pop" | "$mul" | "$min" | "$max" | "$currentDate" | "$rename";
+            op: components["schemas"]["TransformOpType"];
             /**
              * @description JSONPath to field (e.g., "$.user.name", "$.tags", or "user.name")
              * @example $.views
@@ -795,6 +796,12 @@ export interface components {
             value?: unknown;
         };
         /**
+         * @description In-place document transformation using MongoDB-style operators. Transforms are applied atomically
+         *     at the storage layer, eliminating read-modify-write races.
+         *
+         *     **Important:** Transform results are NOT validated against the table schema. This improves performance
+         *     but means it's possible to create invalid documents. Use with care and ensure your operations maintain
+         *     schema compliance.
          * @example {
          *       "key": "article:123",
          *       "operations": [
