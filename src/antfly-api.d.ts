@@ -645,6 +645,16 @@ export interface components {
             [key: string]: unknown;
         };
         ByteRange: string[];
+        /**
+         * @description Synchronization level for batch operations:
+         *     - "propose": Wait for Raft proposal acceptance (fastest, default)
+         *     - "write": Wait for Pebble KV write
+         *     - "full_text": Wait for full-text index WAL write (slowest, most durable)
+         *     - "aknn": Wait for vector index write with best-effort synchronous embedding (falls back to async on timeout)
+         * @default propose
+         * @enum {string}
+         */
+        SyncLevel: "propose" | "write" | "full_text" | "aknn";
         ShardConfig: {
             byte_range: components["schemas"]["ByteRange"];
         };
@@ -931,16 +941,7 @@ export interface components {
              *     ]
              */
             transforms?: components["schemas"]["Transform"][];
-            /**
-             * @description Synchronization level for the batch operation:
-             *     - "propose": Wait for Raft proposal acceptance (fastest, default)
-             *     - "write": Wait for Pebble KV write
-             *     - "full_text": Wait for full-text index WAL write (slowest, most durable)
-             *     - "aknn": Wait for vector index write with best-effort synchronous embedding (falls back to async on timeout)
-             * @default propose
-             * @enum {string}
-             */
-            sync_level: "propose" | "write" | "full_text" | "aknn";
+            sync_level?: components["schemas"]["SyncLevel"];
         };
         BackupRequest: {
             /**
@@ -1425,6 +1426,7 @@ export interface components {
              * @example false
              */
             dry_run: boolean;
+            sync_level?: components["schemas"]["SyncLevel"];
         };
         FailedOperation: {
             id?: string;
