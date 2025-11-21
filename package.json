@@ -57,17 +57,17 @@
   "homepage": "https://github.com/antflydb/antfly-ts#readme",
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@types/node": "^24.10.0",
-    "@typescript-eslint/eslint-plugin": "^8.46.3",
-    "@typescript-eslint/parser": "^8.46.3",
-    "@vitest/ui": "^4.0.8",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.47.0",
+    "@typescript-eslint/parser": "^8.47.0",
+    "@vitest/ui": "^4.0.13",
     "eslint": "^9.39.1",
     "openapi-typescript": "^7.10.1",
     "prettier": "^3.6.2",
-    "tsup": "^8.5.0",
+    "tsup": "^8.5.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.8"
+    "vitest": "^4.0.13"
   },
   "dependencies": {
     "openapi-fetch": "^0.15.0"
