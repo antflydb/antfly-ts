@@ -357,12 +357,23 @@ export interface paths {
         put?: never;
         /**
          * Linear merge sorted records from external source
-         * @description Performs a stateless linear merge of sorted records from an external source.
-         *     Records are upserted, and any Antfly records in the key range that are absent
-         *     from the input are deleted. Supports progressive pagination for large datasets.
+         * @description Stateless sync for keeping Antfly in sync with external sources of truth
+         *     (Postgres, Shopify, S3, Databricks). Both source and destination must be
+         *     sorted by the same key.
          *
-         *     WARNING: Not safe for concurrent merge operations with overlapping ranges.
-         *     Designed as a sync/import API for single-client use.
+         *     Performs three-way merge:
+         *     - Inserts new records from source
+         *     - Updates changed records
+         *     - Deletes Antfly records absent from source page
+         *
+         *     **Stateless & Idempotent**: No sync state between pages. Safe to restart
+         *     from any page if interrupted.
+         *
+         *     **Use Cases**: Sync production databases, e-commerce APIs, data lake exports,
+         *     or warehouse tables to Antfly for low-latency hybrid search.
+         *
+         *     **WARNING**: Not safe for concurrent merges with overlapping ranges.
+         *     Single-client sync API only.
          */
         post: operations["linearMerge"];
         delete?: never;
@@ -1284,21 +1295,37 @@ export interface components {
              * @description Optional Handlebars template string for rendering document content in RAG queries.
              *     Template has access to document fields via `{{this.fields.fieldName}}`.
              *
-             *     Useful for customizing how documents are presented to LLMs in RAG pipelines.
-             * @example Title: {{this.fields.title}}
-             *     Body: {{this.fields.body}}
-             *     URL: {{this.fields.url}}
+             *     **Default**: Uses TOON (Token-Oriented Object Notation) format for 30-60% token reduction:
+             *     ```handlebars
+             *     {{encodeToon this.fields}}
+             *     ```
+             *
+             *     **Available Helpers**:
+             *     - `encodeToon` - Renders fields in compact TOON format with configurable options:
+             *       - `lengthMarker` (bool): Add # prefix to array counts (default: true)
+             *       - `indent` (int): Indentation spacing (default: 2)
+             *       - `delimiter` (string): Field separator for tabular arrays
+             *     - `scrubHtml` - Removes HTML tags and extracts text
+             *     - `media` - Wraps data URIs for GenKit multimodal support
+             *     - `eq` - Equality comparison for conditionals
+             *
+             *     **Examples**:
+             *     - Basic TOON: `{{encodeToon this.fields}}`
+             *     - Compact TOON: `{{encodeToon this.fields lengthMarker=false indent=0}}`
+             *     - Tabular data: `{{encodeToon this.fields delimiter="\t"}}`
+             *     - Custom template: `Title: {{this.fields.title}}\nBody: {{this.fields.body}}`
+             *     - Traditional format: `{{#each this.fields}}{{@key}}: {{this}}\n{{/each}}`
+             *
+             *     TOON format produces compact, LLM-optimized output like:
+             *     ```
+             *     title: Introduction to Vector Search
+             *     author: Jane Doe
+             *     tags[#3]: ai,search,ml
+             *     ```
+             * @example {{encodeToon this.fields}}
              */
             document_renderer?: string;
-            /**
-             * @description Controls whether to search and return chunk documents in addition to original documents.
-             *     When true (default): Searches both original documents and chunks, returns chunks in results.
-             *     When false: Only searches original documents, excludes chunks from results.
-             *
-             *     Use false when you want to search only the original full documents without their chunked versions.
-             * @example true
-             */
-            return_chunks?: boolean;
+            pruner?: components["schemas"]["Pruner"];
         };
         Analyses: {
             pca?: boolean;
@@ -1951,6 +1978,51 @@ export interface components {
             include_edges?: boolean;
             /** @description Which fields to return from documents */
             fields?: string[];
+        };
+        /**
+         * @description Configuration for pruning search results based on score quality.
+         *     Helps filter out low-relevance results in RAG pipelines by detecting
+         *     score gaps or deviations from top results.
+         */
+        Pruner: {
+            /**
+             * Format: double
+             * @description Keep only results with score >= max_score * min_score_ratio.
+             *     For example, 0.5 keeps results scoring at least half of the top result.
+             *     Applied after fusion scoring.
+             * @example 0.5
+             */
+            min_score_ratio?: number;
+            /**
+             * Format: double
+             * @description Stop returning results when score drops more than this percentage
+             *     from the previous result. Detects "elbows" in score distribution.
+             *     For example, 30.0 stops when score drops 30% from previous result.
+             * @example 30
+             */
+            max_score_gap_percent?: number;
+            /**
+             * Format: double
+             * @description Hard minimum score threshold. Results with scores below this value
+             *     are excluded regardless of other pruning settings.
+             * @example 0.01
+             */
+            min_absolute_score?: number;
+            /**
+             * @description Only keep results that appear in multiple indexes (both full-text
+             *     and vector search). Useful for increasing precision by requiring
+             *     agreement between different retrieval methods.
+             * @default false
+             */
+            require_multi_index: boolean;
+            /**
+             * Format: double
+             * @description Keep results within N standard deviations below the mean score.
+             *     For example, 1.0 keeps results with score >= mean - 1*stddev.
+             *     Useful for statistical outlier detection in result sets.
+             * @example 1.5
+             */
+            std_dev_threshold?: number;
         };
         /** @description A node in graph query results */
         GraphResultNode: {
