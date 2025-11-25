@@ -649,12 +649,13 @@ export interface components {
          * @description Synchronization level for batch operations:
          *     - "propose": Wait for Raft proposal acceptance (fastest, default)
          *     - "write": Wait for Pebble KV write
-         *     - "full_text": Wait for full-text index WAL write (slowest, most durable)
-         *     - "aknn": Wait for vector index write with best-effort synchronous embedding (falls back to async on timeout)
+         *     - "full_text": Wait for full-text index WAL write
+         *     - "enrichments": Pre-compute enrichments before Raft proposal (synchronous enrichment generation)
+         *     - "aknn": Wait for vector index write with best-effort synchronous embedding (falls back to async on timeout, slowest, most durable)
          * @default propose
          * @enum {string}
          */
-        SyncLevel: "propose" | "write" | "full_text" | "aknn";
+        SyncLevel: "propose" | "write" | "full_text" | "enrichments" | "aknn";
         ShardConfig: {
             byte_range: components["schemas"]["ByteRange"];
         };
@@ -1289,6 +1290,15 @@ export interface components {
              *     URL: {{this.fields.url}}
              */
             document_renderer?: string;
+            /**
+             * @description Controls whether to search and return chunk documents in addition to original documents.
+             *     When true (default): Searches both original documents and chunks, returns chunks in results.
+             *     When false: Only searches original documents, excludes chunks from results.
+             *
+             *     Use false when you want to search only the original full documents without their chunked versions.
+             * @example true
+             */
+            return_chunks?: boolean;
         };
         Analyses: {
             pca?: boolean;
@@ -1826,87 +1836,13 @@ export interface components {
          */
         MergeStrategy: "rrf" | "rsf" | "failover";
         /**
-         * @description The embedding provider to use.
+         * @description The reranking provider to use.
          * @enum {string}
          */
-        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "mock";
-        /** @description Configuration for the Google embedding provider. */
-        GoogleEmbedderConfig: {
-            /** @description The Google Cloud project ID. */
-            project_id?: string;
-            /** @description The Google Cloud location (e.g., 'us-central1'). */
-            location?: string;
-            /**
-             * @description The name of the embedding model to use (e.g., 'text-embedding-004').
-             * @default text-embedding-004
-             */
-            model: string;
-            /**
-             * @description The dimension of the embedding.
-             * @default 1024
-             */
-            dimension: number;
-            /** @description The Google API key. */
-            api_key?: string;
-            /**
-             * Format: uri
-             * @description The URL of the Google API endpoint.
-             */
-            url?: string;
-        };
-        /**
-         * @description Configuration for Google Cloud Vertex AI embedding models (enterprise-grade).
-         *
-         *     Uses Application Default Credentials (ADC) for authentication by default.
-         *     Suitable for production deployments on Google Cloud Platform.
-         *
-         *     **Authentication Priority:**
-         *     1. credentials_path (path to service account key file)
-         *     2. GOOGLE_APPLICATION_CREDENTIALS environment variable
-         *     3. Application Default Credentials (ADC) - RECOMMENDED
-         *        - In GCP: automatic (Cloud Run, GKE, Compute Engine)
-         *        - Local dev: `gcloud auth application-default login`
-         *
-         *     **Required IAM Permission:** `roles/aiplatform.user`
-         *
-         *     **Supported Models:**
-         *     - text-embedding-004 (latest, 768 dimensions)
-         *     - textembedding-gecko@003, @002, @001 (legacy)
-         *     - textembedding-gecko-multilingual@001 (multilingual support)
-         *     - text-multilingual-embedding-002 (multilingual, 768 dimensions)
-         *     - multimodalembedding (images, audio, video - 128/256/512/1408 dimensions)
-         * @example {
-         *       "provider": "vertex",
-         *       "model": "text-embedding-004",
-         *       "project_id": "my-gcp-project",
-         *       "location": "us-central1",
-         *       "dimension": 768
-         *     }
-         */
-        VertexEmbedderConfig: {
-            /**
-             * @description The name of the Vertex AI embedding model to use.
-             * @example text-embedding-004
-             */
-            model: string;
-            /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
-            project_id?: string;
-            /**
-             * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
-             * @default us-central1
-             */
-            location: string;
-            /** @description Path to service account JSON key file. Alternative to ADC for non-GCP environments. */
-            credentials_path?: string;
-            /**
-             * @description The dimension of the embedding vector. Model-specific (e.g., 768 for text-embedding-004, 128-1408 for multimodalembedding).
-             * @default 768
-             */
-            dimension: number;
-        };
-        /** @description Configuration for the Ollama embedding provider. */
-        OllamaEmbedderConfig: {
-            /** @description The name of the Ollama model to use. */
+        RerankerProvider: "ollama" | "termite";
+        /** @description Configuration for the Ollama reranking provider. */
+        OllamaRerankerConfig: {
+            /** @description The name of the Ollama model to use for reranking. */
             model: string;
             /**
              * Format: uri
@@ -1914,45 +1850,31 @@ export interface components {
              */
             url?: string;
         };
-        /** @description Configuration for the OpenAI embedding provider. */
-        OpenAIEmbedderConfig: {
-            /** @description The name of the OpenAI model to use. */
+        /** @description Configuration for the Termite reranking provider. */
+        TermiteRerankerConfig: {
+            /** @description The name of the reranking model (e.g., cross-encoder model name). */
             model: string;
             /**
              * Format: uri
-             * @description The URL of the OpenAI API endpoint.
+             * @description The URL of the Termite API endpoint.
              */
             url?: string;
-            /** @description The OpenAI API key. */
-            api_key?: string;
-        };
-        /** @description Configuration for the Bedrock embedding provider. */
-        BedrockEmbedderConfig: {
-            /**
-             * @description The name of the Bedrock model to use.
-             * @example amazon.titan-embed-text-v1
-             */
-            model: string;
-            /** @description The AWS region for the Bedrock service. */
-            region?: string;
-            /** @description Whether to strip new lines from the input text. */
-            strip_new_lines?: boolean;
-            /** @description The batch size for embedding requests. */
-            batch_size?: number;
         };
         /**
-         * @description A unified configuration for an embedding provider.
+         * @description A unified configuration for a reranking provider.
          * @example {
-         *       "provider": "openai",
-         *       "model": "text-embedding-004",
+         *       "provider": "ollama",
+         *       "model": "dengcao/Qwen3-Reranker-0.6B:F16",
          *       "field": "content"
          *     }
          */
         RerankerConfig: {
-            provider: components["schemas"]["EmbedderProvider"];
+            provider: components["schemas"]["RerankerProvider"];
+            /** @description Field name to extract from documents for reranking. */
             field?: string;
+            /** @description Handlebars template to render document text for reranking. */
             template?: string;
-        } & (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]);
+        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"]);
         /**
          * @description Type of graph query to execute
          * @enum {string}
@@ -2341,6 +2263,121 @@ export interface components {
             /** @description Whether to use memory-only storage */
             mem_only?: boolean;
         };
+        /** @description Configuration for the Google embedding provider. */
+        GoogleEmbedderConfig: {
+            /** @description The Google Cloud project ID. */
+            project_id?: string;
+            /** @description The Google Cloud location (e.g., 'us-central1'). */
+            location?: string;
+            /**
+             * @description The name of the embedding model to use (e.g., 'text-embedding-004').
+             * @default text-embedding-004
+             */
+            model: string;
+            /**
+             * @description The dimension of the embedding.
+             * @default 1024
+             */
+            dimension: number;
+            /** @description The Google API key. */
+            api_key?: string;
+            /**
+             * Format: uri
+             * @description The URL of the Google API endpoint.
+             */
+            url?: string;
+        };
+        /**
+         * @description Configuration for Google Cloud Vertex AI embedding models (enterprise-grade).
+         *
+         *     Uses Application Default Credentials (ADC) for authentication by default.
+         *     Suitable for production deployments on Google Cloud Platform.
+         *
+         *     **Authentication Priority:**
+         *     1. credentials_path (path to service account key file)
+         *     2. GOOGLE_APPLICATION_CREDENTIALS environment variable
+         *     3. Application Default Credentials (ADC) - RECOMMENDED
+         *        - In GCP: automatic (Cloud Run, GKE, Compute Engine)
+         *        - Local dev: `gcloud auth application-default login`
+         *
+         *     **Required IAM Permission:** `roles/aiplatform.user`
+         *
+         *     **Supported Models:**
+         *     - text-embedding-004 (latest, 768 dimensions)
+         *     - textembedding-gecko@003, @002, @001 (legacy)
+         *     - textembedding-gecko-multilingual@001 (multilingual support)
+         *     - text-multilingual-embedding-002 (multilingual, 768 dimensions)
+         *     - multimodalembedding (images, audio, video - 128/256/512/1408 dimensions)
+         * @example {
+         *       "provider": "vertex",
+         *       "model": "text-embedding-004",
+         *       "project_id": "my-gcp-project",
+         *       "location": "us-central1",
+         *       "dimension": 768
+         *     }
+         */
+        VertexEmbedderConfig: {
+            /**
+             * @description The name of the Vertex AI embedding model to use.
+             * @example text-embedding-004
+             */
+            model: string;
+            /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
+            project_id?: string;
+            /**
+             * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
+             * @default us-central1
+             */
+            location: string;
+            /** @description Path to service account JSON key file. Alternative to ADC for non-GCP environments. */
+            credentials_path?: string;
+            /**
+             * @description The dimension of the embedding vector. Model-specific (e.g., 768 for text-embedding-004, 128-1408 for multimodalembedding).
+             * @default 768
+             */
+            dimension: number;
+        };
+        /** @description Configuration for the Ollama embedding provider. */
+        OllamaEmbedderConfig: {
+            /** @description The name of the Ollama model to use. */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Ollama API endpoint.
+             */
+            url?: string;
+        };
+        /** @description Configuration for the OpenAI embedding provider. */
+        OpenAIEmbedderConfig: {
+            /** @description The name of the OpenAI model to use. */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the OpenAI API endpoint.
+             */
+            url?: string;
+            /** @description The OpenAI API key. */
+            api_key?: string;
+        };
+        /** @description Configuration for the Bedrock embedding provider. */
+        BedrockEmbedderConfig: {
+            /**
+             * @description The name of the Bedrock model to use.
+             * @example amazon.titan-embed-text-v1
+             */
+            model: string;
+            /** @description The AWS region for the Bedrock service. */
+            region?: string;
+            /** @description Whether to strip new lines from the input text. */
+            strip_new_lines?: boolean;
+            /** @description The batch size for embedding requests. */
+            batch_size?: number;
+        };
+        /**
+         * @description The embedding provider to use.
+         * @enum {string}
+         */
+        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "mock";
         /**
          * @description A unified configuration for an embedding provider.
          * @example {
@@ -2350,6 +2387,160 @@ export interface components {
          */
         EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
+        };
+        /**
+         * @description Document chunking strategy.
+         *     - hugot: ONNX-accelerated chunking using sentence boundary detection
+         *     - fixed: Simple fixed-size chunking by token count
+         * @enum {string}
+         */
+        ChunkingStrategy: "hugot" | "fixed";
+        /**
+         * @description Configuration for the Termite chunking provider.
+         *
+         *     Termite is a centralized HTTP service that provides chunking with multi-tier caching.
+         *     It supports multiple chunking strategies similar to how generators support different models.
+         *
+         *     **Chunking Strategies:**
+         *     - hugot: ONNX-accelerated chunking using sentence boundary detection
+         *     - fixed: Simple fixed-size chunking by token count (default, no ONNX required)
+         *
+         *     **Caching:**
+         *     - L1: Memory cache with 2-minute TTL
+         *     - L2: Persistent Pebble database
+         *     - Singleflight deduplication for concurrent identical requests
+         * @example {
+         *       "provider": "termite",
+         *       "api_url": "http://localhost:8080",
+         *       "strategy": "fixed",
+         *       "target_tokens": 500,
+         *       "overlap_tokens": 50,
+         *       "separator": "\n\n",
+         *       "max_chunks": 50,
+         *       "full_text": {}
+         *     }
+         */
+        TermiteChunkerConfig: {
+            /**
+             * Format: uri
+             * @description The URL of the Termite API endpoint (e.g., 'http://localhost:8080'). Can also be set via ANTFLY_TERMITE_URL environment variable.
+             * @example http://localhost:8080
+             */
+            api_url?: string;
+            /**
+             * @description The chunking strategy to use. Like 'model' in generators - determines the chunking algorithm.
+             * @default fixed
+             */
+            strategy: components["schemas"]["ChunkingStrategy"];
+            /**
+             * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
+             * @default 500
+             */
+            target_tokens: number;
+            /**
+             * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
+             * @default 50
+             */
+            overlap_tokens: number;
+            /**
+             * @description Separator string for splitting (e.g., '\n\n' for paragraphs). Only used with fixed strategy.
+             * @default
+             */
+            separator: string;
+            /**
+             * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
+             * @default 50
+             */
+            max_chunks: number;
+            /**
+             * Format: float
+             * @description Minimum confidence threshold for separator detection. Only used with hugot strategy.
+             * @default 0.5
+             */
+            threshold: number;
+            /**
+             * @description Configuration for full-text indexing of chunks in Bleve.
+             *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
+             *     When absent, chunks use :c: suffix and are only used for vector embeddings.
+             *     This object is reserved for future options like boosting, field mapping, etc.
+             * @example {}
+             */
+            full_text?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description Configuration for the local Antfly chunking provider.
+         *
+         *     This provider runs chunking directly within the storage node process,
+         *     without requiring an external Termite service. It uses simple fixed-size
+         *     tokenizer-based chunking with no caching overhead.
+         *
+         *     **Use this when:**
+         *     - Running single-node deployments (swarm mode)
+         *     - You don't need embedding/chunk caching across nodes
+         *     - You want minimal setup complexity
+         *
+         *     **Use Termite instead when:**
+         *     - Running multi-node clusters where caching reduces costs
+         *     - You need ONNX-accelerated chunking (hugot strategy)
+         *     - You want persistent chunk/embedding caches
+         * @example {
+         *       "provider": "antfly",
+         *       "target_tokens": 500,
+         *       "overlap_tokens": 50,
+         *       "separator": "\n\n",
+         *       "max_chunks": 50
+         *     }
+         */
+        AntflyChunkerConfig: {
+            /**
+             * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
+             * @default 500
+             */
+            target_tokens: number;
+            /**
+             * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
+             * @default 50
+             */
+            overlap_tokens: number;
+            /**
+             * @description Separator string for splitting (e.g., '\n\n' for paragraphs).
+             * @default
+             */
+            separator: string;
+            /**
+             * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
+             * @default 50
+             */
+            max_chunks: number;
+            /**
+             * @description Configuration for full-text indexing of chunks in Bleve.
+             *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
+             *     When absent, chunks use :c: suffix and are only used for vector embeddings.
+             *     This object is reserved for future options like boosting, field mapping, etc.
+             * @example {}
+             */
+            full_text?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description The chunking provider to use.
+         * @enum {string}
+         */
+        ChunkerProvider: "mock" | "termite" | "antfly";
+        /**
+         * @description A unified configuration for a chunking provider.
+         * @example {
+         *       "provider": "termite",
+         *       "strategy": "fixed",
+         *       "target_tokens": 500,
+         *       "overlap_tokens": 50
+         *     }
+         */
+        ChunkerConfig: (components["schemas"]["TermiteChunkerConfig"] | components["schemas"]["AntflyChunkerConfig"]) & {
+            provider: components["schemas"]["ChunkerProvider"];
         };
         EmbeddingIndexConfig: {
             /** @description Vector dimension */
@@ -2365,8 +2556,10 @@ export interface components {
             mem_only?: boolean;
             /** @description Configuration for the embeddings plugin */
             embedder?: components["schemas"]["EmbedderConfig"];
-            /** @description Configuration for the generative AI plugin */
+            /** @description Configuration for the summarizer plugin */
             summarizer?: components["schemas"]["GeneratorConfig"];
+            /** @description Configuration for the chunking plugin. When specified, documents are automatically chunked at write time before indexing. */
+            chunker?: components["schemas"]["ChunkerConfig"];
         };
         /** @description Configuration for a specific edge type */
         EdgeTypeConfig: {
@@ -2411,6 +2604,14 @@ export interface components {
             /** @description Optional description of the index and its purpose */
             description?: string;
             type: components["schemas"]["IndexType"];
+            /**
+             * @description List of enrichment names to apply to documents before indexing. Enrichments must be defined at the table level.
+             * @example [
+             *       "semantic_chunks",
+             *       "summary"
+             *     ]
+             */
+            enrichments?: string[];
         } & (components["schemas"]["BleveIndexV2Config"] | components["schemas"]["EmbeddingIndexConfig"] | components["schemas"]["GraphIndexV0Config"]);
         /** @description Defines the structure of a document type */
         DocumentSchema: {
