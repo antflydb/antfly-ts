@@ -2461,21 +2461,23 @@ export interface components {
             provider: components["schemas"]["EmbedderProvider"];
         };
         /**
-         * @description Document chunking strategy.
-         *     - hugot: ONNX-accelerated chunking using sentence boundary detection
-         *     - fixed: Simple fixed-size chunking by token count
+         * @description Document chunking strategy. The strategy name maps to ONNX model directory names when using Termite.
+         *     - fixed: Simple fixed-size chunking by token count (built-in, no ONNX required)
+         *     - chonky_onnx: ONNX-accelerated chunking using sentence boundary detection (requires models/chunkers/chonky_onnx/)
          * @enum {string}
          */
-        ChunkingStrategy: "hugot" | "fixed";
+        ChunkingStrategy: "fixed" | "chonky_onnx";
         /**
          * @description Configuration for the Termite chunking provider.
          *
          *     Termite is a centralized HTTP service that provides chunking with multi-tier caching.
-         *     It supports multiple chunking strategies similar to how generators support different models.
+         *     It supports multiple chunking strategies - the strategy name maps to ONNX model directory names
+         *     (similar to how Ollama works with model names).
          *
          *     **Chunking Strategies:**
-         *     - hugot: ONNX-accelerated chunking using sentence boundary detection
-         *     - fixed: Simple fixed-size chunking by token count (default, no ONNX required)
+         *     - fixed: Simple fixed-size chunking by token count (built-in, no ONNX required)
+         *     - chonky_onnx: ONNX model from models/chunkers/chonky_onnx/ directory
+         *     - Any other name will attempt to load from models/chunkers/{name}/ directory
          *
          *     **Caching:**
          *     - L1: Memory cache with 2-minute TTL
@@ -2484,7 +2486,7 @@ export interface components {
          * @example {
          *       "provider": "termite",
          *       "api_url": "http://localhost:8080",
-         *       "strategy": "fixed",
+         *       "strategy": "chonky_onnx",
          *       "target_tokens": 500,
          *       "overlap_tokens": 50,
          *       "separator": "\n\n",
@@ -2526,7 +2528,7 @@ export interface components {
             max_chunks: number;
             /**
              * Format: float
-             * @description Minimum confidence threshold for separator detection. Only used with hugot strategy.
+             * @description Minimum confidence threshold for separator detection. Only used with ONNX-based strategies like chonky_onnx.
              * @default 0.5
              */
             threshold: number;
@@ -2555,7 +2557,7 @@ export interface components {
          *
          *     **Use Termite instead when:**
          *     - Running multi-node clusters where caching reduces costs
-         *     - You need ONNX-accelerated chunking (hugot strategy)
+         *     - You need ONNX-accelerated chunking (e.g., chonky_onnx strategy)
          *     - You want persistent chunk/embedding caches
          * @example {
          *       "provider": "antfly",
