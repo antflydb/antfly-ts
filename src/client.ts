@@ -397,6 +397,12 @@ export class AntflyClient {
                         callbacks.onClassification(classData);
                       }
                       break;
+                    case "reasoning":
+                      if (callbacks.onReasoning) {
+                        // Reasoning is streamed as plain text, not JSON
+                        callbacks.onReasoning(data);
+                      }
+                      break;
                     case "hits_start":
                       if (callbacks.onHitsStart) {
                         const hitsStartData = JSON.parse(data);
@@ -415,22 +421,22 @@ export class AntflyClient {
                         callbacks.onHitsEnd(hitsEndData);
                       }
                       break;
-                    case "reasoning":
-                      if (callbacks.onReasoning) {
-                        const chunk = JSON.parse(data);
-                        callbacks.onReasoning(chunk);
-                      }
-                      break;
                     case "answer":
                       if (callbacks.onAnswer) {
-                        const chunk = JSON.parse(data);
-                        callbacks.onAnswer(chunk);
+                        // Answer is streamed as plain text, not JSON
+                        callbacks.onAnswer(data);
+                      }
+                      break;
+                    case "confidence":
+                      if (callbacks.onConfidence) {
+                        const confidence = JSON.parse(data);
+                        callbacks.onConfidence(confidence);
                       }
                       break;
                     case "followup_question":
                       if (callbacks.onFollowUpQuestion) {
-                        const question = JSON.parse(data);
-                        callbacks.onFollowUpQuestion(question);
+                        // Follow-up question is streamed as plain text
+                        callbacks.onFollowUpQuestion(data);
                       }
                       break;
                     case "done":

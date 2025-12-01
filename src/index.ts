@@ -99,6 +99,11 @@ export type {
   AnswerAgentRequest,
   AnswerAgentResult,
   AnswerAgentStreamCallbacks,
+  ClassificationTransformationResult,
+  RouteType,
+  QueryStrategy,
+  SemanticQueryMode,
+  AnswerConfidence,
 
   // Error type
   AntflyError,

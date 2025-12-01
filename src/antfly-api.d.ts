@@ -137,6 +137,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/query-builder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Build a search query from natural language
+         * @description Uses an LLM to translate natural language search intent into a structured Bleve query.
+         *     The generated query can be used directly in the QueryRequest.full_text_search or filter_query fields.
+         *
+         *     This endpoint is useful for:
+         *     - Building queries from user descriptions
+         *     - Generating example queries for a table's schema
+         *     - Agentic retrieval in RAG pipelines
+         */
+        post: operations["queryBuilderAgent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tables": {
         parameters: {
             query?: never;
@@ -675,12 +701,32 @@ export interface components {
              * Format: uint
              * @description Number of shards to create for the table. Data is partitioned across shards based on key ranges.
              *
-             *     Guidelines:
+             *     **Sizing Guidelines:**
              *     - Small datasets (<100K docs): 1-3 shards
              *     - Medium datasets (100K-1M docs): 3-10 shards
              *     - Large datasets (>1M docs): 10+ shards
              *
              *     More shards enable better parallelism but increase overhead. Choose based on expected data size and query patterns.
+             *
+             *     **When to Add More Shards:**
+             *
+             *     Antfly supports **online shard reallocation** without downtime. Add more shards when:
+             *     - Individual shards exceed size thresholds (configurable)
+             *     - Query latency increases due to large shard size
+             *     - Need better parallelism for write-heavy workloads
+             *
+             *     Use the internal `/reallocate` endpoint to trigger automatic shard splitting:
+             *     ```bash
+             *     POST /_internal/v1/reallocate
+             *     ```
+             *
+             *     This enqueues a reallocation request that the leader processes asynchronously, splitting
+             *     large shards and redistributing data without service interruption.
+             *
+             *     **Advantages over Elasticsearch:**
+             *     - Automatic shard splitting (no manual reindexing required)
+             *     - Online operation (no downtime)
+             *     - Transparent to applications (keys remain accessible during reallocation)
              * @example 3
              */
             num_shards?: number;
@@ -715,8 +761,25 @@ export interface components {
                 [key: string]: components["schemas"]["IndexConfig"];
             };
             /**
-             * @description Optional schema definition specifying field types and primary key.
+             * @description Optional schema definition specifying field types, primary key, and TTL configuration.
              *     While optional, defining a schema provides type safety, optimized indexing, and better search performance.
+             *
+             *     **Schema Features:**
+             *     - **Field Types**: Define document structure using JSON Schema with `x-antfly-types` extensions
+             *     - **Document TTL**: Configure automatic expiration via `ttl_duration` and optional `ttl_field`
+             *     - **Primary Keys**: Specify unique identifier fields
+             *     - **Validation**: Enforce schema constraints on writes
+             *
+             *     **TTL Example:**
+             *     ```json
+             *     {
+             *       "ttl_duration": "7d",
+             *       "ttl_field": "_timestamp",
+             *       "document_schemas": {...}
+             *     }
+             *     ```
+             *
+             *     See the Table Management documentation for comprehensive TTL configuration and use cases.
              */
             schema?: components["schemas"]["TableSchema"];
         };
@@ -838,15 +901,36 @@ export interface components {
              * @description If true, create document if it doesn't exist (like MongoDB upsert)
              * @default false
              */
-            upsert: boolean;
+            upsert?: boolean;
         };
         /**
-         * @description Batch insert, delete, and transform operations in a single request. All operations are processed atomically within each shard.
+         * @description Batch insert, delete, and transform operations in a single request.
          *
-         *     Benefits:
+         *     **Atomicity**:
+         *     - **Single shard**: Operations are atomic within shard boundaries
+         *     - **Multiple shards**: Uses distributed 2-phase commit (2PC) for atomic cross-shard writes
+         *
+         *     **How distributed transactions work**:
+         *     1. Metadata server allocates HLC timestamp and selects coordinator shard
+         *     2. Coordinator writes transaction record, participants write intents
+         *     3. After all intents succeed, coordinator commits transaction
+         *     4. Participants are notified asynchronously to resolve intents
+         *     5. Recovery loop ensures notifications complete even after coordinator failure
+         *
+         *     **Performance**:
+         *     - Single-shard batches: <5ms latency
+         *     - Cross-shard transactions: ~20ms latency
+         *     - Intent resolution: <30 seconds worst-case (via recovery loop)
+         *
+         *     **Guarantees**:
+         *     - All writes succeed or all fail (atomicity across all shards)
+         *     - Coordinator failure is recoverable (new leader resumes notifications)
+         *     - Idempotent resolution (duplicate notifications are safe)
+         *
+         *     **Benefits**:
          *     - Reduces network overhead compared to individual requests
          *     - More efficient indexing (updates are batched)
-         *     - Atomic within shard boundaries
+         *     - Automatic distributed transactions when operations span shards
          *
          *     The inserts are upserts - existing keys are overwritten, new keys are created.
          * @example {
@@ -989,7 +1073,7 @@ export interface components {
              *     For mixed: [{"table": "papers", "semantic_search": "...", "limit": 10}, {"table": "books", "full_text_search": {...}, "limit": 5}]
              */
             queries: components["schemas"]["QueryRequest"][];
-            summarizer: components["schemas"]["GeneratorConfig"];
+            generator: components["schemas"]["GeneratorConfig"];
             /**
              * @description Optional system prompt to guide the summarization
              * @example You are a helpful AI assistant. Summarize the following search results concisely.
@@ -1020,36 +1104,67 @@ export interface components {
             query_results?: components["schemas"]["QueryResult"][];
             summary_result?: components["schemas"]["SummarizeResult"];
         };
-        /**
-         * @description Optional user context to customize the content guidance for each section of the answer agent response.
-         *
-         *     **What you can customize**: Style, tone, length, detail level, and focus of content for each section independently.
-         *
-         *     **What is fixed**: The response format is always markdown with consistent structure (## Reasoning, ## Answer, ## Follow-up Questions).
-         *     Markdown formatting (headings, bullets, code blocks, etc.) is always applied and cannot be disabled.
-         *
-         *     **Architecture**: These contexts are passed as template variables to the prompt template. Defaults are set
-         *     at the application layer, and users can override them via this API to customize content guidance.
-         */
-        UserContext: {
+        QueryBuilderRequest: {
             /**
-             * @description Custom content guidance for the reasoning section. Controls what information to include,
-             *     the level of detail, and the focus of the reasoning process. Does not control markdown formatting.
-             * @example Keep reasoning brief, 1-2 sentences maximum
+             * @description Name of the table to build query for. If provided, uses table schema for field context.
+             * @example articles
              */
-            reasoning_context?: string;
+            table?: string;
             /**
-             * @description Custom content guidance for the answer section. Controls the tone, content depth, level of detail,
-             *     and what information to emphasize. Does not control markdown formatting (which is always applied).
-             * @example Provide a comprehensive answer with technical details and examples
+             * @description Natural language description of the search intent
+             * @example Find all published articles about machine learning from the last year
              */
-            answer_context?: string;
+            intent: string;
             /**
-             * @description Custom content guidance for follow-up questions. Controls the quantity, focus area, tone,
-             *     and style of follow-up questions. Does not control markdown formatting.
-             * @example Generate 5 follow-up questions focused on technical specifications and pricing
+             * @description List of searchable field names to consider. Overrides table schema if provided.
+             * @example [
+             *       "title",
+             *       "content",
+             *       "status",
+             *       "published_at"
+             *     ]
              */
-            followup_context?: string;
+            schema_fields?: string[];
+            generator?: components["schemas"]["GeneratorConfig"];
+        };
+        QueryBuilderResult: {
+            /**
+             * @description Generated search query in simplified DSL format.
+             *     Can be used directly in QueryRequest.full_text_search or filter_query.
+             * @example {
+             *       "and": [
+             *         {
+             *           "match": "machine learning",
+             *           "field": "content"
+             *         },
+             *         {
+             *           "term": "published",
+             *           "field": "status"
+             *         }
+             *       ]
+             *     }
+             */
+            query: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description Human-readable explanation of what the query does and why it was structured this way
+             * @example Searches for 'machine learning' in content field AND requires status to be exactly 'published'
+             */
+            explanation?: string;
+            /**
+             * Format: double
+             * @description Model's confidence in the generated query (0.0-1.0)
+             * @example 0.85
+             */
+            confidence?: number;
+            /**
+             * @description Any issues, limitations, or assumptions made when generating the query
+             * @example [
+             *       "Field 'category' not found in schema, using content field instead"
+             *     ]
+             */
+            warnings?: string[];
         };
         AnswerAgentRequest: {
             /**
@@ -1057,7 +1172,11 @@ export interface components {
              * @example What are the best gaming laptops under $2000?
              */
             query: string;
-            summarizer: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Default generator configuration used for all pipeline steps unless overridden in `steps`.
+             *     This is the simple configuration - just set this and everything works with sensible defaults.
+             */
+            generator: components["schemas"]["GeneratorConfig"];
             /**
              * @description Array of query requests to execute. The query text will be transformed for semantic search
              *     and populated into the semantic_search field of each query.
@@ -1080,38 +1199,114 @@ export interface components {
              */
             queries: components["schemas"]["QueryRequest"][];
             /**
-             * @description Optional system prompt to guide classification and answer generation
-             * @example You are a helpful shopping assistant.
+             * @description Advanced per-step configuration. Override the default generator for specific steps,
+             *     configure step-specific options, or set up generator chains with retry/fallback.
+             *
+             *     **Simple usage** - just set `generator` and all steps use it with defaults.
+             *
+             *     **Advanced usage** - configure each step independently:
+             *     ```json
+             *     {
+             *       "steps": {
+             *         "classification": {
+             *           "generator": {"provider": "openai", "model": "gpt-4o-mini"},
+             *           "with_reasoning": true
+             *         },
+             *         "answer": {
+             *           "generator": {"provider": "anthropic", "model": "claude-3-opus"}
+             *         },
+             *         "followup": {
+             *           "enabled": true,
+             *           "generator": {"provider": "openai", "model": "gpt-4o-mini"}
+             *         }
+             *       }
+             *     }
+             *     ```
              */
-            system_prompt?: string;
+            steps?: components["schemas"]["AnswerAgentSteps"];
             /**
              * @description Enable SSE streaming of results (classification, queries, results, answer) instead of JSON response
              * @default true
              */
-            with_streaming: boolean;
+            with_streaming?: boolean;
             /**
-             * @description Include the LLM's reasoning process as separate events before the answer
-             * @default false
+             * @description Maximum total tokens allowed for retrieved document context.
+             *     When set, documents are pruned (lowest-ranked first) to fit within this budget.
+             *     Useful for ensuring LLM context limits are not exceeded.
+             *     Uses BERT tokenizer for estimation.
+             * @example 100000
              */
-            with_reasoning: boolean;
+            max_context_tokens?: number;
             /**
-             * @description Include suggested follow-up questions as separate events after the answer
-             * @default false
+             * @description Tokens to reserve for system prompt, answer generation, and other overhead.
+             *     Subtracted from max_context_tokens to determine available context budget.
+             *     Defaults to 4000 if max_context_tokens is set.
+             * @default 4000
+             * @example 4000
              */
-            with_followup: boolean;
-            user_context?: components["schemas"]["UserContext"];
+            reserve_tokens?: number;
         };
-        /** @description Answer agent result with classification and generated answer with inline resource references */
+        /**
+         * @description Answer agent result with classification, retrieved documents, and generated answer.
+         *
+         *     The classification_transformation contains pre-retrieval reasoning (if enabled via
+         *     steps.classification.with_reasoning). This reasoning is automatically passed to
+         *     the answer generation step for continuity of thought.
+         */
         AnswerAgentResult: {
-            /** @description Query classification and transformation result */
+            /**
+             * @description Query classification and transformation result. Includes:
+             *     - route_type: "question" or "search"
+             *     - strategy: "simple", "decompose", "step_back", or "hyde"
+             *     - semantic_query: Optimized query for retrieval
+             *     - reasoning: Pre-retrieval analysis (if steps.classification.with_reasoning was enabled)
+             */
             classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
             /** @description Results from each executed query */
             query_results?: components["schemas"]["QueryResult"][];
-            /** @description LLM's reasoning process (if with_reasoning was enabled) */
-            reasoning?: string;
             /** @description Generated answer (markdown format with inline resource references) */
             answer?: string;
-            /** @description Suggested follow-up questions (if with_followup was enabled) */
+            /** @description Suggested follow-up questions (if steps.followup.enabled was true) */
+            followup_questions?: string[];
+            /**
+             * Format: float
+             * @description Overall confidence in the answer (0.0 to 1.0). Only present if steps.confidence.enabled was true.
+             */
+            answer_confidence?: number;
+            /**
+             * Format: float
+             * @description Relevance of the provided resources to the question (0.0 to 1.0). Only present if steps.confidence.enabled was true.
+             */
+            context_relevance?: number;
+        };
+        /** @description Confidence assessment for the generated answer */
+        AnswerConfidence: {
+            /**
+             * Format: float
+             * @description Overall confidence in the answer (0.0 to 1.0). Considers both ability to answer from provided resources and general knowledge.
+             */
+            answer_confidence: number;
+            /**
+             * Format: float
+             * @description Relevance of the provided resources to the question (0.0 to 1.0)
+             */
+            context_relevance: number;
+        };
+        /** @description Result from answer generation with optional confidence and follow-up questions */
+        AnswerResult: {
+            /**
+             * Format: float
+             * @description Overall confidence in the answer (0.0 to 1.0)
+             */
+            answer_confidence?: number;
+            /**
+             * Format: float
+             * @description Relevance of the provided resources to the question (0.0 to 1.0)
+             */
+            context_relevance?: number;
+            /** @description Generated answer in markdown format */
+            answer: string;
+            /** @description Suggested follow-up questions */
             followup_questions?: string[];
         };
         QueryRequest: {
@@ -1144,10 +1339,31 @@ export interface components {
              *     to the query and can be combined with full_text_search using Reciprocal Rank Fusion (RRF).
              *
              *     The semantic_search string is automatically embedded using the configured embedding model
-             *     for the specified indexes.
+             *     for the specified indexes. Use `embedding_template` for multimodal queries.
              * @example artificial intelligence and machine learning applications
              */
             semantic_search?: string;
+            /**
+             * @description Optional Handlebars template for multimodal embedding of the semantic_search query.
+             *     The template has access to `this` which contains the semantic_search string value.
+             *
+             *     Use this when you want to embed multimodal content (images, PDFs, etc.) instead of
+             *     just text. The template is rendered using dotprompt with access to remote content helpers.
+             *
+             *     **Available Helpers**:
+             *     - `remoteMedia url=<url>` - Fetches and embeds remote images/media
+             *     - `remotePDF url=<url>` - Fetches and extracts content from PDFs
+             *     - `remoteText url=<url>` - Fetches and includes remote text content
+             *
+             *     **Examples**:
+             *     - PDF search: `{{remotePDF url=this}}`
+             *     - Image search: `{{remoteMedia url=this}}`
+             *     - Mixed: `Search for: {{this}} {{#if this}}{{remoteMedia url=this}}{{/if}}`
+             *
+             *     When not specified, the semantic_search string is embedded as plain text.
+             * @example {{remotePDF url=this}}
+             */
+            embedding_template?: string;
             /**
              * @description List of vector index names to use for semantic search. Required when using semantic_search.
              *     Multiple indexes can be specified, and their results will be merged using RRF.
@@ -1268,6 +1484,20 @@ export interface components {
              * @example 0.1
              */
             distance_over?: number;
+            /**
+             * @description Strategy for merging full-text and semantic search results. Only applies
+             *     when both `full_text_search` and `semantic_search` are specified.
+             *
+             *     Options:
+             *     - `rrf` (default): Reciprocal Rank Fusion - Combines based on result rankings.
+             *       Works well when both search types return relevant results.
+             *     - `rsf`: Relative Score Fusion - Normalizes scores within a window and
+             *       combines weighted scores. Better when score distributions differ significantly.
+             *     - `failover`: Uses full-text search if semantic embedding generation fails.
+             *       Useful for reliability when embedding service may be unavailable.
+             *
+             *     **Most users should use the default `rrf`.**
+             */
             merge_strategy?: components["schemas"]["MergeStrategy"];
             /**
              * @description If true, returns only the total count of matching documents without retrieving the actual documents.
@@ -1275,6 +1505,28 @@ export interface components {
              * @example false
              */
             count?: boolean;
+            /**
+             * @description Optional reranker configuration to improve result relevance.
+             *
+             *     Rerankers use cross-encoder models that score query-document pairs directly,
+             *     providing more accurate relevance scores than embedding similarity alone.
+             *
+             *     **When to use:**
+             *     - Results need high precision (e.g., RAG, question answering)
+             *     - You have semantic or hybrid search results to refine
+             *     - Latency trade-off is acceptable (reranking adds 100-500ms typically)
+             *
+             *     **Best practice:** Retrieve more results (limit: 50-100) then rerank to final size.
+             *
+             *     Example:
+             *     ```json
+             *     {
+             *       "provider": "termite",
+             *       "model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+             *       "field": "content"
+             *     }
+             *     ```
+             */
             reranker?: components["schemas"]["RerankerConfig"];
             analyses?: components["schemas"]["Analyses"];
             /**
@@ -1322,9 +1574,33 @@ export interface components {
              *     author: Jane Doe
              *     tags[#3]: ai,search,ml
              *     ```
+             *
+             *     **References**:
+             *     - TOON Specification: https://github.com/toon-format/toon
+             *     - Go Implementation: https://github.com/alpkeskin/gotoon
              * @example {{encodeToon this.fields}}
              */
             document_renderer?: string;
+            /**
+             * @description Optional result pruning configuration to filter low-relevance results.
+             *
+             *     Pruning helps detect "elbows" in score distributions and removes
+             *     results that are significantly worse than top matches.
+             *
+             *     **Common patterns:**
+             *     - RAG queries: Use `max_score_gap_percent: 30` to stop at quality drop-offs
+             *     - Strict matching: Use `min_score_ratio: 0.7` for high-quality results only
+             *     - Combine both for best results
+             *
+             *     Example:
+             *     ```json
+             *     {
+             *       "min_score_ratio": 0.5,
+             *       "max_score_gap_percent": 25.0,
+             *       "min_absolute_score": 0.3
+             *     }
+             *     ```
+             */
             pruner?: components["schemas"]["Pruner"];
         };
         Analyses: {
@@ -1469,7 +1745,7 @@ export interface components {
              * @default false
              * @example false
              */
-            dry_run: boolean;
+            dry_run?: boolean;
             sync_level?: components["schemas"]["SyncLevel"];
         };
         FailedOperation: {
@@ -1556,34 +1832,34 @@ export interface components {
              * @description Minimum edge weight filter
              * @default 0
              */
-            min_weight: number;
+            min_weight?: number;
             /**
              * Format: double
              * @description Maximum edge weight filter
              * @default 1
              */
-            max_weight: number;
+            max_weight?: number;
             direction?: components["schemas"]["EdgeDirection"];
             /**
              * @description Maximum traversal depth (0 = unlimited)
              * @default 3
              */
-            max_depth: number;
+            max_depth?: number;
             /**
              * @description Maximum results to return (0 = unlimited)
              * @default 100
              */
-            max_results: number;
+            max_results?: number;
             /**
              * @description Include path information in results
              * @default false
              */
-            include_paths: boolean;
+            include_paths?: boolean;
             /**
              * @description Visit each node only once
              * @default true
              */
-            deduplicate_nodes: boolean;
+            deduplicate_nodes?: boolean;
         };
         /** @description A single result from graph traversal */
         TraversalResult: {
@@ -1635,10 +1911,10 @@ export interface components {
             /** @description Filter by specific edge types */
             edge_types?: string[];
             /** @default 10 */
-            max_depth: number;
+            max_depth?: number;
             weight_mode?: components["schemas"]["PathFindWeightMode"];
             /** @default 1 */
-            k: number;
+            k?: number;
             /** Format: double */
             min_weight?: number;
             /** Format: double */
@@ -1906,7 +2182,16 @@ export interface components {
          * @description Type of graph query to execute
          * @enum {string}
          */
-        GraphQueryType: "traverse" | "neighbors" | "shortest_path" | "k_shortest_paths";
+        GraphQueryType: "traverse" | "neighbors" | "shortest_path" | "k_shortest_paths" | "pattern";
+        /** @description Filter nodes during graph traversal using existing query primitives */
+        NodeFilter: {
+            /** @description Bleve query to filter nodes (same syntax as search filter_query) */
+            filter_query?: {
+                [key: string]: unknown;
+            };
+            /** @description Filter by key prefix */
+            filter_prefix?: string;
+        };
         /** @description Defines how to select start/target nodes for graph queries */
         GraphNodeSelector: {
             /** @description Explicit list of node keys */
@@ -1919,6 +2204,8 @@ export interface components {
             result_ref?: string;
             /** @description Maximum number of nodes to select from the referenced results */
             limit?: number;
+            /** @description Filter which nodes to use as start/target */
+            node_filter?: components["schemas"]["NodeFilter"];
         };
         /**
          * @description Path weighting algorithm for pathfinding:
@@ -1954,6 +2241,8 @@ export interface components {
             weight_mode?: components["schemas"]["PathWeightMode"];
             /** @description Number of paths to find (k-shortest-paths) */
             k?: number;
+            /** @description Filter which nodes to visit during traversal */
+            node_filter?: components["schemas"]["NodeFilter"];
             /** @description Graph algorithm to run (e.g., 'pagerank', 'betweenness') */
             algorithm?: string;
             /** @description Parameters for the graph algorithm */
@@ -1961,17 +2250,56 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** @description Edge constraints in a pattern step */
+        PatternEdgeStep: {
+            /** @description Edge types to traverse (empty = any) */
+            types?: string[];
+            direction?: components["schemas"]["EdgeDirection"];
+            /**
+             * @description Minimum number of hops (1 = direct edge)
+             * @default 1
+             */
+            min_hops?: number;
+            /**
+             * @description Maximum number of hops (>1 = variable-length path)
+             * @default 1
+             */
+            max_hops?: number;
+            /**
+             * Format: double
+             * @description Minimum edge weight filter
+             */
+            min_weight?: number;
+            /**
+             * Format: double
+             * @description Maximum edge weight filter
+             */
+            max_weight?: number;
+        };
+        /** @description A step in a graph pattern query */
+        PatternStep: {
+            /** @description Name for this node (reuse alias for cycle detection) */
+            alias?: string;
+            /** @description Filter constraints for nodes at this step */
+            node_filter?: components["schemas"]["NodeFilter"];
+            /** @description Edge to traverse to reach this step (null for first step) */
+            edge?: components["schemas"]["PatternEdgeStep"];
+        };
         /** @description Declarative graph query to execute after full-text/vector searches */
         GraphQuery: {
             type: components["schemas"]["GraphQueryType"];
             /** @description Graph index name (must be graph_v0 type) */
             index_name: string;
             /** @description Starting node(s) for the query */
-            start_nodes: components["schemas"]["GraphNodeSelector"];
+            start_nodes?: components["schemas"]["GraphNodeSelector"];
             /** @description Target nodes (for pathfinding only) */
             target_nodes?: components["schemas"]["GraphNodeSelector"];
             /** @description Traversal/pathfinding parameters */
-            params: components["schemas"]["GraphQueryParams"];
+            params?: components["schemas"]["GraphQueryParams"];
+            /** @description Pattern steps for pattern query type */
+            pattern?: components["schemas"]["PatternStep"][];
+            /** @description Which aliases to return from pattern query (empty = all) */
+            return_aliases?: string[];
             /** @description Fetch full documents for graph results */
             include_documents?: boolean;
             /** @description Include edge details for each node */
@@ -2014,7 +2342,7 @@ export interface components {
              *     agreement between different retrieval methods.
              * @default false
              */
-            require_multi_index: boolean;
+            require_multi_index?: boolean;
             /**
              * Format: double
              * @description Keep results within N standard deviations below the mean score.
@@ -2046,6 +2374,15 @@ export interface components {
             /** @description Connected edges (when include_edges=true) */
             edges?: components["schemas"]["Edge"][];
         };
+        /** @description A single match from a pattern query */
+        PatternMatch: {
+            /** @description Map of alias to matched node */
+            bindings?: {
+                [key: string]: components["schemas"]["GraphResultNode"];
+            };
+            /** @description Edges traversed in this match */
+            path?: components["schemas"]["PathEdge"][];
+        };
         /** @description Results of a graph query */
         GraphQueryResult: {
             type: components["schemas"]["GraphQueryType"];
@@ -2053,6 +2390,8 @@ export interface components {
             nodes?: components["schemas"]["GraphResultNode"][];
             /** @description Result paths (for pathfinding queries) */
             paths?: components["schemas"]["Path"][];
+            /** @description Pattern matches (for pattern queries) */
+            matches?: components["schemas"]["PatternMatch"][];
             /** @description Total number of results */
             total: number;
             /**
@@ -2141,7 +2480,7 @@ export interface components {
              * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
              * @default us-central1
              */
-            location: string;
+            location?: string;
             /** @description Path to service account JSON key file. Sets GOOGLE_APPLICATION_CREDENTIALS environment variable. Alternative to ADC for non-GCP environments. */
             credentials_path?: string;
             /**
@@ -2298,6 +2637,168 @@ export interface components {
         GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "anthropic" | "mock";
         /**
          * @description A unified configuration for a generative AI provider.
+         *
+         *     Generators can be configured with custom prompts using templates. Templates use
+         *     Handlebars syntax and support various built-in helpers for formatting and data manipulation.
+         *
+         *     **Template System:**
+         *     - **Syntax**: Handlebars templating (https://handlebarsjs.com/guide/)
+         *     - **Caching**: Templates are automatically cached with configurable TTL (default: 5 minutes)
+         *     - **Context**: Templates receive the full context data passed to the generator
+         *
+         *     **Built-in Helpers:**
+         *
+         *     1. **scrubHtml** - Remove script/style tags and extract clean text from HTML
+         *        ```handlebars
+         *        {{scrubHtml html_content}}
+         *        ```
+         *        - Removes `<script>` and `<style>` tags
+         *        - Adds newlines after block elements (p, div, h1-h6, li, etc.)
+         *        - Returns plain text with preserved readability
+         *        - Useful for cleaning web content before summarization
+         *
+         *     2. **eq** - Equality comparison for conditionals
+         *        ```handlebars
+         *        {{#if (eq status "active")}}Active{{/if}}
+         *        {{#if (eq @key "special")}}Special field{{/if}}
+         *        ```
+         *        - Use in `{{#if}}` blocks for conditional logic
+         *        - Compares any two values for equality
+         *
+         *     3. **media** - GenKit dotprompt media directive for multimodal content
+         *        ```handlebars
+         *        {{media url=imageDataURI}}
+         *        {{media url=this.image_url}}
+         *        {{media url="https://example.com/image.jpg"}}
+         *        {{media url="s3://endpoint/bucket/image.png"}}
+         *        {{media url="file:///path/to/image.jpg"}}
+         *        ```
+         *        - Returns: `<<<dotprompt:media:url data:image/png;base64,...>>>`
+         *        - Compatible with GenKit's dotprompt format
+         *
+         *        **Supported URL Schemes:**
+         *        - `data:` - Base64 encoded data URIs (e.g., `data:image/jpeg;base64,...`)
+         *        - `http://` / `https://` - Web URLs with automatic content type detection
+         *        - `file://` - Local filesystem paths
+         *        - `s3://` - S3-compatible storage (format: `s3://endpoint/bucket/key`)
+         *
+         *        **Automatic Content Processing:**
+         *        - **Images**: Downloaded, resized (if needed), converted to data URIs
+         *        - **PDFs**: Text extracted or first page rendered as image
+         *        - **HTML**: Readable text extracted using Mozilla Readability
+         *
+         *        **Security Controls:**
+         *        Downloads are protected by content security settings (see Configuration Reference):
+         *        - Allowed host whitelist
+         *        - Private IP blocking (prevents SSRF attacks)
+         *        - Download size limits (default: 100MB)
+         *        - Download timeouts (default: 30s)
+         *        - Image dimension limits (default: 2048px, auto-resized)
+         *
+         *        See: https://antfly.io/docs/configuration#security--cors
+         *
+         *     4. **encodeToon** - Encode data in TOON format (Token-Oriented Object Notation)
+         *        ```handlebars
+         *        {{encodeToon this.fields}}
+         *        {{encodeToon this.fields lengthMarker=false indent=4}}
+         *        {{encodeToon this.fields delimiter="\t"}}
+         *        ```
+         *
+         *        **What is TOON?**
+         *        TOON is a compact, human-readable format designed for passing structured data to LLMs.
+         *        It provides **30-60% token reduction** compared to JSON while maintaining high LLM
+         *        comprehension accuracy.
+         *
+         *        **Key Features:**
+         *        - Compact syntax using `:` for key-value pairs
+         *        - Array length markers: `tags[#3]: ai,search,ml`
+         *        - Tabular format for uniform data structures
+         *        - Optimized for LLM parsing and understanding
+         *        - Maintains human readability
+         *
+         *        **Benefits:**
+         *        - **Lower API costs** - Reduced token usage means lower LLM API costs
+         *        - **Faster responses** - Less tokens to process
+         *        - **More context** - Fit more documents within token limits
+         *
+         *        **Options:**
+         *        - `lengthMarker` (bool): Add # prefix to array counts like `[#3]` (default: true)
+         *        - `indent` (int): Indentation spacing for nested objects (default: 2)
+         *        - `delimiter` (string): Field separator for tabular arrays (default: none, use `"\t"` for tabs)
+         *
+         *        **Example output:**
+         *        ```
+         *        title: Introduction to Vector Search
+         *        author: Jane Doe
+         *        tags[#3]: ai,search,ml
+         *        metadata:
+         *          edition: 2
+         *          pages: 450
+         *        ```
+         *
+         *        **Default in RAG:** TOON is the default format for document rendering in RAG queries.
+         *
+         *        **References:**
+         *        - TOON Specification: https://github.com/toon-format/toon
+         *        - Go Implementation: https://github.com/alpkeskin/gotoon
+         *
+         *     **Template Examples:**
+         *
+         *     RAG summarization with document references:
+         *     ```handlebars
+         *     Based on these documents, provide a comprehensive summary:
+         *
+         *     {{#each documents}}
+         *     Document {{this.id}}:
+         *     {{scrubHtml this.content}}
+         *
+         *     {{/each}}
+         *
+         *     Valid document IDs: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
+         *     ```
+         *
+         *     Conditional formatting:
+         *     ```handlebars
+         *     {{#if system_prompt}}System: {{system_prompt}}{{/if}}
+         *
+         *     User Query: {{query}}
+         *
+         *     {{#if context}}
+         *     Context:
+         *     {{#each context}}
+         *     - {{this}}
+         *     {{/each}}
+         *     {{/if}}
+         *     ```
+         *
+         *     Multimodal prompt with images:
+         *     ```handlebars
+         *     Analyze this image:
+         *     {{media url=image_url}}
+         *
+         *     Focus on: {{focus_area}}
+         *     ```
+         *
+         *     Structured data encoding:
+         *     ```handlebars
+         *     User Profile:
+         *     {{encodeToon user_data indent=2 lengthMarker=true}}
+         *
+         *     Please analyze this profile.
+         *     ```
+         *
+         *     **Common Use Cases:**
+         *     - **RAG (Retrieval-Augmented Generation)**: Format retrieved documents with citations
+         *     - **Summarization**: Clean HTML content and structure summaries
+         *     - **Query Classification**: Format queries with metadata for better classification
+         *     - **Multimodal**: Include images/audio/video in prompts
+         *     - **Data Formatting**: Convert structured data to readable text
+         *
+         *     **Best Practices:**
+         *     - Keep templates simple - complex logic belongs in application code
+         *     - Use clear, descriptive field names in context
+         *     - Handle missing fields gracefully (templates use "missingkey=zero" by default)
+         *     - Test templates with representative data before production use
          * @example {
          *       "provider": "openai",
          *       "model": "gpt-4o",
@@ -2313,18 +2814,187 @@ export interface components {
             /** @description The generated summary text in markdown format with inline resource references like [resource_id res1] or [resource_id res1, res2] */
             summary: string;
         };
+        /** @description Retry configuration for generator calls */
+        RetryConfig: {
+            /**
+             * @description Maximum number of retry attempts
+             * @default 3
+             */
+            max_attempts?: number;
+            /**
+             * @description Initial backoff delay in milliseconds
+             * @default 1000
+             */
+            initial_backoff_ms?: number;
+            /**
+             * Format: float
+             * @description Multiplier for exponential backoff
+             * @default 2
+             */
+            backoff_multiplier?: number;
+            /**
+             * @description Maximum backoff delay in milliseconds
+             * @default 30000
+             */
+            max_backoff_ms?: number;
+        };
+        /**
+         * @description Condition for trying the next generator in chain:
+         *     - always: Always try next regardless of outcome
+         *     - on_error: Try next on any error (default)
+         *     - on_timeout: Try next only on timeout errors
+         *     - on_rate_limit: Try next only on rate limit errors
+         * @default on_error
+         * @enum {string}
+         */
+        ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
+        /** @description A single link in a generator chain with optional retry and condition */
+        ChainLink: {
+            generator: components["schemas"]["GeneratorConfig"];
+            /** @description Retry configuration for this generator */
+            retry?: components["schemas"]["RetryConfig"];
+            /** @description When to try the next generator in chain */
+            condition?: components["schemas"]["ChainCondition"];
+        };
+        /**
+         * @description Strategy for query transformation and retrieval:
+         *     - simple: Direct query with multi-phrase expansion. Best for straightforward factual queries.
+         *     - decompose: Break complex queries into sub-questions, retrieve for each. Best for multi-part questions.
+         *     - step_back: Generate broader background query first, then specific query. Best for questions needing context.
+         *     - hyde: Generate hypothetical answer document, embed that for retrieval. Best for abstract/conceptual questions.
+         * @enum {string}
+         */
+        QueryStrategy: "simple" | "decompose" | "step_back" | "hyde";
+        /**
+         * @description Mode for semantic query generation:
+         *     - rewrite: Transform query into expanded keywords/concepts optimized for vector search (Level 2 optimization)
+         *     - hypothetical: Generate a hypothetical answer that would appear in relevant documents (HyDE - Level 3 optimization)
+         * @enum {string}
+         */
+        SemanticQueryMode: "rewrite" | "hypothetical";
+        /**
+         * @description Configuration for the classification step. This step analyzes the query,
+         *     selects the optimal retrieval strategy, and generates semantic transformations.
+         */
+        ClassificationStepConfig: {
+            /** @description Generator to use for classification. If not specified, uses the default summarizer. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Include pre-retrieval reasoning explaining query analysis and strategy selection
+             * @default false
+             */
+            with_reasoning?: boolean;
+            /** @description Override LLM strategy selection. If not set, the LLM chooses optimal strategy. */
+            force_strategy?: components["schemas"]["QueryStrategy"];
+            /** @description Override semantic query mode selection. */
+            force_semantic_mode?: components["schemas"]["SemanticQueryMode"];
+            /**
+             * @description Number of alternative query phrasings to generate
+             * @default 3
+             */
+            multi_phrase_count?: number;
+        };
+        /**
+         * @description Configuration for the answer generation step. This step generates the final
+         *     answer from retrieved documents using the reasoning as context.
+         */
+        AnswerStepConfig: {
+            /** @description Generator to use for answer generation. If not specified, uses the default summarizer. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /** @description Custom system prompt for answer generation */
+            system_prompt?: string;
+            /**
+             * @description Custom guidance for answer tone, detail level, and style
+             * @example Be concise and technical. Include code examples where relevant.
+             */
+            answer_context?: string;
+        };
+        /**
+         * @description Configuration for generating follow-up questions. Uses a separate generator
+         *     call which can use a cheaper/faster model.
+         */
+        FollowupStepConfig: {
+            /**
+             * @description Enable follow-up question generation
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator for follow-up questions. If not specified, uses the answer step's generator. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Number of follow-up questions to generate
+             * @default 3
+             */
+            count?: number;
+            /**
+             * @description Custom guidance for follow-up question focus and style
+             * @example Focus on implementation details and edge cases
+             */
+            context?: string;
+        };
+        /**
+         * @description Configuration for confidence assessment. Evaluates answer quality and
+         *     resource relevance. Can use a model calibrated for scoring tasks.
+         */
+        ConfidenceStepConfig: {
+            /**
+             * @description Enable confidence scoring
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator for confidence assessment. If not specified, uses the answer step's generator. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Custom guidance for confidence assessment approach
+             * @example Be conservative - only give high confidence if resources directly address the question
+             */
+            context?: string;
+        };
+        /**
+         * @description Per-step configuration for the answer agent pipeline. Each step can have
+         *     its own generator (or chain of generators) and step-specific options.
+         *     If a step is not configured, it uses the top-level generator as default.
+         */
+        AnswerAgentSteps: {
+            /** @description Configuration for query classification and transformation */
+            classification?: components["schemas"]["ClassificationStepConfig"];
+            /** @description Configuration for answer generation */
+            answer?: components["schemas"]["AnswerStepConfig"];
+            /** @description Configuration for follow-up question generation */
+            followup?: components["schemas"]["FollowupStepConfig"];
+            /** @description Configuration for confidence assessment */
+            confidence?: components["schemas"]["ConfidenceStepConfig"];
+        };
         /**
          * @description Classification of query type: question (specific factual query) or search (exploratory query)
          * @enum {string}
          */
         RouteType: "question" | "search";
-        /** @description Query classification and transformation result combining all query enhancements */
+        /** @description Query classification and transformation result combining all query enhancements including strategy selection and semantic optimization */
         ClassificationTransformationResult: {
             route_type: components["schemas"]["RouteType"];
+            strategy: components["schemas"]["QueryStrategy"];
+            semantic_mode: components["schemas"]["SemanticQueryMode"];
             /** @description Clarified query with added context for answer generation (human-readable) */
             improved_query: string;
-            /** @description Optimized query for vector/semantic search (concept extraction with synonyms) */
+            /** @description Optimized query for vector/semantic search. Content style depends on semantic_mode: keywords for 'rewrite', hypothetical answer for 'hypothetical' */
             semantic_query: string;
+            /** @description Broader background query for context (only present when strategy is 'step_back') */
+            step_back_query?: string;
+            /** @description Decomposed sub-questions (only present when strategy is 'decompose') */
+            sub_questions?: string[];
+            /** @description Alternative phrasings of the query for expanded retrieval coverage */
+            multi_phrases?: string[];
+            /** @description Pre-retrieval reasoning explaining query analysis and strategy selection (only present when with_classification_reasoning is enabled) */
+            reasoning?: string;
             /**
              * Format: float
              * @description Classification confidence (0.0 to 1.0)
@@ -2335,27 +3005,51 @@ export interface components {
             /** @description Whether to use memory-only storage */
             mem_only?: boolean;
         };
-        /** @description Configuration for the Google embedding provider. */
+        /**
+         * @description Configuration for the Google AI (Gemini) embedding provider.
+         *
+         *     Uses Google's Gemini models for generating embeddings with configurable dimensions.
+         *
+         *     **Available Models:**
+         *     - `gemini-embedding-001` - Latest Gemini embedding model
+         *
+         *     **Legacy Models (deprecating):**
+         *     - `embedding-001` - Deprecating on August 14, 2025
+         *     - `text-embedding-004` - Deprecating on January 14, 2026
+         *
+         *     **Authentication:**
+         *     API key can be provided via the `api_key` field or the `GEMINI_API_KEY` environment variable.
+         *
+         *     **Dimension Configuration:**
+         *     The dimension can be configured on the vector index (see vector index configuration).
+         *     Different models support different dimension ranges.
+         * @example {
+         *       "provider": "gemini",
+         *       "model": "gemini-embedding-001",
+         *       "api_key": "your-api-key"
+         *     }
+         */
         GoogleEmbedderConfig: {
-            /** @description The Google Cloud project ID. */
+            /** @description The Google Cloud project ID (optional for Gemini API, required for Vertex AI). */
             project_id?: string;
-            /** @description The Google Cloud location (e.g., 'us-central1'). */
+            /** @description The Google Cloud location (e.g., 'us-central1'). Required for Vertex AI, optional for Gemini API. */
             location?: string;
             /**
-             * @description The name of the embedding model to use (e.g., 'text-embedding-004').
-             * @default text-embedding-004
+             * @description The name of the embedding model to use.
+             * @default gemini-embedding-001
+             * @example gemini-embedding-001
              */
             model: string;
             /**
-             * @description The dimension of the embedding.
-             * @default 1024
+             * @description The dimension of the embedding vector. Model-specific and configurable on the vector index.
+             * @default 768
              */
-            dimension: number;
-            /** @description The Google API key. */
+            dimension?: number;
+            /** @description The Google API key. Can also be set via GEMINI_API_KEY environment variable. */
             api_key?: string;
             /**
              * Format: uri
-             * @description The URL of the Google API endpoint.
+             * @description The URL of the Google API endpoint (optional, uses default if not specified).
              */
             url?: string;
         };
@@ -2400,49 +3094,136 @@ export interface components {
              * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
              * @default us-central1
              */
-            location: string;
+            location?: string;
             /** @description Path to service account JSON key file. Alternative to ADC for non-GCP environments. */
             credentials_path?: string;
             /**
              * @description The dimension of the embedding vector. Model-specific (e.g., 768 for text-embedding-004, 128-1408 for multimodalembedding).
              * @default 768
              */
-            dimension: number;
+            dimension?: number;
         };
-        /** @description Configuration for the Ollama embedding provider. */
+        /**
+         * @description Configuration for the Ollama embedding provider.
+         *
+         *     Local embeddings using Ollama's HTTP API for privacy and development.
+         *
+         *     **Popular Models:**
+         *     - `all-minilm` - 384-dimensional, good for general use
+         *     - `nomic-embed-text` - 768-dimensional, high-quality embeddings
+         *     - `mxbai-embed-large` - 1024-dimensional, larger model for better accuracy
+         *     - `embeddinggemma` - 768-dimensional, high-quality embeddings from Google
+         *
+         *     **Finding Model Dimensions:**
+         *     Use the following command to discover embedding dimensions for any model:
+         *     ```bash
+         *     curl http://localhost:11434/api/embeddings -d '{"model": "<model_name>", "prompt": "foo"}' | jq ".embedding | length"
+         *     ```
+         *
+         *     **URL Configuration:**
+         *     The URL can be provided via the `url` field or the `OLLAMA_HOST` environment variable.
+         *     Defaults to `http://localhost:11434` if not specified.
+         * @example {
+         *       "provider": "ollama",
+         *       "model": "all-minilm",
+         *       "url": "http://localhost:11434"
+         *     }
+         */
         OllamaEmbedderConfig: {
-            /** @description The name of the Ollama model to use. */
+            /**
+             * @description The name of the Ollama model to use (e.g., 'all-minilm', 'nomic-embed-text').
+             * @example all-minilm
+             */
             model: string;
             /**
              * Format: uri
-             * @description The URL of the Ollama API endpoint.
+             * @description The URL of the Ollama API endpoint. Can also be set via OLLAMA_HOST environment variable.
+             * @default http://localhost:11434
+             * @example http://localhost:11434
              */
             url?: string;
         };
-        /** @description Configuration for the OpenAI embedding provider. */
+        /**
+         * @description Configuration for the OpenAI embedding provider.
+         *
+         *     Supports OpenAI and OpenAI-compatible APIs for embeddings.
+         *
+         *     **Available Models:**
+         *     - `text-embedding-3-small` - Smaller, faster model (1536 dimensions)
+         *     - `text-embedding-3-large` - Larger, more accurate model (3072 dimensions)
+         *     - `text-embedding-ada-002` - Legacy model (1536 dimensions)
+         *
+         *     **Authentication:**
+         *     API key can be provided via the `api_key` field or the `OPENAI_API_KEY` environment variable.
+         *
+         *     **OpenAI-Compatible APIs:**
+         *     Set the `url` field to use compatible services (e.g., Azure OpenAI, local proxies).
+         *     Can also be set via `OPENAI_BASE_URL` environment variable.
+         * @example {
+         *       "provider": "openai",
+         *       "model": "text-embedding-3-small",
+         *       "api_key": "sk-..."
+         *     }
+         */
         OpenAIEmbedderConfig: {
-            /** @description The name of the OpenAI model to use. */
+            /**
+             * @description The name of the OpenAI model to use.
+             * @example text-embedding-3-small
+             */
             model: string;
             /**
              * Format: uri
-             * @description The URL of the OpenAI API endpoint.
+             * @description The URL of the OpenAI API endpoint. Defaults to OpenAI's API. Can be set via OPENAI_BASE_URL environment variable.
+             * @default https://api.openai.com
+             * @example https://api.openai.com
              */
             url?: string;
-            /** @description The OpenAI API key. */
+            /** @description The OpenAI API key. Can also be set via OPENAI_API_KEY environment variable. */
             api_key?: string;
         };
-        /** @description Configuration for the Bedrock embedding provider. */
+        /**
+         * @description Configuration for the AWS Bedrock embedding provider.
+         *
+         *     Uses AWS Bedrock's managed embedding models with automatic scaling.
+         *
+         *     **Available Models:**
+         *     - `amazon.titan-embed-text-v1` - Amazon Titan Text Embeddings v1
+         *     - `amazon.titan-embed-text-v2` - Amazon Titan Text Embeddings v2 (improved accuracy)
+         *     - `cohere.embed-english-v3` - Cohere embeddings for English text
+         *     - `cohere.embed-multilingual-v3` - Cohere embeddings with multilingual support
+         *
+         *     **Authentication:**
+         *     Uses AWS credentials from the environment (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+         *     or IAM roles when running on AWS infrastructure.
+         *
+         *     **Region Configuration:**
+         *     Specify the AWS region where Bedrock is available (e.g., 'us-east-1', 'us-west-2').
+         * @example {
+         *       "provider": "bedrock",
+         *       "model": "amazon.titan-embed-text-v1",
+         *       "region": "us-east-1"
+         *     }
+         */
         BedrockEmbedderConfig: {
             /**
              * @description The name of the Bedrock model to use.
              * @example amazon.titan-embed-text-v1
              */
             model: string;
-            /** @description The AWS region for the Bedrock service. */
+            /**
+             * @description The AWS region for the Bedrock service (e.g., 'us-east-1').
+             * @example us-east-1
+             */
             region?: string;
-            /** @description Whether to strip new lines from the input text. */
+            /**
+             * @description Whether to strip new lines from the input text before embedding.
+             * @default false
+             */
             strip_new_lines?: boolean;
-            /** @description The batch size for embedding requests. */
+            /**
+             * @description The batch size for embedding requests to optimize throughput.
+             * @default 1
+             */
             batch_size?: number;
         };
         /**
@@ -2452,9 +3233,149 @@ export interface components {
         EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "mock";
         /**
          * @description A unified configuration for an embedding provider.
+         *
+         *     Embedders can be configured with templates to customize how documents are
+         *     converted to text before embedding. Templates use Handlebars syntax and
+         *     support various built-in helpers.
+         *
+         *     **Template System:**
+         *     - **Syntax**: Handlebars templating (https://handlebarsjs.com/guide/)
+         *     - **Caching**: Templates are automatically cached with configurable TTL (default: 5 minutes)
+         *     - **Context**: Templates receive the full document as context
+         *
+         *     **Built-in Helpers:**
+         *
+         *     1. **scrubHtml** - Remove script/style tags and extract clean text from HTML
+         *        ```handlebars
+         *        {{scrubHtml html_content}}
+         *        ```
+         *        - Removes `<script>` and `<style>` tags
+         *        - Adds newlines after block elements (p, div, h1-h6, li, etc.)
+         *        - Returns plain text with preserved readability
+         *
+         *     2. **eq** - Equality comparison for conditionals
+         *        ```handlebars
+         *        {{#if (eq status "active")}}Active user{{/if}}
+         *        {{#if (eq @key "special")}}Special field{{/if}}
+         *        ```
+         *
+         *     3. **media** - GenKit dotprompt media directive for multimodal content
+         *        ```handlebars
+         *        {{media url=imageDataURI}}
+         *        {{media url=this.image_url}}
+         *        {{media url="https://example.com/image.jpg"}}
+         *        {{media url="s3://endpoint/bucket/image.png"}}
+         *        {{media url="file:///path/to/image.jpg"}}
+         *        ```
+         *        Returns: `<<<dotprompt:media:url data:image/png;base64,...>>>`
+         *
+         *        **Supported URL Schemes:**
+         *        - `data:` - Base64 encoded data URIs (e.g., `data:image/jpeg;base64,...`)
+         *        - `http://` / `https://` - Web URLs with automatic content type detection
+         *        - `file://` - Local filesystem paths
+         *        - `s3://` - S3-compatible storage (format: `s3://endpoint/bucket/key`)
+         *
+         *        **Automatic Content Processing:**
+         *        - **Images**: Downloaded, resized (if needed), converted to data URIs
+         *        - **PDFs**: Text extracted or first page rendered as image
+         *        - **HTML**: Readable text extracted using Mozilla Readability
+         *
+         *        **Security Controls:**
+         *        Downloads are protected by content security settings (see Configuration Reference):
+         *        - Allowed host whitelist
+         *        - Private IP blocking (prevents SSRF attacks)
+         *        - Download size limits (default: 100MB)
+         *        - Download timeouts (default: 30s)
+         *        - Image dimension limits (default: 2048px, auto-resized)
+         *
+         *        See: https://antfly.io/docs/configuration#security--cors
+         *
+         *     4. **encodeToon** - Encode data in TOON format (Token-Oriented Object Notation)
+         *        ```handlebars
+         *        {{encodeToon this.fields}}
+         *        {{encodeToon this.fields lengthMarker=false indent=4}}
+         *        {{encodeToon this.fields delimiter="\t"}}
+         *        ```
+         *
+         *        **What is TOON?**
+         *        TOON is a compact, human-readable format designed for passing structured data to LLMs.
+         *        It provides **30-60% token reduction** compared to JSON while maintaining high LLM
+         *        comprehension accuracy.
+         *
+         *        **Key Features:**
+         *        - Compact syntax using `:` for key-value pairs
+         *        - Array length markers: `tags[#3]: ai,search,ml`
+         *        - Tabular format for uniform data structures
+         *        - Optimized for LLM parsing and understanding
+         *        - Maintains human readability
+         *
+         *        **Benefits:**
+         *        - **Lower API costs** - Reduced token usage means lower LLM API costs
+         *        - **Faster responses** - Less tokens to process
+         *        - **More context** - Fit more documents within token limits
+         *
+         *        **Options:**
+         *        - `lengthMarker` (bool): Add # prefix to array counts like `[#3]` (default: true)
+         *        - `indent` (int): Indentation spacing for nested objects (default: 2)
+         *        - `delimiter` (string): Field separator for tabular arrays (default: none, use `"\t"` for tabs)
+         *
+         *        **Example output:**
+         *        ```
+         *        title: Introduction to Vector Search
+         *        author: Jane Doe
+         *        tags[#3]: ai,search,ml
+         *        metadata:
+         *          edition: 2
+         *          pages: 450
+         *        ```
+         *
+         *        **Default in RAG:** TOON is the default format for document rendering in RAG queries.
+         *
+         *        **References:**
+         *        - TOON Specification: https://github.com/toon-format/toon
+         *        - Go Implementation: https://github.com/alpkeskin/gotoon
+         *
+         *     **Template Examples:**
+         *
+         *     Document with metadata:
+         *     ```handlebars
+         *     Title: {{metadata.title}}
+         *     Date: {{metadata.date}}
+         *     Tags: {{#each metadata.tags}}{{this}}, {{/each}}
+         *
+         *     {{content}}
+         *     ```
+         *
+         *     HTML content extraction:
+         *     ```handlebars
+         *     Product: {{name}}
+         *     Description: {{scrubHtml description_html}}
+         *     Price: ${{price}}
+         *     ```
+         *
+         *     Multimodal with image:
+         *     ```handlebars
+         *     Product: {{title}}
+         *     {{media url=image}}
+         *     Description: {{description}}
+         *     ```
+         *
+         *     Conditional formatting:
+         *     ```handlebars
+         *     {{title}}
+         *     {{#if author}}By: {{author}}{{/if}}
+         *     {{#if (eq category "premium")}}⭐ Premium Content{{/if}}
+         *     {{body}}
+         *     ```
+         *
+         *     **Environment Variables:**
+         *     - `GEMINI_API_KEY` - API key for Google AI
+         *     - `OPENAI_API_KEY` - API key for OpenAI
+         *     - `OPENAI_BASE_URL` - Base URL for OpenAI-compatible APIs
+         *     - `OLLAMA_HOST` - Ollama server URL (e.g., http://localhost:11434)
          * @example {
          *       "provider": "openai",
-         *       "model": "text-embedding-004"
+         *       "model": "text-embedding-3-small"
          *     }
          */
         EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]) & {
@@ -2510,28 +3431,28 @@ export interface components {
              * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
              * @default 500
              */
-            target_tokens: number;
+            target_tokens?: number;
             /**
              * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
              * @default 50
              */
-            overlap_tokens: number;
+            overlap_tokens?: number;
             /**
              * @description Separator string for splitting (e.g., '\n\n' for paragraphs). Only used with fixed strategy.
              * @default
              */
-            separator: string;
+            separator?: string;
             /**
              * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
              * @default 50
              */
-            max_chunks: number;
+            max_chunks?: number;
             /**
              * Format: float
              * @description Minimum confidence threshold for separator detection. Only used with ONNX-based strategies like chonky_onnx.
              * @default 0.5
              */
-            threshold: number;
+            threshold?: number;
             /**
              * @description Configuration for full-text indexing of chunks in Bleve.
              *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
@@ -2572,22 +3493,22 @@ export interface components {
              * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
              * @default 500
              */
-            target_tokens: number;
+            target_tokens?: number;
             /**
              * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
              * @default 50
              */
-            overlap_tokens: number;
+            overlap_tokens?: number;
             /**
              * @description Separator string for splitting (e.g., '\n\n' for paragraphs).
              * @default
              */
-            separator: string;
+            separator?: string;
             /**
              * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
              * @default 50
              */
-            max_chunks: number;
+            max_chunks?: number;
             /**
              * @description Configuration for full-text indexing of chunks in Bleve.
              *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
@@ -2644,18 +3565,18 @@ export interface components {
              * @description Maximum allowed edge weight
              * @default 1
              */
-            max_weight: number;
+            max_weight?: number;
             /**
              * Format: double
              * @description Minimum allowed edge weight
              * @default 0
              */
-            min_weight: number;
+            min_weight?: number;
             /**
              * @description Whether to allow edges from a node to itself
              * @default true
              */
-            allow_self_loops: boolean;
+            allow_self_loops?: boolean;
             /** @description Required metadata fields for this edge type */
             required_metadata?: string[];
         };
@@ -3024,6 +3945,57 @@ export interface operations {
                 };
             };
             /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    queryBuilderAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryBuilderRequest"];
+            };
+        };
+        responses: {
+            /** @description Query built successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryBuilderResult"];
+                };
+            };
+            /** @description Invalid request (e.g., empty intent or missing table) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Table not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error (e.g., LLM call failed) */
             500: {
                 headers: {
                     [name: string]: unknown;

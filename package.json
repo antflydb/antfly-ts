@@ -31,7 +31,7 @@
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "generate": "npx openapi-typescript ../openapi.yaml -o ./src/antfly-api.d.ts && npx openapi-typescript ../bleve-query-openapi.yaml --client fetch -o ./src/bleve-query.d.ts",
+    "generate": "npx openapi-typescript ../openapi.yaml -o ./src/antfly-api.d.ts --default-non-nullable=false && npx openapi-typescript ../bleve-query-openapi.yaml --client fetch -o ./src/bleve-query.d.ts --default-non-nullable=false",
     "prepublishOnly": "npm run test:ts && npm run lint && npm run test && npm run build",
     "example:node": "tsx examples/node-example.ts"
   },

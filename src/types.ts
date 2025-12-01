@@ -123,6 +123,11 @@ export type RAGResult = components["schemas"]["RAGResult"];
 // Answer Agent types
 export type AnswerAgentRequest = components["schemas"]["AnswerAgentRequest"];
 export type AnswerAgentResult = components["schemas"]["AnswerAgentResult"];
+export type ClassificationTransformationResult = components["schemas"]["ClassificationTransformationResult"];
+export type RouteType = components["schemas"]["RouteType"];
+export type QueryStrategy = components["schemas"]["QueryStrategy"];
+export type SemanticQueryMode = components["schemas"]["SemanticQueryMode"];
+export type AnswerConfidence = components["schemas"]["AnswerConfidence"];
 
 // Error type
 export type AntflyError = components["schemas"]["Error"];
@@ -158,17 +163,13 @@ export interface RAGStreamCallbacks {
 
 // Answer Agent streaming callbacks for structured SSE events
 export interface AnswerAgentStreamCallbacks {
-  onClassification?: (data: {
-    route_type: "question" | "search";
-    improved_query: string;
-    semantic_query: string;
-    confidence: number;
-  }) => void;
+  onClassification?: (data: ClassificationTransformationResult) => void;
+  onReasoning?: (chunk: string) => void;
   onHitsStart?: (data: { table: string; status: number; error?: string }) => void;
   onHit?: (hit: QueryHit) => void;
   onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
-  onReasoning?: (chunk: string) => void;
   onAnswer?: (chunk: string) => void;
+  onConfidence?: (data: AnswerConfidence) => void;
   onFollowUpQuestion?: (question: string) => void;
   onDone?: (data?: { complete: boolean }) => void;
   onError?: (error: string) => void;
