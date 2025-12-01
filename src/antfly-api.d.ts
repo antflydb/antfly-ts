@@ -918,9 +918,9 @@ export interface components {
          *     5. Recovery loop ensures notifications complete even after coordinator failure
          *
          *     **Performance**:
-         *     - Single-shard batches: <5ms latency
+         *     - Single-shard batches: < 5ms latency
          *     - Cross-shard transactions: ~20ms latency
-         *     - Intent resolution: <30 seconds worst-case (via recovery loop)
+         *     - Intent resolution: < 30 seconds worst-case (via recovery loop)
          *
          *     **Guarantees**:
          *     - All writes succeed or all fail (atomicity across all shards)
@@ -1246,14 +1246,7 @@ export interface components {
              */
             reserve_tokens?: number;
         };
-        /**
-         * @description Answer agent result with classification, retrieved documents, and generated answer.
-         *
-         *     The classification_transformation contains pre-retrieval reasoning (if enabled via
-         *     steps.classification.with_reasoning). This reasoning is automatically passed to
-         *     the answer generation step for continuity of thought.
-         */
-        AnswerAgentResult: {
+        AnswerAgentResult: components["schemas"]["AnswerResult"] & {
             /**
              * @description Query classification and transformation result. Includes:
              *     - route_type: "question" or "search"
@@ -1264,20 +1257,6 @@ export interface components {
             classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
             /** @description Results from each executed query */
             query_results?: components["schemas"]["QueryResult"][];
-            /** @description Generated answer (markdown format with inline resource references) */
-            answer?: string;
-            /** @description Suggested follow-up questions (if steps.followup.enabled was true) */
-            followup_questions?: string[];
-            /**
-             * Format: float
-             * @description Overall confidence in the answer (0.0 to 1.0). Only present if steps.confidence.enabled was true.
-             */
-            answer_confidence?: number;
-            /**
-             * Format: float
-             * @description Relevance of the provided resources to the question (0.0 to 1.0). Only present if steps.confidence.enabled was true.
-             */
-            context_relevance?: number;
         };
         /** @description Confidence assessment for the generated answer */
         AnswerConfidence: {
