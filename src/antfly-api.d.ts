@@ -2183,7 +2183,7 @@ export interface components {
          * @description The reranking provider to use.
          * @enum {string}
          */
-        RerankerProvider: "ollama" | "termite" | "cohere";
+        RerankerProvider: "ollama" | "termite" | "cohere" | "vertex";
         /** @description Configuration for the Ollama reranking provider. */
         OllamaRerankerConfig: {
             /** @description The name of the Ollama model to use for reranking. */
@@ -2232,6 +2232,35 @@ export interface components {
             max_chunks_per_doc?: number;
         };
         /**
+         * @description Configuration for the Google Vertex AI Ranking API.
+         *
+         *     Uses Application Default Credentials (ADC) or explicit credentials path.
+         *     Requires Discovery Engine API enabled in the GCP project.
+         *
+         *     **Models:** semantic-ranker-default@latest (default), semantic-ranker-fast-004
+         *
+         *     **Docs:** https://cloud.google.com/generative-ai-app-builder/docs/ranking
+         * @example {
+         *       "provider": "vertex",
+         *       "model": "semantic-ranker-default@latest",
+         *       "project_id": "my-gcp-project"
+         *     }
+         */
+        VertexRerankerConfig: {
+            /**
+             * @description The ranking model to use.
+             * @default semantic-ranker-default@latest
+             * @example semantic-ranker-default@latest
+             */
+            model: string;
+            /** @description Google Cloud project ID. Falls back to GOOGLE_CLOUD_PROJECT environment variable. */
+            project_id?: string;
+            /** @description Path to service account JSON file. Falls back to GOOGLE_APPLICATION_CREDENTIALS environment variable. */
+            credentials_path?: string;
+            /** @description Maximum number of records to return. If not specified, returns all documents with scores. */
+            top_n?: number;
+        };
+        /**
          * @description A unified configuration for a reranking provider.
          * @example {
          *       "provider": "ollama",
@@ -2245,7 +2274,7 @@ export interface components {
             field?: string;
             /** @description Handlebars template to render document text for reranking. */
             template?: string;
-        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"]);
+        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"] | components["schemas"]["VertexRerankerConfig"]);
         /**
          * @description Type of graph query to execute
          * @enum {string}
@@ -2805,8 +2834,6 @@ export interface components {
          *        {{media url="s3://endpoint/bucket/image.png"}}
          *        {{media url="file:///path/to/image.jpg"}}
          *        ```
-         *        - Returns: `<<<dotprompt:media:url data:image/png;base64,...>>>`
-         *        - Compatible with GenKit's dotprompt format
          *
          *        **Supported URL Schemes:**
          *        - `data:` - Base64 encoded data URIs (e.g., `data:image/jpeg;base64,...`)
@@ -3529,7 +3556,6 @@ export interface components {
          *        {{media url="s3://endpoint/bucket/image.png"}}
          *        {{media url="file:///path/to/image.jpg"}}
          *        ```
-         *        Returns: `<<<dotprompt:media:url data:image/png;base64,...>>>`
          *
          *        **Supported URL Schemes:**
          *        - `data:` - Base64 encoded data URIs (e.g., `data:image/jpeg;base64,...`)
