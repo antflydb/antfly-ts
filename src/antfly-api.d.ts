@@ -137,6 +137,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/eval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Standalone evaluation endpoint
+         * @description Run evaluators on provided data without executing a query.
+         *     Useful for testing evaluators, evaluating cached results, or batch evaluation.
+         *
+         *     **Retrieval metrics** (require ground_truth.relevant_ids and retrieved_ids):
+         *     - recall, precision, ndcg, mrr, map
+         *
+         *     **LLM-as-judge metrics** (require judge config):
+         *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
+         */
+        post: operations["evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/query-builder": {
         parameters: {
             query?: never;
@@ -382,12 +409,12 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Linear merge sorted records from external source
-         * @description Stateless sync for keeping Antfly in sync with external sources of truth
-         *     (Postgres, Shopify, S3, Databricks). Both source and destination must be
-         *     sorted by the same key.
+         * Synchronize data from external sources (Shopify, Postgres, S3) using a linear merge
+         * @description Synchronize and keep Antfly in sync with external data sources like Shopify,
+         *     Postgres, S3, or any sorted record source. Also known as: data synchronization,
+         *     database sync, incremental sync, e-commerce sync.
          *
-         *     Performs three-way merge:
+         *     Both source and destination must be sorted by the same key. Performs three-way merge:
          *     - Inserts new records from source
          *     - Updates changed records
          *     - Deletes Antfly records absent from source page
@@ -395,8 +422,8 @@ export interface paths {
          *     **Stateless & Idempotent**: No sync state between pages. Safe to restart
          *     from any page if interrupted.
          *
-         *     **Use Cases**: Sync production databases, e-commerce APIs, data lake exports,
-         *     or warehouse tables to Antfly for low-latency hybrid search.
+         *     **Use Cases**: Sync production databases, e-commerce APIs (Shopify, WooCommerce),
+         *     data lake exports, or warehouse tables to Antfly for low-latency hybrid search.
          *
          *     **WARNING**: Not safe for concurrent merges with overlapping ranges.
          *     Single-client sync API only.
@@ -1097,12 +1124,34 @@ export interface components {
             prompt?: string;
             /** @description Enable SSE streaming of results instead of JSON response */
             with_streaming?: boolean;
+            /**
+             * @description Optional evaluation configuration. When provided, runs evaluators on the query results
+             *     and includes scores in the response.
+             *
+             *     **Retrieval metrics** (require ground_truth.relevant_ids):
+             *     - recall, precision, ndcg, mrr, map
+             *
+             *     **LLM-as-judge metrics** (require judge config):
+             *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
+             *
+             *     Example:
+             *     ```json
+             *     {
+             *       "evaluators": ["recall", "faithfulness"],
+             *       "ground_truth": {"relevant_ids": ["doc1", "doc2"]},
+             *       "judge": {"provider": "ollama", "model": "gemma3:4b"}
+             *     }
+             *     ```
+             */
+            eval?: components["schemas"]["EvalConfig"];
         };
         /** @description RAG result with individual query results and summary */
         RAGResult: {
             /** @description Results from each query. Check each result's status and error fields for failures. */
             query_results?: components["schemas"]["QueryResult"][];
             summary_result?: components["schemas"]["SummarizeResult"];
+            /** @description Evaluation results when eval config was provided in the request */
+            eval_result?: components["schemas"]["EvalResult"];
         };
         QueryBuilderRequest: {
             /**
@@ -1245,6 +1294,17 @@ export interface components {
              * @example 4000
              */
             reserve_tokens?: number;
+            /**
+             * @description Optional evaluation configuration. When provided, runs evaluators on the query results
+             *     and generated answer, including scores in the response.
+             *
+             *     **Retrieval metrics** (require ground_truth.relevant_ids):
+             *     - recall, precision, ndcg, mrr, map
+             *
+             *     **LLM-as-judge metrics** (require judge config):
+             *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
+             */
+            eval?: components["schemas"]["EvalConfig"];
         };
         AnswerAgentResult: components["schemas"]["AnswerResult"] & {
             /**
@@ -1257,6 +1317,8 @@ export interface components {
             classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
             /** @description Results from each executed query */
             query_results?: components["schemas"]["QueryResult"][];
+            /** @description Evaluation results when eval config was provided in the request */
+            eval_result?: components["schemas"]["EvalResult"];
         };
         /** @description Confidence assessment for the generated answer */
         AnswerConfidence: {
@@ -2121,7 +2183,7 @@ export interface components {
          * @description The reranking provider to use.
          * @enum {string}
          */
-        RerankerProvider: "ollama" | "termite";
+        RerankerProvider: "ollama" | "termite" | "cohere";
         /** @description Configuration for the Ollama reranking provider. */
         OllamaRerankerConfig: {
             /** @description The name of the Ollama model to use for reranking. */
@@ -2143,6 +2205,33 @@ export interface components {
             url?: string;
         };
         /**
+         * @description Configuration for the Cohere reranking provider.
+         *
+         *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
+         *
+         *     **Example Models:** rerank-english-v3.0 (default), rerank-multilingual-v3.0
+         *
+         *     **Docs:** https://docs.cohere.com/reference/rerank
+         * @example {
+         *       "provider": "cohere",
+         *       "model": "rerank-english-v3.0"
+         *     }
+         */
+        CohereRerankerConfig: {
+            /**
+             * @description The name of the Cohere reranking model to use.
+             * @default rerank-english-v3.0
+             * @example rerank-english-v3.0
+             */
+            model: string;
+            /** @description The Cohere API key. Can also be set via COHERE_API_KEY environment variable. */
+            api_key?: string;
+            /** @description Number of most relevant documents to return. If not specified, returns all documents with scores. */
+            top_n?: number;
+            /** @description Maximum number of chunks per document for long document handling. */
+            max_chunks_per_doc?: number;
+        };
+        /**
          * @description A unified configuration for a reranking provider.
          * @example {
          *       "provider": "ollama",
@@ -2156,7 +2245,7 @@ export interface components {
             field?: string;
             /** @description Handlebars template to render document text for reranking. */
             template?: string;
-        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"]);
+        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"]);
         /**
          * @description Type of graph query to execute
          * @enum {string}
@@ -2379,15 +2468,22 @@ export interface components {
              */
             took?: number;
         };
-        /** @description Configuration for the Google generative AI provider (Gemini). Defaults to gemini-2.5-flash if no model is specified. */
+        /**
+         * @description Configuration for the Google generative AI provider (Gemini).
+         *
+         *     **Example Models:** gemini-2.5-flash (default), gemini-2.5-pro, gemini-3.0-pro
+         *
+         *     **Docs:** https://ai.google.dev/gemini-api/docs/models
+         */
         GoogleGeneratorConfig: {
             /** @description The Google Cloud project ID. */
             project_id?: string;
             /** @description The Google Cloud location (e.g., 'us-central1'). */
             location?: string;
             /**
-             * @description The name of the generative model to use (e.g., 'gemini-2.5-flash', 'gemini-1.5-pro').
+             * @description The name of the generative model to use (e.g., 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.0-pro').
              * @default gemini-2.5-flash
+             * @example gemini-2.5-flash
              */
             model: string;
             /**
@@ -2415,28 +2511,13 @@ export interface components {
         /**
          * @description Configuration for Google Cloud Vertex AI generative models (enterprise-grade).
          *
-         *     Uses Application Default Credentials (ADC) for authentication by default.
-         *     Suitable for production deployments on Google Cloud Platform.
+         *     Uses Application Default Credentials (ADC) for authentication. In GCP environments
+         *     (Cloud Run, GKE, Compute Engine) this is automatic. For local dev, run
+         *     `gcloud auth application-default login`. Requires IAM role `roles/aiplatform.user`.
          *
-         *     **Authentication Priority:**
-         *     1. credentials_path (path to service account key file)
-         *     2. GOOGLE_APPLICATION_CREDENTIALS environment variable
-         *     3. Application Default Credentials (ADC) - RECOMMENDED
-         *        - In GCP: automatic (Cloud Run, GKE, Compute Engine)
-         *        - Local dev: `gcloud auth application-default login`
+         *     **Example Models:** gemini-2.5-flash (default), gemini-2.5-pro, gemini-3.0-pro
          *
-         *     **Note:** credentials_json is not supported by the genkit VertexAI plugin.
-         *     Use credentials_path or ADC instead.
-         *
-         *     **Required IAM Permission:** `roles/aiplatform.user`
-         *
-         *     **Supported Models:**
-         *     - gemini-2.5-flash (default, fast and efficient)
-         *     - gemini-1.5-pro (balanced performance)
-         *     - gemini-1.5-flash (cost-effective)
-         *     - gemini-2.0-pro (advanced reasoning)
-         *
-         *     Defaults to gemini-2.5-flash if no model is specified.
+         *     **Docs:** https://cloud.google.com/vertex-ai/generative-ai/docs/learn/models
          * @example {
          *       "provider": "vertex",
          *       "model": "gemini-2.5-flash",
@@ -2477,9 +2558,20 @@ export interface components {
             /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
             top_k?: number;
         };
-        /** @description Configuration for the Ollama generative AI provider. */
+        /**
+         * @description Configuration for the Ollama generative AI provider.
+         *
+         *     Ollama provides local LLM inference for privacy and offline use.
+         *
+         *     **Example Models:** llama3.3:70b, qwen2.5:72b, deepseek-r1:70b, mistral:7b, llava:34b
+         *
+         *     **Docs:** https://ollama.com/library
+         */
         OllamaGeneratorConfig: {
-            /** @description The name of the Ollama model to use (e.g., 'llama3.2', 'llava'). */
+            /**
+             * @description The name of the Ollama model to use (e.g., 'llama3.3:70b', 'qwen2.5:72b', 'deepseek-coder:33b').
+             * @example llama3.3:70b
+             */
             model: string;
             /**
              * Format: uri
@@ -2501,9 +2593,19 @@ export interface components {
             /** @description Top-k sampling parameter. */
             top_k?: number;
         };
-        /** @description Configuration for the OpenAI generative AI provider. */
+        /**
+         * @description Configuration for the OpenAI generative AI provider.
+         *
+         *     **Example Models:** gpt-4.1 (default), gpt-4.1-mini, o3, o4-mini
+         *
+         *     **Docs:** https://platform.openai.com/docs/models
+         */
         OpenAIGeneratorConfig: {
-            /** @description The name of the OpenAI model to use (e.g., 'gpt-4o', 'gpt-4-turbo'). */
+            /**
+             * @description The name of the OpenAI model to use (e.g., 'gpt-4.1', 'gpt-4.1-mini', 'o4-mini').
+             * @default gpt-4.1
+             * @example gpt-4.1
+             */
             model: string;
             /**
              * Format: uri
@@ -2535,11 +2637,19 @@ export interface components {
              */
             presence_penalty?: number;
         };
-        /** @description Configuration for the AWS Bedrock generative AI provider. */
+        /**
+         * @description Configuration for the AWS Bedrock generative AI provider.
+         *
+         *     Provides access to models from Anthropic, Meta, Amazon, Cohere, Mistral, and others.
+         *
+         *     **Example Models:** anthropic.claude-sonnet-4-5-20250929-v1:0, meta.llama3-3-70b-instruct-v1:0, amazon.nova-pro-v1:0
+         *
+         *     **Docs:** https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+         */
         BedrockGeneratorConfig: {
             /**
-             * @description The name of the Bedrock model to use.
-             * @example anthropic.claude-3-5-sonnet-20241022-v2:0
+             * @description The Bedrock model ID to use (e.g., 'anthropic.claude-sonnet-4-5-20250929-v1:0').
+             * @example anthropic.claude-sonnet-4-5-20250929-v1:0
              */
             model: string;
             /** @description The AWS region for the Bedrock service. */
@@ -2561,30 +2671,24 @@ export interface components {
         };
         /**
          * @description Configuration for the Anthropic generative AI provider (Claude models).
-         *     Uses the firebase/genkit compat_oai/anthropic plugin with OpenAI-compatible API.
          *
-         *     Defaults to claude-3-7-sonnet-20250219 if no model is specified.
+         *     API key via `api_key` field or `ANTHROPIC_API_KEY` environment variable.
          *
-         *     API key can be provided via the 'api_key' field or the ANTHROPIC_API_KEY environment variable.
+         *     **Example Models:** claude-sonnet-4-5-20250929 (default), claude-opus-4-5-20251101, claude-3-5-haiku-20241022
          *
-         *     Supported models:
-         *     - claude-3-7-sonnet-20250219 (latest, most capable)
-         *     - claude-3-5-haiku-20241022 (fast and efficient)
-         *     - claude-3-5-sonnet-20240620 (balanced performance)
-         *     - claude-3-opus-20240229 (highly capable)
-         *     - claude-3-haiku-20240307 (fastest)
+         *     **Docs:** https://docs.anthropic.com/en/docs/about-claude/models/overview
          * @example {
          *       "provider": "anthropic",
-         *       "model": "claude-3-7-sonnet-20250219",
+         *       "model": "claude-sonnet-4-5-20250929",
          *       "temperature": 0.7,
          *       "max_tokens": 4096
          *     }
          */
         AnthropicGeneratorConfig: {
             /**
-             * @description The full model ID of the Anthropic model to use (e.g., 'claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022').
-             * @default claude-3-7-sonnet-20250219
-             * @example claude-3-7-sonnet-20250219
+             * @description The full model ID of the Anthropic model to use (e.g., 'claude-sonnet-4-5-20250929', 'claude-opus-4-5-20251101').
+             * @default claude-sonnet-4-5-20250929
+             * @example claude-sonnet-4-5-20250929
              */
             model: string;
             /** @description The Anthropic API key. If not provided, falls back to ANTHROPIC_API_KEY environment variable. */
@@ -2610,10 +2714,59 @@ export interface components {
             top_k?: number;
         };
         /**
+         * @description Configuration for the Cohere generative AI provider (Command models).
+         *
+         *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
+         *
+         *     **Example Models:** command-r-plus (default), command-r, command-a-03-2025
+         *
+         *     **Docs:** https://docs.cohere.com/reference/chat
+         * @example {
+         *       "provider": "cohere",
+         *       "model": "command-r-plus",
+         *       "temperature": 0.7,
+         *       "max_tokens": 4096
+         *     }
+         */
+        CohereGeneratorConfig: {
+            /**
+             * @description The name of the Cohere model to use.
+             * @default command-r-plus
+             * @example command-r-plus
+             */
+            model: string;
+            /** @description The Cohere API key. If not provided, falls back to COHERE_API_KEY environment variable. */
+            api_key?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-1.0). Higher values make output more random.
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate in the response. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
+            top_k?: number;
+            /**
+             * Format: float
+             * @description Penalty for token frequency (0.0-1.0).
+             */
+            frequency_penalty?: number;
+            /**
+             * Format: float
+             * @description Penalty for token presence (0.0-1.0).
+             */
+            presence_penalty?: number;
+        };
+        /**
          * @description The generative AI provider to use.
          * @enum {string}
          */
-        GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "anthropic" | "mock";
+        GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "anthropic" | "cohere" | "mock";
         /**
          * @description A unified configuration for a generative AI provider.
          *
@@ -2780,18 +2933,136 @@ export interface components {
          *     - Test templates with representative data before production use
          * @example {
          *       "provider": "openai",
-         *       "model": "gpt-4o",
+         *       "model": "gpt-4.1",
          *       "temperature": 0.7,
          *       "max_tokens": 2048
          *     }
          */
-        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"]) & {
+        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"] | components["schemas"]["CohereGeneratorConfig"]) & {
             provider: components["schemas"]["GeneratorProvider"];
+        };
+        /**
+         * @description Available evaluator types:
+         *
+         *     **Retrieval metrics** (require ground_truth.relevant_ids):
+         *     - recall: Recall@k - fraction of relevant docs retrieved
+         *     - precision: Precision@k - fraction of retrieved docs that are relevant
+         *     - ndcg: Normalized Discounted Cumulative Gain
+         *     - mrr: Mean Reciprocal Rank
+         *     - map: Mean Average Precision
+         *
+         *     **LLM-as-judge metrics** (require judge config):
+         *     - relevance: Is output relevant to query? (works on retrieval-only too)
+         *     - faithfulness: Is output grounded in context?
+         *     - completeness: Does output fully address query?
+         *     - coherence: Is output well-structured?
+         *     - safety: Is output safe/appropriate?
+         *     - helpfulness: Is output useful?
+         *     - correctness: Is output factually correct? (uses expectations)
+         *     - citation_quality: Are citations accurate?
+         * @enum {string}
+         */
+        EvaluatorName: "recall" | "precision" | "ndcg" | "mrr" | "map" | "relevance" | "faithfulness" | "completeness" | "coherence" | "safety" | "helpfulness" | "correctness" | "citation_quality";
+        /** @description Ground truth data for evaluation */
+        GroundTruth: {
+            /** @description Document IDs known to be relevant (for retrieval metrics) */
+            relevant_ids?: string[];
+            /**
+             * @description Context for evaluators about what to expect in the response.
+             *     Provides guidance for LLM judges (e.g., "Should mention pricing tiers").
+             */
+            expectations?: string;
+        };
+        /** @description Options for evaluation behavior */
+        EvalOptions: {
+            /**
+             * @description K value for @K metrics (precision@k, recall@k, ndcg@k)
+             * @default 10
+             */
+            k?: number;
+            /**
+             * Format: float
+             * @description Score threshold for pass/fail determination
+             * @default 0.5
+             */
+            pass_threshold?: number;
+            /**
+             * @description Timeout for evaluation in seconds
+             * @default 30
+             */
+            timeout_seconds?: number;
+        };
+        /**
+         * @description Configuration for inline evaluation of query results.
+         *     Add to RAGRequest, QueryRequest, or AnswerAgentRequest.
+         */
+        EvalConfig: {
+            /** @description List of evaluators to run */
+            evaluators?: components["schemas"]["EvaluatorName"][];
+            /**
+             * @description LLM configuration for judge-based evaluators.
+             *     Falls back to default if not specified.
+             */
+            judge?: components["schemas"]["GeneratorConfig"];
+            /** @description Ground truth data for retrieval metrics */
+            ground_truth?: components["schemas"]["GroundTruth"];
+            /** @description Evaluation options (k, thresholds, etc.) */
+            options?: components["schemas"]["EvalOptions"];
         };
         /** @description Result of a summarization operation. The summary is formatted as markdown with inline resource references using [resource_id <id>] or [resource_id <id1>, <id2>] format. */
         SummarizeResult: {
             /** @description The generated summary text in markdown format with inline resource references like [resource_id res1] or [resource_id res1, res2] */
             summary: string;
+        };
+        /** @description Result from a single evaluator */
+        EvaluatorScore: {
+            /**
+             * Format: float
+             * @description Numeric score (0-1)
+             */
+            score?: number;
+            /** @description Whether the evaluation passed the threshold */
+            pass?: boolean;
+            /** @description Human-readable explanation of the result */
+            reason?: string;
+            /** @description Additional evaluator-specific data */
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Scores organized by category */
+        EvalScores: {
+            /** @description Retrieval metric scores (recall, precision, ndcg, etc.) */
+            retrieval?: {
+                [key: string]: components["schemas"]["EvaluatorScore"];
+            };
+            /** @description Generation quality scores (faithfulness, relevance, etc.) */
+            generation?: {
+                [key: string]: components["schemas"]["EvaluatorScore"];
+            };
+        };
+        /** @description Aggregate statistics across all evaluators */
+        EvalSummary: {
+            /**
+             * Format: float
+             * @description Average score across all evaluators
+             */
+            average_score?: number;
+            /** @description Number of evaluators that passed */
+            passed?: number;
+            /** @description Number of evaluators that failed */
+            failed?: number;
+            /** @description Total number of evaluators run */
+            total?: number;
+        };
+        /** @description Complete evaluation result */
+        EvalResult: {
+            /** @description Scores organized by category */
+            scores?: components["schemas"]["EvalScores"];
+            /** @description Aggregate statistics */
+            summary?: components["schemas"]["EvalSummary"];
+            /** @description Total evaluation duration in milliseconds */
+            duration_ms?: number;
         };
         /** @description Retry configuration for generator calls */
         RetryConfig: {
@@ -2980,6 +3251,28 @@ export interface components {
              */
             confidence: number;
         };
+        /**
+         * @description Standalone evaluation request for POST /eval endpoint.
+         *     Useful for testing evaluators without running a query.
+         */
+        EvalRequest: {
+            /** @description List of evaluators to run */
+            evaluators: components["schemas"]["EvaluatorName"][];
+            /** @description LLM configuration for judge-based evaluators */
+            judge?: components["schemas"]["GeneratorConfig"];
+            /** @description Ground truth data */
+            ground_truth?: components["schemas"]["GroundTruth"];
+            /** @description Evaluation options */
+            options?: components["schemas"]["EvalOptions"];
+            /** @description Original query/input to evaluate */
+            query?: string;
+            /** @description Generated output to evaluate (optional for retrieval-only) */
+            output?: string;
+            /** @description Retrieved documents/context */
+            context?: Record<string, never>[];
+            /** @description IDs of retrieved documents (for retrieval metrics) */
+            retrieved_ids?: string[];
+        };
         BleveIndexV2Config: {
             /** @description Whether to use memory-only storage */
             mem_only?: boolean;
@@ -2987,24 +3280,15 @@ export interface components {
         /**
          * @description Configuration for the Google AI (Gemini) embedding provider.
          *
-         *     Uses Google's Gemini models for generating embeddings with configurable dimensions.
+         *     API key via `api_key` field or `GEMINI_API_KEY` environment variable.
          *
-         *     **Available Models:**
-         *     - `gemini-embedding-001` - Latest Gemini embedding model
+         *     **Example Models:** gemini-embedding-001 (default, 3072 dims)
          *
-         *     **Legacy Models (deprecating):**
-         *     - `embedding-001` - Deprecating on August 14, 2025
-         *     - `text-embedding-004` - Deprecating on January 14, 2026
-         *
-         *     **Authentication:**
-         *     API key can be provided via the `api_key` field or the `GEMINI_API_KEY` environment variable.
-         *
-         *     **Dimension Configuration:**
-         *     The dimension can be configured on the vector index (see vector index configuration).
-         *     Different models support different dimension ranges.
+         *     **Docs:** https://ai.google.dev/gemini-api/docs/embeddings
          * @example {
          *       "provider": "gemini",
          *       "model": "gemini-embedding-001",
+         *       "dimension": 3072,
          *       "api_key": "your-api-key"
          *     }
          */
@@ -3020,8 +3304,8 @@ export interface components {
              */
             model: string;
             /**
-             * @description The dimension of the embedding vector. Model-specific and configurable on the vector index.
-             * @default 768
+             * @description The dimension of the embedding vector (768, 1536, or 3072 recommended).
+             * @default 3072
              */
             dimension?: number;
             /** @description The Google API key. Can also be set via GEMINI_API_KEY environment variable. */
@@ -3035,36 +3319,24 @@ export interface components {
         /**
          * @description Configuration for Google Cloud Vertex AI embedding models (enterprise-grade).
          *
-         *     Uses Application Default Credentials (ADC) for authentication by default.
-         *     Suitable for production deployments on Google Cloud Platform.
+         *     Uses Application Default Credentials (ADC) for authentication. Requires IAM role `roles/aiplatform.user`.
          *
-         *     **Authentication Priority:**
-         *     1. credentials_path (path to service account key file)
-         *     2. GOOGLE_APPLICATION_CREDENTIALS environment variable
-         *     3. Application Default Credentials (ADC) - RECOMMENDED
-         *        - In GCP: automatic (Cloud Run, GKE, Compute Engine)
-         *        - Local dev: `gcloud auth application-default login`
+         *     **Example Models:** gemini-embedding-001 (default, 3072 dims), multimodalembedding (images/audio/video)
          *
-         *     **Required IAM Permission:** `roles/aiplatform.user`
-         *
-         *     **Supported Models:**
-         *     - text-embedding-004 (latest, 768 dimensions)
-         *     - textembedding-gecko@003, @002, @001 (legacy)
-         *     - textembedding-gecko-multilingual@001 (multilingual support)
-         *     - text-multilingual-embedding-002 (multilingual, 768 dimensions)
-         *     - multimodalembedding (images, audio, video - 128/256/512/1408 dimensions)
+         *     **Docs:** https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings
          * @example {
          *       "provider": "vertex",
-         *       "model": "text-embedding-004",
+         *       "model": "gemini-embedding-001",
          *       "project_id": "my-gcp-project",
          *       "location": "us-central1",
-         *       "dimension": 768
+         *       "dimension": 3072
          *     }
          */
         VertexEmbedderConfig: {
             /**
              * @description The name of the Vertex AI embedding model to use.
-             * @example text-embedding-004
+             * @default gemini-embedding-001
+             * @example gemini-embedding-001
              */
             model: string;
             /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
@@ -3077,41 +3349,29 @@ export interface components {
             /** @description Path to service account JSON key file. Alternative to ADC for non-GCP environments. */
             credentials_path?: string;
             /**
-             * @description The dimension of the embedding vector. Model-specific (e.g., 768 for text-embedding-004, 128-1408 for multimodalembedding).
-             * @default 768
+             * @description The dimension of the embedding vector (768, 1536, or 3072 for gemini-embedding-001; 128-1408 for multimodalembedding).
+             * @default 3072
              */
             dimension?: number;
         };
         /**
          * @description Configuration for the Ollama embedding provider.
          *
-         *     Local embeddings using Ollama's HTTP API for privacy and development.
+         *     Local embeddings for privacy and offline use. URL via `url` field or `OLLAMA_HOST` env var.
          *
-         *     **Popular Models:**
-         *     - `all-minilm` - 384-dimensional, good for general use
-         *     - `nomic-embed-text` - 768-dimensional, high-quality embeddings
-         *     - `mxbai-embed-large` - 1024-dimensional, larger model for better accuracy
-         *     - `embeddinggemma` - 768-dimensional, high-quality embeddings from Google
+         *     **Example Models:** nomic-embed-text (768 dims), mxbai-embed-large (1024 dims), all-minilm (384 dims)
          *
-         *     **Finding Model Dimensions:**
-         *     Use the following command to discover embedding dimensions for any model:
-         *     ```bash
-         *     curl http://localhost:11434/api/embeddings -d '{"model": "<model_name>", "prompt": "foo"}' | jq ".embedding | length"
-         *     ```
-         *
-         *     **URL Configuration:**
-         *     The URL can be provided via the `url` field or the `OLLAMA_HOST` environment variable.
-         *     Defaults to `http://localhost:11434` if not specified.
+         *     **Docs:** https://ollama.com/search?c=embedding
          * @example {
          *       "provider": "ollama",
-         *       "model": "all-minilm",
+         *       "model": "nomic-embed-text",
          *       "url": "http://localhost:11434"
          *     }
          */
         OllamaEmbedderConfig: {
             /**
-             * @description The name of the Ollama model to use (e.g., 'all-minilm', 'nomic-embed-text').
-             * @example all-minilm
+             * @description The name of the Ollama model to use (e.g., 'nomic-embed-text', 'mxbai-embed-large').
+             * @example nomic-embed-text
              */
             model: string;
             /**
@@ -3125,19 +3385,12 @@ export interface components {
         /**
          * @description Configuration for the OpenAI embedding provider.
          *
-         *     Supports OpenAI and OpenAI-compatible APIs for embeddings.
+         *     API key via `api_key` field or `OPENAI_API_KEY` environment variable.
+         *     Supports OpenAI-compatible APIs via `url` field.
          *
-         *     **Available Models:**
-         *     - `text-embedding-3-small` - Smaller, faster model (1536 dimensions)
-         *     - `text-embedding-3-large` - Larger, more accurate model (3072 dimensions)
-         *     - `text-embedding-ada-002` - Legacy model (1536 dimensions)
+         *     **Example Models:** text-embedding-3-small (default, 1536 dims), text-embedding-3-large (3072 dims)
          *
-         *     **Authentication:**
-         *     API key can be provided via the `api_key` field or the `OPENAI_API_KEY` environment variable.
-         *
-         *     **OpenAI-Compatible APIs:**
-         *     Set the `url` field to use compatible services (e.g., Azure OpenAI, local proxies).
-         *     Can also be set via `OPENAI_BASE_URL` environment variable.
+         *     **Docs:** https://platform.openai.com/docs/guides/embeddings
          * @example {
          *       "provider": "openai",
          *       "model": "text-embedding-3-small",
@@ -3147,6 +3400,7 @@ export interface components {
         OpenAIEmbedderConfig: {
             /**
              * @description The name of the OpenAI model to use.
+             * @default text-embedding-3-small
              * @example text-embedding-3-small
              */
             model: string;
@@ -3159,34 +3413,27 @@ export interface components {
             url?: string;
             /** @description The OpenAI API key. Can also be set via OPENAI_API_KEY environment variable. */
             api_key?: string;
+            /** @description Output dimension for the embedding (uses MRL for dimension reduction). Recommended: 256, 512, 1024, 1536, or 3072. */
+            dimensions?: number;
         };
         /**
          * @description Configuration for the AWS Bedrock embedding provider.
          *
-         *     Uses AWS Bedrock's managed embedding models with automatic scaling.
+         *     Uses AWS credentials from environment or IAM roles.
          *
-         *     **Available Models:**
-         *     - `amazon.titan-embed-text-v1` - Amazon Titan Text Embeddings v1
-         *     - `amazon.titan-embed-text-v2` - Amazon Titan Text Embeddings v2 (improved accuracy)
-         *     - `cohere.embed-english-v3` - Cohere embeddings for English text
-         *     - `cohere.embed-multilingual-v3` - Cohere embeddings with multilingual support
+         *     **Example Models:** cohere.embed-english-v4, amazon.titan-embed-text-v2:0
          *
-         *     **Authentication:**
-         *     Uses AWS credentials from the environment (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-         *     or IAM roles when running on AWS infrastructure.
-         *
-         *     **Region Configuration:**
-         *     Specify the AWS region where Bedrock is available (e.g., 'us-east-1', 'us-west-2').
+         *     **Docs:** https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
          * @example {
          *       "provider": "bedrock",
-         *       "model": "amazon.titan-embed-text-v1",
+         *       "model": "cohere.embed-english-v4",
          *       "region": "us-east-1"
          *     }
          */
         BedrockEmbedderConfig: {
             /**
-             * @description The name of the Bedrock model to use.
-             * @example amazon.titan-embed-text-v1
+             * @description The Bedrock model ID to use (e.g., 'cohere.embed-english-v4', 'amazon.titan-embed-text-v2:0').
+             * @example cohere.embed-english-v4
              */
             model: string;
             /**
@@ -3206,10 +3453,46 @@ export interface components {
             batch_size?: number;
         };
         /**
+         * @description Configuration for the Cohere embedding provider.
+         *
+         *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
+         *
+         *     **Example Models:** embed-english-v3.0 (default, 1024 dims), embed-multilingual-v3.0
+         *
+         *     **Docs:** https://docs.cohere.com/reference/embed
+         * @example {
+         *       "provider": "cohere",
+         *       "model": "embed-english-v3.0",
+         *       "input_type": "search_document"
+         *     }
+         */
+        CohereEmbedderConfig: {
+            /**
+             * @description The name of the Cohere embedding model to use.
+             * @default embed-english-v3.0
+             * @example embed-english-v3.0
+             */
+            model: string;
+            /** @description The Cohere API key. Can also be set via COHERE_API_KEY environment variable. */
+            api_key?: string;
+            /**
+             * @description Specifies the type of input for optimized embeddings.
+             * @default search_document
+             * @enum {string}
+             */
+            input_type?: "search_document" | "search_query" | "classification" | "clustering";
+            /**
+             * @description How to handle inputs longer than the max token length.
+             * @default END
+             * @enum {string}
+             */
+            truncate?: "NONE" | "START" | "END";
+        };
+        /**
          * @description The embedding provider to use.
          * @enum {string}
          */
-        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "mock";
+        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "cohere" | "mock";
         /**
          * @description A unified configuration for an embedding provider.
          *
@@ -3352,31 +3635,55 @@ export interface components {
          *     - `OPENAI_API_KEY` - API key for OpenAI
          *     - `OPENAI_BASE_URL` - Base URL for OpenAI-compatible APIs
          *     - `OLLAMA_HOST` - Ollama server URL (e.g., http://localhost:11434)
+         *
+         *     **Importing Pre-computed Embeddings:**
+         *
+         *     You can import existing embeddings (from OpenAI, Cohere, or any provider) by including
+         *     them directly in your documents using the `_embeddings` field. This bypasses the
+         *     embedding generation step and writes vectors directly to the index.
+         *
+         *     **Steps:**
+         *     1. Create the index first with the appropriate dimension
+         *     2. Write documents with `_embeddings: { "<indexName>": [...<embedding>...] }`
+         *
+         *     **Example:**
+         *     ```json
+         *     {
+         *       "title": "My Document",
+         *       "content": "Document text...",
+         *       "_embeddings": {
+         *         "my_vector_index": [0.1, 0.2, 0.3, ...]
+         *       }
+         *     }
+         *     ```
+         *
+         *     **Use Cases:**
+         *     - Migrating from another vector database with existing embeddings
+         *     - Using embeddings generated by external systems
+         *     - Importing pre-computed OpenAI, Cohere, or other provider embeddings
+         *     - Batch processing embeddings offline before ingestion
          * @example {
          *       "provider": "openai",
          *       "model": "text-embedding-3-small"
          *     }
          */
-        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"]) & {
+        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
         };
         /**
-         * @description Document chunking strategy. The strategy name maps to ONNX model directory names when using Termite.
+         * @description Chunking model name. The name maps to ONNX model directory names when using Termite.
          *     - fixed: Simple fixed-size chunking by token count (built-in, no ONNX required)
-         *     - chonky_onnx: ONNX-accelerated chunking using sentence boundary detection (requires models/chunkers/chonky_onnx/)
-         * @enum {string}
+         *     - Any other name will attempt to load from models/chunkers/{name}/ directory
          */
-        ChunkingStrategy: "fixed" | "chonky_onnx";
+        ChunkingModel: string;
         /**
          * @description Configuration for the Termite chunking provider.
          *
          *     Termite is a centralized HTTP service that provides chunking with multi-tier caching.
-         *     It supports multiple chunking strategies - the strategy name maps to ONNX model directory names
-         *     (similar to how Ollama works with model names).
+         *     The model name maps to ONNX model directory names (similar to how Ollama works).
          *
-         *     **Chunking Strategies:**
+         *     **Chunking Models:**
          *     - fixed: Simple fixed-size chunking by token count (built-in, no ONNX required)
-         *     - chonky_onnx: ONNX model from models/chunkers/chonky_onnx/ directory
          *     - Any other name will attempt to load from models/chunkers/{name}/ directory
          *
          *     **Caching:**
@@ -3386,7 +3693,7 @@ export interface components {
          * @example {
          *       "provider": "termite",
          *       "api_url": "http://localhost:8080",
-         *       "strategy": "chonky_onnx",
+         *       "model": "fixed",
          *       "target_tokens": 500,
          *       "overlap_tokens": 50,
          *       "separator": "\n\n",
@@ -3402,10 +3709,10 @@ export interface components {
              */
             api_url?: string;
             /**
-             * @description The chunking strategy to use. Like 'model' in generators - determines the chunking algorithm.
+             * @description The chunking model to use. Either 'fixed' for simple token-based chunking, or a model name from models/chunkers/{name}/.
              * @default fixed
              */
-            strategy: components["schemas"]["ChunkingStrategy"];
+            model: components["schemas"]["ChunkingModel"];
             /**
              * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
              * @default 500
@@ -3428,7 +3735,7 @@ export interface components {
             max_chunks?: number;
             /**
              * Format: float
-             * @description Minimum confidence threshold for separator detection. Only used with ONNX-based strategies like chonky_onnx.
+             * @description Minimum confidence threshold for separator detection. Only used with ONNX-based models.
              * @default 0.5
              */
             threshold?: number;
@@ -3457,7 +3764,7 @@ export interface components {
          *
          *     **Use Termite instead when:**
          *     - Running multi-node clusters where caching reduces costs
-         *     - You need ONNX-accelerated chunking (e.g., chonky_onnx strategy)
+         *     - You need ONNX-accelerated chunking models
          *     - You want persistent chunk/embedding caches
          * @example {
          *       "provider": "antfly",
@@ -3508,7 +3815,7 @@ export interface components {
          * @description A unified configuration for a chunking provider.
          * @example {
          *       "provider": "termite",
-         *       "strategy": "fixed",
+         *       "model": "fixed",
          *       "target_tokens": 500,
          *       "overlap_tokens": 50
          *     }
@@ -3924,6 +4231,48 @@ export interface operations {
                 };
             };
             /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    evaluate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvalRequest"];
+            };
+        };
+        responses: {
+            /** @description Evaluation completed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalResult"];
+                };
+            };
+            /** @description Invalid evaluation request (e.g., missing required fields) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error (e.g., LLM judge failed) */
             500: {
                 headers: {
                     [name: string]: unknown;
