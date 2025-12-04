@@ -239,7 +239,13 @@ export function boolean(options: {
   boost?: number;
   minShouldMatch?: number;
 }): Query {
-  const result: any = {
+  const result: {
+    boost?: number;
+    must?: ConjunctionQuery;
+    should?: DisjunctionQuery;
+    must_not?: DisjunctionQuery;
+    filter?: Query;
+  } = {
     boost: options.boost,
   };
 

@@ -4,15 +4,15 @@
  */
 
 import type {
-  QueryRequest,
   BleveQuery,
-  MatchQuery,
   BooleanQuery,
-  TermQuery,
-  NumericRangeQuery,
+  BoolFieldQuery,
   ConjunctionQuery,
   DisjunctionQuery,
-  BoolFieldQuery,
+  MatchQuery,
+  NumericRangeQuery,
+  QueryRequest,
+  TermQuery,
 } from "../src/types.js";
 
 // Example 1: Simple match query
@@ -109,10 +109,4 @@ const queryStringQuery: QueryRequest = {
 };
 
 // Export examples for use in other files
-export {
-  simpleMatchQuery,
-  booleanQuery,
-  filteredQuery,
-  complexQuery,
-  queryStringQuery,
-};
+export { simpleMatchQuery, booleanQuery, filteredQuery, complexQuery, queryStringQuery };

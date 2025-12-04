@@ -123,7 +123,8 @@ export type RAGResult = components["schemas"]["RAGResult"];
 // Answer Agent types
 export type AnswerAgentRequest = components["schemas"]["AnswerAgentRequest"];
 export type AnswerAgentResult = components["schemas"]["AnswerAgentResult"];
-export type ClassificationTransformationResult = components["schemas"]["ClassificationTransformationResult"];
+export type ClassificationTransformationResult =
+  components["schemas"]["ClassificationTransformationResult"];
 export type RouteType = components["schemas"]["RouteType"];
 export type QueryStrategy = components["schemas"]["QueryStrategy"];
 export type SemanticQueryMode = components["schemas"]["SemanticQueryMode"];

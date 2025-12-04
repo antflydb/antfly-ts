@@ -5,7 +5,7 @@
 // When running from source, import from src
 // In production, use: import { AntflyClient } from "@antfly/sdk";
 import { AntflyClient } from "../src/client.js";
-import type { QueryRequest, CreateTableRequest, BatchRequest } from "../src/types.js";
+import type { BatchRequest, CreateTableRequest, QueryRequest } from "../src/types.js";
 
 async function main() {
   // Initialize the client with environment variables
@@ -138,7 +138,7 @@ async function main() {
 
     // Example: Table-specific RAG query with streaming
     console.log("\nPerforming RAG query with streaming...");
-    let streamedText = "";
+    let _streamedText = "";
     await client.tables.rag(
       "products",
       {
@@ -152,7 +152,7 @@ async function main() {
         },
       },
       (chunk) => {
-        streamedText += chunk;
+        _streamedText += chunk;
         process.stdout.write(chunk);
       }
     );

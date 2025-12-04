@@ -33,112 +33,95 @@
  * ```
  */
 
+// Re-export the generated types for advanced users
+export type { components, operations, paths } from "./antfly-api.js";
+export type { components as bleve_components } from "./bleve-query.js";
 // Main client export
 export { AntflyClient } from "./client.js";
-
-export { embedderProviders, generatorProviders } from "./types.js";
-
+// Query helper functions
+export {
+  boolean,
+  conjunction,
+  dateRange,
+  disjunction,
+  docIds,
+  fuzzy,
+  geoBoundingBox,
+  geoDistance,
+  match,
+  matchAll,
+  matchNone,
+  matchPhrase,
+  numericRange,
+  prefix,
+  queryString,
+  term,
+} from "./query-helpers.js";
 // Type exports
 export type {
-  // Configuration
-  AntflyConfig,
-  QueryOptions,
-
-  // Core types
-  QueryResponses,
-  QueryRequest,
-  QueryResult,
-  QueryHit,
-  BatchRequest, // Now using our custom type
-
-  // Table types
-  Table,
-  CreateTableRequest,
-  TableSchema,
-  TableStatus,
-
-  // Index types
-  IndexConfig,
-  IndexStatus,
-
-  // User and permission types
-  User,
-  CreateUserRequest,
-  UpdatePasswordRequest,
-  Permission,
-  ResourceType,
-  PermissionType,
-
-  // Backup/Restore types
-  BackupRequest,
-  RestoreRequest,
-
-  // Schema types
-  DocumentSchema,
-
-  // Search and facet types
-  FacetOption,
-  FacetResult,
-  TermFacetResult,
-  AntflyType,
-
-  // Model and reranker types
-  EmbedderConfig,
-  GeneratorConfig,
-  RerankerConfig,
-  EmbedderProvider,
-  GeneratorProvider,
-
-  // RAG types
-  RAGRequest,
-  RAGResult,
-  RAGStreamCallbacks,
-  SummarizeResult,
-
   // Answer Agent types
   AnswerAgentRequest,
   AnswerAgentResult,
   AnswerAgentStreamCallbacks,
-  ClassificationTransformationResult,
-  RouteType,
-  QueryStrategy,
-  SemanticQueryMode,
   AnswerConfidence,
-
+  // Configuration
+  AntflyConfig,
+  // Error type
+  AntflyError,
+  AntflyType,
+  // Backup/Restore types
+  BackupRequest,
+  BatchRequest, // Now using our custom type
+  ClassificationTransformationResult,
+  CreateTableRequest,
+  CreateUserRequest,
+  // Schema types
+  DocumentSchema,
+  // Model and reranker types
+  EmbedderConfig,
+  EmbedderProvider,
+  // Search and facet types
+  FacetOption,
+  FacetResult,
+  GeneratorConfig,
+  GeneratorProvider,
+  // Index types
+  IndexConfig,
+  IndexStatus,
+  Permission,
+  PermissionType,
   // Query Builder Agent types
   QueryBuilderRequest,
   QueryBuilderResult,
-
-  // Error type
-  AntflyError,
-
+  QueryHit,
+  QueryOptions,
+  QueryRequest,
+  // Core types
+  QueryResponses,
+  QueryResult,
+  QueryStrategy,
+  // RAG types
+  RAGRequest,
+  RAGResult,
+  RAGStreamCallbacks,
+  RerankerConfig,
+  ResourceType,
   // Utility type for response data
   ResponseData,
+  RestoreRequest,
+  RouteType,
+  SemanticQueryMode,
+  SummarizeResult,
+  // Table types
+  Table,
+  TableSchema,
+  TableStatus,
+  TermFacetResult,
+  UpdatePasswordRequest,
+  // User and permission types
+  User,
 } from "./types.js";
-
-// Re-export the generated types for advanced users
-export type { paths, components, operations } from "./antfly-api.js";
-export type { components as bleve_components } from "./bleve-query.js";
-
-// Query helper functions
-export {
-  queryString,
-  term,
-  match,
-  matchPhrase,
-  prefix,
-  fuzzy,
-  numericRange,
-  dateRange,
-  matchAll,
-  matchNone,
-  boolean,
-  conjunction,
-  disjunction,
-  docIds,
-  geoDistance,
-  geoBoundingBox
-} from "./query-helpers.js";
+export { embedderProviders, generatorProviders } from "./types.js";
 
 // Default export for convenience
 import { AntflyClient } from "./client.js";
