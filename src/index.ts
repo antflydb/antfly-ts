@@ -105,6 +105,10 @@ export type {
   SemanticQueryMode,
   AnswerConfidence,
 
+  // Query Builder Agent types
+  QueryBuilderRequest,
+  QueryBuilderResult,
+
   // Error type
   AntflyError,
 

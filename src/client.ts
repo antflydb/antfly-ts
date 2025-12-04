@@ -26,6 +26,8 @@ import type {
   AnswerAgentRequest,
   AnswerAgentResult,
   AnswerAgentStreamCallbacks,
+  QueryBuilderRequest,
+  QueryBuilderResult,
 } from "./types.js";
 
 export class AntflyClient {
@@ -494,6 +496,20 @@ export class AntflyClient {
     callbacks?: AnswerAgentStreamCallbacks
   ): Promise<AnswerAgentResult | AbortController> {
     return this.performAnswerAgent("/agents/answer", request, callbacks);
+  }
+
+  /**
+   * Query Builder Agent - Translates natural language into structured search queries
+   * Uses an LLM to generate optimized Bleve queries from user intent
+   * @param request - Query builder request with intent and optional table/schema context
+   * @returns Promise with QueryBuilderResult containing the generated query, explanation, and confidence
+   */
+  async queryBuilderAgent(request: QueryBuilderRequest): Promise<QueryBuilderResult> {
+    const { data, error } = await this.client.POST("/agents/query-builder", {
+      body: request,
+    });
+    if (error) throw new Error(`Query builder agent failed: ${error.error}`);
+    return data!;
   }
 
   /**

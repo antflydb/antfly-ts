@@ -129,6 +129,10 @@ export type QueryStrategy = components["schemas"]["QueryStrategy"];
 export type SemanticQueryMode = components["schemas"]["SemanticQueryMode"];
 export type AnswerConfidence = components["schemas"]["AnswerConfidence"];
 
+// Query Builder Agent types
+export type QueryBuilderRequest = components["schemas"]["QueryBuilderRequest"];
+export type QueryBuilderResult = components["schemas"]["QueryBuilderResult"];
+
 // Error type
 export type AntflyError = components["schemas"]["Error"];
 

@@ -495,6 +495,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/tables/{tableName}/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan keys in a table within a key range
+         * @description Scans keys in a table within an optional key range and returns them as
+         *     newline-delimited JSON (NDJSON). Each line contains a JSON object with
+         *     the key and optionally projected document fields. This is useful for
+         *     iterating through all keys in a table or a subset of keys within a range.
+         */
+        post: operations["scanKeys"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tables/{tableName}/lookup/{key}": {
         parameters: {
             query?: never;
@@ -931,6 +957,70 @@ export interface components {
             upsert?: boolean;
         };
         /**
+         * @description Request to scan keys in a table within a key range.
+         *     If no range is specified, scans all keys in the table.
+         */
+        ScanKeysRequest: {
+            /**
+             * @description Start of the key range to scan (exclusive by default).
+             *     Can be a full key or a prefix. If not specified, starts from
+             *     the beginning of the table.
+             * @example user:100
+             */
+            from?: string;
+            /**
+             * @description End of the key range to scan (inclusive by default).
+             *     Can be a full key or a prefix. If not specified, scans to
+             *     the end of the table.
+             * @example user:200
+             */
+            to?: string;
+            /**
+             * @description If true, include keys matching 'from' in the results.
+             *     Default: false (exclusive lower bound for pagination).
+             * @default false
+             */
+            inclusive_from?: boolean;
+            /**
+             * @description If true, exclude keys matching 'to' from the results.
+             *     Default: false (inclusive upper bound).
+             * @default false
+             */
+            exclusive_to?: boolean;
+            /**
+             * @description List of fields to include in each result. If not specified,
+             *     only returns the key. Supports:
+             *     - Simple fields: "title", "author"
+             *     - Nested paths: "user.address.city"
+             *     - Wildcards: "_chunks.*"
+             *     - Exclusions: "-_chunks.*._embedding"
+             *     - Special fields: "_embeddings", "_summaries", "_chunks"
+             * @example [
+             *       "title",
+             *       "author",
+             *       "metadata.tags"
+             *     ]
+             */
+            fields?: string[];
+            /**
+             * @description Bleve query to filter documents. Only documents matching this query
+             *     are included in results. Uses the sear library for efficient per-document
+             *     matching without requiring a full index.
+             *
+             *     Examples:
+             *     - Status filtering: `{"query": "status:published"}`
+             *     - Date ranges: `{"query": "created_at:>2023-01-01"}`
+             *     - Field matching: `{"query": "category:technology"}`
+             */
+            filter_query?: components["schemas"]["Query"] & unknown;
+            /**
+             * @description Maximum number of results to return. If not specified, returns all
+             *     matching keys in the range. Useful for pagination or sampling.
+             * @example 100
+             */
+            limit?: number;
+        };
+        /**
          * @description Batch insert, delete, and transform operations in a single request.
          *
          *     **Atomicity**:
@@ -1100,7 +1190,17 @@ export interface components {
              *     For mixed: [{"table": "papers", "semantic_search": "...", "limit": 10}, {"table": "books", "full_text_search": {...}, "limit": 5}]
              */
             queries: components["schemas"]["QueryRequest"][];
-            generator: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Generator configuration for summarization. Mutually exclusive with 'chain'.
+             *     Either 'generator' or 'chain' must be provided.
+             */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Chain of generators with retry/fallback semantics. Mutually exclusive with 'generator'.
+             *     Each link can specify retry configuration and a condition for trying the next generator.
+             *     Either 'generator' or 'chain' must be provided.
+             */
+            chain?: components["schemas"]["ChainLink"][];
             /**
              * @description Optional system prompt to guide the summarization
              * @example You are a helpful AI assistant. Summarize the following search results concisely.
@@ -1224,8 +1324,15 @@ export interface components {
             /**
              * @description Default generator configuration used for all pipeline steps unless overridden in `steps`.
              *     This is the simple configuration - just set this and everything works with sensible defaults.
+             *     Mutually exclusive with 'chain'. Either 'generator' or 'chain' must be provided.
              */
-            generator: components["schemas"]["GeneratorConfig"];
+            generator?: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Default chain of generators for all pipeline steps unless overridden in `steps`.
+             *     Each link can specify retry configuration and a condition for trying the next generator.
+             *     Mutually exclusive with 'generator'. Either 'generator' or 'chain' must be provided.
+             */
+            chain?: components["schemas"]["ChainLink"][];
             /**
              * @description Array of query requests to execute. The query text will be transformed for semantic search
              *     and populated into the semantic_search field of each query.
@@ -2235,11 +2342,16 @@ export interface components {
          * @description Configuration for the Google Vertex AI Ranking API.
          *
          *     Uses Application Default Credentials (ADC) or explicit credentials path.
-         *     Requires Discovery Engine API enabled in the GCP project.
+         *
+         *     **Prerequisites:**
+         *     - Enable Discovery Engine API: `gcloud services enable discoveryengine.googleapis.com`
+         *     - Grant IAM role: `roles/discoveryengine.admin` (includes `discoveryengine.rankingConfigs.rank` permission)
          *
          *     **Models:** semantic-ranker-default@latest (default), semantic-ranker-fast-004
          *
          *     **Docs:** https://cloud.google.com/generative-ai-app-builder/docs/ranking
+         *
+         *     **IAM:** https://cloud.google.com/generative-ai-app-builder/docs/access-control
          * @example {
          *       "provider": "vertex",
          *       "model": "semantic-ranker-default@latest",
@@ -2968,6 +3080,48 @@ export interface components {
         GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"] | components["schemas"]["CohereGeneratorConfig"]) & {
             provider: components["schemas"]["GeneratorProvider"];
         };
+        /** @description Retry configuration for generator calls */
+        RetryConfig: {
+            /**
+             * @description Maximum number of retry attempts
+             * @default 3
+             */
+            max_attempts?: number;
+            /**
+             * @description Initial backoff delay in milliseconds
+             * @default 1000
+             */
+            initial_backoff_ms?: number;
+            /**
+             * Format: float
+             * @description Multiplier for exponential backoff
+             * @default 2
+             */
+            backoff_multiplier?: number;
+            /**
+             * @description Maximum backoff delay in milliseconds
+             * @default 30000
+             */
+            max_backoff_ms?: number;
+        };
+        /**
+         * @description Condition for trying the next generator in chain:
+         *     - always: Always try next regardless of outcome
+         *     - on_error: Try next on any error (default)
+         *     - on_timeout: Try next only on timeout errors
+         *     - on_rate_limit: Try next only on rate limit errors
+         * @default on_error
+         * @enum {string}
+         */
+        ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
+        /** @description A single link in a generator chain with optional retry and condition */
+        ChainLink: {
+            generator: components["schemas"]["GeneratorConfig"];
+            /** @description Retry configuration for this generator */
+            retry?: components["schemas"]["RetryConfig"];
+            /** @description When to try the next generator in chain */
+            condition?: components["schemas"]["ChainCondition"];
+        };
         /**
          * @description Available evaluator types:
          *
@@ -3090,48 +3244,6 @@ export interface components {
             summary?: components["schemas"]["EvalSummary"];
             /** @description Total evaluation duration in milliseconds */
             duration_ms?: number;
-        };
-        /** @description Retry configuration for generator calls */
-        RetryConfig: {
-            /**
-             * @description Maximum number of retry attempts
-             * @default 3
-             */
-            max_attempts?: number;
-            /**
-             * @description Initial backoff delay in milliseconds
-             * @default 1000
-             */
-            initial_backoff_ms?: number;
-            /**
-             * Format: float
-             * @description Multiplier for exponential backoff
-             * @default 2
-             */
-            backoff_multiplier?: number;
-            /**
-             * @description Maximum backoff delay in milliseconds
-             * @default 30000
-             */
-            max_backoff_ms?: number;
-        };
-        /**
-         * @description Condition for trying the next generator in chain:
-         *     - always: Always try next regardless of outcome
-         *     - on_error: Try next on any error (default)
-         *     - on_timeout: Try next only on timeout errors
-         *     - on_rate_limit: Try next only on rate limit errors
-         * @default on_error
-         * @enum {string}
-         */
-        ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
-        /** @description A single link in a generator chain with optional retry and condition */
-        ChainLink: {
-            generator: components["schemas"]["GeneratorConfig"];
-            /** @description Retry configuration for this generator */
-            retry?: components["schemas"]["RetryConfig"];
-            /** @description When to try the next generator in chain */
-            condition?: components["schemas"]["ChainCondition"];
         };
         /**
          * @description Strategy for query transformation and retrieval:
@@ -3697,12 +3809,6 @@ export interface components {
             provider: components["schemas"]["EmbedderProvider"];
         };
         /**
-         * @description Chunking model name. The name maps to ONNX model directory names when using Termite.
-         *     - fixed: Simple fixed-size chunking by token count (built-in, no ONNX required)
-         *     - Any other name will attempt to load from models/chunkers/{name}/ directory
-         */
-        ChunkingModel: string;
-        /**
          * @description Configuration for the Termite chunking provider.
          *
          *     Termite is a centralized HTTP service that provides chunking with multi-tier caching.
@@ -3737,8 +3843,9 @@ export interface components {
             /**
              * @description The chunking model to use. Either 'fixed' for simple token-based chunking, or a model name from models/chunkers/{name}/.
              * @default fixed
+             * @example fixed
              */
-            model: components["schemas"]["ChunkingModel"];
+            model: string;
             /**
              * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
              * @default 500
@@ -4713,9 +4820,51 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
-    lookupKey: {
+    scanKeys: {
         parameters: {
             query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ScanKeysRequest"];
+            };
+        };
+        responses: {
+            /** @description Keys found (streamed as NDJSON) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-ndjson": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    lookupKey: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma-separated list of fields to include in the response.
+                 *     If not specified, returns the full document. Supports:
+                 *     - Simple fields: "title,author"
+                 *     - Nested paths: "user.address.city"
+                 *     - Wildcards: "_chunks.*"
+                 *     - Exclusions: "-_chunks.*._embedding"
+                 *     - Special fields: "_embeddings,_summaries,_chunks"
+                 * @example title,author,metadata.tags
+                 */
+                fields?: string;
+            };
             header?: never;
             path: {
                 /** @description Name of the table */
