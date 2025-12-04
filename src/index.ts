@@ -72,6 +72,18 @@ export type {
   // Backup/Restore types
   BackupRequest,
   BatchRequest, // Now using our custom type
+  // Chat Agent types
+  ChatAgentRequest,
+  ChatAgentResult,
+  ChatAgentSteps,
+  ChatAgentStreamCallbacks,
+  ChatMessage,
+  ChatMessageRole,
+  ChatToolCall,
+  ChatToolName,
+  ChatToolResult,
+  ChatToolsConfig,
+  ClarificationRequest,
   ClassificationTransformationResult,
   CreateTableRequest,
   CreateUserRequest,
@@ -83,6 +95,8 @@ export type {
   // Search and facet types
   FacetOption,
   FacetResult,
+  FetchConfig,
+  FilterSpec,
   GeneratorConfig,
   GeneratorProvider,
   // Index types
@@ -120,6 +134,9 @@ export type {
   UpdatePasswordRequest,
   // User and permission types
   User,
+  // Web search types
+  WebSearchConfig,
+  WebSearchResultItem,
 } from "./types.js";
 export { embedderProviders, generatorProviders } from "./types.js";
 

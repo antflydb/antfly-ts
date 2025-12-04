@@ -12,6 +12,9 @@ import type {
   AntflyConfig,
   BackupRequest,
   BatchRequest,
+  ChatAgentRequest,
+  ChatAgentResult,
+  ChatAgentStreamCallbacks,
   CreateTableRequest,
   CreateUserRequest,
   IndexConfig,
@@ -510,6 +513,180 @@ export class AntflyClient {
     });
     if (error) throw new Error(`Query builder agent failed: ${error.error}`);
     return data!;
+  }
+
+  /**
+   * Private helper for Chat Agent requests to handle streaming and non-streaming responses
+   */
+  private async performChatAgent(
+    path: string,
+    request: ChatAgentRequest,
+    callbacks?: ChatAgentStreamCallbacks
+  ): Promise<ChatAgentResult | AbortController> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream, application/json",
+    };
+
+    // Add auth header if configured
+    if (this.config.auth) {
+      const auth = btoa(`${this.config.auth.username}:${this.config.auth.password}`);
+      headers["Authorization"] = `Basic ${auth}`;
+    }
+
+    // Merge with any additional headers
+    Object.assign(headers, this.config.headers);
+
+    const abortController = new AbortController();
+    const response = await fetch(`${this.config.baseUrl}${path}`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(request),
+      signal: abortController.signal,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Chat agent request failed: ${response.status} ${errorText}`);
+    }
+
+    if (!response.body) {
+      throw new Error("Response body is null");
+    }
+
+    // Check content type to determine response format
+    const contentType = response.headers.get("content-type") || "";
+    const isJSON = contentType.includes("application/json");
+
+    // Handle JSON response (non-streaming)
+    if (isJSON) {
+      const result = (await response.json()) as ChatAgentResult;
+      return result;
+    }
+
+    // Handle SSE streaming response
+    if (callbacks) {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let currentEvent = "";
+
+      // Start reading the stream in the background
+      (async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (!line.trim()) {
+                // Empty line marks end of an event
+                currentEvent = "";
+                continue;
+              }
+
+              if (line.startsWith("event: ")) {
+                currentEvent = line.slice(7).trim();
+              } else if (line.startsWith("data: ")) {
+                const data = line.slice(6).trim();
+
+                try {
+                  // Dispatch based on event type
+                  switch (currentEvent) {
+                    case "classification":
+                      if (callbacks.onClassification) {
+                        const classData = JSON.parse(data);
+                        callbacks.onClassification(classData);
+                      }
+                      break;
+                    case "clarification_required":
+                      if (callbacks.onClarificationRequired) {
+                        const clarification = JSON.parse(data);
+                        callbacks.onClarificationRequired(clarification);
+                      }
+                      break;
+                    case "filter_applied":
+                      if (callbacks.onFilterApplied) {
+                        const filter = JSON.parse(data);
+                        callbacks.onFilterApplied(filter);
+                      }
+                      break;
+                    case "search_executed":
+                      if (callbacks.onSearchExecuted) {
+                        const searchData = JSON.parse(data);
+                        callbacks.onSearchExecuted(searchData);
+                      }
+                      break;
+                    case "websearch_executed":
+                      if (callbacks.onWebSearchExecuted) {
+                        const webSearchData = JSON.parse(data);
+                        callbacks.onWebSearchExecuted(webSearchData);
+                      }
+                      break;
+                    case "fetch_executed":
+                      if (callbacks.onFetchExecuted) {
+                        const fetchData = JSON.parse(data);
+                        callbacks.onFetchExecuted(fetchData);
+                      }
+                      break;
+                    case "hit":
+                      if (callbacks.onHit) {
+                        const hit = JSON.parse(data);
+                        callbacks.onHit(hit);
+                      }
+                      break;
+                    case "answer":
+                      if (callbacks.onAnswer) {
+                        // Answer is streamed as plain text, not JSON
+                        callbacks.onAnswer(data);
+                      }
+                      break;
+                    case "done":
+                      if (callbacks.onDone) {
+                        const doneData = JSON.parse(data);
+                        callbacks.onDone(doneData);
+                      }
+                      return;
+                    case "error":
+                      if (callbacks.onError) {
+                        const error = JSON.parse(data);
+                        callbacks.onError(error);
+                      }
+                      throw new Error(data);
+                  }
+                } catch (e) {
+                  console.warn("Failed to parse SSE data:", currentEvent, data, e);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          if ((error as Error).name !== "AbortError") {
+            console.error("Chat agent streaming error:", error);
+          }
+        }
+      })();
+    }
+
+    return abortController;
+  }
+
+  /**
+   * Chat Agent - Conversational RAG with multi-turn history and tool calling
+   * Supports filter refinement, clarification requests, and streaming responses
+   * @param request - Chat agent request with conversation history and generator config
+   * @param callbacks - Optional callbacks for SSE events (classification, clarification_required, filter_applied, hit, answer, done, error)
+   * @returns Promise with ChatAgentResult (JSON) or AbortController (when streaming)
+   */
+  async chatAgent(
+    request: ChatAgentRequest,
+    callbacks?: ChatAgentStreamCallbacks
+  ): Promise<ChatAgentResult | AbortController> {
+    return this.performChatAgent("/agents/chat", request, callbacks);
   }
 
   /**

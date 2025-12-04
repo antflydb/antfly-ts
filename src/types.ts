@@ -134,6 +134,21 @@ export type AnswerConfidence = components["schemas"]["AnswerConfidence"];
 export type QueryBuilderRequest = components["schemas"]["QueryBuilderRequest"];
 export type QueryBuilderResult = components["schemas"]["QueryBuilderResult"];
 
+// Chat Agent types
+export type ChatAgentRequest = components["schemas"]["ChatAgentRequest"];
+export type ChatAgentResult = components["schemas"]["ChatAgentResult"];
+export type ChatMessage = components["schemas"]["ChatMessage"];
+export type ChatMessageRole = components["schemas"]["ChatMessageRole"];
+export type ChatToolCall = components["schemas"]["ChatToolCall"];
+export type ChatToolResult = components["schemas"]["ChatToolResult"];
+export type ChatToolName = components["schemas"]["ChatToolName"];
+export type ChatToolsConfig = components["schemas"]["ChatToolsConfig"];
+export type ChatAgentSteps = components["schemas"]["ChatAgentSteps"];
+export type FilterSpec = components["schemas"]["FilterSpec"];
+export type ClarificationRequest = components["schemas"]["ClarificationRequest"];
+export type WebSearchConfig = components["schemas"]["WebSearchConfig"];
+export type FetchConfig = components["schemas"]["FetchConfig"];
+
 // Error type
 export type AntflyError = components["schemas"]["Error"];
 
@@ -177,6 +192,28 @@ export interface AnswerAgentStreamCallbacks {
   onConfidence?: (data: AnswerConfidence) => void;
   onFollowUpQuestion?: (question: string) => void;
   onDone?: (data?: { complete: boolean }) => void;
+  onError?: (error: string) => void;
+}
+
+// Web search result from websearch tool
+export interface WebSearchResultItem {
+  title: string;
+  url: string;
+  snippet: string;
+  source?: string;
+}
+
+// Chat Agent streaming callbacks for structured SSE events
+export interface ChatAgentStreamCallbacks {
+  onClassification?: (data: ClassificationTransformationResult) => void;
+  onClarificationRequired?: (data: ClarificationRequest) => void;
+  onFilterApplied?: (filter: FilterSpec) => void;
+  onSearchExecuted?: (data: { query: string }) => void;
+  onWebSearchExecuted?: (data: { query: string; results: WebSearchResultItem[] }) => void;
+  onFetchExecuted?: (data: { url: string; content: string }) => void;
+  onHit?: (hit: QueryHit) => void;
+  onAnswer?: (chunk: string) => void;
+  onDone?: (data: { applied_filters: FilterSpec[] }) => void;
   onError?: (error: string) => void;
 }
 

@@ -4,5556 +4,6087 @@
  */
 
 export interface paths {
-  "/status": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get cluster status
+         * @description Returns the current health and status of all stores and shards in the cluster
+         */
+        get: operations["getStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get cluster status
-     * @description Returns the current health and status of all stores and shards in the cluster
-     */
-    get: operations["getStatus"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/query": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Perform a global query
+         * @description Executes a query across all relevant tables and shards based on the query content.
+         *
+         *     ## Query Examples
+         *
+         *     **Full-text search:**
+         *     ```json
+         *     {
+         *       "table": "wikipedia",
+         *       "full_text_search": {"query": "body:computer"},
+         *       "limit": 10
+         *     }
+         *     ```
+         *
+         *     **Semantic search:**
+         *     ```json
+         *     {
+         *       "table": "articles",
+         *       "semantic_search": "artificial intelligence applications",
+         *       "indexes": ["title_body_embedding"],
+         *       "limit": 20
+         *     }
+         *     ```
+         *
+         *     **Hybrid search (RRF):**
+         *     ```json
+         *     {
+         *       "table": "products",
+         *       "full_text_search": {"query": "laptop gaming"},
+         *       "semantic_search": "high performance gaming computers",
+         *       "indexes": ["product_embedding"],
+         *       "filter_query": {"query": "price:<2000 AND in_stock:true"},
+         *       "fields": ["name", "price", "description"],
+         *       "limit": 15
+         *     }
+         *     ```
+         *
+         *     **With filtering:**
+         *     ```json
+         *     {
+         *       "table": "users",
+         *       "filter_prefix": "tenant:acme:",
+         *       "full_text_search": {"query": "active:true"},
+         *       "exclusion_query": {"query": "status:deleted"},
+         *       "limit": 50
+         *     }
+         *     ```
+         *
+         *     **NDJSON format:**
+         *     For bulk queries, send multiple queries as NDJSON with `Content-Type: application/x-ndjson`.
+         *     Each line must end with `\n`:
+         *     ```
+         *     {"table":"wiki","semantic_search":"AI","indexes":["emb"],"limit":5}
+         *     {"table":"docs","full_text_search":{"query":"tutorial"},"limit":10}
+         *     ```
+         */
+        post: operations["globalQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Perform a global query
-     * @description Executes a query across all relevant tables and shards based on the query content.
-     *
-     *     ## Query Examples
-     *
-     *     **Full-text search:**
-     *     ```json
-     *     {
-     *       "table": "wikipedia",
-     *       "full_text_search": {"query": "body:computer"},
-     *       "limit": 10
-     *     }
-     *     ```
-     *
-     *     **Semantic search:**
-     *     ```json
-     *     {
-     *       "table": "articles",
-     *       "semantic_search": "artificial intelligence applications",
-     *       "indexes": ["title_body_embedding"],
-     *       "limit": 20
-     *     }
-     *     ```
-     *
-     *     **Hybrid search (RRF):**
-     *     ```json
-     *     {
-     *       "table": "products",
-     *       "full_text_search": {"query": "laptop gaming"},
-     *       "semantic_search": "high performance gaming computers",
-     *       "indexes": ["product_embedding"],
-     *       "filter_query": {"query": "price:<2000 AND in_stock:true"},
-     *       "fields": ["name", "price", "description"],
-     *       "limit": 15
-     *     }
-     *     ```
-     *
-     *     **With filtering:**
-     *     ```json
-     *     {
-     *       "table": "users",
-     *       "filter_prefix": "tenant:acme:",
-     *       "full_text_search": {"query": "active:true"},
-     *       "exclusion_query": {"query": "status:deleted"},
-     *       "limit": 50
-     *     }
-     *     ```
-     *
-     *     **NDJSON format:**
-     *     For bulk queries, send multiple queries as NDJSON with `Content-Type: application/x-ndjson`.
-     *     Each line must end with `\n`:
-     *     ```
-     *     {"table":"wiki","semantic_search":"AI","indexes":["emb"],"limit":5}
-     *     {"table":"docs","full_text_search":{"query":"tutorial"},"limit":10}
-     *     ```
-     */
-    post: operations["globalQuery"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/rag": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/rag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Perform RAG (Retrieval-Augmented Generation) query
+         * @description Executes a query and streams a summary of the results using the specified summarizer. The response is streamed as Server-Sent Events (SSE) for real-time updates.
+         */
+        post: operations["ragQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Perform RAG (Retrieval-Augmented Generation) query
-     * @description Executes a query and streams a summary of the results using the specified summarizer. The response is streamed as Server-Sent Events (SSE) for real-time updates.
-     */
-    post: operations["ragQuery"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/agents/answer": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/agents/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Answer Agent - Intelligent query routing with automatic query generation
+         * @description Uses LLM to classify and improve the query, transform it for optimal semantic search, execute the provided queries with the transformed text, and generate an answer. Streams classification, query execution, results, and answer as SSE events.
+         */
+        post: operations["answerAgent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Answer Agent - Intelligent query routing with automatic query generation
-     * @description Uses LLM to classify and improve the query, transform it for optimal semantic search, execute the provided queries with the transformed text, and generate an answer. Streams classification, query execution, results, and answer as SSE events.
-     */
-    post: operations["answerAgent"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/eval": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/agents/chat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Chat Agent - Conversational RAG with tool calling and clarifications
+         * @description Conversational RAG agent that maintains message history and supports interactive
+         *     clarifications and filter refinement through tool calling.
+         *
+         *     **Key Features:**
+         *     - **Conversation History**: Maintains context across multiple turns
+         *     - **Tool Calling**: Models with native support (OpenAI, Anthropic, Gemini) use function calling
+         *     - **Clarifications**: Model can pause to ask clarifying questions before searching
+         *     - **Dynamic Filters**: Accumulates filters across conversation turns
+         *     - **Fallback Mode**: Models without tool support use prompt-based structured output
+         *
+         *     **SSE Event Types:**
+         *     - `clarification_required`: Model needs user input (contains question and options)
+         *     - `filter_applied`: Filter tool executed (contains filter spec)
+         *     - `search_executed`: Search tool executed (contains query)
+         *     - `hit`: Individual search result
+         *     - `answer`: Answer text chunk
+         *     - `done`: Conversation turn complete
+         *     - `error`: Error occurred
+         *
+         *     **Conversation Flow:**
+         *     1. Client sends messages array with conversation history
+         *     2. If model needs clarification, returns `pending_clarification` in response
+         *     3. Client displays clarification question, gets user answer
+         *     4. Client sends new request with answer appended to messages
+         *     5. Process repeats until answer is generated
+         */
+        post: operations["chatAgent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Standalone evaluation endpoint
-     * @description Run evaluators on provided data without executing a query.
-     *     Useful for testing evaluators, evaluating cached results, or batch evaluation.
-     *
-     *     **Retrieval metrics** (require ground_truth.relevant_ids and retrieved_ids):
-     *     - recall, precision, ndcg, mrr, map
-     *
-     *     **LLM-as-judge metrics** (require judge config):
-     *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
-     */
-    post: operations["evaluate"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/agents/query-builder": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/eval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Standalone evaluation endpoint
+         * @description Run evaluators on provided data without executing a query.
+         *     Useful for testing evaluators, evaluating cached results, or batch evaluation.
+         *
+         *     **Retrieval metrics** (require ground_truth.relevant_ids and retrieved_ids):
+         *     - recall, precision, ndcg, mrr, map
+         *
+         *     **LLM-as-judge metrics** (require judge config):
+         *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
+         */
+        post: operations["evaluate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Build a search query from natural language
-     * @description Uses an LLM to translate natural language search intent into a structured Bleve query.
-     *     The generated query can be used directly in the QueryRequest.full_text_search or filter_query fields.
-     *
-     *     This endpoint is useful for:
-     *     - Building queries from user descriptions
-     *     - Generating example queries for a table's schema
-     *     - Agentic retrieval in RAG pipelines
-     */
-    post: operations["queryBuilderAgent"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/agents/query-builder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Build a search query from natural language
+         * @description Uses an LLM to translate natural language search intent into a structured Bleve query.
+         *     The generated query can be used directly in the QueryRequest.full_text_search or filter_query fields.
+         *
+         *     This endpoint is useful for:
+         *     - Building queries from user descriptions
+         *     - Generating example queries for a table's schema
+         *     - Agentic retrieval in RAG pipelines
+         */
+        post: operations["queryBuilderAgent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List all tables */
-    get: operations["listTables"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all tables */
+        get: operations["listTables"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get table details */
-    get: operations["getTable"];
-    put?: never;
-    /**
-     * Create a new table
-     * @description Creates a new table with optional schema definition, indexes, and configuration.
-     *
-     *     ## Use Cases
-     *
-     *     **Simple table for unstructured data:**
-     *     ```json
-     *     {
-     *       "num_shards": 1
-     *     }
-     *     ```
-     *
-     *     **Table with full-text search:**
-     *     ```json
-     *     {
-     *       "num_shards": 3,
-     *       "schema": {
-     *         "document_schemas": {
-     *           "article": {
-     *             "schema": {
-     *               "type": "object",
-     *               "properties": {
-     *                 "id": {
-     *                   "type": "string",
-     *                   "x-antfly-types": ["keyword"]
-     *                 },
-     *                 "title": {
-     *                   "type": "string",
-     *                   "x-antfly-types": ["text", "keyword"]
-     *                 },
-     *                 "body": {
-     *                   "type": "string",
-     *                   "x-antfly-types": ["text"]
-     *                 }
-     *               },
-     *               "x-antfly-include-in-all": ["title", "body"]
-     *             }
-     *           }
-     *         },
-     *         "default_type": "article"
-     *       },
-     *       "indexes": {
-     *         "search_idx": {
-     *           "type": "full_text_v0"
-     *         }
-     *       }
-     *     }
-     *     ```
-     *
-     *     **Table with vector similarity search:**
-     *     ```json
-     *     {
-     *       "num_shards": 5,
-     *       "description": "Product catalog with semantic search",
-     *       "schema": {
-     *         "document_schemas": {
-     *           "product": {
-     *             "schema": {
-     *               "type": "object",
-     *               "properties": {
-     *                 "product_id": {
-     *                   "type": "string",
-     *                   "x-antfly-types": ["keyword"]
-     *                 },
-     *                 "name": {
-     *                   "type": "string",
-     *                   "x-antfly-types": ["text", "keyword"]
-     *                 },
-     *                 "description": {
-     *                   "type": "string",
-     *                   "x-antfly-types": ["text"]
-     *                 },
-     *                 "price": {
-     *                   "type": "number",
-     *                   "x-antfly-types": ["numeric"]
-     *                 }
-     *               },
-     *               "x-antfly-include-in-all": ["name", "description"]
-     *             }
-     *           }
-     *         },
-     *         "default_type": "product"
-     *       },
-     *       "indexes": {
-     *         "semantic_idx": {
-     *           "type": "aknn_v0",
-     *           "field": "description",
-     *           "embedder": {
-     *             "provider": "ollama",
-     *             "model": "all-minilm",
-     *             "url": "http://localhost:11434"
-     *           }
-     *         }
-     *       }
-     *     }
-     *     ```
-     *
-     *     ## Best Practices
-     *
-     *     - Define schema for core fields to improve performance
-     *     - Start with fewer shards for small datasets (1-3)
-     *     - Use meaningful table names (e.g., "products", "users", "articles")
-     *     - Consider adding both full-text and vector indexes for hybrid search
-     */
-    post: operations["createTable"];
-    /** Drop a table */
-    delete: operations["dropTable"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/query": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table to query */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        /** Get table details */
+        get: operations["getTable"];
+        put?: never;
+        /**
+         * Create a new table
+         * @description Creates a new table with optional schema definition, indexes, and configuration.
+         *
+         *     ## Use Cases
+         *
+         *     **Simple table for unstructured data:**
+         *     ```json
+         *     {
+         *       "num_shards": 1
+         *     }
+         *     ```
+         *
+         *     **Table with full-text search:**
+         *     ```json
+         *     {
+         *       "num_shards": 3,
+         *       "schema": {
+         *         "document_schemas": {
+         *           "article": {
+         *             "schema": {
+         *               "type": "object",
+         *               "properties": {
+         *                 "id": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["keyword"]
+         *                 },
+         *                 "title": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["text", "keyword"]
+         *                 },
+         *                 "body": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["text"]
+         *                 }
+         *               },
+         *               "x-antfly-include-in-all": ["title", "body"]
+         *             }
+         *           }
+         *         },
+         *         "default_type": "article"
+         *       },
+         *       "indexes": {
+         *         "search_idx": {
+         *           "type": "full_text_v0"
+         *         }
+         *       }
+         *     }
+         *     ```
+         *
+         *     **Table with vector similarity search:**
+         *     ```json
+         *     {
+         *       "num_shards": 5,
+         *       "description": "Product catalog with semantic search",
+         *       "schema": {
+         *         "document_schemas": {
+         *           "product": {
+         *             "schema": {
+         *               "type": "object",
+         *               "properties": {
+         *                 "product_id": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["keyword"]
+         *                 },
+         *                 "name": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["text", "keyword"]
+         *                 },
+         *                 "description": {
+         *                   "type": "string",
+         *                   "x-antfly-types": ["text"]
+         *                 },
+         *                 "price": {
+         *                   "type": "number",
+         *                   "x-antfly-types": ["numeric"]
+         *                 }
+         *               },
+         *               "x-antfly-include-in-all": ["name", "description"]
+         *             }
+         *           }
+         *         },
+         *         "default_type": "product"
+         *       },
+         *       "indexes": {
+         *         "semantic_idx": {
+         *           "type": "aknn_v0",
+         *           "field": "description",
+         *           "embedder": {
+         *             "provider": "ollama",
+         *             "model": "all-minilm",
+         *             "url": "http://localhost:11434"
+         *           }
+         *         }
+         *       }
+         *     }
+         *     ```
+         *
+         *     ## Best Practices
+         *
+         *     - Define schema for core fields to improve performance
+         *     - Start with fewer shards for small datasets (1-3)
+         *     - Use meaningful table names (e.g., "products", "users", "articles")
+         *     - Consider adding both full-text and vector indexes for hybrid search
+         */
+        post: operations["createTable"];
+        /** Drop a table */
+        delete: operations["dropTable"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Query a specific table */
-    post: operations["queryTable"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/rag": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table for RAG query */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to query */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Query a specific table */
+        post: operations["queryTable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Perform RAG query on a specific table
-     * @description Executes a RAG query on a specific table and streams a summary of the results using the specified summarizer. The response is streamed as Server-Sent Events (SSE) for real-time updates or returns JSON with citations.
-     */
-    post: operations["tableRagQuery"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/batch": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table for batch operation */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/rag": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table for RAG query */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Perform RAG query on a specific table
+         * @description Executes a RAG query on a specific table and streams a summary of the results using the specified summarizer. The response is streamed as Server-Sent Events (SSE) for real-time updates or returns JSON with citations.
+         */
+        post: operations["tableRagQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Perform batch inserts and deletes on a table */
-    post: operations["batch"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/merge": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table for batch operation */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Perform batch inserts and deletes on a table */
+        post: operations["batch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Synchronize data from external sources (Shopify, Postgres, S3) using a linear merge
-     * @description Synchronize and keep Antfly in sync with external data sources like Shopify,
-     *     Postgres, S3, or any sorted record source. Also known as: data synchronization,
-     *     database sync, incremental sync, e-commerce sync.
-     *
-     *     Both source and destination must be sorted by the same key. Performs three-way merge:
-     *     - Inserts new records from source
-     *     - Updates changed records
-     *     - Deletes Antfly records absent from source page
-     *
-     *     **Stateless & Idempotent**: No sync state between pages. Safe to restart
-     *     from any page if interrupted.
-     *
-     *     **Use Cases**: Sync production databases, e-commerce APIs (Shopify, WooCommerce),
-     *     data lake exports, or warehouse tables to Antfly for low-latency hybrid search.
-     *
-     *     **WARNING**: Not safe for concurrent merges with overlapping ranges.
-     *     Single-client sync API only.
-     */
-    post: operations["linearMerge"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/backup": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table to backup */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Synchronize data from external sources (Shopify, Postgres, S3) using a linear merge
+         * @description Synchronize and keep Antfly in sync with external data sources like Shopify,
+         *     Postgres, S3, or any sorted record source. Also known as: data synchronization,
+         *     database sync, incremental sync, e-commerce sync.
+         *
+         *     Both source and destination must be sorted by the same key. Performs three-way merge:
+         *     - Inserts new records from source
+         *     - Updates changed records
+         *     - Deletes Antfly records absent from source page
+         *
+         *     **Stateless & Idempotent**: No sync state between pages. Safe to restart
+         *     from any page if interrupted.
+         *
+         *     **Use Cases**: Sync production databases, e-commerce APIs (Shopify, WooCommerce),
+         *     data lake exports, or warehouse tables to Antfly for low-latency hybrid search.
+         *
+         *     **WARNING**: Not safe for concurrent merges with overlapping ranges.
+         *     Single-client sync API only.
+         */
+        post: operations["linearMerge"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Backup a table */
-    post: operations["backupTable"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/restore": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table to restore into */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/backup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to backup */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Backup a table */
+        post: operations["backupTable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /** Restore a table from backup */
-    post: operations["restoreTable"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/schema": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to restore into */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore a table from backup */
+        post: operations["restoreTable"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    /** Update a table's schema */
-    put: operations["updateSchema"];
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/lookup": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Update a table's schema */
+        put: operations["updateSchema"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    put?: never;
-    /**
-     * Scan keys in a table within a key range
-     * @description Scans keys in a table within an optional key range and returns them as
-     *     newline-delimited JSON (NDJSON). Each line contains a JSON object with
-     *     the key and optionally projected document fields. This is useful for
-     *     iterating through all keys in a table or a subset of keys within a range.
-     */
-    post: operations["scanKeys"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/lookup/{key}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-        /** @description Key of the record to lookup */
-        key: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan keys in a table within a key range
+         * @description Scans keys in a table within an optional key range and returns them as
+         *     newline-delimited JSON (NDJSON). Each line contains a JSON object with
+         *     the key and optionally projected document fields. This is useful for
+         *     iterating through all keys in a table or a subset of keys within a range.
+         */
+        post: operations["scanKeys"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Lookup a key in a table */
-    get: operations["lookupKey"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/indexes": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/lookup/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Key of the record to lookup */
+                key: string;
+            };
+            cookie?: never;
+        };
+        /** Lookup a key in a table */
+        get: operations["lookupKey"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** List all indexes for a table */
-    get: operations["listIndexes"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/tables/{tableName}/indexes/{indexName}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-        /** @description Name of the index */
-        indexName: string;
-      };
-      cookie?: never;
+    "/tables/{tableName}/indexes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        /** List all indexes for a table */
+        get: operations["listIndexes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /** Get index details */
-    get: operations["getIndex"];
-    put?: never;
-    /** Add an index to a table */
-    post: operations["createIndex"];
-    /** Drop an index from a table */
-    delete: operations["dropIndex"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/users/me": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/tables/{tableName}/indexes/{indexName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Name of the index */
+                indexName: string;
+            };
+            cookie?: never;
+        };
+        /** Get index details */
+        get: operations["getIndex"];
+        put?: never;
+        /** Add an index to a table */
+        post: operations["createIndex"];
+        /** Drop an index from a table */
+        delete: operations["dropIndex"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get current authenticated user
-     * @description Retrieves details for the currently authenticated user.
-     */
-    get: operations["getCurrentUser"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/users": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
+    "/users/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get current authenticated user
+         * @description Retrieves details for the currently authenticated user.
+         */
+        get: operations["getCurrentUser"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * List all users
-     * @description Retrieves a list of all users in the system. Requires admin permission.
-     */
-    get: operations["listUsers"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/users/{userName}": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
+    "/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List all users
+         * @description Retrieves a list of all users in the system. Requires admin permission.
+         */
+        get: operations["listUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get user details
-     * @description Retrieves details for a specific user.
-     */
-    get: operations["getUserByName"];
-    put?: never;
-    /**
-     * Create a new user
-     * @description Creates a new user with the given username and password. Username in path takes precedence.
-     */
-    post: operations["createUser"];
-    /**
-     * Delete a user
-     * @description Deletes a specific user.
-     */
-    delete: operations["deleteUser"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/users/{userName}/password": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
+    "/users/{userName}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get user details
+         * @description Retrieves details for a specific user.
+         */
+        get: operations["getUserByName"];
+        put?: never;
+        /**
+         * Create a new user
+         * @description Creates a new user with the given username and password. Username in path takes precedence.
+         */
+        post: operations["createUser"];
+        /**
+         * Delete a user
+         * @description Deletes a specific user.
+         */
+        delete: operations["deleteUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    get?: never;
-    /**
-     * Update user password
-     * @description Updates the password for a specific user.
-     */
-    put: operations["updateUserPassword"];
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/users/{userName}/permissions": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
+    "/users/{userName}/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update user password
+         * @description Updates the password for a specific user.
+         */
+        put: operations["updateUserPassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
     };
-    /**
-     * Get user permissions
-     * @description Retrieves all permissions for a specific user.
-     */
-    get: operations["getUserPermissions"];
-    put?: never;
-    /**
-     * Add permission to user
-     * @description Adds a new permission to a specific user.
-     */
-    post: operations["addPermissionToUser"];
-    /**
-     * Remove permission from user
-     * @description Removes a specific permission rule from a user based on resource name and type.
-     */
-    delete: operations["removePermissionFromUser"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
+    "/users/{userName}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /**
+         * Get user permissions
+         * @description Retrieves all permissions for a specific user.
+         */
+        get: operations["getUserPermissions"];
+        put?: never;
+        /**
+         * Add permission to user
+         * @description Adds a new permission to a specific user.
+         */
+        post: operations["addPermissionToUser"];
+        /**
+         * Remove permission from user
+         * @description Removes a specific permission rule from a user based on resource name and type.
+         */
+        delete: operations["removePermissionFromUser"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-  schemas: {
-    Error: {
-      /** @example An error message */
-      error: string;
-    };
-    /**
-     * @description Overall health status of the cluster
-     * @enum {string}
-     */
-    ClusterHealth: "unknown" | "healthy" | "unhealthy" | "degraded" | "error";
-    ClusterStatus: {
-      health: components["schemas"]["ClusterHealth"];
-      /** @description Optional message providing details about the health status */
-      message?: string;
-      /** @description Indicates whether authentication is enabled for the cluster */
-      auth_enabled?: boolean;
-    } & {
-      [key: string]: unknown;
-    };
-    ByteRange: string[];
-    /**
-     * @description Synchronization level for batch operations:
-     *     - "propose": Wait for Raft proposal acceptance (fastest, default)
-     *     - "write": Wait for Pebble KV write
-     *     - "full_text": Wait for full-text index WAL write
-     *     - "enrichments": Pre-compute enrichments before Raft proposal (synchronous enrichment generation)
-     *     - "aknn": Wait for vector index write with best-effort synchronous embedding (falls back to async on timeout, slowest, most durable)
-     * @default propose
-     * @enum {string}
-     */
-    SyncLevel: "propose" | "write" | "full_text" | "enrichments" | "aknn";
-    ShardConfig: {
-      byte_range: components["schemas"]["ByteRange"];
-    };
-    CreateTableRequest: {
-      /**
-       * Format: uint
-       * @description Number of shards to create for the table. Data is partitioned across shards based on key ranges.
-       *
-       *     **Sizing Guidelines:**
-       *     - Small datasets (<100K docs): 1-3 shards
-       *     - Medium datasets (100K-1M docs): 3-10 shards
-       *     - Large datasets (>1M docs): 10+ shards
-       *
-       *     More shards enable better parallelism but increase overhead. Choose based on expected data size and query patterns.
-       *
-       *     **When to Add More Shards:**
-       *
-       *     Antfly supports **online shard reallocation** without downtime. Add more shards when:
-       *     - Individual shards exceed size thresholds (configurable)
-       *     - Query latency increases due to large shard size
-       *     - Need better parallelism for write-heavy workloads
-       *
-       *     Use the internal `/reallocate` endpoint to trigger automatic shard splitting:
-       *     ```bash
-       *     POST /_internal/v1/reallocate
-       *     ```
-       *
-       *     This enqueues a reallocation request that the leader processes asynchronously, splitting
-       *     large shards and redistributing data without service interruption.
-       *
-       *     **Advantages over Elasticsearch:**
-       *     - Automatic shard splitting (no manual reindexing required)
-       *     - Online operation (no downtime)
-       *     - Transparent to applications (keys remain accessible during reallocation)
-       * @example 3
-       */
-      num_shards?: number;
-      /**
-       * @description Optional human-readable description of the table and its purpose.
-       *     Useful for documentation and team collaboration.
-       * @example User profiles with embeddings for semantic search
-       */
-      description?: string;
-      /**
-       * @description Map of index name to index configuration. Indexes enable different query capabilities:
-       *     - Full-text indexes for BM25 search
-       *     - Vector indexes for semantic similarity
-       *     - Multimodal indexes for images/audio/video
-       *
-       *     You can add multiple indexes to support different query patterns.
-       * @example {
-       *       "search_index": {
-       *         "type": "full_text_v0"
-       *       },
-       *       "embedding_index": {
-       *         "type": "aknn_v0",
-       *         "dimension": 384,
-       *         "embedder": {
-       *           "provider": "ollama",
-       *           "model": "all-minilm"
-       *         }
-       *       }
-       *     }
-       */
-      indexes?: {
-        [key: string]: components["schemas"]["IndexConfig"];
-      };
-      /**
-       * @description Optional schema definition specifying field types, primary key, and TTL configuration.
-       *     While optional, defining a schema provides type safety, optimized indexing, and better search performance.
-       *
-       *     **Schema Features:**
-       *     - **Field Types**: Define document structure using JSON Schema with `x-antfly-types` extensions
-       *     - **Document TTL**: Configure automatic expiration via `ttl_duration` and optional `ttl_field`
-       *     - **Primary Keys**: Specify unique identifier fields
-       *     - **Validation**: Enforce schema constraints on writes
-       *
-       *     **TTL Example:**
-       *     ```json
-       *     {
-       *       "ttl_duration": "7d",
-       *       "ttl_field": "_timestamp",
-       *       "document_schemas": {...}
-       *     }
-       *     ```
-       *
-       *     See the Table Management documentation for comprehensive TTL configuration and use cases.
-       */
-      schema?: components["schemas"]["TableSchema"];
-    };
-    /** @enum {string} */
-    AntflyType:
-      | "search_as_you_type"
-      | "keyword"
-      | "text"
-      | "html"
-      | "numeric"
-      | "datetime"
-      | "boolean"
-      | "link"
-      | "geopoint"
-      | "geoshape"
-      | "embedding"
-      | "blob";
-    Table: {
-      name: string;
-      /**
-       * @description Optional description of the table.
-       * @example Table for user data
-       */
-      description?: string;
-      indexes: {
-        [key: string]: components["schemas"]["IndexConfig"];
-      };
-      shards: {
-        [key: string]: components["schemas"]["ShardConfig"];
-      };
-      schema?: components["schemas"]["TableSchema"];
-    };
-    DateRange: {
-      name: string;
-      from?: string;
-      to?: string;
-    };
-    NumericRange: {
-      name: string;
-      /** Format: float */
-      from?: number;
-      /** Format: float */
-      to?: number;
-    };
-    TermFacetResult: {
-      term: string;
-      count: number;
-    };
-    DateRangeResult: components["schemas"]["DateRange"] & {
-      count: number;
-    };
-    NumericRangeResult: components["schemas"]["NumericRange"] & {
-      count: number;
-    };
-    FacetOption: {
-      field?: string;
-      size?: number;
-      date_ranges?: components["schemas"]["DateRange"][];
-      numeric_ranges?: components["schemas"]["NumericRange"][];
-    };
-    FacetResult: {
-      field?: string;
-      total?: number;
-      missing?: number;
-      terms?: components["schemas"]["TermFacetResult"][];
-      date_ranges?: components["schemas"]["DateRangeResult"][];
-      numeric_ranges?: components["schemas"]["NumericRangeResult"][];
-    };
-    IndexStatus: {
-      shard_status: {
-        [key: string]: components["schemas"]["IndexStats"];
-      };
-      config: components["schemas"]["IndexConfig"];
-      status: components["schemas"]["IndexStats"];
-    };
-    StorageStatus: {
-      /**
-       * Format: uint64
-       * @description Disk usage in bytes.
-       */
-      disk_usage?: number;
-      /** @description Whether the table has received data. */
-      empty?: boolean;
-    };
-    TableStatus: components["schemas"]["Table"] & {
-      storage_status: components["schemas"]["StorageStatus"];
-    };
-    /**
-     * @description MongoDB-style update operator
-     * @enum {string}
-     */
-    TransformOpType:
-      | "$set"
-      | "$unset"
-      | "$inc"
-      | "$push"
-      | "$pull"
-      | "$addToSet"
-      | "$pop"
-      | "$mul"
-      | "$min"
-      | "$max"
-      | "$currentDate"
-      | "$rename";
-    TransformOp: {
-      op: components["schemas"]["TransformOpType"];
-      /**
-       * @description JSONPath to field (e.g., "$.user.name", "$.tags", or "user.name")
-       * @example $.views
-       */
-      path: string;
-      /** @description Value for operation (not required for $unset, $currentDate). Type depends on operator (number for $inc/$mul, any for $set, etc.) */
-      value?: unknown;
-    };
-    /**
-     * @description In-place document transformation using MongoDB-style operators. Transforms are applied atomically
-     *     at the storage layer, eliminating read-modify-write races.
-     *
-     *     **Important:** Transform results are NOT validated against the table schema. This improves performance
-     *     but means it's possible to create invalid documents. Use with care and ensure your operations maintain
-     *     schema compliance.
-     * @example {
-     *       "key": "article:123",
-     *       "operations": [
-     *         {
-     *           "op": "$inc",
-     *           "path": "$.views",
-     *           "value": 1
-     *         },
-     *         {
-     *           "op": "$currentDate",
-     *           "path": "$.lastViewed"
-     *         }
-     *       ]
-     *     }
-     */
-    Transform: {
-      /** @description Document key (must be a string, not an object like inserts) */
-      key: string;
-      /** @description List of operations to apply in sequence */
-      operations: components["schemas"]["TransformOp"][];
-      /**
-       * @description If true, create document if it doesn't exist (like MongoDB upsert)
-       * @default false
-       */
-      upsert?: boolean;
-    };
-    /**
-     * @description Request to scan keys in a table within a key range.
-     *     If no range is specified, scans all keys in the table.
-     */
-    ScanKeysRequest: {
-      /**
-       * @description Start of the key range to scan (exclusive by default).
-       *     Can be a full key or a prefix. If not specified, starts from
-       *     the beginning of the table.
-       * @example user:100
-       */
-      from?: string;
-      /**
-       * @description End of the key range to scan (inclusive by default).
-       *     Can be a full key or a prefix. If not specified, scans to
-       *     the end of the table.
-       * @example user:200
-       */
-      to?: string;
-      /**
-       * @description If true, include keys matching 'from' in the results.
-       *     Default: false (exclusive lower bound for pagination).
-       * @default false
-       */
-      inclusive_from?: boolean;
-      /**
-       * @description If true, exclude keys matching 'to' from the results.
-       *     Default: false (inclusive upper bound).
-       * @default false
-       */
-      exclusive_to?: boolean;
-      /**
-       * @description List of fields to include in each result. If not specified,
-       *     only returns the key. Supports:
-       *     - Simple fields: "title", "author"
-       *     - Nested paths: "user.address.city"
-       *     - Wildcards: "_chunks.*"
-       *     - Exclusions: "-_chunks.*._embedding"
-       *     - Special fields: "_embeddings", "_summaries", "_chunks"
-       * @example [
-       *       "title",
-       *       "author",
-       *       "metadata.tags"
-       *     ]
-       */
-      fields?: string[];
-      /**
-       * @description Bleve query to filter documents. Only documents matching this query
-       *     are included in results. Uses the sear library for efficient per-document
-       *     matching without requiring a full index.
-       *
-       *     Examples:
-       *     - Status filtering: `{"query": "status:published"}`
-       *     - Date ranges: `{"query": "created_at:>2023-01-01"}`
-       *     - Field matching: `{"query": "category:technology"}`
-       */
-      filter_query?: components["schemas"]["Query"] & unknown;
-      /**
-       * @description Maximum number of results to return. If not specified, returns all
-       *     matching keys in the range. Useful for pagination or sampling.
-       * @example 100
-       */
-      limit?: number;
-    };
-    /**
-     * @description Batch insert, delete, and transform operations in a single request.
-     *
-     *     **Atomicity**:
-     *     - **Single shard**: Operations are atomic within shard boundaries
-     *     - **Multiple shards**: Uses distributed 2-phase commit (2PC) for atomic cross-shard writes
-     *
-     *     **How distributed transactions work**:
-     *     1. Metadata server allocates HLC timestamp and selects coordinator shard
-     *     2. Coordinator writes transaction record, participants write intents
-     *     3. After all intents succeed, coordinator commits transaction
-     *     4. Participants are notified asynchronously to resolve intents
-     *     5. Recovery loop ensures notifications complete even after coordinator failure
-     *
-     *     **Performance**:
-     *     - Single-shard batches: < 5ms latency
-     *     - Cross-shard transactions: ~20ms latency
-     *     - Intent resolution: < 30 seconds worst-case (via recovery loop)
-     *
-     *     **Guarantees**:
-     *     - All writes succeed or all fail (atomicity across all shards)
-     *     - Coordinator failure is recoverable (new leader resumes notifications)
-     *     - Idempotent resolution (duplicate notifications are safe)
-     *
-     *     **Benefits**:
-     *     - Reduces network overhead compared to individual requests
-     *     - More efficient indexing (updates are batched)
-     *     - Automatic distributed transactions when operations span shards
-     *
-     *     The inserts are upserts - existing keys are overwritten, new keys are created.
-     * @example {
-     *       "inserts": {
-     *         "user:123": {
-     *           "name": "John Doe",
-     *           "email": "john@example.com",
-     *           "age": 30,
-     *           "tags": [
-     *             "customer",
-     *             "premium"
-     *           ]
-     *         },
-     *         "user:456": {
-     *           "name": "Jane Smith",
-     *           "email": "jane@example.com",
-     *           "age": 25,
-     *           "tags": [
-     *             "customer"
-     *           ]
-     *         }
-     *       },
-     *       "deletes": [
-     *         "user:789",
-     *         "user:old_account"
-     *       ]
-     *     }
-     */
-    BatchRequest: {
-      /**
-       * @description Map of document IDs to document objects. Each key is the unique identifier for the document.
-       *
-       *     Best practices:
-       *     - Use consistent key naming schemes (e.g., "user:123", "article:456")
-       *     - Key length affects storage and performance - keep them reasonably short
-       *     - Keys are sorted lexicographically, so choose prefixes that support range scans
-       * @example {
-       *       "user:123": {
-       *         "name": "John Doe",
-       *         "email": "john@example.com",
-       *         "age": 30,
-       *         "tags": [
-       *           "customer",
-       *           "premium"
-       *         ]
-       *       },
-       *       "user:456": {
-       *         "name": "Jane Smith",
-       *         "email": "jane@example.com",
-       *         "age": 25,
-       *         "tags": [
-       *           "customer"
-       *         ]
-       *       }
-       *     }
-       */
-      inserts?: {
-        [key: string]: Record<string, never>;
-      };
-      /**
-       * @description Array of document IDs to delete. Documents are removed from all indexes.
-       *
-       *     Notes:
-       *     - Non-existent keys are silently ignored
-       *     - Deletions are processed before inserts in the same batch
-       *     - Keys are permanently removed from storage and indexes
-       * @example [
-       *       "user:789",
-       *       "user:old_account"
-       *     ]
-       */
-      deletes?: string[];
-      /**
-       * @description Array of transform operations for in-place document updates using MongoDB-style operators.
-       *
-       *     Transform operations allow you to modify documents without read-modify-write races:
-       *     - Operations are applied atomically on the server
-       *     - Multiple operations per document are applied in sequence
-       *     - Supports numeric operations ($inc, $mul), array operations ($push, $pull), and more
-       *
-       *     Common use cases:
-       *     - Increment counters (views, likes, votes)
-       *     - Update timestamps ($currentDate)
-       *     - Manage arrays (add/remove tags, items)
-       *     - Update nested fields without overwriting the entire document
-       * @example [
-       *       {
-       *         "key": "article:123",
-       *         "operations": [
-       *           {
-       *             "op": "$inc",
-       *             "path": "$.views",
-       *             "value": 1
-       *           },
-       *           {
-       *             "op": "$currentDate",
-       *             "path": "$.lastViewed"
-       *           }
-       *         ]
-       *       },
-       *       {
-       *         "key": "user:456",
-       *         "operations": [
-       *           {
-       *             "op": "$push",
-       *             "path": "$.tags",
-       *             "value": "vip"
-       *           }
-       *         ]
-       *       }
-       *     ]
-       */
-      transforms?: components["schemas"]["Transform"][];
-      sync_level?: components["schemas"]["SyncLevel"];
-    };
-    BackupRequest: {
-      /**
-       * @description Unique identifier for this backup. Used to reference the backup for restore operations.
-       *     Choose a meaningful name that includes date/version information.
-       * @example backup-2025-01-15-v2
-       */
-      backup_id: string;
-      /**
-       * @description Storage location for the backup. Supports multiple backends:
-       *     - Local filesystem: `file:///path/to/backup`
-       *     - Amazon S3: `s3://bucket-name/path/to/backup`
-       *
-       *     The backup includes all table data, indexes, and metadata for the specified table.
-       * @example s3://mybucket/antfly-backups/users-table/2025-01-15
-       */
-      location: string;
-    };
-    RestoreRequest: components["schemas"]["BackupRequest"];
-    RAGRequest: {
-      /**
-       * @description Array of retrieval queries to execute. Each query must specify a table and can specify its own limit and document_renderer.
-       *     Results from all queries are concatenated together (respecting each query's limit).
-       *     For single table: [{"table": "papers", "semantic_search": "...", "limit": 10}]
-       *     For broadcast: [{"table": "images", "limit": 5, ...}, {"table": "products", "limit": 5, ...}]
-       *     For mixed: [{"table": "papers", "semantic_search": "...", "limit": 10}, {"table": "books", "full_text_search": {...}, "limit": 5}]
-       */
-      queries: components["schemas"]["QueryRequest"][];
-      /**
-       * @description Generator configuration for summarization. Mutually exclusive with 'chain'.
-       *     Either 'generator' or 'chain' must be provided.
-       */
-      generator?: components["schemas"]["GeneratorConfig"];
-      /**
-       * @description Chain of generators with retry/fallback semantics. Mutually exclusive with 'generator'.
-       *     Each link can specify retry configuration and a condition for trying the next generator.
-       *     Either 'generator' or 'chain' must be provided.
-       */
-      chain?: components["schemas"]["ChainLink"][];
-      /**
-       * @description Optional system prompt to guide the summarization
-       * @example You are a helpful AI assistant. Summarize the following search results concisely.
-       */
-      system_prompt?: string;
-      /**
-       * @description Optional custom user prompt template for the LLM. If not provided, a default prompt is used.
-       *     The prompt can reference the following variables:
-       *     - {{documents}}: Array of retrieved documents with id and fields
-       *     - {{semantic_search}}: The user's semantic search query (if provided)
-       *     You can use Handlebars template syntax to customize the prompt, including loops and conditionals.
-       *     To generate a comma-separated list of document IDs, use: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
-       * @example Based on these documents, provide a detailed analysis:
-       *
-       *     {{#each documents}}
-       *     Doc {{this.id}}: {{this.fields}}
-       *     {{/each}}
-       *
-       *     Valid IDs: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
-       */
-      prompt?: string;
-      /** @description Enable SSE streaming of results instead of JSON response */
-      with_streaming?: boolean;
-      /**
-       * @description Optional evaluation configuration. When provided, runs evaluators on the query results
-       *     and includes scores in the response.
-       *
-       *     **Retrieval metrics** (require ground_truth.relevant_ids):
-       *     - recall, precision, ndcg, mrr, map
-       *
-       *     **LLM-as-judge metrics** (require judge config):
-       *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
-       *
-       *     Example:
-       *     ```json
-       *     {
-       *       "evaluators": ["recall", "faithfulness"],
-       *       "ground_truth": {"relevant_ids": ["doc1", "doc2"]},
-       *       "judge": {"provider": "ollama", "model": "gemma3:4b"}
-       *     }
-       *     ```
-       */
-      eval?: components["schemas"]["EvalConfig"];
-    };
-    /** @description RAG result with individual query results and summary */
-    RAGResult: {
-      /** @description Results from each query. Check each result's status and error fields for failures. */
-      query_results?: components["schemas"]["QueryResult"][];
-      summary_result?: components["schemas"]["SummarizeResult"];
-      /** @description Evaluation results when eval config was provided in the request */
-      eval_result?: components["schemas"]["EvalResult"];
-    };
-    QueryBuilderRequest: {
-      /**
-       * @description Name of the table to build query for. If provided, uses table schema for field context.
-       * @example articles
-       */
-      table?: string;
-      /**
-       * @description Natural language description of the search intent
-       * @example Find all published articles about machine learning from the last year
-       */
-      intent: string;
-      /**
-       * @description List of searchable field names to consider. Overrides table schema if provided.
-       * @example [
-       *       "title",
-       *       "content",
-       *       "status",
-       *       "published_at"
-       *     ]
-       */
-      schema_fields?: string[];
-      generator?: components["schemas"]["GeneratorConfig"];
-    };
-    QueryBuilderResult: {
-      /**
-       * @description Generated search query in simplified DSL format.
-       *     Can be used directly in QueryRequest.full_text_search or filter_query.
-       * @example {
-       *       "and": [
-       *         {
-       *           "match": "machine learning",
-       *           "field": "content"
-       *         },
-       *         {
-       *           "term": "published",
-       *           "field": "status"
-       *         }
-       *       ]
-       *     }
-       */
-      query: {
-        [key: string]: unknown;
-      };
-      /**
-       * @description Human-readable explanation of what the query does and why it was structured this way
-       * @example Searches for 'machine learning' in content field AND requires status to be exactly 'published'
-       */
-      explanation?: string;
-      /**
-       * Format: double
-       * @description Model's confidence in the generated query (0.0-1.0)
-       * @example 0.85
-       */
-      confidence?: number;
-      /**
-       * @description Any issues, limitations, or assumptions made when generating the query
-       * @example [
-       *       "Field 'category' not found in schema, using content field instead"
-       *     ]
-       */
-      warnings?: string[];
-    };
-    AnswerAgentRequest: {
-      /**
-       * @description User's natural language query to be classified and improved
-       * @example What are the best gaming laptops under $2000?
-       */
-      query: string;
-      /**
-       * @description Default generator configuration used for all pipeline steps unless overridden in `steps`.
-       *     This is the simple configuration - just set this and everything works with sensible defaults.
-       *     Mutually exclusive with 'chain'. Either 'generator' or 'chain' must be provided.
-       */
-      generator?: components["schemas"]["GeneratorConfig"];
-      /**
-       * @description Default chain of generators for all pipeline steps unless overridden in `steps`.
-       *     Each link can specify retry configuration and a condition for trying the next generator.
-       *     Mutually exclusive with 'generator'. Either 'generator' or 'chain' must be provided.
-       */
-      chain?: components["schemas"]["ChainLink"][];
-      /**
-       * @description Array of query requests to execute. The query text will be transformed for semantic search
-       *     and populated into the semantic_search field of each query.
-       * @example [
-       *       {
-       *         "table": "products",
-       *         "indexes": [
-       *           "embedding_idx"
-       *         ],
-       *         "limit": 10
-       *       },
-       *       {
-       *         "table": "reviews",
-       *         "indexes": [
-       *           "embedding_idx"
-       *         ],
-       *         "limit": 5
-       *       }
-       *     ]
-       */
-      queries: components["schemas"]["QueryRequest"][];
-      /**
-       * @description Advanced per-step configuration. Override the default generator for specific steps,
-       *     configure step-specific options, or set up generator chains with retry/fallback.
-       *
-       *     **Simple usage** - just set `generator` and all steps use it with defaults.
-       *
-       *     **Advanced usage** - configure each step independently:
-       *     ```json
-       *     {
-       *       "steps": {
-       *         "classification": {
-       *           "generator": {"provider": "openai", "model": "gpt-4o-mini"},
-       *           "with_reasoning": true
-       *         },
-       *         "answer": {
-       *           "generator": {"provider": "anthropic", "model": "claude-3-opus"}
-       *         },
-       *         "followup": {
-       *           "enabled": true,
-       *           "generator": {"provider": "openai", "model": "gpt-4o-mini"}
-       *         }
-       *       }
-       *     }
-       *     ```
-       */
-      steps?: components["schemas"]["AnswerAgentSteps"];
-      /**
-       * @description Enable SSE streaming of results (classification, queries, results, answer) instead of JSON response
-       * @default true
-       */
-      with_streaming?: boolean;
-      /**
-       * @description Maximum total tokens allowed for retrieved document context.
-       *     When set, documents are pruned (lowest-ranked first) to fit within this budget.
-       *     Useful for ensuring LLM context limits are not exceeded.
-       *     Uses BERT tokenizer for estimation.
-       * @example 100000
-       */
-      max_context_tokens?: number;
-      /**
-       * @description Tokens to reserve for system prompt, answer generation, and other overhead.
-       *     Subtracted from max_context_tokens to determine available context budget.
-       *     Defaults to 4000 if max_context_tokens is set.
-       * @default 4000
-       * @example 4000
-       */
-      reserve_tokens?: number;
-      /**
-       * @description Optional evaluation configuration. When provided, runs evaluators on the query results
-       *     and generated answer, including scores in the response.
-       *
-       *     **Retrieval metrics** (require ground_truth.relevant_ids):
-       *     - recall, precision, ndcg, mrr, map
-       *
-       *     **LLM-as-judge metrics** (require judge config):
-       *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
-       */
-      eval?: components["schemas"]["EvalConfig"];
-    };
-    AnswerAgentResult: components["schemas"]["AnswerResult"] & {
-      /**
-       * @description Query classification and transformation result. Includes:
-       *     - route_type: "question" or "search"
-       *     - strategy: "simple", "decompose", "step_back", or "hyde"
-       *     - semantic_query: Optimized query for retrieval
-       *     - reasoning: Pre-retrieval analysis (if steps.classification.with_reasoning was enabled)
-       */
-      classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
-      /** @description Results from each executed query */
-      query_results?: components["schemas"]["QueryResult"][];
-      /** @description Evaluation results when eval config was provided in the request */
-      eval_result?: components["schemas"]["EvalResult"];
-    };
-    /** @description Confidence assessment for the generated answer */
-    AnswerConfidence: {
-      /**
-       * Format: float
-       * @description Overall confidence in the answer (0.0 to 1.0). Considers both ability to answer from provided resources and general knowledge.
-       */
-      answer_confidence: number;
-      /**
-       * Format: float
-       * @description Relevance of the provided resources to the question (0.0 to 1.0)
-       */
-      context_relevance: number;
-    };
-    /** @description Result from answer generation with optional confidence and follow-up questions */
-    AnswerResult: {
-      /**
-       * Format: float
-       * @description Overall confidence in the answer (0.0 to 1.0)
-       */
-      answer_confidence?: number;
-      /**
-       * Format: float
-       * @description Relevance of the provided resources to the question (0.0 to 1.0)
-       */
-      context_relevance?: number;
-      /** @description Generated answer in markdown format */
-      answer: string;
-      /** @description Suggested follow-up questions */
-      followup_questions?: string[];
-    };
-    QueryRequest: {
-      /**
-       * @description Name of the table to query. Optional for global queries.
-       * @example wikipedia
-       */
-      table?: string;
-      /**
-       * @description Bleve query for full-text search. Supports all Bleve query types.
-       *
-       *     See bleve-query-openapi.yaml for complete type definitions.
-       *
-       *     Examples:
-       *     - Simple: `{"query": "computer"}`
-       *     - Field-specific: `{"query": "body:computer"}`
-       *     - Boolean: `{"query": "artificial AND intelligence"}`
-       *     - Range: `{"query": "year:>2020"}`
-       *     - Phrase: `{"query": "\"exact phrase\""}`
-       * @example {
-       *       "query": "body:computer AND category:technology",
-       *       "boost": 1
-       *     }
-       */
-      full_text_search?: components["schemas"]["Query"] & {
-        [key: string]: unknown;
-      };
-      /**
-       * @description Natural language query for vector similarity search. Results are ranked by semantic similarity
-       *     to the query and can be combined with full_text_search using Reciprocal Rank Fusion (RRF).
-       *
-       *     The semantic_search string is automatically embedded using the configured embedding model
-       *     for the specified indexes. Use `embedding_template` for multimodal queries.
-       * @example artificial intelligence and machine learning applications
-       */
-      semantic_search?: string;
-      /**
-       * @description Optional Handlebars template for multimodal embedding of the semantic_search query.
-       *     The template has access to `this` which contains the semantic_search string value.
-       *
-       *     Use this when you want to embed multimodal content (images, PDFs, etc.) instead of
-       *     just text. The template is rendered using dotprompt with access to remote content helpers.
-       *
-       *     **Available Helpers**:
-       *     - `remoteMedia url=<url>` - Fetches and embeds remote images/media
-       *     - `remotePDF url=<url>` - Fetches and extracts content from PDFs
-       *     - `remoteText url=<url>` - Fetches and includes remote text content
-       *
-       *     **Examples**:
-       *     - PDF search: `{{remotePDF url=this}}`
-       *     - Image search: `{{remoteMedia url=this}}`
-       *     - Mixed: `Search for: {{this}} {{#if this}}{{remoteMedia url=this}}{{/if}}`
-       *
-       *     When not specified, the semantic_search string is embedded as plain text.
-       * @example {{remotePDF url=this}}
-       */
-      embedding_template?: string;
-      /**
-       * @description List of vector index names to use for semantic search. Required when using semantic_search.
-       *     Multiple indexes can be specified, and their results will be merged using RRF.
-       * @example [
-       *       "title_body_nomic",
-       *       "description_embedding"
-       *     ]
-       */
-      indexes?: string[];
-      /**
-       * Format: byte
-       * @description Filter results by key prefix. Only returns documents whose keys start with this string.
-       *     Applied before scoring to improve performance.
-       *
-       *     Common use cases:
-       *     - Multi-tenant filtering: `"tenant:acme:"`
-       *     - User-specific data: `"user:123:"`
-       *     - Document type filtering: `"article:"`
-       */
-      filter_prefix?: string;
-      /**
-       * @description Bleve query applied as an AND condition. Documents must match both the main query
-       *     and this filter. Applied before scoring for better performance.
-       *
-       *     See bleve-query-openapi.yaml for complete type definitions.
-       *
-       *     Use for:
-       *     - Status filtering: `"status:published"`
-       *     - Date ranges: `"created_at:>2023-01-01"`
-       *     - Category filtering: `"category:technology AND language:en"`
-       * @example {
-       *       "query": "category:technology AND year:>2020",
-       *       "boost": 1
-       *     }
-       */
-      filter_query?: components["schemas"]["Query"] & unknown;
-      /**
-       * @description Bleve query applied as a NOT condition. Documents matching this query are excluded
-       *     from results. Applied before scoring.
-       *
-       *     See bleve-query-openapi.yaml for complete type definitions.
-       *
-       *     Use for:
-       *     - Excluding drafts: `"status:draft"`
-       *     - Removing deprecated content: `"deprecated:true"`
-       *     - Filtering out archived items: `"status:archived"`
-       * @example {
-       *       "query": "category:deprecated OR status:archived",
-       *       "boost": 1
-       *     }
-       */
-      exclusion_query?: components["schemas"]["Query"] & unknown;
-      /**
-       * @description Faceting configuration for aggregating results by field values.
-       *     Useful for building faceted navigation and filters.
-       */
-      facets?: {
-        [key: string]: components["schemas"]["FacetOption"];
-      };
-      /**
-       * @description Pre-computed embeddings to use for semantic searches instead of embedding the semantic_search string.
-       *     The keys are the index names, and values are the embedding vectors.
-       *
-       *     Use when you've already generated embeddings on the client side to avoid redundant embedding calls.
-       */
-      embeddings?: {
-        [key: string]: number[];
-      };
-      /**
-       * @description List of fields to include in the results. If not specified, all fields are returned.
-       *     Use to reduce response size and improve performance.
-       * @example [
-       *       "title",
-       *       "url",
-       *       "summary",
-       *       "created_at"
-       *     ]
-       */
-      fields?: string[];
-      /**
-       * @description Maximum number of results to return. For semantic_search, this is the topk parameter.
-       *     Default varies by query type (typically 10).
-       * @example 20
-       */
-      limit?: number;
-      /**
-       * @description Number of results to skip for pagination. Only available for full_text_search queries.
-       *     Not supported for semantic_search due to vector index limitations.
-       * @example 0
-       */
-      offset?: number;
-      /**
-       * @description Sort order for results. Map of field names to boolean (true = descending, false = ascending).
-       *     Only applicable for full_text_search queries. Semantic searches are always sorted by similarity score.
-       * @example {
-       *       "created_at": true,
-       *       "score": true
-       *     }
-       */
-      order_by?: {
-        [key: string]: boolean;
-      };
-      /**
-       * Format: float
-       * @description Maximum distance threshold for semantic similarity search. Results with distance
-       *     greater than this value are excluded. Lower distances indicate higher similarity.
-       *
-       *     Useful for filtering out low-confidence matches.
-       * @example 0.5
-       */
-      distance_under?: number;
-      /**
-       * Format: float
-       * @description Minimum distance threshold for semantic similarity search. Results with distance
-       *     less than this value are excluded.
-       *
-       *     Useful for excluding near-exact duplicates or finding dissimilar documents.
-       * @example 0.1
-       */
-      distance_over?: number;
-      /**
-       * @description Strategy for merging full-text and semantic search results. Only applies
-       *     when both `full_text_search` and `semantic_search` are specified.
-       *
-       *     Options:
-       *     - `rrf` (default): Reciprocal Rank Fusion - Combines based on result rankings.
-       *       Works well when both search types return relevant results.
-       *     - `rsf`: Relative Score Fusion - Normalizes scores within a window and
-       *       combines weighted scores. Better when score distributions differ significantly.
-       *     - `failover`: Uses full-text search if semantic embedding generation fails.
-       *       Useful for reliability when embedding service may be unavailable.
-       *
-       *     **Most users should use the default `rrf`.**
-       */
-      merge_strategy?: components["schemas"]["MergeStrategy"];
-      /**
-       * @description If true, returns only the total count of matching documents without retrieving the actual documents.
-       *     Useful for pagination and displaying result counts.
-       * @example false
-       */
-      count?: boolean;
-      /**
-       * @description Optional reranker configuration to improve result relevance.
-       *
-       *     Rerankers use cross-encoder models that score query-document pairs directly,
-       *     providing more accurate relevance scores than embedding similarity alone.
-       *
-       *     **When to use:**
-       *     - Results need high precision (e.g., RAG, question answering)
-       *     - You have semantic or hybrid search results to refine
-       *     - Latency trade-off is acceptable (reranking adds 100-500ms typically)
-       *
-       *     **Best practice:** Retrieve more results (limit: 50-100) then rerank to final size.
-       *
-       *     Example:
-       *     ```json
-       *     {
-       *       "provider": "termite",
-       *       "model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
-       *       "field": "content"
-       *     }
-       *     ```
-       */
-      reranker?: components["schemas"]["RerankerConfig"];
-      analyses?: components["schemas"]["Analyses"];
-      /**
-       * @description Declarative graph queries to execute after full-text/vector searches.
-       *     Results can reference search results using node selectors like $full_text_results.
-       */
-      graph_searches?: {
-        [key: string]: components["schemas"]["GraphQuery"];
-      };
-      /**
-       * @description Strategy for merging graph results with search results:
-       *     - union: Include nodes from both search and graph results
-       *     - intersection: Only include nodes appearing in both
-       * @enum {string}
-       */
-      expand_strategy?: "union" | "intersection";
-      /**
-       * @description Optional Handlebars template string for rendering document content in RAG queries.
-       *     Template has access to document fields via `{{this.fields.fieldName}}`.
-       *
-       *     **Default**: Uses TOON (Token-Oriented Object Notation) format for 30-60% token reduction:
-       *     ```handlebars
-       *     {{encodeToon this.fields}}
-       *     ```
-       *
-       *     **Available Helpers**:
-       *     - `encodeToon` - Renders fields in compact TOON format with configurable options:
-       *       - `lengthMarker` (bool): Add # prefix to array counts (default: true)
-       *       - `indent` (int): Indentation spacing (default: 2)
-       *       - `delimiter` (string): Field separator for tabular arrays
-       *     - `scrubHtml` - Removes HTML tags and extracts text
-       *     - `media` - Wraps data URIs for GenKit multimodal support
-       *     - `eq` - Equality comparison for conditionals
-       *
-       *     **Examples**:
-       *     - Basic TOON: `{{encodeToon this.fields}}`
-       *     - Compact TOON: `{{encodeToon this.fields lengthMarker=false indent=0}}`
-       *     - Tabular data: `{{encodeToon this.fields delimiter="\t"}}`
-       *     - Custom template: `Title: {{this.fields.title}}\nBody: {{this.fields.body}}`
-       *     - Traditional format: `{{#each this.fields}}{{@key}}: {{this}}\n{{/each}}`
-       *
-       *     TOON format produces compact, LLM-optimized output like:
-       *     ```
-       *     title: Introduction to Vector Search
-       *     author: Jane Doe
-       *     tags[#3]: ai,search,ml
-       *     ```
-       *
-       *     **References**:
-       *     - TOON Specification: https://github.com/toon-format/toon
-       *     - Go Implementation: https://github.com/alpkeskin/gotoon
-       * @example {{encodeToon this.fields}}
-       */
-      document_renderer?: string;
-      /**
-       * @description Optional result pruning configuration to filter low-relevance results.
-       *
-       *     Pruning helps detect "elbows" in score distributions and removes
-       *     results that are significantly worse than top matches.
-       *
-       *     **Common patterns:**
-       *     - RAG queries: Use `max_score_gap_percent: 30` to stop at quality drop-offs
-       *     - Strict matching: Use `min_score_ratio: 0.7` for high-quality results only
-       *     - Combine both for best results
-       *
-       *     Example:
-       *     ```json
-       *     {
-       *       "min_score_ratio": 0.5,
-       *       "max_score_gap_percent": 25.0,
-       *       "min_absolute_score": 0.3
-       *     }
-       *     ```
-       */
-      pruner?: components["schemas"]["Pruner"];
-    };
-    Analyses: {
-      pca?: boolean;
-      tsne?: boolean;
-    };
-    AnalysesResult: {
-      pca?: number[];
-      tsne?: number[];
-    };
-    /** @description A single query result hit */
-    QueryHit: {
-      /** @description ID of the record. */
-      _id: string;
-      /**
-       * Format: float
-       * @description Relevance score of the hit.
-       */
-      _score: number;
-      /** @description Scores partitioned by index when using RRF search. */
-      _index_scores?: {
-        [key: string]: unknown;
-      };
-      _source?: {
-        [key: string]: unknown;
-      };
-    };
-    /** @description A list of query hits. */
-    QueryHits: {
-      /**
-       * Format: uint64
-       * @description Total number of hits available.
-       */
-      total?: number;
-      hits?: components["schemas"]["QueryHit"][];
-      /**
-       * Format: float
-       * @description Maximum score of the results.
-       */
-      max_score?: number;
-    };
-    /** @description Responses from multiple query operations. */
-    QueryResponses: {
-      responses?: components["schemas"]["QueryResult"][];
-    };
-    /** @description Result of a query operation as an array of results and a count. */
-    QueryResult: {
-      hits?: components["schemas"]["QueryHits"];
-      facets?: {
-        [key: string]: components["schemas"]["FacetResult"];
-      };
-      /** @description Analysis results like PCA and t-SNE per index embeddings. */
-      analyses?: {
-        [key: string]: components["schemas"]["AnalysesResult"];
-      };
-      /** @description Results from declarative graph queries. */
-      graph_results?: {
-        [key: string]: components["schemas"]["GraphQueryResult"];
-      };
-      /**
-       * Format: int64
-       * @description Duration of the query in milliseconds.
-       */
-      took: number;
-      /**
-       * Format: int32
-       * @description HTTP status code of the query operation.
-       */
-      status: number;
-      /** @description Error message if the query failed. */
-      error?: string;
-      /** @description Which table this result came from */
-      table?: string;
-    };
-    /**
-     * @description Status of a linear merge page operation:
-     *     - "success": All records in batch processed successfully
-     *     - "partial": Processing stopped at shard boundary, client should retry with next_cursor
-     *     - "error": Fatal error occurred, no records processed successfully
-     * @enum {string}
-     */
-    LinearMergePageStatus: "success" | "partial" | "error";
-    /**
-     * @description Linear merge operation for syncing sorted records from external sources.
-     *     Use this to keep Antfly in sync with an external database or data source.
-     *
-     *     **How it works:**
-     *     1. Send sorted records from your external source
-     *     2. Server upserts records that exist in your batch
-     *     3. Server deletes Antfly records in the key range that are absent from your batch
-     *     4. If stopped at shard boundary, use next_cursor for next request
-     *
-     *     **WARNING:** Not safe for concurrent operations with overlapping key ranges.
-     */
-    LinearMergeRequest: {
-      /**
-       * @description Map of resource ID to resource object: {"resource_id_1": {...}, "resource_id_2": {...}}
-       *
-       *     Requirements:
-       *     - Keys must be sorted lexicographically by your client
-       *     - Server will process keys in sorted order
-       *     - Use consistent key naming (e.g., all start with same prefix)
-       *
-       *     This format avoids duplicate IDs and matches Antfly's batch write interface.
-       * @example {
-       *       "product:001": {
-       *         "name": "Laptop",
-       *         "price": 999.99
-       *       },
-       *       "product:002": {
-       *         "name": "Mouse",
-       *         "price": 29.99
-       *       },
-       *       "product:003": {
-       *         "name": "Keyboard",
-       *         "price": 79.99
-       *       }
-       *     }
-       */
-      records: {
-        [key: string]: unknown;
-      };
-      /**
-       * @description ID of last record from previous merge request.
-       *     - First request: Use empty string ""
-       *     - Subsequent requests: Use next_cursor from previous response
-       *     - Defines lower bound of key range to process
-       *
-       *     This enables pagination for large datasets.
-       * @example product:003
-       */
-      last_merged_id?: string;
-      /**
-       * @description If true, returns what would be deleted without making changes.
-       *
-       *     Use cases:
-       *     - Validate sync behavior before committing
-       *     - Check which records will be removed
-       *     - Test key range boundaries
-       *
-       *     Response includes deleted_ids array when dry_run=true.
-       * @default false
-       * @example false
-       */
-      dry_run?: boolean;
-      sync_level?: components["schemas"]["SyncLevel"];
-    };
-    FailedOperation: {
-      id?: string;
-      /** @enum {string} */
-      operation?: "upsert" | "delete";
-      error?: string;
-    };
-    /** @description Key range processed in this request */
-    KeyRange: {
-      from?: string;
-      to?: string;
-    };
-    LinearMergeResult: {
-      status: components["schemas"]["LinearMergePageStatus"];
-      /** @description Records inserted or updated (0 if dry_run=true) */
-      upserted: number;
-      /** @description Records skipped because content hash matched (unchanged) */
-      skipped: number;
-      /** @description Records deleted or would be deleted (if dry_run=true) */
-      deleted: number;
-      /** @description IDs that were deleted (or would be deleted if dry_run=true). Only included if dry_run=true. */
-      deleted_ids?: string[];
-      failed?: components["schemas"]["FailedOperation"][];
-      /** @description ID of last record in this batch (use for next request) */
-      next_cursor: string;
-      key_range?: components["schemas"]["KeyRange"];
-      /** @description Total number of keys scanned from Antfly during range query */
-      keys_scanned?: number;
-      /** @description Additional information (e.g., "stopped at shard boundary", "dry run - no changes made") */
-      message?: string;
-      /** Format: int64 */
-      took?: number;
-    };
-    /** @description A typed, weighted connection between documents */
-    Edge: {
-      /**
-       * Format: byte
-       * @description Base64-encoded source document key
-       */
-      source: string;
-      /**
-       * Format: byte
-       * @description Base64-encoded target document key
-       */
-      target: string;
-      /** @description Edge type (e.g., "cites", "similar_to", "authored_by") */
-      type: string;
-      /**
-       * Format: double
-       * @description Edge weight/confidence (0.0 to 1.0)
-       */
-      weight: number;
-      /**
-       * Format: date-time
-       * @description When the edge was created
-       */
-      created_at?: string;
-      /**
-       * Format: date-time
-       * @description When the edge was last updated
-       */
-      updated_at?: string;
-      /** @description Optional edge metadata */
-      metadata?: {
-        [key: string]: unknown;
-      };
-    };
-    /**
-     * @description Direction of edges to query:
-     *     - out: Outgoing edges from the node
-     *     - in: Incoming edges to the node
-     *     - both: Both outgoing and incoming edges
-     * @default out
-     * @enum {string}
-     */
-    EdgeDirection: "out" | "in" | "both";
-    /** @description Rules for graph traversal */
-    TraversalRules: {
-      /** @description Filter edges by type (empty = all types) */
-      edge_types?: string[];
-      /**
-       * Format: double
-       * @description Minimum edge weight filter
-       * @default 0
-       */
-      min_weight?: number;
-      /**
-       * Format: double
-       * @description Maximum edge weight filter
-       * @default 1
-       */
-      max_weight?: number;
-      direction?: components["schemas"]["EdgeDirection"];
-      /**
-       * @description Maximum traversal depth (0 = unlimited)
-       * @default 3
-       */
-      max_depth?: number;
-      /**
-       * @description Maximum results to return (0 = unlimited)
-       * @default 100
-       */
-      max_results?: number;
-      /**
-       * @description Include path information in results
-       * @default false
-       */
-      include_paths?: boolean;
-      /**
-       * @description Visit each node only once
-       * @default true
-       */
-      deduplicate_nodes?: boolean;
-    };
-    /** @description A single result from graph traversal */
-    TraversalResult: {
-      /**
-       * Format: byte
-       * @description Base64-encoded document key
-       */
-      key: string;
-      /** @description Document data (if loaded) */
-      document?: {
-        [key: string]: unknown;
-      };
-      /** @description Distance from start node (0 = start node) */
-      depth: number;
-      /** @description Sequence of keys from start to this node (if include_paths=true) */
-      path?: string[];
-      /** @description Sequence of edges from start to this node (if include_paths=true) */
-      path_edges?: components["schemas"]["Edge"][];
-      /**
-       * Format: double
-       * @description Product of edge weights along the path
-       */
-      total_weight?: number;
-    };
-    EdgesResponse: {
-      edges?: components["schemas"]["Edge"][];
-      /** @description Total number of edges returned */
-      count?: number;
-    };
-    TraverseResponse: {
-      results?: components["schemas"]["TraversalResult"][];
-      /** @description Total number of results */
-      count?: number;
-    };
-    /**
-     * @description Algorithm for path finding:
-     *     - min_hops: Shortest path by hop count (breadth-first search, ignores weights)
-     *     - max_weight: Path with maximum product of edge weights (strongest connection chain)
-     *     - min_weight: Path with minimum sum of edge weights (lowest cost route)
-     * @default min_hops
-     * @enum {string}
-     */
-    PathFindWeightMode: "min_hops" | "max_weight" | "min_weight";
-    PathFindRequest: {
-      /** @description Source node key (base64-encoded) */
-      source: string;
-      /** @description Target node key (base64-encoded) */
-      target: string;
-      /** @description Filter by specific edge types */
-      edge_types?: string[];
-      /** @default 10 */
-      max_depth?: number;
-      weight_mode?: components["schemas"]["PathFindWeightMode"];
-      /** @default 1 */
-      k?: number;
-      /** Format: double */
-      min_weight?: number;
-      /** Format: double */
-      max_weight?: number;
-      direction?: components["schemas"]["EdgeDirection"];
-    };
-    PathFindResult: {
-      paths?: components["schemas"]["Path"][];
-      source?: string;
-      target?: string;
-      weight_mode?: components["schemas"]["PathFindWeightMode"];
-      paths_found?: number;
-      /** Format: double */
-      search_time_ms?: number;
-    };
-    Path: {
-      /** @description Ordered list of node keys (base64-encoded) */
-      nodes?: string[];
-      edges?: components["schemas"]["PathEdge"][];
-      /** Format: double */
-      total_weight?: number;
-      length?: number;
-    };
-    PathEdge: {
-      source?: string;
-      target?: string;
-      type?: string;
-      /** Format: double */
-      weight?: number;
-      metadata?: {
-        [key: string]: unknown;
-      };
-    };
-    /**
-     * Format: double
-     * @description A floating-point number used to decrease or increase the relevance scores of a query.
-     * @default 1
-     */
-    Boost: number | null;
-    TermQuery: {
-      term: string;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    /** @description The fuzziness of the query. Can be an integer or "auto". */
-    Fuzziness: number | "auto";
-    MatchQuery: {
-      match: string;
-      field?: string;
-      analyzer?: string;
-      boost?: components["schemas"]["Boost"];
-      /** Format: int32 */
-      prefix_length?: number;
-      fuzziness?: components["schemas"]["Fuzziness"];
-      /** @enum {string} */
-      operator?: "or" | "and";
-    };
-    MatchPhraseQuery: {
-      match_phrase: string;
-      field?: string;
-      analyzer?: string;
-      boost?: components["schemas"]["Boost"];
-      fuzziness?: components["schemas"]["Fuzziness"];
-    };
-    PhraseQuery: {
-      terms: string[];
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-      fuzziness?: components["schemas"]["Fuzziness"];
-    };
-    MultiPhraseQuery: {
-      terms: string[][];
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-      fuzziness?: components["schemas"]["Fuzziness"];
-    };
-    FuzzyQuery: {
-      term: string;
-      /** Format: int32 */
-      prefix_length?: number;
-      fuzziness?: components["schemas"]["Fuzziness"];
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    PrefixQuery: {
-      prefix: string;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    RegexpQuery: {
-      regexp: string;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    WildcardQuery: {
-      wildcard: string;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    QueryStringQuery: {
-      query: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    NumericRangeQuery: {
-      /** Format: double */
-      min?: number | null;
-      /** Format: double */
-      max?: number | null;
-      inclusive_min?: boolean | null;
-      inclusive_max?: boolean | null;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    TermRangeQuery: {
-      min?: string | null;
-      max?: string | null;
-      inclusive_min?: boolean | null;
-      inclusive_max?: boolean | null;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    DateRangeStringQuery: {
-      /** Format: date-time */
-      start?: string;
-      /** Format: date-time */
-      end?: string;
-      inclusive_start?: boolean | null;
-      inclusive_end?: boolean | null;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-      datetime_parser?: string;
-    };
-    Query:
-      | components["schemas"]["TermQuery"]
-      | components["schemas"]["MatchQuery"]
-      | components["schemas"]["MatchPhraseQuery"]
-      | components["schemas"]["PhraseQuery"]
-      | components["schemas"]["MultiPhraseQuery"]
-      | components["schemas"]["FuzzyQuery"]
-      | components["schemas"]["PrefixQuery"]
-      | components["schemas"]["RegexpQuery"]
-      | components["schemas"]["WildcardQuery"]
-      | components["schemas"]["QueryStringQuery"]
-      | components["schemas"]["NumericRangeQuery"]
-      | components["schemas"]["TermRangeQuery"]
-      | components["schemas"]["DateRangeStringQuery"]
-      | components["schemas"]["BooleanQuery"]
-      | components["schemas"]["ConjunctionQuery"]
-      | components["schemas"]["DisjunctionQuery"]
-      | components["schemas"]["MatchAllQuery"]
-      | components["schemas"]["MatchNoneQuery"]
-      | components["schemas"]["DocIdQuery"]
-      | components["schemas"]["BoolFieldQuery"]
-      | components["schemas"]["IPRangeQuery"]
-      | components["schemas"]["GeoBoundingBoxQuery"]
-      | components["schemas"]["GeoDistanceQuery"]
-      | components["schemas"]["GeoBoundingPolygonQuery"]
-      | components["schemas"]["GeoShapeQuery"];
-    ConjunctionQuery: {
-      conjuncts: components["schemas"]["Query"][];
-      boost?: components["schemas"]["Boost"];
-    };
-    DisjunctionQuery: {
-      disjuncts: components["schemas"]["Query"][];
-      boost?: components["schemas"]["Boost"];
-      /** Format: double */
-      min?: number;
-    };
-    BooleanQuery: {
-      must?: components["schemas"]["ConjunctionQuery"];
-      should?: components["schemas"]["DisjunctionQuery"];
-      must_not?: components["schemas"]["DisjunctionQuery"];
-      filter?: components["schemas"]["Query"];
-      boost?: components["schemas"]["Boost"];
-    };
-    MatchAllQuery: {
-      match_all: Record<string, never>;
-      boost?: components["schemas"]["Boost"];
-    };
-    MatchNoneQuery: {
-      match_none: Record<string, never>;
-      boost?: components["schemas"]["Boost"];
-    };
-    DocIdQuery: {
-      ids: string[];
-      boost?: components["schemas"]["Boost"];
-    };
-    BoolFieldQuery: {
-      bool: boolean;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    IPRangeQuery: {
-      cidr: string;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    GeoBoundingBoxQuery: {
-      /** @description [lon, lat] */
-      top_left: number[];
-      /** @description [lon, lat] */
-      bottom_right: number[];
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    GeoDistanceQuery: {
-      /** @description [lon, lat] */
-      location: number[];
-      /** @example 10km */
-      distance: string;
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    GeoPoint: {
-      /** Format: double */
-      lon?: number;
-      /** Format: double */
-      lat?: number;
-    };
-    GeoBoundingPolygonQuery: {
-      polygon_points: components["schemas"]["GeoPoint"][];
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    /** @description A GeoJSON shape object. This is a simplified representation. */
-    GeoShape: {
-      type: string;
-      coordinates: unknown[];
-    };
-    GeoShapeGeometry: {
-      shape: components["schemas"]["GeoShape"];
-      /** @enum {string} */
-      relation: "intersects" | "contains" | "within";
-    };
-    GeoShapeQuery: {
-      geometry: components["schemas"]["GeoShapeGeometry"];
-      field?: string;
-      boost?: components["schemas"]["Boost"];
-    };
-    /**
-     * @description Merge strategy for combining results from the semantic_search and full_text_search.
-     *     rrf: Reciprocal Rank Fusion - combines scores using reciprocal rank formula
-     *     rsf: Relative Score Fusion - normalizes scores by min/max within a window and combines weighted scores
-     *     failover: Use full_text_search if embedding generation fails
-     * @default rrf
-     * @enum {string}
-     */
-    MergeStrategy: "rrf" | "rsf" | "failover";
-    /**
-     * @description The reranking provider to use.
-     * @enum {string}
-     */
-    RerankerProvider: "ollama" | "termite" | "cohere" | "vertex";
-    /** @description Configuration for the Ollama reranking provider. */
-    OllamaRerankerConfig: {
-      /** @description The name of the Ollama model to use for reranking. */
-      model: string;
-      /**
-       * Format: uri
-       * @description The URL of the Ollama API endpoint.
-       */
-      url?: string;
-    };
-    /** @description Configuration for the Termite reranking provider. */
-    TermiteRerankerConfig: {
-      /** @description The name of the reranking model (e.g., cross-encoder model name). */
-      model: string;
-      /**
-       * Format: uri
-       * @description The URL of the Termite API endpoint.
-       */
-      url?: string;
-    };
-    /**
-     * @description Configuration for the Cohere reranking provider.
-     *
-     *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
-     *
-     *     **Example Models:** rerank-english-v3.0 (default), rerank-multilingual-v3.0
-     *
-     *     **Docs:** https://docs.cohere.com/reference/rerank
-     * @example {
-     *       "provider": "cohere",
-     *       "model": "rerank-english-v3.0"
-     *     }
-     */
-    CohereRerankerConfig: {
-      /**
-       * @description The name of the Cohere reranking model to use.
-       * @default rerank-english-v3.0
-       * @example rerank-english-v3.0
-       */
-      model: string;
-      /** @description The Cohere API key. Can also be set via COHERE_API_KEY environment variable. */
-      api_key?: string;
-      /** @description Number of most relevant documents to return. If not specified, returns all documents with scores. */
-      top_n?: number;
-      /** @description Maximum number of chunks per document for long document handling. */
-      max_chunks_per_doc?: number;
-    };
-    /**
-     * @description Configuration for the Google Vertex AI Ranking API.
-     *
-     *     Uses Application Default Credentials (ADC) or explicit credentials path.
-     *
-     *     **Prerequisites:**
-     *     - Enable Discovery Engine API: `gcloud services enable discoveryengine.googleapis.com`
-     *     - Grant IAM role: `roles/discoveryengine.admin` (includes `discoveryengine.rankingConfigs.rank` permission)
-     *
-     *     **Models:** semantic-ranker-default@latest (default), semantic-ranker-fast-004
-     *
-     *     **Docs:** https://cloud.google.com/generative-ai-app-builder/docs/ranking
-     *
-     *     **IAM:** https://cloud.google.com/generative-ai-app-builder/docs/access-control
-     * @example {
-     *       "provider": "vertex",
-     *       "model": "semantic-ranker-default@latest",
-     *       "project_id": "my-gcp-project"
-     *     }
-     */
-    VertexRerankerConfig: {
-      /**
-       * @description The ranking model to use.
-       * @default semantic-ranker-default@latest
-       * @example semantic-ranker-default@latest
-       */
-      model: string;
-      /** @description Google Cloud project ID. Falls back to GOOGLE_CLOUD_PROJECT environment variable. */
-      project_id?: string;
-      /** @description Path to service account JSON file. Falls back to GOOGLE_APPLICATION_CREDENTIALS environment variable. */
-      credentials_path?: string;
-      /** @description Maximum number of records to return. If not specified, returns all documents with scores. */
-      top_n?: number;
-    };
-    /**
-     * @description A unified configuration for a reranking provider.
-     * @example {
-     *       "provider": "ollama",
-     *       "model": "dengcao/Qwen3-Reranker-0.6B:F16",
-     *       "field": "content"
-     *     }
-     */
-    RerankerConfig: {
-      provider: components["schemas"]["RerankerProvider"];
-      /** @description Field name to extract from documents for reranking. */
-      field?: string;
-      /** @description Handlebars template to render document text for reranking. */
-      template?: string;
-    } & (
-      | components["schemas"]["OllamaRerankerConfig"]
-      | components["schemas"]["TermiteRerankerConfig"]
-      | components["schemas"]["CohereRerankerConfig"]
-      | components["schemas"]["VertexRerankerConfig"]
-    );
-    /**
-     * @description Type of graph query to execute
-     * @enum {string}
-     */
-    GraphQueryType: "traverse" | "neighbors" | "shortest_path" | "k_shortest_paths" | "pattern";
-    /** @description Filter nodes during graph traversal using existing query primitives */
-    NodeFilter: {
-      /** @description Bleve query to filter nodes (same syntax as search filter_query) */
-      filter_query?: {
-        [key: string]: unknown;
-      };
-      /** @description Filter by key prefix */
-      filter_prefix?: string;
-    };
-    /** @description Defines how to select start/target nodes for graph queries */
-    GraphNodeSelector: {
-      /** @description Explicit list of node keys */
-      keys?: string[];
-      /**
-       * @description Reference to search results to use as nodes:
-       *     - "$full_text_results" - use full-text search results
-       *     - "$aknn_results.index_name" - use vector search results from specific index
-       */
-      result_ref?: string;
-      /** @description Maximum number of nodes to select from the referenced results */
-      limit?: number;
-      /** @description Filter which nodes to use as start/target */
-      node_filter?: components["schemas"]["NodeFilter"];
-    };
-    /**
-     * @description Path weighting algorithm for pathfinding:
-     *     - min_hops: Minimize number of edges
-     *     - min_weight: Minimize sum of edge weights
-     *     - max_weight: Maximize product of edge weights
-     * @enum {string}
-     */
-    PathWeightMode: "min_hops" | "min_weight" | "max_weight";
-    /** @description Parameters for graph traversal and pathfinding */
-    GraphQueryParams: {
-      /** @description Filter by edge types */
-      edge_types?: string[];
-      direction?: components["schemas"]["EdgeDirection"];
-      /** @description Maximum traversal depth */
-      max_depth?: number;
-      /**
-       * Format: double
-       * @description Minimum edge weight
-       */
-      min_weight?: number;
-      /**
-       * Format: double
-       * @description Maximum edge weight
-       */
-      max_weight?: number;
-      /** @description Maximum number of results (traversal) */
-      max_results?: number;
-      /** @description Remove duplicate nodes (traversal) */
-      deduplicate_nodes?: boolean;
-      /** @description Include path information (traversal) */
-      include_paths?: boolean;
-      weight_mode?: components["schemas"]["PathWeightMode"];
-      /** @description Number of paths to find (k-shortest-paths) */
-      k?: number;
-      /** @description Filter which nodes to visit during traversal */
-      node_filter?: components["schemas"]["NodeFilter"];
-      /** @description Graph algorithm to run (e.g., 'pagerank', 'betweenness') */
-      algorithm?: string;
-      /** @description Parameters for the graph algorithm */
-      algorithm_params?: {
-        [key: string]: unknown;
-      };
-    };
-    /** @description Edge constraints in a pattern step */
-    PatternEdgeStep: {
-      /** @description Edge types to traverse (empty = any) */
-      types?: string[];
-      direction?: components["schemas"]["EdgeDirection"];
-      /**
-       * @description Minimum number of hops (1 = direct edge)
-       * @default 1
-       */
-      min_hops?: number;
-      /**
-       * @description Maximum number of hops (>1 = variable-length path)
-       * @default 1
-       */
-      max_hops?: number;
-      /**
-       * Format: double
-       * @description Minimum edge weight filter
-       */
-      min_weight?: number;
-      /**
-       * Format: double
-       * @description Maximum edge weight filter
-       */
-      max_weight?: number;
-    };
-    /** @description A step in a graph pattern query */
-    PatternStep: {
-      /** @description Name for this node (reuse alias for cycle detection) */
-      alias?: string;
-      /** @description Filter constraints for nodes at this step */
-      node_filter?: components["schemas"]["NodeFilter"];
-      /** @description Edge to traverse to reach this step (null for first step) */
-      edge?: components["schemas"]["PatternEdgeStep"];
-    };
-    /** @description Declarative graph query to execute after full-text/vector searches */
-    GraphQuery: {
-      type: components["schemas"]["GraphQueryType"];
-      /** @description Graph index name (must be graph_v0 type) */
-      index_name: string;
-      /** @description Starting node(s) for the query */
-      start_nodes?: components["schemas"]["GraphNodeSelector"];
-      /** @description Target nodes (for pathfinding only) */
-      target_nodes?: components["schemas"]["GraphNodeSelector"];
-      /** @description Traversal/pathfinding parameters */
-      params?: components["schemas"]["GraphQueryParams"];
-      /** @description Pattern steps for pattern query type */
-      pattern?: components["schemas"]["PatternStep"][];
-      /** @description Which aliases to return from pattern query (empty = all) */
-      return_aliases?: string[];
-      /** @description Fetch full documents for graph results */
-      include_documents?: boolean;
-      /** @description Include edge details for each node */
-      include_edges?: boolean;
-      /** @description Which fields to return from documents */
-      fields?: string[];
-    };
-    /**
-     * @description Configuration for pruning search results based on score quality.
-     *     Helps filter out low-relevance results in RAG pipelines by detecting
-     *     score gaps or deviations from top results.
-     */
-    Pruner: {
-      /**
-       * Format: double
-       * @description Keep only results with score >= max_score * min_score_ratio.
-       *     For example, 0.5 keeps results scoring at least half of the top result.
-       *     Applied after fusion scoring.
-       * @example 0.5
-       */
-      min_score_ratio?: number;
-      /**
-       * Format: double
-       * @description Stop returning results when score drops more than this percentage
-       *     from the previous result. Detects "elbows" in score distribution.
-       *     For example, 30.0 stops when score drops 30% from previous result.
-       * @example 30
-       */
-      max_score_gap_percent?: number;
-      /**
-       * Format: double
-       * @description Hard minimum score threshold. Results with scores below this value
-       *     are excluded regardless of other pruning settings.
-       * @example 0.01
-       */
-      min_absolute_score?: number;
-      /**
-       * @description Only keep results that appear in multiple indexes (both full-text
-       *     and vector search). Useful for increasing precision by requiring
-       *     agreement between different retrieval methods.
-       * @default false
-       */
-      require_multi_index?: boolean;
-      /**
-       * Format: double
-       * @description Keep results within N standard deviations below the mean score.
-       *     For example, 1.0 keeps results with score >= mean - 1*stddev.
-       *     Useful for statistical outlier detection in result sets.
-       * @example 1.5
-       */
-      std_dev_threshold?: number;
-    };
-    /** @description A node in graph query results */
-    GraphResultNode: {
-      /** @description Document key */
-      key: string;
-      /** @description Distance from start node */
-      depth?: number;
-      /**
-       * Format: double
-       * @description Weighted distance
-       */
-      distance?: number;
-      /** @description Full document (if include_documents=true) */
-      document?: {
-        [key: string]: unknown;
-      };
-      /** @description Keys in path from start to this node */
-      path?: string[];
-      /** @description Edges in path from start to this node */
-      path_edges?: components["schemas"]["PathEdge"][];
-      /** @description Connected edges (when include_edges=true) */
-      edges?: components["schemas"]["Edge"][];
-    };
-    /** @description A single match from a pattern query */
-    PatternMatch: {
-      /** @description Map of alias to matched node */
-      bindings?: {
-        [key: string]: components["schemas"]["GraphResultNode"];
-      };
-      /** @description Edges traversed in this match */
-      path?: components["schemas"]["PathEdge"][];
-    };
-    /** @description Results of a graph query */
-    GraphQueryResult: {
-      type: components["schemas"]["GraphQueryType"];
-      /** @description Result nodes */
-      nodes?: components["schemas"]["GraphResultNode"][];
-      /** @description Result paths (for pathfinding queries) */
-      paths?: components["schemas"]["Path"][];
-      /** @description Pattern matches (for pattern queries) */
-      matches?: components["schemas"]["PatternMatch"][];
-      /** @description Total number of results */
-      total: number;
-      /**
-       * Format: int64
-       * @description Query execution time
-       */
-      took?: number;
-    };
-    /**
-     * @description Configuration for the Google generative AI provider (Gemini).
-     *
-     *     **Example Models:** gemini-2.5-flash (default), gemini-2.5-pro, gemini-3.0-pro
-     *
-     *     **Docs:** https://ai.google.dev/gemini-api/docs/models
-     */
-    GoogleGeneratorConfig: {
-      /** @description The Google Cloud project ID. */
-      project_id?: string;
-      /** @description The Google Cloud location (e.g., 'us-central1'). */
-      location?: string;
-      /**
-       * @description The name of the generative model to use (e.g., 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.0-pro').
-       * @default gemini-2.5-flash
-       * @example gemini-2.5-flash
-       */
-      model: string;
-      /**
-       * Format: float
-       * @description Controls randomness in generation (0.0-2.0).
-       */
-      temperature?: number;
-      /** @description Maximum number of tokens to generate. */
-      max_tokens?: number;
-      /**
-       * Format: float
-       * @description Nucleus sampling parameter.
-       */
-      top_p?: number;
-      /** @description Top-k sampling parameter. */
-      top_k?: number;
-      /** @description The Google API key. */
-      api_key?: string;
-      /**
-       * Format: uri
-       * @description The URL of the Google API endpoint.
-       */
-      url?: string;
-    };
-    /**
-     * @description Configuration for Google Cloud Vertex AI generative models (enterprise-grade).
-     *
-     *     Uses Application Default Credentials (ADC) for authentication. In GCP environments
-     *     (Cloud Run, GKE, Compute Engine) this is automatic. For local dev, run
-     *     `gcloud auth application-default login`. Requires IAM role `roles/aiplatform.user`.
-     *
-     *     **Example Models:** gemini-2.5-flash (default), gemini-2.5-pro, gemini-3.0-pro
-     *
-     *     **Docs:** https://cloud.google.com/vertex-ai/generative-ai/docs/learn/models
-     * @example {
-     *       "provider": "vertex",
-     *       "model": "gemini-2.5-flash",
-     *       "project_id": "my-gcp-project",
-     *       "location": "us-central1",
-     *       "temperature": 0.7,
-     *       "max_tokens": 4096
-     *     }
-     */
-    VertexGeneratorConfig: {
-      /**
-       * @description The name of the Vertex AI model to use.
-       * @default gemini-2.5-flash
-       * @example gemini-2.5-flash
-       */
-      model: string;
-      /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
-      project_id?: string;
-      /**
-       * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
-       * @default us-central1
-       */
-      location?: string;
-      /** @description Path to service account JSON key file. Sets GOOGLE_APPLICATION_CREDENTIALS environment variable. Alternative to ADC for non-GCP environments. */
-      credentials_path?: string;
-      /**
-       * Format: float
-       * @description Controls randomness in generation (0.0-2.0). Higher values make output more random.
-       */
-      temperature?: number;
-      /** @description Maximum number of tokens to generate in the response. */
-      max_tokens?: number;
-      /**
-       * Format: float
-       * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
-       */
-      top_p?: number;
-      /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
-      top_k?: number;
-    };
-    /**
-     * @description Configuration for the Ollama generative AI provider.
-     *
-     *     Ollama provides local LLM inference for privacy and offline use.
-     *
-     *     **Example Models:** llama3.3:70b, qwen2.5:72b, deepseek-r1:70b, mistral:7b, llava:34b
-     *
-     *     **Docs:** https://ollama.com/library
-     */
-    OllamaGeneratorConfig: {
-      /**
-       * @description The name of the Ollama model to use (e.g., 'llama3.3:70b', 'qwen2.5:72b', 'deepseek-coder:33b').
-       * @example llama3.3:70b
-       */
-      model: string;
-      /**
-       * Format: uri
-       * @description The URL of the Ollama API endpoint.
-       */
-      url?: string;
-      /**
-       * Format: float
-       * @description Controls randomness in generation (0.0-2.0).
-       */
-      temperature?: number;
-      /** @description Maximum number of tokens to generate. */
-      max_tokens?: number;
-      /**
-       * Format: float
-       * @description Nucleus sampling parameter.
-       */
-      top_p?: number;
-      /** @description Top-k sampling parameter. */
-      top_k?: number;
-    };
-    /**
-     * @description Configuration for the OpenAI generative AI provider.
-     *
-     *     **Example Models:** gpt-4.1 (default), gpt-4.1-mini, o3, o4-mini
-     *
-     *     **Docs:** https://platform.openai.com/docs/models
-     */
-    OpenAIGeneratorConfig: {
-      /**
-       * @description The name of the OpenAI model to use (e.g., 'gpt-4.1', 'gpt-4.1-mini', 'o4-mini').
-       * @default gpt-4.1
-       * @example gpt-4.1
-       */
-      model: string;
-      /**
-       * Format: uri
-       * @description The URL of the OpenAI API endpoint.
-       */
-      url?: string;
-      /** @description The OpenAI API key. */
-      api_key?: string;
-      /**
-       * Format: float
-       * @description Controls randomness in generation (0.0-2.0).
-       */
-      temperature?: number;
-      /** @description Maximum number of tokens to generate. */
-      max_tokens?: number;
-      /**
-       * Format: float
-       * @description Nucleus sampling parameter.
-       */
-      top_p?: number;
-      /**
-       * Format: float
-       * @description Penalty for token frequency (-2.0 to 2.0).
-       */
-      frequency_penalty?: number;
-      /**
-       * Format: float
-       * @description Penalty for token presence (-2.0 to 2.0).
-       */
-      presence_penalty?: number;
-    };
-    /**
-     * @description Configuration for the AWS Bedrock generative AI provider.
-     *
-     *     Provides access to models from Anthropic, Meta, Amazon, Cohere, Mistral, and others.
-     *
-     *     **Example Models:** anthropic.claude-sonnet-4-5-20250929-v1:0, meta.llama3-3-70b-instruct-v1:0, amazon.nova-pro-v1:0
-     *
-     *     **Docs:** https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
-     */
-    BedrockGeneratorConfig: {
-      /**
-       * @description The Bedrock model ID to use (e.g., 'anthropic.claude-sonnet-4-5-20250929-v1:0').
-       * @example anthropic.claude-sonnet-4-5-20250929-v1:0
-       */
-      model: string;
-      /** @description The AWS region for the Bedrock service. */
-      region?: string;
-      /**
-       * Format: float
-       * @description Controls randomness in generation (0.0-1.0).
-       */
-      temperature?: number;
-      /** @description Maximum number of tokens to generate. */
-      max_tokens?: number;
-      /**
-       * Format: float
-       * @description Nucleus sampling parameter.
-       */
-      top_p?: number;
-      /** @description Top-k sampling parameter. */
-      top_k?: number;
-    };
-    /**
-     * @description Configuration for the Anthropic generative AI provider (Claude models).
-     *
-     *     API key via `api_key` field or `ANTHROPIC_API_KEY` environment variable.
-     *
-     *     **Example Models:** claude-sonnet-4-5-20250929 (default), claude-opus-4-5-20251101, claude-3-5-haiku-20241022
-     *
-     *     **Docs:** https://docs.anthropic.com/en/docs/about-claude/models/overview
-     * @example {
-     *       "provider": "anthropic",
-     *       "model": "claude-sonnet-4-5-20250929",
-     *       "temperature": 0.7,
-     *       "max_tokens": 4096
-     *     }
-     */
-    AnthropicGeneratorConfig: {
-      /**
-       * @description The full model ID of the Anthropic model to use (e.g., 'claude-sonnet-4-5-20250929', 'claude-opus-4-5-20251101').
-       * @default claude-sonnet-4-5-20250929
-       * @example claude-sonnet-4-5-20250929
-       */
-      model: string;
-      /** @description The Anthropic API key. If not provided, falls back to ANTHROPIC_API_KEY environment variable. */
-      api_key?: string;
-      /**
-       * Format: uri
-       * @description The URL of the Anthropic API endpoint (optional, uses default if not specified).
-       */
-      url?: string;
-      /**
-       * Format: float
-       * @description Controls randomness in generation (0.0-1.0). Higher values make output more random.
-       */
-      temperature?: number;
-      /** @description Maximum number of tokens to generate in the response. */
-      max_tokens?: number;
-      /**
-       * Format: float
-       * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
-       */
-      top_p?: number;
-      /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
-      top_k?: number;
-    };
-    /**
-     * @description Configuration for the Cohere generative AI provider (Command models).
-     *
-     *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
-     *
-     *     **Example Models:** command-r-plus (default), command-r, command-a-03-2025
-     *
-     *     **Docs:** https://docs.cohere.com/reference/chat
-     * @example {
-     *       "provider": "cohere",
-     *       "model": "command-r-plus",
-     *       "temperature": 0.7,
-     *       "max_tokens": 4096
-     *     }
-     */
-    CohereGeneratorConfig: {
-      /**
-       * @description The name of the Cohere model to use.
-       * @default command-r-plus
-       * @example command-r-plus
-       */
-      model: string;
-      /** @description The Cohere API key. If not provided, falls back to COHERE_API_KEY environment variable. */
-      api_key?: string;
-      /**
-       * Format: float
-       * @description Controls randomness in generation (0.0-1.0). Higher values make output more random.
-       */
-      temperature?: number;
-      /** @description Maximum number of tokens to generate in the response. */
-      max_tokens?: number;
-      /**
-       * Format: float
-       * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
-       */
-      top_p?: number;
-      /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
-      top_k?: number;
-      /**
-       * Format: float
-       * @description Penalty for token frequency (0.0-1.0).
-       */
-      frequency_penalty?: number;
-      /**
-       * Format: float
-       * @description Penalty for token presence (0.0-1.0).
-       */
-      presence_penalty?: number;
-    };
-    /**
-     * @description The generative AI provider to use.
-     * @enum {string}
-     */
-    GeneratorProvider:
-      | "gemini"
-      | "vertex"
-      | "ollama"
-      | "openai"
-      | "bedrock"
-      | "anthropic"
-      | "cohere"
-      | "mock";
-    /**
-     * @description A unified configuration for a generative AI provider.
-     *
-     *     Generators can be configured with custom prompts using templates. Templates use
-     *     Handlebars syntax and support various built-in helpers for formatting and data manipulation.
-     *
-     *     **Template System:**
-     *     - **Syntax**: Handlebars templating (https://handlebarsjs.com/guide/)
-     *     - **Caching**: Templates are automatically cached with configurable TTL (default: 5 minutes)
-     *     - **Context**: Templates receive the full context data passed to the generator
-     *
-     *     **Built-in Helpers:**
-     *
-     *     1. **scrubHtml** - Remove script/style tags and extract clean text from HTML
-     *        ```handlebars
-     *        {{scrubHtml html_content}}
-     *        ```
-     *        - Removes `<script>` and `<style>` tags
-     *        - Adds newlines after block elements (p, div, h1-h6, li, etc.)
-     *        - Returns plain text with preserved readability
-     *        - Useful for cleaning web content before summarization
-     *
-     *     2. **eq** - Equality comparison for conditionals
-     *        ```handlebars
-     *        {{#if (eq status "active")}}Active{{/if}}
-     *        {{#if (eq @key "special")}}Special field{{/if}}
-     *        ```
-     *        - Use in `{{#if}}` blocks for conditional logic
-     *        - Compares any two values for equality
-     *
-     *     3. **media** - GenKit dotprompt media directive for multimodal content
-     *        ```handlebars
-     *        {{media url=imageDataURI}}
-     *        {{media url=this.image_url}}
-     *        {{media url="https://example.com/image.jpg"}}
-     *        {{media url="s3://endpoint/bucket/image.png"}}
-     *        {{media url="file:///path/to/image.jpg"}}
-     *        ```
-     *
-     *        **Supported URL Schemes:**
-     *        - `data:` - Base64 encoded data URIs (e.g., `data:image/jpeg;base64,...`)
-     *        - `http://` / `https://` - Web URLs with automatic content type detection
-     *        - `file://` - Local filesystem paths
-     *        - `s3://` - S3-compatible storage (format: `s3://endpoint/bucket/key`)
-     *
-     *        **Automatic Content Processing:**
-     *        - **Images**: Downloaded, resized (if needed), converted to data URIs
-     *        - **PDFs**: Text extracted or first page rendered as image
-     *        - **HTML**: Readable text extracted using Mozilla Readability
-     *
-     *        **Security Controls:**
-     *        Downloads are protected by content security settings (see Configuration Reference):
-     *        - Allowed host whitelist
-     *        - Private IP blocking (prevents SSRF attacks)
-     *        - Download size limits (default: 100MB)
-     *        - Download timeouts (default: 30s)
-     *        - Image dimension limits (default: 2048px, auto-resized)
-     *
-     *        See: https://antfly.io/docs/configuration#security--cors
-     *
-     *     4. **encodeToon** - Encode data in TOON format (Token-Oriented Object Notation)
-     *        ```handlebars
-     *        {{encodeToon this.fields}}
-     *        {{encodeToon this.fields lengthMarker=false indent=4}}
-     *        {{encodeToon this.fields delimiter="\t"}}
-     *        ```
-     *
-     *        **What is TOON?**
-     *        TOON is a compact, human-readable format designed for passing structured data to LLMs.
-     *        It provides **30-60% token reduction** compared to JSON while maintaining high LLM
-     *        comprehension accuracy.
-     *
-     *        **Key Features:**
-     *        - Compact syntax using `:` for key-value pairs
-     *        - Array length markers: `tags[#3]: ai,search,ml`
-     *        - Tabular format for uniform data structures
-     *        - Optimized for LLM parsing and understanding
-     *        - Maintains human readability
-     *
-     *        **Benefits:**
-     *        - **Lower API costs** - Reduced token usage means lower LLM API costs
-     *        - **Faster responses** - Less tokens to process
-     *        - **More context** - Fit more documents within token limits
-     *
-     *        **Options:**
-     *        - `lengthMarker` (bool): Add # prefix to array counts like `[#3]` (default: true)
-     *        - `indent` (int): Indentation spacing for nested objects (default: 2)
-     *        - `delimiter` (string): Field separator for tabular arrays (default: none, use `"\t"` for tabs)
-     *
-     *        **Example output:**
-     *        ```
-     *        title: Introduction to Vector Search
-     *        author: Jane Doe
-     *        tags[#3]: ai,search,ml
-     *        metadata:
-     *          edition: 2
-     *          pages: 450
-     *        ```
-     *
-     *        **Default in RAG:** TOON is the default format for document rendering in RAG queries.
-     *
-     *        **References:**
-     *        - TOON Specification: https://github.com/toon-format/toon
-     *        - Go Implementation: https://github.com/alpkeskin/gotoon
-     *
-     *     **Template Examples:**
-     *
-     *     RAG summarization with document references:
-     *     ```handlebars
-     *     Based on these documents, provide a comprehensive summary:
-     *
-     *     {{#each documents}}
-     *     Document {{this.id}}:
-     *     {{scrubHtml this.content}}
-     *
-     *     {{/each}}
-     *
-     *     Valid document IDs: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
-     *     ```
-     *
-     *     Conditional formatting:
-     *     ```handlebars
-     *     {{#if system_prompt}}System: {{system_prompt}}{{/if}}
-     *
-     *     User Query: {{query}}
-     *
-     *     {{#if context}}
-     *     Context:
-     *     {{#each context}}
-     *     - {{this}}
-     *     {{/each}}
-     *     {{/if}}
-     *     ```
-     *
-     *     Multimodal prompt with images:
-     *     ```handlebars
-     *     Analyze this image:
-     *     {{media url=image_url}}
-     *
-     *     Focus on: {{focus_area}}
-     *     ```
-     *
-     *     Structured data encoding:
-     *     ```handlebars
-     *     User Profile:
-     *     {{encodeToon user_data indent=2 lengthMarker=true}}
-     *
-     *     Please analyze this profile.
-     *     ```
-     *
-     *     **Common Use Cases:**
-     *     - **RAG (Retrieval-Augmented Generation)**: Format retrieved documents with citations
-     *     - **Summarization**: Clean HTML content and structure summaries
-     *     - **Query Classification**: Format queries with metadata for better classification
-     *     - **Multimodal**: Include images/audio/video in prompts
-     *     - **Data Formatting**: Convert structured data to readable text
-     *
-     *     **Best Practices:**
-     *     - Keep templates simple - complex logic belongs in application code
-     *     - Use clear, descriptive field names in context
-     *     - Handle missing fields gracefully (templates use "missingkey=zero" by default)
-     *     - Test templates with representative data before production use
-     * @example {
-     *       "provider": "openai",
-     *       "model": "gpt-4.1",
-     *       "temperature": 0.7,
-     *       "max_tokens": 2048
-     *     }
-     */
-    GeneratorConfig: (
-      | components["schemas"]["GoogleGeneratorConfig"]
-      | components["schemas"]["VertexGeneratorConfig"]
-      | components["schemas"]["OllamaGeneratorConfig"]
-      | components["schemas"]["OpenAIGeneratorConfig"]
-      | components["schemas"]["BedrockGeneratorConfig"]
-      | components["schemas"]["AnthropicGeneratorConfig"]
-      | components["schemas"]["CohereGeneratorConfig"]
-    ) & {
-      provider: components["schemas"]["GeneratorProvider"];
-    };
-    /** @description Retry configuration for generator calls */
-    RetryConfig: {
-      /**
-       * @description Maximum number of retry attempts
-       * @default 3
-       */
-      max_attempts?: number;
-      /**
-       * @description Initial backoff delay in milliseconds
-       * @default 1000
-       */
-      initial_backoff_ms?: number;
-      /**
-       * Format: float
-       * @description Multiplier for exponential backoff
-       * @default 2
-       */
-      backoff_multiplier?: number;
-      /**
-       * @description Maximum backoff delay in milliseconds
-       * @default 30000
-       */
-      max_backoff_ms?: number;
-    };
-    /**
-     * @description Condition for trying the next generator in chain:
-     *     - always: Always try next regardless of outcome
-     *     - on_error: Try next on any error (default)
-     *     - on_timeout: Try next only on timeout errors
-     *     - on_rate_limit: Try next only on rate limit errors
-     * @default on_error
-     * @enum {string}
-     */
-    ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
-    /** @description A single link in a generator chain with optional retry and condition */
-    ChainLink: {
-      generator: components["schemas"]["GeneratorConfig"];
-      /** @description Retry configuration for this generator */
-      retry?: components["schemas"]["RetryConfig"];
-      /** @description When to try the next generator in chain */
-      condition?: components["schemas"]["ChainCondition"];
-    };
-    /**
-     * @description Available evaluator types:
-     *
-     *     **Retrieval metrics** (require ground_truth.relevant_ids):
-     *     - recall: Recall@k - fraction of relevant docs retrieved
-     *     - precision: Precision@k - fraction of retrieved docs that are relevant
-     *     - ndcg: Normalized Discounted Cumulative Gain
-     *     - mrr: Mean Reciprocal Rank
-     *     - map: Mean Average Precision
-     *
-     *     **LLM-as-judge metrics** (require judge config):
-     *     - relevance: Is output relevant to query? (works on retrieval-only too)
-     *     - faithfulness: Is output grounded in context?
-     *     - completeness: Does output fully address query?
-     *     - coherence: Is output well-structured?
-     *     - safety: Is output safe/appropriate?
-     *     - helpfulness: Is output useful?
-     *     - correctness: Is output factually correct? (uses expectations)
-     *     - citation_quality: Are citations accurate?
-     * @enum {string}
-     */
-    EvaluatorName:
-      | "recall"
-      | "precision"
-      | "ndcg"
-      | "mrr"
-      | "map"
-      | "relevance"
-      | "faithfulness"
-      | "completeness"
-      | "coherence"
-      | "safety"
-      | "helpfulness"
-      | "correctness"
-      | "citation_quality";
-    /** @description Ground truth data for evaluation */
-    GroundTruth: {
-      /** @description Document IDs known to be relevant (for retrieval metrics) */
-      relevant_ids?: string[];
-      /**
-       * @description Context for evaluators about what to expect in the response.
-       *     Provides guidance for LLM judges (e.g., "Should mention pricing tiers").
-       */
-      expectations?: string;
-    };
-    /** @description Options for evaluation behavior */
-    EvalOptions: {
-      /**
-       * @description K value for @K metrics (precision@k, recall@k, ndcg@k)
-       * @default 10
-       */
-      k?: number;
-      /**
-       * Format: float
-       * @description Score threshold for pass/fail determination
-       * @default 0.5
-       */
-      pass_threshold?: number;
-      /**
-       * @description Timeout for evaluation in seconds
-       * @default 30
-       */
-      timeout_seconds?: number;
-    };
-    /**
-     * @description Configuration for inline evaluation of query results.
-     *     Add to RAGRequest, QueryRequest, or AnswerAgentRequest.
-     */
-    EvalConfig: {
-      /** @description List of evaluators to run */
-      evaluators?: components["schemas"]["EvaluatorName"][];
-      /**
-       * @description LLM configuration for judge-based evaluators.
-       *     Falls back to default if not specified.
-       */
-      judge?: components["schemas"]["GeneratorConfig"];
-      /** @description Ground truth data for retrieval metrics */
-      ground_truth?: components["schemas"]["GroundTruth"];
-      /** @description Evaluation options (k, thresholds, etc.) */
-      options?: components["schemas"]["EvalOptions"];
-    };
-    /** @description Result of a summarization operation. The summary is formatted as markdown with inline resource references using [resource_id <id>] or [resource_id <id1>, <id2>] format. */
-    SummarizeResult: {
-      /** @description The generated summary text in markdown format with inline resource references like [resource_id res1] or [resource_id res1, res2] */
-      summary: string;
-    };
-    /** @description Result from a single evaluator */
-    EvaluatorScore: {
-      /**
-       * Format: float
-       * @description Numeric score (0-1)
-       */
-      score?: number;
-      /** @description Whether the evaluation passed the threshold */
-      pass?: boolean;
-      /** @description Human-readable explanation of the result */
-      reason?: string;
-      /** @description Additional evaluator-specific data */
-      metadata?: {
-        [key: string]: unknown;
-      };
-    };
-    /** @description Scores organized by category */
-    EvalScores: {
-      /** @description Retrieval metric scores (recall, precision, ndcg, etc.) */
-      retrieval?: {
-        [key: string]: components["schemas"]["EvaluatorScore"];
-      };
-      /** @description Generation quality scores (faithfulness, relevance, etc.) */
-      generation?: {
-        [key: string]: components["schemas"]["EvaluatorScore"];
-      };
-    };
-    /** @description Aggregate statistics across all evaluators */
-    EvalSummary: {
-      /**
-       * Format: float
-       * @description Average score across all evaluators
-       */
-      average_score?: number;
-      /** @description Number of evaluators that passed */
-      passed?: number;
-      /** @description Number of evaluators that failed */
-      failed?: number;
-      /** @description Total number of evaluators run */
-      total?: number;
-    };
-    /** @description Complete evaluation result */
-    EvalResult: {
-      /** @description Scores organized by category */
-      scores?: components["schemas"]["EvalScores"];
-      /** @description Aggregate statistics */
-      summary?: components["schemas"]["EvalSummary"];
-      /** @description Total evaluation duration in milliseconds */
-      duration_ms?: number;
-    };
-    /**
-     * @description Strategy for query transformation and retrieval:
-     *     - simple: Direct query with multi-phrase expansion. Best for straightforward factual queries.
-     *     - decompose: Break complex queries into sub-questions, retrieve for each. Best for multi-part questions.
-     *     - step_back: Generate broader background query first, then specific query. Best for questions needing context.
-     *     - hyde: Generate hypothetical answer document, embed that for retrieval. Best for abstract/conceptual questions.
-     * @enum {string}
-     */
-    QueryStrategy: "simple" | "decompose" | "step_back" | "hyde";
-    /**
-     * @description Mode for semantic query generation:
-     *     - rewrite: Transform query into expanded keywords/concepts optimized for vector search (Level 2 optimization)
-     *     - hypothetical: Generate a hypothetical answer that would appear in relevant documents (HyDE - Level 3 optimization)
-     * @enum {string}
-     */
-    SemanticQueryMode: "rewrite" | "hypothetical";
-    /**
-     * @description Configuration for the classification step. This step analyzes the query,
-     *     selects the optimal retrieval strategy, and generates semantic transformations.
-     */
-    ClassificationStepConfig: {
-      /** @description Generator to use for classification. If not specified, uses the default summarizer. */
-      generator?: components["schemas"]["GeneratorConfig"];
-      /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-      chain?: components["schemas"]["ChainLink"][];
-      /**
-       * @description Include pre-retrieval reasoning explaining query analysis and strategy selection
-       * @default false
-       */
-      with_reasoning?: boolean;
-      /** @description Override LLM strategy selection. If not set, the LLM chooses optimal strategy. */
-      force_strategy?: components["schemas"]["QueryStrategy"];
-      /** @description Override semantic query mode selection. */
-      force_semantic_mode?: components["schemas"]["SemanticQueryMode"];
-      /**
-       * @description Number of alternative query phrasings to generate
-       * @default 3
-       */
-      multi_phrase_count?: number;
-    };
-    /**
-     * @description Configuration for the answer generation step. This step generates the final
-     *     answer from retrieved documents using the reasoning as context.
-     */
-    AnswerStepConfig: {
-      /** @description Generator to use for answer generation. If not specified, uses the default summarizer. */
-      generator?: components["schemas"]["GeneratorConfig"];
-      /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-      chain?: components["schemas"]["ChainLink"][];
-      /** @description Custom system prompt for answer generation */
-      system_prompt?: string;
-      /**
-       * @description Custom guidance for answer tone, detail level, and style
-       * @example Be concise and technical. Include code examples where relevant.
-       */
-      answer_context?: string;
-    };
-    /**
-     * @description Configuration for generating follow-up questions. Uses a separate generator
-     *     call which can use a cheaper/faster model.
-     */
-    FollowupStepConfig: {
-      /**
-       * @description Enable follow-up question generation
-       * @default false
-       */
-      enabled?: boolean;
-      /** @description Generator for follow-up questions. If not specified, uses the answer step's generator. */
-      generator?: components["schemas"]["GeneratorConfig"];
-      /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-      chain?: components["schemas"]["ChainLink"][];
-      /**
-       * @description Number of follow-up questions to generate
-       * @default 3
-       */
-      count?: number;
-      /**
-       * @description Custom guidance for follow-up question focus and style
-       * @example Focus on implementation details and edge cases
-       */
-      context?: string;
-    };
-    /**
-     * @description Configuration for confidence assessment. Evaluates answer quality and
-     *     resource relevance. Can use a model calibrated for scoring tasks.
-     */
-    ConfidenceStepConfig: {
-      /**
-       * @description Enable confidence scoring
-       * @default false
-       */
-      enabled?: boolean;
-      /** @description Generator for confidence assessment. If not specified, uses the answer step's generator. */
-      generator?: components["schemas"]["GeneratorConfig"];
-      /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-      chain?: components["schemas"]["ChainLink"][];
-      /**
-       * @description Custom guidance for confidence assessment approach
-       * @example Be conservative - only give high confidence if resources directly address the question
-       */
-      context?: string;
-    };
-    /**
-     * @description Per-step configuration for the answer agent pipeline. Each step can have
-     *     its own generator (or chain of generators) and step-specific options.
-     *     If a step is not configured, it uses the top-level generator as default.
-     */
-    AnswerAgentSteps: {
-      /** @description Configuration for query classification and transformation */
-      classification?: components["schemas"]["ClassificationStepConfig"];
-      /** @description Configuration for answer generation */
-      answer?: components["schemas"]["AnswerStepConfig"];
-      /** @description Configuration for follow-up question generation */
-      followup?: components["schemas"]["FollowupStepConfig"];
-      /** @description Configuration for confidence assessment */
-      confidence?: components["schemas"]["ConfidenceStepConfig"];
-    };
-    /**
-     * @description Classification of query type: question (specific factual query) or search (exploratory query)
-     * @enum {string}
-     */
-    RouteType: "question" | "search";
-    /** @description Query classification and transformation result combining all query enhancements including strategy selection and semantic optimization */
-    ClassificationTransformationResult: {
-      route_type: components["schemas"]["RouteType"];
-      strategy: components["schemas"]["QueryStrategy"];
-      semantic_mode: components["schemas"]["SemanticQueryMode"];
-      /** @description Clarified query with added context for answer generation (human-readable) */
-      improved_query: string;
-      /** @description Optimized query for vector/semantic search. Content style depends on semantic_mode: keywords for 'rewrite', hypothetical answer for 'hypothetical' */
-      semantic_query: string;
-      /** @description Broader background query for context (only present when strategy is 'step_back') */
-      step_back_query?: string;
-      /** @description Decomposed sub-questions (only present when strategy is 'decompose') */
-      sub_questions?: string[];
-      /** @description Alternative phrasings of the query for expanded retrieval coverage */
-      multi_phrases?: string[];
-      /** @description Pre-retrieval reasoning explaining query analysis and strategy selection (only present when with_classification_reasoning is enabled) */
-      reasoning?: string;
-      /**
-       * Format: float
-       * @description Classification confidence (0.0 to 1.0)
-       */
-      confidence: number;
-    };
-    /**
-     * @description Standalone evaluation request for POST /eval endpoint.
-     *     Useful for testing evaluators without running a query.
-     */
-    EvalRequest: {
-      /** @description List of evaluators to run */
-      evaluators: components["schemas"]["EvaluatorName"][];
-      /** @description LLM configuration for judge-based evaluators */
-      judge?: components["schemas"]["GeneratorConfig"];
-      /** @description Ground truth data */
-      ground_truth?: components["schemas"]["GroundTruth"];
-      /** @description Evaluation options */
-      options?: components["schemas"]["EvalOptions"];
-      /** @description Original query/input to evaluate */
-      query?: string;
-      /** @description Generated output to evaluate (optional for retrieval-only) */
-      output?: string;
-      /** @description Retrieved documents/context */
-      context?: Record<string, never>[];
-      /** @description IDs of retrieved documents (for retrieval metrics) */
-      retrieved_ids?: string[];
-    };
-    BleveIndexV2Config: {
-      /** @description Whether to use memory-only storage */
-      mem_only?: boolean;
-    };
-    /**
-     * @description Configuration for the Google AI (Gemini) embedding provider.
-     *
-     *     API key via `api_key` field or `GEMINI_API_KEY` environment variable.
-     *
-     *     **Example Models:** gemini-embedding-001 (default, 3072 dims)
-     *
-     *     **Docs:** https://ai.google.dev/gemini-api/docs/embeddings
-     * @example {
-     *       "provider": "gemini",
-     *       "model": "gemini-embedding-001",
-     *       "dimension": 3072,
-     *       "api_key": "your-api-key"
-     *     }
-     */
-    GoogleEmbedderConfig: {
-      /** @description The Google Cloud project ID (optional for Gemini API, required for Vertex AI). */
-      project_id?: string;
-      /** @description The Google Cloud location (e.g., 'us-central1'). Required for Vertex AI, optional for Gemini API. */
-      location?: string;
-      /**
-       * @description The name of the embedding model to use.
-       * @default gemini-embedding-001
-       * @example gemini-embedding-001
-       */
-      model: string;
-      /**
-       * @description The dimension of the embedding vector (768, 1536, or 3072 recommended).
-       * @default 3072
-       */
-      dimension?: number;
-      /** @description The Google API key. Can also be set via GEMINI_API_KEY environment variable. */
-      api_key?: string;
-      /**
-       * Format: uri
-       * @description The URL of the Google API endpoint (optional, uses default if not specified).
-       */
-      url?: string;
-    };
-    /**
-     * @description Configuration for Google Cloud Vertex AI embedding models (enterprise-grade).
-     *
-     *     Uses Application Default Credentials (ADC) for authentication. Requires IAM role `roles/aiplatform.user`.
-     *
-     *     **Example Models:** gemini-embedding-001 (default, 3072 dims), multimodalembedding (images/audio/video)
-     *
-     *     **Docs:** https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings
-     * @example {
-     *       "provider": "vertex",
-     *       "model": "gemini-embedding-001",
-     *       "project_id": "my-gcp-project",
-     *       "location": "us-central1",
-     *       "dimension": 3072
-     *     }
-     */
-    VertexEmbedderConfig: {
-      /**
-       * @description The name of the Vertex AI embedding model to use.
-       * @default gemini-embedding-001
-       * @example gemini-embedding-001
-       */
-      model: string;
-      /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
-      project_id?: string;
-      /**
-       * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
-       * @default us-central1
-       */
-      location?: string;
-      /** @description Path to service account JSON key file. Alternative to ADC for non-GCP environments. */
-      credentials_path?: string;
-      /**
-       * @description The dimension of the embedding vector (768, 1536, or 3072 for gemini-embedding-001; 128-1408 for multimodalembedding).
-       * @default 3072
-       */
-      dimension?: number;
-    };
-    /**
-     * @description Configuration for the Ollama embedding provider.
-     *
-     *     Local embeddings for privacy and offline use. URL via `url` field or `OLLAMA_HOST` env var.
-     *
-     *     **Example Models:** nomic-embed-text (768 dims), mxbai-embed-large (1024 dims), all-minilm (384 dims)
-     *
-     *     **Docs:** https://ollama.com/search?c=embedding
-     * @example {
-     *       "provider": "ollama",
-     *       "model": "nomic-embed-text",
-     *       "url": "http://localhost:11434"
-     *     }
-     */
-    OllamaEmbedderConfig: {
-      /**
-       * @description The name of the Ollama model to use (e.g., 'nomic-embed-text', 'mxbai-embed-large').
-       * @example nomic-embed-text
-       */
-      model: string;
-      /**
-       * Format: uri
-       * @description The URL of the Ollama API endpoint. Can also be set via OLLAMA_HOST environment variable.
-       * @default http://localhost:11434
-       * @example http://localhost:11434
-       */
-      url?: string;
-    };
-    /**
-     * @description Configuration for the OpenAI embedding provider.
-     *
-     *     API key via `api_key` field or `OPENAI_API_KEY` environment variable.
-     *     Supports OpenAI-compatible APIs via `url` field.
-     *
-     *     **Example Models:** text-embedding-3-small (default, 1536 dims), text-embedding-3-large (3072 dims)
-     *
-     *     **Docs:** https://platform.openai.com/docs/guides/embeddings
-     * @example {
-     *       "provider": "openai",
-     *       "model": "text-embedding-3-small",
-     *       "api_key": "sk-..."
-     *     }
-     */
-    OpenAIEmbedderConfig: {
-      /**
-       * @description The name of the OpenAI model to use.
-       * @default text-embedding-3-small
-       * @example text-embedding-3-small
-       */
-      model: string;
-      /**
-       * Format: uri
-       * @description The URL of the OpenAI API endpoint. Defaults to OpenAI's API. Can be set via OPENAI_BASE_URL environment variable.
-       * @default https://api.openai.com
-       * @example https://api.openai.com
-       */
-      url?: string;
-      /** @description The OpenAI API key. Can also be set via OPENAI_API_KEY environment variable. */
-      api_key?: string;
-      /** @description Output dimension for the embedding (uses MRL for dimension reduction). Recommended: 256, 512, 1024, 1536, or 3072. */
-      dimensions?: number;
-    };
-    /**
-     * @description Configuration for the AWS Bedrock embedding provider.
-     *
-     *     Uses AWS credentials from environment or IAM roles.
-     *
-     *     **Example Models:** cohere.embed-english-v4, amazon.titan-embed-text-v2:0
-     *
-     *     **Docs:** https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
-     * @example {
-     *       "provider": "bedrock",
-     *       "model": "cohere.embed-english-v4",
-     *       "region": "us-east-1"
-     *     }
-     */
-    BedrockEmbedderConfig: {
-      /**
-       * @description The Bedrock model ID to use (e.g., 'cohere.embed-english-v4', 'amazon.titan-embed-text-v2:0').
-       * @example cohere.embed-english-v4
-       */
-      model: string;
-      /**
-       * @description The AWS region for the Bedrock service (e.g., 'us-east-1').
-       * @example us-east-1
-       */
-      region?: string;
-      /**
-       * @description Whether to strip new lines from the input text before embedding.
-       * @default false
-       */
-      strip_new_lines?: boolean;
-      /**
-       * @description The batch size for embedding requests to optimize throughput.
-       * @default 1
-       */
-      batch_size?: number;
-    };
-    /**
-     * @description Configuration for the Cohere embedding provider.
-     *
-     *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
-     *
-     *     **Example Models:** embed-english-v3.0 (default, 1024 dims), embed-multilingual-v3.0
-     *
-     *     **Docs:** https://docs.cohere.com/reference/embed
-     * @example {
-     *       "provider": "cohere",
-     *       "model": "embed-english-v3.0",
-     *       "input_type": "search_document"
-     *     }
-     */
-    CohereEmbedderConfig: {
-      /**
-       * @description The name of the Cohere embedding model to use.
-       * @default embed-english-v3.0
-       * @example embed-english-v3.0
-       */
-      model: string;
-      /** @description The Cohere API key. Can also be set via COHERE_API_KEY environment variable. */
-      api_key?: string;
-      /**
-       * @description Specifies the type of input for optimized embeddings.
-       * @default search_document
-       * @enum {string}
-       */
-      input_type?: "search_document" | "search_query" | "classification" | "clustering";
-      /**
-       * @description How to handle inputs longer than the max token length.
-       * @default END
-       * @enum {string}
-       */
-      truncate?: "NONE" | "START" | "END";
-    };
-    /**
-     * @description The embedding provider to use.
-     * @enum {string}
-     */
-    EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "cohere" | "mock";
-    /**
-     * @description A unified configuration for an embedding provider.
-     *
-     *     Embedders can be configured with templates to customize how documents are
-     *     converted to text before embedding. Templates use Handlebars syntax and
-     *     support various built-in helpers.
-     *
-     *     **Template System:**
-     *     - **Syntax**: Handlebars templating (https://handlebarsjs.com/guide/)
-     *     - **Caching**: Templates are automatically cached with configurable TTL (default: 5 minutes)
-     *     - **Context**: Templates receive the full document as context
-     *
-     *     **Built-in Helpers:**
-     *
-     *     1. **scrubHtml** - Remove script/style tags and extract clean text from HTML
-     *        ```handlebars
-     *        {{scrubHtml html_content}}
-     *        ```
-     *        - Removes `<script>` and `<style>` tags
-     *        - Adds newlines after block elements (p, div, h1-h6, li, etc.)
-     *        - Returns plain text with preserved readability
-     *
-     *     2. **eq** - Equality comparison for conditionals
-     *        ```handlebars
-     *        {{#if (eq status "active")}}Active user{{/if}}
-     *        {{#if (eq @key "special")}}Special field{{/if}}
-     *        ```
-     *
-     *     3. **media** - GenKit dotprompt media directive for multimodal content
-     *        ```handlebars
-     *        {{media url=imageDataURI}}
-     *        {{media url=this.image_url}}
-     *        {{media url="https://example.com/image.jpg"}}
-     *        {{media url="s3://endpoint/bucket/image.png"}}
-     *        {{media url="file:///path/to/image.jpg"}}
-     *        ```
-     *
-     *        **Supported URL Schemes:**
-     *        - `data:` - Base64 encoded data URIs (e.g., `data:image/jpeg;base64,...`)
-     *        - `http://` / `https://` - Web URLs with automatic content type detection
-     *        - `file://` - Local filesystem paths
-     *        - `s3://` - S3-compatible storage (format: `s3://endpoint/bucket/key`)
-     *
-     *        **Automatic Content Processing:**
-     *        - **Images**: Downloaded, resized (if needed), converted to data URIs
-     *        - **PDFs**: Text extracted or first page rendered as image
-     *        - **HTML**: Readable text extracted using Mozilla Readability
-     *
-     *        **Security Controls:**
-     *        Downloads are protected by content security settings (see Configuration Reference):
-     *        - Allowed host whitelist
-     *        - Private IP blocking (prevents SSRF attacks)
-     *        - Download size limits (default: 100MB)
-     *        - Download timeouts (default: 30s)
-     *        - Image dimension limits (default: 2048px, auto-resized)
-     *
-     *        See: https://antfly.io/docs/configuration#security--cors
-     *
-     *     4. **encodeToon** - Encode data in TOON format (Token-Oriented Object Notation)
-     *        ```handlebars
-     *        {{encodeToon this.fields}}
-     *        {{encodeToon this.fields lengthMarker=false indent=4}}
-     *        {{encodeToon this.fields delimiter="\t"}}
-     *        ```
-     *
-     *        **What is TOON?**
-     *        TOON is a compact, human-readable format designed for passing structured data to LLMs.
-     *        It provides **30-60% token reduction** compared to JSON while maintaining high LLM
-     *        comprehension accuracy.
-     *
-     *        **Key Features:**
-     *        - Compact syntax using `:` for key-value pairs
-     *        - Array length markers: `tags[#3]: ai,search,ml`
-     *        - Tabular format for uniform data structures
-     *        - Optimized for LLM parsing and understanding
-     *        - Maintains human readability
-     *
-     *        **Benefits:**
-     *        - **Lower API costs** - Reduced token usage means lower LLM API costs
-     *        - **Faster responses** - Less tokens to process
-     *        - **More context** - Fit more documents within token limits
-     *
-     *        **Options:**
-     *        - `lengthMarker` (bool): Add # prefix to array counts like `[#3]` (default: true)
-     *        - `indent` (int): Indentation spacing for nested objects (default: 2)
-     *        - `delimiter` (string): Field separator for tabular arrays (default: none, use `"\t"` for tabs)
-     *
-     *        **Example output:**
-     *        ```
-     *        title: Introduction to Vector Search
-     *        author: Jane Doe
-     *        tags[#3]: ai,search,ml
-     *        metadata:
-     *          edition: 2
-     *          pages: 450
-     *        ```
-     *
-     *        **Default in RAG:** TOON is the default format for document rendering in RAG queries.
-     *
-     *        **References:**
-     *        - TOON Specification: https://github.com/toon-format/toon
-     *        - Go Implementation: https://github.com/alpkeskin/gotoon
-     *
-     *     **Template Examples:**
-     *
-     *     Document with metadata:
-     *     ```handlebars
-     *     Title: {{metadata.title}}
-     *     Date: {{metadata.date}}
-     *     Tags: {{#each metadata.tags}}{{this}}, {{/each}}
-     *
-     *     {{content}}
-     *     ```
-     *
-     *     HTML content extraction:
-     *     ```handlebars
-     *     Product: {{name}}
-     *     Description: {{scrubHtml description_html}}
-     *     Price: ${{price}}
-     *     ```
-     *
-     *     Multimodal with image:
-     *     ```handlebars
-     *     Product: {{title}}
-     *     {{media url=image}}
-     *     Description: {{description}}
-     *     ```
-     *
-     *     Conditional formatting:
-     *     ```handlebars
-     *     {{title}}
-     *     {{#if author}}By: {{author}}{{/if}}
-     *     {{#if (eq category "premium")}}⭐ Premium Content{{/if}}
-     *     {{body}}
-     *     ```
-     *
-     *     **Environment Variables:**
-     *     - `GEMINI_API_KEY` - API key for Google AI
-     *     - `OPENAI_API_KEY` - API key for OpenAI
-     *     - `OPENAI_BASE_URL` - Base URL for OpenAI-compatible APIs
-     *     - `OLLAMA_HOST` - Ollama server URL (e.g., http://localhost:11434)
-     *
-     *     **Importing Pre-computed Embeddings:**
-     *
-     *     You can import existing embeddings (from OpenAI, Cohere, or any provider) by including
-     *     them directly in your documents using the `_embeddings` field. This bypasses the
-     *     embedding generation step and writes vectors directly to the index.
-     *
-     *     **Steps:**
-     *     1. Create the index first with the appropriate dimension
-     *     2. Write documents with `_embeddings: { "<indexName>": [...<embedding>...] }`
-     *
-     *     **Example:**
-     *     ```json
-     *     {
-     *       "title": "My Document",
-     *       "content": "Document text...",
-     *       "_embeddings": {
-     *         "my_vector_index": [0.1, 0.2, 0.3, ...]
-     *       }
-     *     }
-     *     ```
-     *
-     *     **Use Cases:**
-     *     - Migrating from another vector database with existing embeddings
-     *     - Using embeddings generated by external systems
-     *     - Importing pre-computed OpenAI, Cohere, or other provider embeddings
-     *     - Batch processing embeddings offline before ingestion
-     * @example {
-     *       "provider": "openai",
-     *       "model": "text-embedding-3-small"
-     *     }
-     */
-    EmbedderConfig: (
-      | components["schemas"]["GoogleEmbedderConfig"]
-      | components["schemas"]["VertexEmbedderConfig"]
-      | components["schemas"]["OllamaEmbedderConfig"]
-      | components["schemas"]["OpenAIEmbedderConfig"]
-      | components["schemas"]["BedrockEmbedderConfig"]
-      | components["schemas"]["CohereEmbedderConfig"]
-    ) & {
-      provider: components["schemas"]["EmbedderProvider"];
-    };
-    /**
-     * @description Configuration for the Termite chunking provider.
-     *
-     *     Termite is a centralized HTTP service that provides chunking with multi-tier caching.
-     *     The model name maps to ONNX model directory names (similar to how Ollama works).
-     *
-     *     **Chunking Models:**
-     *     - fixed: Simple fixed-size chunking by token count (built-in, no ONNX required)
-     *     - Any other name will attempt to load from models/chunkers/{name}/ directory
-     *
-     *     **Caching:**
-     *     - L1: Memory cache with 2-minute TTL
-     *     - L2: Persistent Pebble database
-     *     - Singleflight deduplication for concurrent identical requests
-     * @example {
-     *       "provider": "termite",
-     *       "api_url": "http://localhost:8080",
-     *       "model": "fixed",
-     *       "target_tokens": 500,
-     *       "overlap_tokens": 50,
-     *       "separator": "\n\n",
-     *       "max_chunks": 50,
-     *       "full_text": {}
-     *     }
-     */
-    TermiteChunkerConfig: {
-      /**
-       * Format: uri
-       * @description The URL of the Termite API endpoint (e.g., 'http://localhost:8080'). Can also be set via ANTFLY_TERMITE_URL environment variable.
-       * @example http://localhost:8080
-       */
-      api_url?: string;
-      /**
-       * @description The chunking model to use. Either 'fixed' for simple token-based chunking, or a model name from models/chunkers/{name}/.
-       * @default fixed
-       * @example fixed
-       */
-      model: string;
-      /**
-       * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
-       * @default 500
-       */
-      target_tokens?: number;
-      /**
-       * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
-       * @default 50
-       */
-      overlap_tokens?: number;
-      /**
-       * @description Separator string for splitting (e.g., '\n\n' for paragraphs). Only used with fixed strategy.
-       * @default
-       */
-      separator?: string;
-      /**
-       * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
-       * @default 50
-       */
-      max_chunks?: number;
-      /**
-       * Format: float
-       * @description Minimum confidence threshold for separator detection. Only used with ONNX-based models.
-       * @default 0.5
-       */
-      threshold?: number;
-      /**
-       * @description Configuration for full-text indexing of chunks in Bleve.
-       *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
-       *     When absent, chunks use :c: suffix and are only used for vector embeddings.
-       *     This object is reserved for future options like boosting, field mapping, etc.
-       * @example {}
-       */
-      full_text?: {
-        [key: string]: unknown;
-      };
-    };
-    /**
-     * @description Configuration for the local Antfly chunking provider.
-     *
-     *     This provider runs chunking directly within the storage node process,
-     *     without requiring an external Termite service. It uses simple fixed-size
-     *     tokenizer-based chunking with no caching overhead.
-     *
-     *     **Use this when:**
-     *     - Running single-node deployments (swarm mode)
-     *     - You don't need embedding/chunk caching across nodes
-     *     - You want minimal setup complexity
-     *
-     *     **Use Termite instead when:**
-     *     - Running multi-node clusters where caching reduces costs
-     *     - You need ONNX-accelerated chunking models
-     *     - You want persistent chunk/embedding caches
-     * @example {
-     *       "provider": "antfly",
-     *       "target_tokens": 500,
-     *       "overlap_tokens": 50,
-     *       "separator": "\n\n",
-     *       "max_chunks": 50
-     *     }
-     */
-    AntflyChunkerConfig: {
-      /**
-       * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
-       * @default 500
-       */
-      target_tokens?: number;
-      /**
-       * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
-       * @default 50
-       */
-      overlap_tokens?: number;
-      /**
-       * @description Separator string for splitting (e.g., '\n\n' for paragraphs).
-       * @default
-       */
-      separator?: string;
-      /**
-       * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
-       * @default 50
-       */
-      max_chunks?: number;
-      /**
-       * @description Configuration for full-text indexing of chunks in Bleve.
-       *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
-       *     When absent, chunks use :c: suffix and are only used for vector embeddings.
-       *     This object is reserved for future options like boosting, field mapping, etc.
-       * @example {}
-       */
-      full_text?: {
-        [key: string]: unknown;
-      };
-    };
-    /**
-     * @description The chunking provider to use.
-     * @enum {string}
-     */
-    ChunkerProvider: "mock" | "termite" | "antfly";
-    /**
-     * @description A unified configuration for a chunking provider.
-     * @example {
-     *       "provider": "termite",
-     *       "model": "fixed",
-     *       "target_tokens": 500,
-     *       "overlap_tokens": 50
-     *     }
-     */
-    ChunkerConfig: (
-      | components["schemas"]["TermiteChunkerConfig"]
-      | components["schemas"]["AntflyChunkerConfig"]
-    ) & {
-      provider: components["schemas"]["ChunkerProvider"];
-    };
-    EmbeddingIndexConfig: {
-      /** @description Vector dimension */
-      dimension: number;
-      /** @description Field to extract embeddings from */
-      field?: string;
-      /**
-       * @description Handlebars template for generating prompts. See https://handlebarsjs.com/guide/ for more information.
-       * @example Hello, {{#if (eq Name "John")}}Johnathan{{else}}{{Name}}{{/if}}! You are {{Age}} years old.
-       */
-      template?: string;
-      /** @description Whether to use in-memory only storage */
-      mem_only?: boolean;
-      /** @description Configuration for the embeddings plugin */
-      embedder?: components["schemas"]["EmbedderConfig"];
-      /** @description Configuration for the summarizer plugin */
-      summarizer?: components["schemas"]["GeneratorConfig"];
-      /** @description Configuration for the chunking plugin. When specified, documents are automatically chunked at write time before indexing. */
-      chunker?: components["schemas"]["ChunkerConfig"];
-    };
-    /** @description Configuration for a specific edge type */
-    EdgeTypeConfig: {
-      /** @description Edge type name (e.g., 'cites', 'similar_to') */
-      name: string;
-      /**
-       * Format: double
-       * @description Maximum allowed edge weight
-       * @default 1
-       */
-      max_weight?: number;
-      /**
-       * Format: double
-       * @description Minimum allowed edge weight
-       * @default 0
-       */
-      min_weight?: number;
-      /**
-       * @description Whether to allow edges from a node to itself
-       * @default true
-       */
-      allow_self_loops?: boolean;
-      /** @description Required metadata fields for this edge type */
-      required_metadata?: string[];
-    };
-    /** @description Configuration for graph_v0 index type */
-    GraphIndexV0Config: {
-      /** @description List of edge types with their configurations */
-      edge_types?: components["schemas"]["EdgeTypeConfig"][];
-      /** @description Maximum number of edges per document (0 = unlimited) */
-      max_edges_per_document?: number;
-    };
-    /**
-     * @description The type of the index.
-     * @enum {string}
-     */
-    IndexType: "full_text_v0" | "aknn_v0" | "graph_v0";
-    /** @description Configuration for an index */
-    IndexConfig: {
-      /** @description Name of the index */
-      name: string;
-      /** @description Optional description of the index and its purpose */
-      description?: string;
-      type: components["schemas"]["IndexType"];
-      /**
-       * @description List of enrichment names to apply to documents before indexing. Enrichments must be defined at the table level.
-       * @example [
-       *       "semantic_chunks",
-       *       "summary"
-       *     ]
-       */
-      enrichments?: string[];
-    } & (
-      | components["schemas"]["BleveIndexV2Config"]
-      | components["schemas"]["EmbeddingIndexConfig"]
-      | components["schemas"]["GraphIndexV0Config"]
-    );
-    /** @description Defines the structure of a document type */
-    DocumentSchema: {
-      /** @description A description of the document type. */
-      description?: string;
-      /**
-       * @description A valid JSON Schema defining the document's structure.
-       *     This is used to infer indexing rules and field types.
-       */
-      schema?: {
-        [key: string]: unknown;
-      };
-    };
-    /** @description Schema definition for a table with multiple document types */
-    TableSchema: {
-      /**
-       * Format: uint32
-       * @description Version of the schema. Used for migrations.
-       */
-      version?: number;
-      /** @description Default type to use from the document_types. */
-      default_type?: string;
-      /**
-       * @description Whether to enforce that documents must match one of the provided document types.
-       *     If false, documents not matching any type will be accepted but not indexed.
-       */
-      enforce_types?: boolean;
-      /** @description A map of type names to their document json schemas. */
-      document_schemas?: {
-        [key: string]: components["schemas"]["DocumentSchema"];
-      };
-      /**
-       * @description The field containing the timestamp for TTL expiration (optional).
-       *     Defaults to "_timestamp" if ttl_duration is specified but ttl_field is not.
-       */
-      ttl_field?: string;
-      /**
-       * @description The duration after which documents should expire, based on the ttl_field timestamp (optional).
-       *     Uses Go duration format (e.g., '24h', '7d', '168h').
-       */
-      ttl_duration?: string;
-    };
-    BleveIndexV2Stats: {
-      /** @description Error message if stats could not be retrieved */
-      error?: string;
-      /**
-       * Format: uint64
-       * @description Number of documents in the index
-       */
-      total_indexed?: number;
-      /**
-       * Format: uint64
-       * @description Size of the index in bytes
-       */
-      disk_usage?: number;
-      /** @description Whether the index is currently rebuilding */
-      rebuilding?: boolean;
-    };
-    EmbeddingIndexStats: {
-      /** @description Error message if stats could not be retrieved */
-      error?: string;
-      /**
-       * Format: uint64
-       * @description Number of vectors in the index
-       */
-      total_indexed?: number;
-      /**
-       * Format: uint64
-       * @description Size of the index in bytes
-       */
-      disk_usage?: number;
-      /**
-       * Format: uint64
-       * @description Total number of nodes in the index
-       */
-      total_nodes?: number;
-    };
-    /** @description Statistics for graph_v0 index */
-    GraphIndexV0Stats: {
-      /** @description Error message if stats could not be retrieved */
-      error?: string;
-      /**
-       * Format: uint64
-       * @description Total number of edges in the graph
-       */
-      total_edges?: number;
-      /** @description Count of edges per edge type */
-      edge_types?: {
-        [key: string]: number;
-      };
-    };
-    /** @description Statistics for an index */
-    IndexStats:
-      | components["schemas"]["BleveIndexV2Stats"]
-      | components["schemas"]["EmbeddingIndexStats"]
-      | components["schemas"]["GraphIndexV0Stats"];
-    User: {
-      /** @example johndoe */
-      username: string;
-      /**
-       * Format: byte
-       * @description Base64 encoded password hash. Exposing this is a security risk.
-       * @example JGFyZ29uMm...
-       */
-      password_hash: string;
-    };
-    /**
-     * @description Type of the resource, e.g., table, user, or global ('*').
-     * @example table
-     * @enum {string}
-     */
-    ResourceType: "table" | "user" | "*";
-    /**
-     * @description Type of permission.
-     * @example read
-     * @enum {string}
-     */
-    PermissionType: "read" | "write" | "admin";
-    Permission: {
-      /**
-       * @description Resource name (e.g., table name, target username, or '*' for global).
-       * @example orders_table
-       */
-      resource: string;
-      resource_type: components["schemas"]["ResourceType"];
-      type: components["schemas"]["PermissionType"];
-    };
-    CreateUserRequest: {
-      /**
-       * @description Username for the new user. If provided in the path, this field can be omitted or must match the path parameter.
-       * @example johndoe
-       */
-      username?: string;
-      /**
-       * Format: password
-       * @example s3cr3tP@sswOrd
-       */
-      password: string;
-      /** @description Optional list of initial permissions for the user. */
-      initial_policies?: components["schemas"]["Permission"][] | null;
-    };
-    UpdatePasswordRequest: {
-      /**
-       * Format: password
-       * @example newS3cr3tP@sswOrd
-       */
-      new_password: string;
-    };
-    SuccessMessage: {
-      /** @example Operation completed successfully */
-      message?: string;
-    };
-  };
-  responses: {
-    /** @description Bad request */
-    BadRequest: {
-      headers: {
-        [name: string]: unknown;
-      };
-      content: {
-        "application/json": components["schemas"]["Error"];
-      };
-    };
-    /** @description Resource not found */
-    NotFound: {
-      headers: {
-        [name: string]: unknown;
-      };
-      content: {
-        "application/json": components["schemas"]["Error"];
-      };
-    };
-    /** @description Internal server error */
-    InternalServerError: {
-      headers: {
-        [name: string]: unknown;
-      };
-      content: {
-        "application/json": components["schemas"]["Error"];
-      };
-    };
-  };
-  parameters: {
-    /** @description The username. */
-    UserNamePathParameter: string;
-  };
-  requestBodies: never;
-  headers: never;
-  pathItems: never;
+    schemas: {
+        Error: {
+            /** @example An error message */
+            error: string;
+        };
+        /**
+         * @description Overall health status of the cluster
+         * @enum {string}
+         */
+        ClusterHealth: "unknown" | "healthy" | "unhealthy" | "degraded" | "error";
+        ClusterStatus: {
+            health: components["schemas"]["ClusterHealth"];
+            /** @description Optional message providing details about the health status */
+            message?: string;
+            /** @description Indicates whether authentication is enabled for the cluster */
+            auth_enabled?: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        ByteRange: string[];
+        /**
+         * @description Synchronization level for batch operations:
+         *     - "propose": Wait for Raft proposal acceptance (fastest, default)
+         *     - "write": Wait for Pebble KV write
+         *     - "full_text": Wait for full-text index WAL write
+         *     - "enrichments": Pre-compute enrichments before Raft proposal (synchronous enrichment generation)
+         *     - "aknn": Wait for vector index write with best-effort synchronous embedding (falls back to async on timeout, slowest, most durable)
+         * @default propose
+         * @enum {string}
+         */
+        SyncLevel: "propose" | "write" | "full_text" | "enrichments" | "aknn";
+        ShardConfig: {
+            byte_range: components["schemas"]["ByteRange"];
+        };
+        CreateTableRequest: {
+            /**
+             * Format: uint
+             * @description Number of shards to create for the table. Data is partitioned across shards based on key ranges.
+             *
+             *     **Sizing Guidelines:**
+             *     - Small datasets (<100K docs): 1-3 shards
+             *     - Medium datasets (100K-1M docs): 3-10 shards
+             *     - Large datasets (>1M docs): 10+ shards
+             *
+             *     More shards enable better parallelism but increase overhead. Choose based on expected data size and query patterns.
+             *
+             *     **When to Add More Shards:**
+             *
+             *     Antfly supports **online shard reallocation** without downtime. Add more shards when:
+             *     - Individual shards exceed size thresholds (configurable)
+             *     - Query latency increases due to large shard size
+             *     - Need better parallelism for write-heavy workloads
+             *
+             *     Use the internal `/reallocate` endpoint to trigger automatic shard splitting:
+             *     ```bash
+             *     POST /_internal/v1/reallocate
+             *     ```
+             *
+             *     This enqueues a reallocation request that the leader processes asynchronously, splitting
+             *     large shards and redistributing data without service interruption.
+             *
+             *     **Advantages over Elasticsearch:**
+             *     - Automatic shard splitting (no manual reindexing required)
+             *     - Online operation (no downtime)
+             *     - Transparent to applications (keys remain accessible during reallocation)
+             * @example 3
+             */
+            num_shards?: number;
+            /**
+             * @description Optional human-readable description of the table and its purpose.
+             *     Useful for documentation and team collaboration.
+             * @example User profiles with embeddings for semantic search
+             */
+            description?: string;
+            /**
+             * @description Map of index name to index configuration. Indexes enable different query capabilities:
+             *     - Full-text indexes for BM25 search
+             *     - Vector indexes for semantic similarity
+             *     - Multimodal indexes for images/audio/video
+             *
+             *     You can add multiple indexes to support different query patterns.
+             * @example {
+             *       "search_index": {
+             *         "type": "full_text_v0"
+             *       },
+             *       "embedding_index": {
+             *         "type": "aknn_v0",
+             *         "dimension": 384,
+             *         "embedder": {
+             *           "provider": "ollama",
+             *           "model": "all-minilm"
+             *         }
+             *       }
+             *     }
+             */
+            indexes?: {
+                [key: string]: components["schemas"]["IndexConfig"];
+            };
+            /**
+             * @description Optional schema definition specifying field types, primary key, and TTL configuration.
+             *     While optional, defining a schema provides type safety, optimized indexing, and better search performance.
+             *
+             *     **Schema Features:**
+             *     - **Field Types**: Define document structure using JSON Schema with `x-antfly-types` extensions
+             *     - **Document TTL**: Configure automatic expiration via `ttl_duration` and optional `ttl_field`
+             *     - **Primary Keys**: Specify unique identifier fields
+             *     - **Validation**: Enforce schema constraints on writes
+             *
+             *     **TTL Example:**
+             *     ```json
+             *     {
+             *       "ttl_duration": "7d",
+             *       "ttl_field": "_timestamp",
+             *       "document_schemas": {...}
+             *     }
+             *     ```
+             *
+             *     See the Table Management documentation for comprehensive TTL configuration and use cases.
+             */
+            schema?: components["schemas"]["TableSchema"];
+        };
+        /** @enum {string} */
+        AntflyType: "search_as_you_type" | "keyword" | "text" | "html" | "numeric" | "datetime" | "boolean" | "link" | "geopoint" | "geoshape" | "embedding" | "blob";
+        Table: {
+            name: string;
+            /**
+             * @description Optional description of the table.
+             * @example Table for user data
+             */
+            description?: string;
+            indexes: {
+                [key: string]: components["schemas"]["IndexConfig"];
+            };
+            shards: {
+                [key: string]: components["schemas"]["ShardConfig"];
+            };
+            schema?: components["schemas"]["TableSchema"];
+        };
+        DateRange: {
+            name: string;
+            from?: string;
+            to?: string;
+        };
+        NumericRange: {
+            name: string;
+            /** Format: float */
+            from?: number;
+            /** Format: float */
+            to?: number;
+        };
+        TermFacetResult: {
+            term: string;
+            count: number;
+        };
+        DateRangeResult: components["schemas"]["DateRange"] & {
+            count: number;
+        };
+        NumericRangeResult: components["schemas"]["NumericRange"] & {
+            count: number;
+        };
+        FacetOption: {
+            field?: string;
+            size?: number;
+            date_ranges?: components["schemas"]["DateRange"][];
+            numeric_ranges?: components["schemas"]["NumericRange"][];
+        };
+        FacetResult: {
+            field?: string;
+            total?: number;
+            missing?: number;
+            terms?: components["schemas"]["TermFacetResult"][];
+            date_ranges?: components["schemas"]["DateRangeResult"][];
+            numeric_ranges?: components["schemas"]["NumericRangeResult"][];
+        };
+        IndexStatus: {
+            shard_status: {
+                [key: string]: components["schemas"]["IndexStats"];
+            };
+            config: components["schemas"]["IndexConfig"];
+            status: components["schemas"]["IndexStats"];
+        };
+        StorageStatus: {
+            /**
+             * Format: uint64
+             * @description Disk usage in bytes.
+             */
+            disk_usage?: number;
+            /** @description Whether the table has received data. */
+            empty?: boolean;
+        };
+        TableStatus: components["schemas"]["Table"] & {
+            storage_status: components["schemas"]["StorageStatus"];
+        };
+        /**
+         * @description MongoDB-style update operator
+         * @enum {string}
+         */
+        TransformOpType: "$set" | "$unset" | "$inc" | "$push" | "$pull" | "$addToSet" | "$pop" | "$mul" | "$min" | "$max" | "$currentDate" | "$rename";
+        TransformOp: {
+            op: components["schemas"]["TransformOpType"];
+            /**
+             * @description JSONPath to field (e.g., "$.user.name", "$.tags", or "user.name")
+             * @example $.views
+             */
+            path: string;
+            /** @description Value for operation (not required for $unset, $currentDate). Type depends on operator (number for $inc/$mul, any for $set, etc.) */
+            value?: unknown;
+        };
+        /**
+         * @description In-place document transformation using MongoDB-style operators. Transforms are applied atomically
+         *     at the storage layer, eliminating read-modify-write races.
+         *
+         *     **Important:** Transform results are NOT validated against the table schema. This improves performance
+         *     but means it's possible to create invalid documents. Use with care and ensure your operations maintain
+         *     schema compliance.
+         * @example {
+         *       "key": "article:123",
+         *       "operations": [
+         *         {
+         *           "op": "$inc",
+         *           "path": "$.views",
+         *           "value": 1
+         *         },
+         *         {
+         *           "op": "$currentDate",
+         *           "path": "$.lastViewed"
+         *         }
+         *       ]
+         *     }
+         */
+        Transform: {
+            /** @description Document key (must be a string, not an object like inserts) */
+            key: string;
+            /** @description List of operations to apply in sequence */
+            operations: components["schemas"]["TransformOp"][];
+            /**
+             * @description If true, create document if it doesn't exist (like MongoDB upsert)
+             * @default false
+             */
+            upsert?: boolean;
+        };
+        /**
+         * @description Request to scan keys in a table within a key range.
+         *     If no range is specified, scans all keys in the table.
+         */
+        ScanKeysRequest: {
+            /**
+             * @description Start of the key range to scan (exclusive by default).
+             *     Can be a full key or a prefix. If not specified, starts from
+             *     the beginning of the table.
+             * @example user:100
+             */
+            from?: string;
+            /**
+             * @description End of the key range to scan (inclusive by default).
+             *     Can be a full key or a prefix. If not specified, scans to
+             *     the end of the table.
+             * @example user:200
+             */
+            to?: string;
+            /**
+             * @description If true, include keys matching 'from' in the results.
+             *     Default: false (exclusive lower bound for pagination).
+             * @default false
+             */
+            inclusive_from?: boolean;
+            /**
+             * @description If true, exclude keys matching 'to' from the results.
+             *     Default: false (inclusive upper bound).
+             * @default false
+             */
+            exclusive_to?: boolean;
+            /**
+             * @description List of fields to include in each result. If not specified,
+             *     only returns the key. Supports:
+             *     - Simple fields: "title", "author"
+             *     - Nested paths: "user.address.city"
+             *     - Wildcards: "_chunks.*"
+             *     - Exclusions: "-_chunks.*._embedding"
+             *     - Special fields: "_embeddings", "_summaries", "_chunks"
+             * @example [
+             *       "title",
+             *       "author",
+             *       "metadata.tags"
+             *     ]
+             */
+            fields?: string[];
+            /**
+             * @description Bleve query to filter documents. Only documents matching this query
+             *     are included in results. Uses the sear library for efficient per-document
+             *     matching without requiring a full index.
+             *
+             *     Examples:
+             *     - Status filtering: `{"query": "status:published"}`
+             *     - Date ranges: `{"query": "created_at:>2023-01-01"}`
+             *     - Field matching: `{"query": "category:technology"}`
+             */
+            filter_query?: components["schemas"]["Query"] & unknown;
+            /**
+             * @description Maximum number of results to return. If not specified, returns all
+             *     matching keys in the range. Useful for pagination or sampling.
+             * @example 100
+             */
+            limit?: number;
+        };
+        /**
+         * @description Batch insert, delete, and transform operations in a single request.
+         *
+         *     **Atomicity**:
+         *     - **Single shard**: Operations are atomic within shard boundaries
+         *     - **Multiple shards**: Uses distributed 2-phase commit (2PC) for atomic cross-shard writes
+         *
+         *     **How distributed transactions work**:
+         *     1. Metadata server allocates HLC timestamp and selects coordinator shard
+         *     2. Coordinator writes transaction record, participants write intents
+         *     3. After all intents succeed, coordinator commits transaction
+         *     4. Participants are notified asynchronously to resolve intents
+         *     5. Recovery loop ensures notifications complete even after coordinator failure
+         *
+         *     **Performance**:
+         *     - Single-shard batches: < 5ms latency
+         *     - Cross-shard transactions: ~20ms latency
+         *     - Intent resolution: < 30 seconds worst-case (via recovery loop)
+         *
+         *     **Guarantees**:
+         *     - All writes succeed or all fail (atomicity across all shards)
+         *     - Coordinator failure is recoverable (new leader resumes notifications)
+         *     - Idempotent resolution (duplicate notifications are safe)
+         *
+         *     **Benefits**:
+         *     - Reduces network overhead compared to individual requests
+         *     - More efficient indexing (updates are batched)
+         *     - Automatic distributed transactions when operations span shards
+         *
+         *     The inserts are upserts - existing keys are overwritten, new keys are created.
+         * @example {
+         *       "inserts": {
+         *         "user:123": {
+         *           "name": "John Doe",
+         *           "email": "john@example.com",
+         *           "age": 30,
+         *           "tags": [
+         *             "customer",
+         *             "premium"
+         *           ]
+         *         },
+         *         "user:456": {
+         *           "name": "Jane Smith",
+         *           "email": "jane@example.com",
+         *           "age": 25,
+         *           "tags": [
+         *             "customer"
+         *           ]
+         *         }
+         *       },
+         *       "deletes": [
+         *         "user:789",
+         *         "user:old_account"
+         *       ]
+         *     }
+         */
+        BatchRequest: {
+            /**
+             * @description Map of document IDs to document objects. Each key is the unique identifier for the document.
+             *
+             *     Best practices:
+             *     - Use consistent key naming schemes (e.g., "user:123", "article:456")
+             *     - Key length affects storage and performance - keep them reasonably short
+             *     - Keys are sorted lexicographically, so choose prefixes that support range scans
+             * @example {
+             *       "user:123": {
+             *         "name": "John Doe",
+             *         "email": "john@example.com",
+             *         "age": 30,
+             *         "tags": [
+             *           "customer",
+             *           "premium"
+             *         ]
+             *       },
+             *       "user:456": {
+             *         "name": "Jane Smith",
+             *         "email": "jane@example.com",
+             *         "age": 25,
+             *         "tags": [
+             *           "customer"
+             *         ]
+             *       }
+             *     }
+             */
+            inserts?: {
+                [key: string]: Record<string, never>;
+            };
+            /**
+             * @description Array of document IDs to delete. Documents are removed from all indexes.
+             *
+             *     Notes:
+             *     - Non-existent keys are silently ignored
+             *     - Deletions are processed before inserts in the same batch
+             *     - Keys are permanently removed from storage and indexes
+             * @example [
+             *       "user:789",
+             *       "user:old_account"
+             *     ]
+             */
+            deletes?: string[];
+            /**
+             * @description Array of transform operations for in-place document updates using MongoDB-style operators.
+             *
+             *     Transform operations allow you to modify documents without read-modify-write races:
+             *     - Operations are applied atomically on the server
+             *     - Multiple operations per document are applied in sequence
+             *     - Supports numeric operations ($inc, $mul), array operations ($push, $pull), and more
+             *
+             *     Common use cases:
+             *     - Increment counters (views, likes, votes)
+             *     - Update timestamps ($currentDate)
+             *     - Manage arrays (add/remove tags, items)
+             *     - Update nested fields without overwriting the entire document
+             * @example [
+             *       {
+             *         "key": "article:123",
+             *         "operations": [
+             *           {
+             *             "op": "$inc",
+             *             "path": "$.views",
+             *             "value": 1
+             *           },
+             *           {
+             *             "op": "$currentDate",
+             *             "path": "$.lastViewed"
+             *           }
+             *         ]
+             *       },
+             *       {
+             *         "key": "user:456",
+             *         "operations": [
+             *           {
+             *             "op": "$push",
+             *             "path": "$.tags",
+             *             "value": "vip"
+             *           }
+             *         ]
+             *       }
+             *     ]
+             */
+            transforms?: components["schemas"]["Transform"][];
+            sync_level?: components["schemas"]["SyncLevel"];
+        };
+        BackupRequest: {
+            /**
+             * @description Unique identifier for this backup. Used to reference the backup for restore operations.
+             *     Choose a meaningful name that includes date/version information.
+             * @example backup-2025-01-15-v2
+             */
+            backup_id: string;
+            /**
+             * @description Storage location for the backup. Supports multiple backends:
+             *     - Local filesystem: `file:///path/to/backup`
+             *     - Amazon S3: `s3://bucket-name/path/to/backup`
+             *
+             *     The backup includes all table data, indexes, and metadata for the specified table.
+             * @example s3://mybucket/antfly-backups/users-table/2025-01-15
+             */
+            location: string;
+        };
+        RestoreRequest: components["schemas"]["BackupRequest"];
+        RAGRequest: {
+            /**
+             * @description Array of retrieval queries to execute. Each query must specify a table and can specify its own limit and document_renderer.
+             *     Results from all queries are concatenated together (respecting each query's limit).
+             *     For single table: [{"table": "papers", "semantic_search": "...", "limit": 10}]
+             *     For broadcast: [{"table": "images", "limit": 5, ...}, {"table": "products", "limit": 5, ...}]
+             *     For mixed: [{"table": "papers", "semantic_search": "...", "limit": 10}, {"table": "books", "full_text_search": {...}, "limit": 5}]
+             */
+            queries: components["schemas"]["QueryRequest"][];
+            /**
+             * @description Generator configuration for summarization. Mutually exclusive with 'chain'.
+             *     Either 'generator' or 'chain' must be provided.
+             */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Chain of generators with retry/fallback semantics. Mutually exclusive with 'generator'.
+             *     Each link can specify retry configuration and a condition for trying the next generator.
+             *     Either 'generator' or 'chain' must be provided.
+             */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Optional system prompt to guide the summarization
+             * @example You are a helpful AI assistant. Summarize the following search results concisely.
+             */
+            system_prompt?: string;
+            /**
+             * @description Optional custom user prompt template for the LLM. If not provided, a default prompt is used.
+             *     The prompt can reference the following variables:
+             *     - {{documents}}: Array of retrieved documents with id and fields
+             *     - {{semantic_search}}: The user's semantic search query (if provided)
+             *     You can use Handlebars template syntax to customize the prompt, including loops and conditionals.
+             *     To generate a comma-separated list of document IDs, use: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
+             * @example Based on these documents, provide a detailed analysis:
+             *
+             *     {{#each documents}}
+             *     Doc {{this.id}}: {{this.fields}}
+             *     {{/each}}
+             *
+             *     Valid IDs: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
+             */
+            prompt?: string;
+            /** @description Enable SSE streaming of results instead of JSON response */
+            with_streaming?: boolean;
+            /**
+             * @description Optional evaluation configuration. When provided, runs evaluators on the query results
+             *     and includes scores in the response.
+             *
+             *     **Retrieval metrics** (require ground_truth.relevant_ids):
+             *     - recall, precision, ndcg, mrr, map
+             *
+             *     **LLM-as-judge metrics** (require judge config):
+             *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
+             *
+             *     Example:
+             *     ```json
+             *     {
+             *       "evaluators": ["recall", "faithfulness"],
+             *       "ground_truth": {"relevant_ids": ["doc1", "doc2"]},
+             *       "judge": {"provider": "ollama", "model": "gemma3:4b"}
+             *     }
+             *     ```
+             */
+            eval?: components["schemas"]["EvalConfig"];
+        };
+        /** @description RAG result with individual query results and summary */
+        RAGResult: {
+            /** @description Results from each query. Check each result's status and error fields for failures. */
+            query_results?: components["schemas"]["QueryResult"][];
+            summary_result?: components["schemas"]["SummarizeResult"];
+            /** @description Evaluation results when eval config was provided in the request */
+            eval_result?: components["schemas"]["EvalResult"];
+        };
+        QueryBuilderRequest: {
+            /**
+             * @description Name of the table to build query for. If provided, uses table schema for field context.
+             * @example articles
+             */
+            table?: string;
+            /**
+             * @description Natural language description of the search intent
+             * @example Find all published articles about machine learning from the last year
+             */
+            intent: string;
+            /**
+             * @description List of searchable field names to consider. Overrides table schema if provided.
+             * @example [
+             *       "title",
+             *       "content",
+             *       "status",
+             *       "published_at"
+             *     ]
+             */
+            schema_fields?: string[];
+            generator?: components["schemas"]["GeneratorConfig"];
+        };
+        QueryBuilderResult: {
+            /**
+             * @description Generated search query in simplified DSL format.
+             *     Can be used directly in QueryRequest.full_text_search or filter_query.
+             * @example {
+             *       "and": [
+             *         {
+             *           "match": "machine learning",
+             *           "field": "content"
+             *         },
+             *         {
+             *           "term": "published",
+             *           "field": "status"
+             *         }
+             *       ]
+             *     }
+             */
+            query: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description Human-readable explanation of what the query does and why it was structured this way
+             * @example Searches for 'machine learning' in content field AND requires status to be exactly 'published'
+             */
+            explanation?: string;
+            /**
+             * Format: double
+             * @description Model's confidence in the generated query (0.0-1.0)
+             * @example 0.85
+             */
+            confidence?: number;
+            /**
+             * @description Any issues, limitations, or assumptions made when generating the query
+             * @example [
+             *       "Field 'category' not found in schema, using content field instead"
+             *     ]
+             */
+            warnings?: string[];
+        };
+        AnswerAgentRequest: {
+            /**
+             * @description User's natural language query to be classified and improved
+             * @example What are the best gaming laptops under $2000?
+             */
+            query: string;
+            /**
+             * @description Default generator configuration used for all pipeline steps unless overridden in `steps`.
+             *     This is the simple configuration - just set this and everything works with sensible defaults.
+             *     Mutually exclusive with 'chain'. Either 'generator' or 'chain' must be provided.
+             */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Default chain of generators for all pipeline steps unless overridden in `steps`.
+             *     Each link can specify retry configuration and a condition for trying the next generator.
+             *     Mutually exclusive with 'generator'. Either 'generator' or 'chain' must be provided.
+             */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Array of query requests to execute. The query text will be transformed for semantic search
+             *     and populated into the semantic_search field of each query.
+             * @example [
+             *       {
+             *         "table": "products",
+             *         "indexes": [
+             *           "embedding_idx"
+             *         ],
+             *         "limit": 10
+             *       },
+             *       {
+             *         "table": "reviews",
+             *         "indexes": [
+             *           "embedding_idx"
+             *         ],
+             *         "limit": 5
+             *       }
+             *     ]
+             */
+            queries: components["schemas"]["QueryRequest"][];
+            /**
+             * @description Advanced per-step configuration. Override the default generator for specific steps,
+             *     configure step-specific options, or set up generator chains with retry/fallback.
+             *
+             *     **Simple usage** - just set `generator` and all steps use it with defaults.
+             *
+             *     **Advanced usage** - configure each step independently:
+             *     ```json
+             *     {
+             *       "steps": {
+             *         "classification": {
+             *           "generator": {"provider": "openai", "model": "gpt-4o-mini"},
+             *           "with_reasoning": true
+             *         },
+             *         "answer": {
+             *           "generator": {"provider": "anthropic", "model": "claude-3-opus"}
+             *         },
+             *         "followup": {
+             *           "enabled": true,
+             *           "generator": {"provider": "openai", "model": "gpt-4o-mini"}
+             *         }
+             *       }
+             *     }
+             *     ```
+             */
+            steps?: components["schemas"]["AnswerAgentSteps"];
+            /**
+             * @description Enable SSE streaming of results (classification, queries, results, answer) instead of JSON response
+             * @default true
+             */
+            with_streaming?: boolean;
+            /**
+             * @description Maximum total tokens allowed for retrieved document context.
+             *     When set, documents are pruned (lowest-ranked first) to fit within this budget.
+             *     Useful for ensuring LLM context limits are not exceeded.
+             *     Uses BERT tokenizer for estimation.
+             * @example 100000
+             */
+            max_context_tokens?: number;
+            /**
+             * @description Tokens to reserve for system prompt, answer generation, and other overhead.
+             *     Subtracted from max_context_tokens to determine available context budget.
+             *     Defaults to 4000 if max_context_tokens is set.
+             * @default 4000
+             * @example 4000
+             */
+            reserve_tokens?: number;
+            /**
+             * @description Optional evaluation configuration. When provided, runs evaluators on the query results
+             *     and generated answer, including scores in the response.
+             *
+             *     **Retrieval metrics** (require ground_truth.relevant_ids):
+             *     - recall, precision, ndcg, mrr, map
+             *
+             *     **LLM-as-judge metrics** (require judge config):
+             *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
+             */
+            eval?: components["schemas"]["EvalConfig"];
+        };
+        AnswerAgentResult: components["schemas"]["AnswerResult"] & {
+            /**
+             * @description Query classification and transformation result. Includes:
+             *     - route_type: "question" or "search"
+             *     - strategy: "simple", "decompose", "step_back", or "hyde"
+             *     - semantic_query: Optimized query for retrieval
+             *     - reasoning: Pre-retrieval analysis (if steps.classification.with_reasoning was enabled)
+             */
+            classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
+            /** @description Results from each executed query */
+            query_results?: components["schemas"]["QueryResult"][];
+            /** @description Evaluation results when eval config was provided in the request */
+            eval_result?: components["schemas"]["EvalResult"];
+        };
+        ChatAgentRequest: {
+            /**
+             * @description Conversation history. Include all previous messages to maintain context.
+             *     The last message should typically be from the user.
+             * @example [
+             *       {
+             *         "role": "user",
+             *         "content": "Find me articles about machine learning"
+             *       },
+             *       {
+             *         "role": "assistant",
+             *         "content": "I found several articles about machine learning. Would you like me to filter by publication date?"
+             *       },
+             *       {
+             *         "role": "user",
+             *         "content": "Yes, only from the last year"
+             *       }
+             *     ]
+             */
+            messages: components["schemas"]["ChatMessage"][];
+            /**
+             * @description Generator configuration for the chat agent.
+             *     Models with native tool calling support (OpenAI, Anthropic, Gemini, Vertex)
+             *     will use function calling. Other models (Ollama) use prompt-based fallback.
+             */
+            generator: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Base query configurations. The chat agent will modify these queries
+             *     based on conversation context, applying filters and transformations.
+             * @example [
+             *       {
+             *         "table": "articles",
+             *         "indexes": [
+             *           "content_embedding"
+             *         ],
+             *         "limit": 10
+             *       }
+             *     ]
+             */
+            queries: components["schemas"]["QueryRequest"][];
+            /**
+             * @description Per-step configuration including tool settings.
+             *
+             *     Example with custom tool configuration:
+             *     ```json
+             *     {
+             *       "steps": {
+             *         "tools": {
+             *           "enable_filter_tool": true,
+             *           "enable_clarification_tool": true,
+             *           "enable_search_tool": true,
+             *           "max_tool_iterations": 5
+             *         }
+             *       }
+             *     }
+             *     ```
+             */
+            steps?: components["schemas"]["ChatAgentSteps"];
+            /**
+             * @description Enable SSE streaming of results
+             * @default true
+             */
+            with_streaming?: boolean;
+            /**
+             * @description Filters accumulated from previous conversation turns.
+             *     These are applied to all queries automatically.
+             *     New filters discovered in this turn will be added to this list in the response.
+             */
+            accumulated_filters?: components["schemas"]["FilterSpec"][];
+            /**
+             * @description Optional custom system prompt for the chat agent.
+             *     If not provided, uses a default conversational RAG prompt.
+             */
+            system_prompt?: string;
+            /**
+             * @description Maximum tokens for retrieved document context
+             * @example 100000
+             */
+            max_context_tokens?: number;
+        };
+        ChatAgentResult: components["schemas"]["schemas-ChatAgentResult"] & {
+            /** @description Query analysis result (if initial query was classified) */
+            classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
+            /** @description Search results from executed queries */
+            query_results?: components["schemas"]["QueryResult"][];
+        };
+        /** @description Confidence assessment for the generated answer */
+        AnswerConfidence: {
+            /**
+             * Format: float
+             * @description Overall confidence in the answer (0.0 to 1.0). Considers both ability to answer from provided resources and general knowledge.
+             */
+            answer_confidence: number;
+            /**
+             * Format: float
+             * @description Relevance of the provided resources to the question (0.0 to 1.0)
+             */
+            context_relevance: number;
+        };
+        /** @description Result from answer generation with optional confidence and follow-up questions */
+        AnswerResult: {
+            /**
+             * Format: float
+             * @description Overall confidence in the answer (0.0 to 1.0)
+             */
+            answer_confidence?: number;
+            /**
+             * Format: float
+             * @description Relevance of the provided resources to the question (0.0 to 1.0)
+             */
+            context_relevance?: number;
+            /** @description Generated answer in markdown format */
+            answer: string;
+            /** @description Suggested follow-up questions */
+            followup_questions?: string[];
+        };
+        QueryRequest: {
+            /**
+             * @description Name of the table to query. Optional for global queries.
+             * @example wikipedia
+             */
+            table?: string;
+            /**
+             * @description Bleve query for full-text search. Supports all Bleve query types.
+             *
+             *     See bleve-query-openapi.yaml for complete type definitions.
+             *
+             *     Examples:
+             *     - Simple: `{"query": "computer"}`
+             *     - Field-specific: `{"query": "body:computer"}`
+             *     - Boolean: `{"query": "artificial AND intelligence"}`
+             *     - Range: `{"query": "year:>2020"}`
+             *     - Phrase: `{"query": "\"exact phrase\""}`
+             * @example {
+             *       "query": "body:computer AND category:technology",
+             *       "boost": 1
+             *     }
+             */
+            full_text_search?: components["schemas"]["Query"] & {
+                [key: string]: unknown;
+            };
+            /**
+             * @description Natural language query for vector similarity search. Results are ranked by semantic similarity
+             *     to the query and can be combined with full_text_search using Reciprocal Rank Fusion (RRF).
+             *
+             *     The semantic_search string is automatically embedded using the configured embedding model
+             *     for the specified indexes. Use `embedding_template` for multimodal queries.
+             * @example artificial intelligence and machine learning applications
+             */
+            semantic_search?: string;
+            /**
+             * @description Optional Handlebars template for multimodal embedding of the semantic_search query.
+             *     The template has access to `this` which contains the semantic_search string value.
+             *
+             *     Use this when you want to embed multimodal content (images, PDFs, etc.) instead of
+             *     just text. The template is rendered using dotprompt with access to remote content helpers.
+             *
+             *     **Available Helpers**:
+             *     - `remoteMedia url=<url>` - Fetches and embeds remote images/media
+             *     - `remotePDF url=<url>` - Fetches and extracts content from PDFs
+             *     - `remoteText url=<url>` - Fetches and includes remote text content
+             *
+             *     **Examples**:
+             *     - PDF search: `{{remotePDF url=this}}`
+             *     - Image search: `{{remoteMedia url=this}}`
+             *     - Mixed: `Search for: {{this}} {{#if this}}{{remoteMedia url=this}}{{/if}}`
+             *
+             *     When not specified, the semantic_search string is embedded as plain text.
+             * @example {{remotePDF url=this}}
+             */
+            embedding_template?: string;
+            /**
+             * @description List of vector index names to use for semantic search. Required when using semantic_search.
+             *     Multiple indexes can be specified, and their results will be merged using RRF.
+             * @example [
+             *       "title_body_nomic",
+             *       "description_embedding"
+             *     ]
+             */
+            indexes?: string[];
+            /**
+             * Format: byte
+             * @description Filter results by key prefix. Only returns documents whose keys start with this string.
+             *     Applied before scoring to improve performance.
+             *
+             *     Common use cases:
+             *     - Multi-tenant filtering: `"tenant:acme:"`
+             *     - User-specific data: `"user:123:"`
+             *     - Document type filtering: `"article:"`
+             */
+            filter_prefix?: string;
+            /**
+             * @description Bleve query applied as an AND condition. Documents must match both the main query
+             *     and this filter. Applied before scoring for better performance.
+             *
+             *     See bleve-query-openapi.yaml for complete type definitions.
+             *
+             *     Use for:
+             *     - Status filtering: `"status:published"`
+             *     - Date ranges: `"created_at:>2023-01-01"`
+             *     - Category filtering: `"category:technology AND language:en"`
+             * @example {
+             *       "query": "category:technology AND year:>2020",
+             *       "boost": 1
+             *     }
+             */
+            filter_query?: components["schemas"]["Query"] & unknown;
+            /**
+             * @description Bleve query applied as a NOT condition. Documents matching this query are excluded
+             *     from results. Applied before scoring.
+             *
+             *     See bleve-query-openapi.yaml for complete type definitions.
+             *
+             *     Use for:
+             *     - Excluding drafts: `"status:draft"`
+             *     - Removing deprecated content: `"deprecated:true"`
+             *     - Filtering out archived items: `"status:archived"`
+             * @example {
+             *       "query": "category:deprecated OR status:archived",
+             *       "boost": 1
+             *     }
+             */
+            exclusion_query?: components["schemas"]["Query"] & unknown;
+            /**
+             * @description Faceting configuration for aggregating results by field values.
+             *     Useful for building faceted navigation and filters.
+             */
+            facets?: {
+                [key: string]: components["schemas"]["FacetOption"];
+            };
+            /**
+             * @description Pre-computed embeddings to use for semantic searches instead of embedding the semantic_search string.
+             *     The keys are the index names, and values are the embedding vectors.
+             *
+             *     Use when you've already generated embeddings on the client side to avoid redundant embedding calls.
+             */
+            embeddings?: {
+                [key: string]: number[];
+            };
+            /**
+             * @description List of fields to include in the results. If not specified, all fields are returned.
+             *     Use to reduce response size and improve performance.
+             * @example [
+             *       "title",
+             *       "url",
+             *       "summary",
+             *       "created_at"
+             *     ]
+             */
+            fields?: string[];
+            /**
+             * @description Maximum number of results to return. For semantic_search, this is the topk parameter.
+             *     Default varies by query type (typically 10).
+             * @example 20
+             */
+            limit?: number;
+            /**
+             * @description Number of results to skip for pagination. Only available for full_text_search queries.
+             *     Not supported for semantic_search due to vector index limitations.
+             * @example 0
+             */
+            offset?: number;
+            /**
+             * @description Sort order for results. Map of field names to boolean (true = descending, false = ascending).
+             *     Only applicable for full_text_search queries. Semantic searches are always sorted by similarity score.
+             * @example {
+             *       "created_at": true,
+             *       "score": true
+             *     }
+             */
+            order_by?: {
+                [key: string]: boolean;
+            };
+            /**
+             * Format: float
+             * @description Maximum distance threshold for semantic similarity search. Results with distance
+             *     greater than this value are excluded. Lower distances indicate higher similarity.
+             *
+             *     Useful for filtering out low-confidence matches.
+             * @example 0.5
+             */
+            distance_under?: number;
+            /**
+             * Format: float
+             * @description Minimum distance threshold for semantic similarity search. Results with distance
+             *     less than this value are excluded.
+             *
+             *     Useful for excluding near-exact duplicates or finding dissimilar documents.
+             * @example 0.1
+             */
+            distance_over?: number;
+            /**
+             * @description Strategy for merging full-text and semantic search results. Only applies
+             *     when both `full_text_search` and `semantic_search` are specified.
+             *
+             *     Options:
+             *     - `rrf` (default): Reciprocal Rank Fusion - Combines based on result rankings.
+             *       Works well when both search types return relevant results.
+             *     - `rsf`: Relative Score Fusion - Normalizes scores within a window and
+             *       combines weighted scores. Better when score distributions differ significantly.
+             *     - `failover`: Uses full-text search if semantic embedding generation fails.
+             *       Useful for reliability when embedding service may be unavailable.
+             *
+             *     **Most users should use the default `rrf`.**
+             */
+            merge_strategy?: components["schemas"]["MergeStrategy"];
+            /**
+             * @description If true, returns only the total count of matching documents without retrieving the actual documents.
+             *     Useful for pagination and displaying result counts.
+             * @example false
+             */
+            count?: boolean;
+            /**
+             * @description Optional reranker configuration to improve result relevance.
+             *
+             *     Rerankers use cross-encoder models that score query-document pairs directly,
+             *     providing more accurate relevance scores than embedding similarity alone.
+             *
+             *     **When to use:**
+             *     - Results need high precision (e.g., RAG, question answering)
+             *     - You have semantic or hybrid search results to refine
+             *     - Latency trade-off is acceptable (reranking adds 100-500ms typically)
+             *
+             *     **Best practice:** Retrieve more results (limit: 50-100) then rerank to final size.
+             *
+             *     Example:
+             *     ```json
+             *     {
+             *       "provider": "termite",
+             *       "model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+             *       "field": "content"
+             *     }
+             *     ```
+             */
+            reranker?: components["schemas"]["RerankerConfig"];
+            analyses?: components["schemas"]["Analyses"];
+            /**
+             * @description Declarative graph queries to execute after full-text/vector searches.
+             *     Results can reference search results using node selectors like $full_text_results.
+             */
+            graph_searches?: {
+                [key: string]: components["schemas"]["GraphQuery"];
+            };
+            /**
+             * @description Strategy for merging graph results with search results:
+             *     - union: Include nodes from both search and graph results
+             *     - intersection: Only include nodes appearing in both
+             * @enum {string}
+             */
+            expand_strategy?: "union" | "intersection";
+            /**
+             * @description Optional Handlebars template string for rendering document content in RAG queries.
+             *     Template has access to document fields via `{{this.fields.fieldName}}`.
+             *
+             *     **Default**: Uses TOON (Token-Oriented Object Notation) format for 30-60% token reduction:
+             *     ```handlebars
+             *     {{encodeToon this.fields}}
+             *     ```
+             *
+             *     **Available Helpers**:
+             *     - `encodeToon` - Renders fields in compact TOON format with configurable options:
+             *       - `lengthMarker` (bool): Add # prefix to array counts (default: true)
+             *       - `indent` (int): Indentation spacing (default: 2)
+             *       - `delimiter` (string): Field separator for tabular arrays
+             *     - `scrubHtml` - Removes HTML tags and extracts text
+             *     - `media` - Wraps data URIs for GenKit multimodal support
+             *     - `eq` - Equality comparison for conditionals
+             *
+             *     **Examples**:
+             *     - Basic TOON: `{{encodeToon this.fields}}`
+             *     - Compact TOON: `{{encodeToon this.fields lengthMarker=false indent=0}}`
+             *     - Tabular data: `{{encodeToon this.fields delimiter="\t"}}`
+             *     - Custom template: `Title: {{this.fields.title}}\nBody: {{this.fields.body}}`
+             *     - Traditional format: `{{#each this.fields}}{{@key}}: {{this}}\n{{/each}}`
+             *
+             *     TOON format produces compact, LLM-optimized output like:
+             *     ```
+             *     title: Introduction to Vector Search
+             *     author: Jane Doe
+             *     tags[#3]: ai,search,ml
+             *     ```
+             *
+             *     **References**:
+             *     - TOON Specification: https://github.com/toon-format/toon
+             *     - Go Implementation: https://github.com/alpkeskin/gotoon
+             * @example {{encodeToon this.fields}}
+             */
+            document_renderer?: string;
+            /**
+             * @description Optional result pruning configuration to filter low-relevance results.
+             *
+             *     Pruning helps detect "elbows" in score distributions and removes
+             *     results that are significantly worse than top matches.
+             *
+             *     **Common patterns:**
+             *     - RAG queries: Use `max_score_gap_percent: 30` to stop at quality drop-offs
+             *     - Strict matching: Use `min_score_ratio: 0.7` for high-quality results only
+             *     - Combine both for best results
+             *
+             *     Example:
+             *     ```json
+             *     {
+             *       "min_score_ratio": 0.5,
+             *       "max_score_gap_percent": 25.0,
+             *       "min_absolute_score": 0.3
+             *     }
+             *     ```
+             */
+            pruner?: components["schemas"]["Pruner"];
+        };
+        Analyses: {
+            pca?: boolean;
+            tsne?: boolean;
+        };
+        AnalysesResult: {
+            pca?: number[];
+            tsne?: number[];
+        };
+        /** @description A single query result hit */
+        QueryHit: {
+            /** @description ID of the record. */
+            _id: string;
+            /**
+             * Format: float
+             * @description Relevance score of the hit.
+             */
+            _score: number;
+            /** @description Scores partitioned by index when using RRF search. */
+            _index_scores?: {
+                [key: string]: unknown;
+            };
+            _source?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description A list of query hits. */
+        QueryHits: {
+            /**
+             * Format: uint64
+             * @description Total number of hits available.
+             */
+            total?: number;
+            hits?: components["schemas"]["QueryHit"][];
+            /**
+             * Format: float
+             * @description Maximum score of the results.
+             */
+            max_score?: number;
+        };
+        /** @description Responses from multiple query operations. */
+        QueryResponses: {
+            responses?: components["schemas"]["QueryResult"][];
+        };
+        /** @description Result of a query operation as an array of results and a count. */
+        QueryResult: {
+            hits?: components["schemas"]["QueryHits"];
+            facets?: {
+                [key: string]: components["schemas"]["FacetResult"];
+            };
+            /** @description Analysis results like PCA and t-SNE per index embeddings. */
+            analyses?: {
+                [key: string]: components["schemas"]["AnalysesResult"];
+            };
+            /** @description Results from declarative graph queries. */
+            graph_results?: {
+                [key: string]: components["schemas"]["GraphQueryResult"];
+            };
+            /**
+             * Format: int64
+             * @description Duration of the query in milliseconds.
+             */
+            took: number;
+            /**
+             * Format: int32
+             * @description HTTP status code of the query operation.
+             */
+            status: number;
+            /** @description Error message if the query failed. */
+            error?: string;
+            /** @description Which table this result came from */
+            table?: string;
+        };
+        /**
+         * @description Status of a linear merge page operation:
+         *     - "success": All records in batch processed successfully
+         *     - "partial": Processing stopped at shard boundary, client should retry with next_cursor
+         *     - "error": Fatal error occurred, no records processed successfully
+         * @enum {string}
+         */
+        LinearMergePageStatus: "success" | "partial" | "error";
+        /**
+         * @description Linear merge operation for syncing sorted records from external sources.
+         *     Use this to keep Antfly in sync with an external database or data source.
+         *
+         *     **How it works:**
+         *     1. Send sorted records from your external source
+         *     2. Server upserts records that exist in your batch
+         *     3. Server deletes Antfly records in the key range that are absent from your batch
+         *     4. If stopped at shard boundary, use next_cursor for next request
+         *
+         *     **WARNING:** Not safe for concurrent operations with overlapping key ranges.
+         */
+        LinearMergeRequest: {
+            /**
+             * @description Map of resource ID to resource object: {"resource_id_1": {...}, "resource_id_2": {...}}
+             *
+             *     Requirements:
+             *     - Keys must be sorted lexicographically by your client
+             *     - Server will process keys in sorted order
+             *     - Use consistent key naming (e.g., all start with same prefix)
+             *
+             *     This format avoids duplicate IDs and matches Antfly's batch write interface.
+             * @example {
+             *       "product:001": {
+             *         "name": "Laptop",
+             *         "price": 999.99
+             *       },
+             *       "product:002": {
+             *         "name": "Mouse",
+             *         "price": 29.99
+             *       },
+             *       "product:003": {
+             *         "name": "Keyboard",
+             *         "price": 79.99
+             *       }
+             *     }
+             */
+            records: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description ID of last record from previous merge request.
+             *     - First request: Use empty string ""
+             *     - Subsequent requests: Use next_cursor from previous response
+             *     - Defines lower bound of key range to process
+             *
+             *     This enables pagination for large datasets.
+             * @example product:003
+             */
+            last_merged_id?: string;
+            /**
+             * @description If true, returns what would be deleted without making changes.
+             *
+             *     Use cases:
+             *     - Validate sync behavior before committing
+             *     - Check which records will be removed
+             *     - Test key range boundaries
+             *
+             *     Response includes deleted_ids array when dry_run=true.
+             * @default false
+             * @example false
+             */
+            dry_run?: boolean;
+            sync_level?: components["schemas"]["SyncLevel"];
+        };
+        FailedOperation: {
+            id?: string;
+            /** @enum {string} */
+            operation?: "upsert" | "delete";
+            error?: string;
+        };
+        /** @description Key range processed in this request */
+        KeyRange: {
+            from?: string;
+            to?: string;
+        };
+        LinearMergeResult: {
+            status: components["schemas"]["LinearMergePageStatus"];
+            /** @description Records inserted or updated (0 if dry_run=true) */
+            upserted: number;
+            /** @description Records skipped because content hash matched (unchanged) */
+            skipped: number;
+            /** @description Records deleted or would be deleted (if dry_run=true) */
+            deleted: number;
+            /** @description IDs that were deleted (or would be deleted if dry_run=true). Only included if dry_run=true. */
+            deleted_ids?: string[];
+            failed?: components["schemas"]["FailedOperation"][];
+            /** @description ID of last record in this batch (use for next request) */
+            next_cursor: string;
+            key_range?: components["schemas"]["KeyRange"];
+            /** @description Total number of keys scanned from Antfly during range query */
+            keys_scanned?: number;
+            /** @description Additional information (e.g., "stopped at shard boundary", "dry run - no changes made") */
+            message?: string;
+            /** Format: int64 */
+            took?: number;
+        };
+        /** @description A typed, weighted connection between documents */
+        Edge: {
+            /**
+             * Format: byte
+             * @description Base64-encoded source document key
+             */
+            source: string;
+            /**
+             * Format: byte
+             * @description Base64-encoded target document key
+             */
+            target: string;
+            /** @description Edge type (e.g., "cites", "similar_to", "authored_by") */
+            type: string;
+            /**
+             * Format: double
+             * @description Edge weight/confidence (0.0 to 1.0)
+             */
+            weight: number;
+            /**
+             * Format: date-time
+             * @description When the edge was created
+             */
+            created_at?: string;
+            /**
+             * Format: date-time
+             * @description When the edge was last updated
+             */
+            updated_at?: string;
+            /** @description Optional edge metadata */
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description Direction of edges to query:
+         *     - out: Outgoing edges from the node
+         *     - in: Incoming edges to the node
+         *     - both: Both outgoing and incoming edges
+         * @default out
+         * @enum {string}
+         */
+        EdgeDirection: "out" | "in" | "both";
+        /** @description Rules for graph traversal */
+        TraversalRules: {
+            /** @description Filter edges by type (empty = all types) */
+            edge_types?: string[];
+            /**
+             * Format: double
+             * @description Minimum edge weight filter
+             * @default 0
+             */
+            min_weight?: number;
+            /**
+             * Format: double
+             * @description Maximum edge weight filter
+             * @default 1
+             */
+            max_weight?: number;
+            direction?: components["schemas"]["EdgeDirection"];
+            /**
+             * @description Maximum traversal depth (0 = unlimited)
+             * @default 3
+             */
+            max_depth?: number;
+            /**
+             * @description Maximum results to return (0 = unlimited)
+             * @default 100
+             */
+            max_results?: number;
+            /**
+             * @description Include path information in results
+             * @default false
+             */
+            include_paths?: boolean;
+            /**
+             * @description Visit each node only once
+             * @default true
+             */
+            deduplicate_nodes?: boolean;
+        };
+        /** @description A single result from graph traversal */
+        TraversalResult: {
+            /**
+             * Format: byte
+             * @description Base64-encoded document key
+             */
+            key: string;
+            /** @description Document data (if loaded) */
+            document?: {
+                [key: string]: unknown;
+            };
+            /** @description Distance from start node (0 = start node) */
+            depth: number;
+            /** @description Sequence of keys from start to this node (if include_paths=true) */
+            path?: string[];
+            /** @description Sequence of edges from start to this node (if include_paths=true) */
+            path_edges?: components["schemas"]["Edge"][];
+            /**
+             * Format: double
+             * @description Product of edge weights along the path
+             */
+            total_weight?: number;
+        };
+        EdgesResponse: {
+            edges?: components["schemas"]["Edge"][];
+            /** @description Total number of edges returned */
+            count?: number;
+        };
+        TraverseResponse: {
+            results?: components["schemas"]["TraversalResult"][];
+            /** @description Total number of results */
+            count?: number;
+        };
+        /**
+         * @description Algorithm for path finding:
+         *     - min_hops: Shortest path by hop count (breadth-first search, ignores weights)
+         *     - max_weight: Path with maximum product of edge weights (strongest connection chain)
+         *     - min_weight: Path with minimum sum of edge weights (lowest cost route)
+         * @default min_hops
+         * @enum {string}
+         */
+        PathFindWeightMode: "min_hops" | "max_weight" | "min_weight";
+        PathFindRequest: {
+            /** @description Source node key (base64-encoded) */
+            source: string;
+            /** @description Target node key (base64-encoded) */
+            target: string;
+            /** @description Filter by specific edge types */
+            edge_types?: string[];
+            /** @default 10 */
+            max_depth?: number;
+            weight_mode?: components["schemas"]["PathFindWeightMode"];
+            /** @default 1 */
+            k?: number;
+            /** Format: double */
+            min_weight?: number;
+            /** Format: double */
+            max_weight?: number;
+            direction?: components["schemas"]["EdgeDirection"];
+        };
+        PathFindResult: {
+            paths?: components["schemas"]["Path"][];
+            source?: string;
+            target?: string;
+            weight_mode?: components["schemas"]["PathFindWeightMode"];
+            paths_found?: number;
+            /** Format: double */
+            search_time_ms?: number;
+        };
+        Path: {
+            /** @description Ordered list of node keys (base64-encoded) */
+            nodes?: string[];
+            edges?: components["schemas"]["PathEdge"][];
+            /** Format: double */
+            total_weight?: number;
+            length?: number;
+        };
+        PathEdge: {
+            source?: string;
+            target?: string;
+            type?: string;
+            /** Format: double */
+            weight?: number;
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * Format: double
+         * @description A floating-point number used to decrease or increase the relevance scores of a query.
+         * @default 1
+         */
+        Boost: number | null;
+        TermQuery: {
+            term: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        /** @description The fuzziness of the query. Can be an integer or "auto". */
+        Fuzziness: number | "auto";
+        MatchQuery: {
+            match: string;
+            field?: string;
+            analyzer?: string;
+            boost?: components["schemas"]["Boost"];
+            /** Format: int32 */
+            prefix_length?: number;
+            fuzziness?: components["schemas"]["Fuzziness"];
+            /** @enum {string} */
+            operator?: "or" | "and";
+        };
+        MatchPhraseQuery: {
+            match_phrase: string;
+            field?: string;
+            analyzer?: string;
+            boost?: components["schemas"]["Boost"];
+            fuzziness?: components["schemas"]["Fuzziness"];
+        };
+        PhraseQuery: {
+            terms: string[];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+            fuzziness?: components["schemas"]["Fuzziness"];
+        };
+        MultiPhraseQuery: {
+            terms: string[][];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+            fuzziness?: components["schemas"]["Fuzziness"];
+        };
+        FuzzyQuery: {
+            term: string;
+            /** Format: int32 */
+            prefix_length?: number;
+            fuzziness?: components["schemas"]["Fuzziness"];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        PrefixQuery: {
+            prefix: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        RegexpQuery: {
+            regexp: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        WildcardQuery: {
+            wildcard: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        QueryStringQuery: {
+            query: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        NumericRangeQuery: {
+            /** Format: double */
+            min?: number | null;
+            /** Format: double */
+            max?: number | null;
+            inclusive_min?: boolean | null;
+            inclusive_max?: boolean | null;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        TermRangeQuery: {
+            min?: string | null;
+            max?: string | null;
+            inclusive_min?: boolean | null;
+            inclusive_max?: boolean | null;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        DateRangeStringQuery: {
+            /** Format: date-time */
+            start?: string;
+            /** Format: date-time */
+            end?: string;
+            inclusive_start?: boolean | null;
+            inclusive_end?: boolean | null;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+            datetime_parser?: string;
+        };
+        Query: components["schemas"]["TermQuery"] | components["schemas"]["MatchQuery"] | components["schemas"]["MatchPhraseQuery"] | components["schemas"]["PhraseQuery"] | components["schemas"]["MultiPhraseQuery"] | components["schemas"]["FuzzyQuery"] | components["schemas"]["PrefixQuery"] | components["schemas"]["RegexpQuery"] | components["schemas"]["WildcardQuery"] | components["schemas"]["QueryStringQuery"] | components["schemas"]["NumericRangeQuery"] | components["schemas"]["TermRangeQuery"] | components["schemas"]["DateRangeStringQuery"] | components["schemas"]["BooleanQuery"] | components["schemas"]["ConjunctionQuery"] | components["schemas"]["DisjunctionQuery"] | components["schemas"]["MatchAllQuery"] | components["schemas"]["MatchNoneQuery"] | components["schemas"]["DocIdQuery"] | components["schemas"]["BoolFieldQuery"] | components["schemas"]["IPRangeQuery"] | components["schemas"]["GeoBoundingBoxQuery"] | components["schemas"]["GeoDistanceQuery"] | components["schemas"]["GeoBoundingPolygonQuery"] | components["schemas"]["GeoShapeQuery"];
+        ConjunctionQuery: {
+            conjuncts: components["schemas"]["Query"][];
+            boost?: components["schemas"]["Boost"];
+        };
+        DisjunctionQuery: {
+            disjuncts: components["schemas"]["Query"][];
+            boost?: components["schemas"]["Boost"];
+            /** Format: double */
+            min?: number;
+        };
+        BooleanQuery: {
+            must?: components["schemas"]["ConjunctionQuery"];
+            should?: components["schemas"]["DisjunctionQuery"];
+            must_not?: components["schemas"]["DisjunctionQuery"];
+            filter?: components["schemas"]["Query"];
+            boost?: components["schemas"]["Boost"];
+        };
+        MatchAllQuery: {
+            match_all: Record<string, never>;
+            boost?: components["schemas"]["Boost"];
+        };
+        MatchNoneQuery: {
+            match_none: Record<string, never>;
+            boost?: components["schemas"]["Boost"];
+        };
+        DocIdQuery: {
+            ids: string[];
+            boost?: components["schemas"]["Boost"];
+        };
+        BoolFieldQuery: {
+            bool: boolean;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        IPRangeQuery: {
+            cidr: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        GeoBoundingBoxQuery: {
+            /** @description [lon, lat] */
+            top_left: number[];
+            /** @description [lon, lat] */
+            bottom_right: number[];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        GeoDistanceQuery: {
+            /** @description [lon, lat] */
+            location: number[];
+            /** @example 10km */
+            distance: string;
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        GeoPoint: {
+            /** Format: double */
+            lon?: number;
+            /** Format: double */
+            lat?: number;
+        };
+        GeoBoundingPolygonQuery: {
+            polygon_points: components["schemas"]["GeoPoint"][];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        /** @description A GeoJSON shape object. This is a simplified representation. */
+        GeoShape: {
+            type: string;
+            coordinates: unknown[];
+        };
+        GeoShapeGeometry: {
+            shape: components["schemas"]["GeoShape"];
+            /** @enum {string} */
+            relation: "intersects" | "contains" | "within";
+        };
+        GeoShapeQuery: {
+            geometry: components["schemas"]["GeoShapeGeometry"];
+            field?: string;
+            boost?: components["schemas"]["Boost"];
+        };
+        /**
+         * @description Merge strategy for combining results from the semantic_search and full_text_search.
+         *     rrf: Reciprocal Rank Fusion - combines scores using reciprocal rank formula
+         *     rsf: Relative Score Fusion - normalizes scores by min/max within a window and combines weighted scores
+         *     failover: Use full_text_search if embedding generation fails
+         * @default rrf
+         * @enum {string}
+         */
+        MergeStrategy: "rrf" | "rsf" | "failover";
+        /**
+         * @description The reranking provider to use.
+         * @enum {string}
+         */
+        RerankerProvider: "ollama" | "termite" | "cohere" | "vertex";
+        /** @description Configuration for the Ollama reranking provider. */
+        OllamaRerankerConfig: {
+            /** @description The name of the Ollama model to use for reranking. */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Ollama API endpoint.
+             */
+            url?: string;
+        };
+        /** @description Configuration for the Termite reranking provider. */
+        TermiteRerankerConfig: {
+            /** @description The name of the reranking model (e.g., cross-encoder model name). */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Termite API endpoint.
+             */
+            url?: string;
+        };
+        /**
+         * @description Configuration for the Cohere reranking provider.
+         *
+         *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
+         *
+         *     **Example Models:** rerank-english-v3.0 (default), rerank-multilingual-v3.0
+         *
+         *     **Docs:** https://docs.cohere.com/reference/rerank
+         * @example {
+         *       "provider": "cohere",
+         *       "model": "rerank-english-v3.0"
+         *     }
+         */
+        CohereRerankerConfig: {
+            /**
+             * @description The name of the Cohere reranking model to use.
+             * @default rerank-english-v3.0
+             * @example rerank-english-v3.0
+             */
+            model: string;
+            /** @description The Cohere API key. Can also be set via COHERE_API_KEY environment variable. */
+            api_key?: string;
+            /** @description Number of most relevant documents to return. If not specified, returns all documents with scores. */
+            top_n?: number;
+            /** @description Maximum number of chunks per document for long document handling. */
+            max_chunks_per_doc?: number;
+        };
+        /**
+         * @description Configuration for the Google Vertex AI Ranking API.
+         *
+         *     Uses Application Default Credentials (ADC) or explicit credentials path.
+         *
+         *     **Prerequisites:**
+         *     - Enable Discovery Engine API: `gcloud services enable discoveryengine.googleapis.com`
+         *     - Grant IAM role: `roles/discoveryengine.admin` (includes `discoveryengine.rankingConfigs.rank` permission)
+         *
+         *     **Models:** semantic-ranker-default@latest (default), semantic-ranker-fast-004
+         *
+         *     **Docs:** https://cloud.google.com/generative-ai-app-builder/docs/ranking
+         *
+         *     **IAM:** https://cloud.google.com/generative-ai-app-builder/docs/access-control
+         * @example {
+         *       "provider": "vertex",
+         *       "model": "semantic-ranker-default@latest",
+         *       "project_id": "my-gcp-project"
+         *     }
+         */
+        VertexRerankerConfig: {
+            /**
+             * @description The ranking model to use.
+             * @default semantic-ranker-default@latest
+             * @example semantic-ranker-default@latest
+             */
+            model: string;
+            /** @description Google Cloud project ID. Falls back to GOOGLE_CLOUD_PROJECT environment variable. */
+            project_id?: string;
+            /** @description Path to service account JSON file. Falls back to GOOGLE_APPLICATION_CREDENTIALS environment variable. */
+            credentials_path?: string;
+            /** @description Maximum number of records to return. If not specified, returns all documents with scores. */
+            top_n?: number;
+        };
+        /**
+         * @description A unified configuration for a reranking provider.
+         * @example {
+         *       "provider": "ollama",
+         *       "model": "dengcao/Qwen3-Reranker-0.6B:F16",
+         *       "field": "content"
+         *     }
+         */
+        RerankerConfig: {
+            provider: components["schemas"]["RerankerProvider"];
+            /** @description Field name to extract from documents for reranking. */
+            field?: string;
+            /** @description Handlebars template to render document text for reranking. */
+            template?: string;
+        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"] | components["schemas"]["VertexRerankerConfig"]);
+        /**
+         * @description Type of graph query to execute
+         * @enum {string}
+         */
+        GraphQueryType: "traverse" | "neighbors" | "shortest_path" | "k_shortest_paths" | "pattern";
+        /** @description Filter nodes during graph traversal using existing query primitives */
+        NodeFilter: {
+            /** @description Bleve query to filter nodes (same syntax as search filter_query) */
+            filter_query?: {
+                [key: string]: unknown;
+            };
+            /** @description Filter by key prefix */
+            filter_prefix?: string;
+        };
+        /** @description Defines how to select start/target nodes for graph queries */
+        GraphNodeSelector: {
+            /** @description Explicit list of node keys */
+            keys?: string[];
+            /**
+             * @description Reference to search results to use as nodes:
+             *     - "$full_text_results" - use full-text search results
+             *     - "$aknn_results.index_name" - use vector search results from specific index
+             */
+            result_ref?: string;
+            /** @description Maximum number of nodes to select from the referenced results */
+            limit?: number;
+            /** @description Filter which nodes to use as start/target */
+            node_filter?: components["schemas"]["NodeFilter"];
+        };
+        /**
+         * @description Path weighting algorithm for pathfinding:
+         *     - min_hops: Minimize number of edges
+         *     - min_weight: Minimize sum of edge weights
+         *     - max_weight: Maximize product of edge weights
+         * @enum {string}
+         */
+        PathWeightMode: "min_hops" | "min_weight" | "max_weight";
+        /** @description Parameters for graph traversal and pathfinding */
+        GraphQueryParams: {
+            /** @description Filter by edge types */
+            edge_types?: string[];
+            direction?: components["schemas"]["EdgeDirection"];
+            /** @description Maximum traversal depth */
+            max_depth?: number;
+            /**
+             * Format: double
+             * @description Minimum edge weight
+             */
+            min_weight?: number;
+            /**
+             * Format: double
+             * @description Maximum edge weight
+             */
+            max_weight?: number;
+            /** @description Maximum number of results (traversal) */
+            max_results?: number;
+            /** @description Remove duplicate nodes (traversal) */
+            deduplicate_nodes?: boolean;
+            /** @description Include path information (traversal) */
+            include_paths?: boolean;
+            weight_mode?: components["schemas"]["PathWeightMode"];
+            /** @description Number of paths to find (k-shortest-paths) */
+            k?: number;
+            /** @description Filter which nodes to visit during traversal */
+            node_filter?: components["schemas"]["NodeFilter"];
+            /** @description Graph algorithm to run (e.g., 'pagerank', 'betweenness') */
+            algorithm?: string;
+            /** @description Parameters for the graph algorithm */
+            algorithm_params?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Edge constraints in a pattern step */
+        PatternEdgeStep: {
+            /** @description Edge types to traverse (empty = any) */
+            types?: string[];
+            direction?: components["schemas"]["EdgeDirection"];
+            /**
+             * @description Minimum number of hops (1 = direct edge)
+             * @default 1
+             */
+            min_hops?: number;
+            /**
+             * @description Maximum number of hops (>1 = variable-length path)
+             * @default 1
+             */
+            max_hops?: number;
+            /**
+             * Format: double
+             * @description Minimum edge weight filter
+             */
+            min_weight?: number;
+            /**
+             * Format: double
+             * @description Maximum edge weight filter
+             */
+            max_weight?: number;
+        };
+        /** @description A step in a graph pattern query */
+        PatternStep: {
+            /** @description Name for this node (reuse alias for cycle detection) */
+            alias?: string;
+            /** @description Filter constraints for nodes at this step */
+            node_filter?: components["schemas"]["NodeFilter"];
+            /** @description Edge to traverse to reach this step (null for first step) */
+            edge?: components["schemas"]["PatternEdgeStep"];
+        };
+        /** @description Declarative graph query to execute after full-text/vector searches */
+        GraphQuery: {
+            type: components["schemas"]["GraphQueryType"];
+            /** @description Graph index name (must be graph_v0 type) */
+            index_name: string;
+            /** @description Starting node(s) for the query */
+            start_nodes?: components["schemas"]["GraphNodeSelector"];
+            /** @description Target nodes (for pathfinding only) */
+            target_nodes?: components["schemas"]["GraphNodeSelector"];
+            /** @description Traversal/pathfinding parameters */
+            params?: components["schemas"]["GraphQueryParams"];
+            /** @description Pattern steps for pattern query type */
+            pattern?: components["schemas"]["PatternStep"][];
+            /** @description Which aliases to return from pattern query (empty = all) */
+            return_aliases?: string[];
+            /** @description Fetch full documents for graph results */
+            include_documents?: boolean;
+            /** @description Include edge details for each node */
+            include_edges?: boolean;
+            /** @description Which fields to return from documents */
+            fields?: string[];
+        };
+        /**
+         * @description Configuration for pruning search results based on score quality.
+         *     Helps filter out low-relevance results in RAG pipelines by detecting
+         *     score gaps or deviations from top results.
+         */
+        Pruner: {
+            /**
+             * Format: double
+             * @description Keep only results with score >= max_score * min_score_ratio.
+             *     For example, 0.5 keeps results scoring at least half of the top result.
+             *     Applied after fusion scoring.
+             * @example 0.5
+             */
+            min_score_ratio?: number;
+            /**
+             * Format: double
+             * @description Stop returning results when score drops more than this percentage
+             *     from the previous result. Detects "elbows" in score distribution.
+             *     For example, 30.0 stops when score drops 30% from previous result.
+             * @example 30
+             */
+            max_score_gap_percent?: number;
+            /**
+             * Format: double
+             * @description Hard minimum score threshold. Results with scores below this value
+             *     are excluded regardless of other pruning settings.
+             * @example 0.01
+             */
+            min_absolute_score?: number;
+            /**
+             * @description Only keep results that appear in multiple indexes (both full-text
+             *     and vector search). Useful for increasing precision by requiring
+             *     agreement between different retrieval methods.
+             * @default false
+             */
+            require_multi_index?: boolean;
+            /**
+             * Format: double
+             * @description Keep results within N standard deviations below the mean score.
+             *     For example, 1.0 keeps results with score >= mean - 1*stddev.
+             *     Useful for statistical outlier detection in result sets.
+             * @example 1.5
+             */
+            std_dev_threshold?: number;
+        };
+        /** @description A node in graph query results */
+        GraphResultNode: {
+            /** @description Document key */
+            key: string;
+            /** @description Distance from start node */
+            depth?: number;
+            /**
+             * Format: double
+             * @description Weighted distance
+             */
+            distance?: number;
+            /** @description Full document (if include_documents=true) */
+            document?: {
+                [key: string]: unknown;
+            };
+            /** @description Keys in path from start to this node */
+            path?: string[];
+            /** @description Edges in path from start to this node */
+            path_edges?: components["schemas"]["PathEdge"][];
+            /** @description Connected edges (when include_edges=true) */
+            edges?: components["schemas"]["Edge"][];
+        };
+        /** @description A single match from a pattern query */
+        PatternMatch: {
+            /** @description Map of alias to matched node */
+            bindings?: {
+                [key: string]: components["schemas"]["GraphResultNode"];
+            };
+            /** @description Edges traversed in this match */
+            path?: components["schemas"]["PathEdge"][];
+        };
+        /** @description Results of a graph query */
+        GraphQueryResult: {
+            type: components["schemas"]["GraphQueryType"];
+            /** @description Result nodes */
+            nodes?: components["schemas"]["GraphResultNode"][];
+            /** @description Result paths (for pathfinding queries) */
+            paths?: components["schemas"]["Path"][];
+            /** @description Pattern matches (for pattern queries) */
+            matches?: components["schemas"]["PatternMatch"][];
+            /** @description Total number of results */
+            total: number;
+            /**
+             * Format: int64
+             * @description Query execution time
+             */
+            took?: number;
+        };
+        /**
+         * @description Configuration for the Google generative AI provider (Gemini).
+         *
+         *     **Example Models:** gemini-2.5-flash (default), gemini-2.5-pro, gemini-3.0-pro
+         *
+         *     **Docs:** https://ai.google.dev/gemini-api/docs/models
+         */
+        GoogleGeneratorConfig: {
+            /** @description The Google Cloud project ID. */
+            project_id?: string;
+            /** @description The Google Cloud location (e.g., 'us-central1'). */
+            location?: string;
+            /**
+             * @description The name of the generative model to use (e.g., 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3.0-pro').
+             * @default gemini-2.5-flash
+             * @example gemini-2.5-flash
+             */
+            model: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. */
+            top_k?: number;
+            /** @description The Google API key. */
+            api_key?: string;
+            /**
+             * Format: uri
+             * @description The URL of the Google API endpoint.
+             */
+            url?: string;
+        };
+        /**
+         * @description Configuration for Google Cloud Vertex AI generative models (enterprise-grade).
+         *
+         *     Uses Application Default Credentials (ADC) for authentication. In GCP environments
+         *     (Cloud Run, GKE, Compute Engine) this is automatic. For local dev, run
+         *     `gcloud auth application-default login`. Requires IAM role `roles/aiplatform.user`.
+         *
+         *     **Example Models:** gemini-2.5-flash (default), gemini-2.5-pro, gemini-3.0-pro
+         *
+         *     **Docs:** https://cloud.google.com/vertex-ai/generative-ai/docs/learn/models
+         * @example {
+         *       "provider": "vertex",
+         *       "model": "gemini-2.5-flash",
+         *       "project_id": "my-gcp-project",
+         *       "location": "us-central1",
+         *       "temperature": 0.7,
+         *       "max_tokens": 4096
+         *     }
+         */
+        VertexGeneratorConfig: {
+            /**
+             * @description The name of the Vertex AI model to use.
+             * @default gemini-2.5-flash
+             * @example gemini-2.5-flash
+             */
+            model: string;
+            /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
+            project_id?: string;
+            /**
+             * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
+             * @default us-central1
+             */
+            location?: string;
+            /** @description Path to service account JSON key file. Sets GOOGLE_APPLICATION_CREDENTIALS environment variable. Alternative to ADC for non-GCP environments. */
+            credentials_path?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0). Higher values make output more random.
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate in the response. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
+            top_k?: number;
+        };
+        /**
+         * @description Configuration for the Ollama generative AI provider.
+         *
+         *     Ollama provides local LLM inference for privacy and offline use.
+         *
+         *     **Example Models:** llama3.3:70b, qwen2.5:72b, deepseek-r1:70b, mistral:7b, llava:34b
+         *
+         *     **Docs:** https://ollama.com/library
+         */
+        OllamaGeneratorConfig: {
+            /**
+             * @description The name of the Ollama model to use (e.g., 'llama3.3:70b', 'qwen2.5:72b', 'deepseek-coder:33b').
+             * @example llama3.3:70b
+             */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Ollama API endpoint.
+             */
+            url?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. */
+            top_k?: number;
+        };
+        /**
+         * @description Configuration for the OpenAI generative AI provider.
+         *
+         *     **Example Models:** gpt-4.1 (default), gpt-4.1-mini, o3, o4-mini
+         *
+         *     **Docs:** https://platform.openai.com/docs/models
+         */
+        OpenAIGeneratorConfig: {
+            /**
+             * @description The name of the OpenAI model to use (e.g., 'gpt-4.1', 'gpt-4.1-mini', 'o4-mini').
+             * @default gpt-4.1
+             * @example gpt-4.1
+             */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the OpenAI API endpoint.
+             */
+            url?: string;
+            /** @description The OpenAI API key. */
+            api_key?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /**
+             * Format: float
+             * @description Penalty for token frequency (-2.0 to 2.0).
+             */
+            frequency_penalty?: number;
+            /**
+             * Format: float
+             * @description Penalty for token presence (-2.0 to 2.0).
+             */
+            presence_penalty?: number;
+        };
+        /**
+         * @description Configuration for the AWS Bedrock generative AI provider.
+         *
+         *     Provides access to models from Anthropic, Meta, Amazon, Cohere, Mistral, and others.
+         *
+         *     **Example Models:** anthropic.claude-sonnet-4-5-20250929-v1:0, meta.llama3-3-70b-instruct-v1:0, amazon.nova-pro-v1:0
+         *
+         *     **Docs:** https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+         */
+        BedrockGeneratorConfig: {
+            /**
+             * @description The Bedrock model ID to use (e.g., 'anthropic.claude-sonnet-4-5-20250929-v1:0').
+             * @example anthropic.claude-sonnet-4-5-20250929-v1:0
+             */
+            model: string;
+            /** @description The AWS region for the Bedrock service. */
+            region?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-1.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. */
+            top_k?: number;
+        };
+        /**
+         * @description Configuration for the Anthropic generative AI provider (Claude models).
+         *
+         *     API key via `api_key` field or `ANTHROPIC_API_KEY` environment variable.
+         *
+         *     **Example Models:** claude-sonnet-4-5-20250929 (default), claude-opus-4-5-20251101, claude-3-5-haiku-20241022
+         *
+         *     **Docs:** https://docs.anthropic.com/en/docs/about-claude/models/overview
+         * @example {
+         *       "provider": "anthropic",
+         *       "model": "claude-sonnet-4-5-20250929",
+         *       "temperature": 0.7,
+         *       "max_tokens": 4096
+         *     }
+         */
+        AnthropicGeneratorConfig: {
+            /**
+             * @description The full model ID of the Anthropic model to use (e.g., 'claude-sonnet-4-5-20250929', 'claude-opus-4-5-20251101').
+             * @default claude-sonnet-4-5-20250929
+             * @example claude-sonnet-4-5-20250929
+             */
+            model: string;
+            /** @description The Anthropic API key. If not provided, falls back to ANTHROPIC_API_KEY environment variable. */
+            api_key?: string;
+            /**
+             * Format: uri
+             * @description The URL of the Anthropic API endpoint (optional, uses default if not specified).
+             */
+            url?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-1.0). Higher values make output more random.
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate in the response. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
+            top_k?: number;
+        };
+        /**
+         * @description Configuration for the Cohere generative AI provider (Command models).
+         *
+         *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
+         *
+         *     **Example Models:** command-r-plus (default), command-r, command-a-03-2025
+         *
+         *     **Docs:** https://docs.cohere.com/reference/chat
+         * @example {
+         *       "provider": "cohere",
+         *       "model": "command-r-plus",
+         *       "temperature": 0.7,
+         *       "max_tokens": 4096
+         *     }
+         */
+        CohereGeneratorConfig: {
+            /**
+             * @description The name of the Cohere model to use.
+             * @default command-r-plus
+             * @example command-r-plus
+             */
+            model: string;
+            /** @description The Cohere API key. If not provided, falls back to COHERE_API_KEY environment variable. */
+            api_key?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-1.0). Higher values make output more random.
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate in the response. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. Only sample from the top K options for each subsequent token. */
+            top_k?: number;
+            /**
+             * Format: float
+             * @description Penalty for token frequency (0.0-1.0).
+             */
+            frequency_penalty?: number;
+            /**
+             * Format: float
+             * @description Penalty for token presence (0.0-1.0).
+             */
+            presence_penalty?: number;
+        };
+        /**
+         * @description The generative AI provider to use.
+         * @enum {string}
+         */
+        GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "anthropic" | "cohere" | "mock";
+        /**
+         * @description A unified configuration for a generative AI provider.
+         *
+         *     Generators can be configured with custom prompts using templates. Templates use
+         *     Handlebars syntax and support various built-in helpers for formatting and data manipulation.
+         *
+         *     **Template System:**
+         *     - **Syntax**: Handlebars templating (https://handlebarsjs.com/guide/)
+         *     - **Caching**: Templates are automatically cached with configurable TTL (default: 5 minutes)
+         *     - **Context**: Templates receive the full context data passed to the generator
+         *
+         *     **Built-in Helpers:**
+         *
+         *     1. **scrubHtml** - Remove script/style tags and extract clean text from HTML
+         *        ```handlebars
+         *        {{scrubHtml html_content}}
+         *        ```
+         *        - Removes `<script>` and `<style>` tags
+         *        - Adds newlines after block elements (p, div, h1-h6, li, etc.)
+         *        - Returns plain text with preserved readability
+         *        - Useful for cleaning web content before summarization
+         *
+         *     2. **eq** - Equality comparison for conditionals
+         *        ```handlebars
+         *        {{#if (eq status "active")}}Active{{/if}}
+         *        {{#if (eq @key "special")}}Special field{{/if}}
+         *        ```
+         *        - Use in `{{#if}}` blocks for conditional logic
+         *        - Compares any two values for equality
+         *
+         *     3. **media** - GenKit dotprompt media directive for multimodal content
+         *        ```handlebars
+         *        {{media url=imageDataURI}}
+         *        {{media url=this.image_url}}
+         *        {{media url="https://example.com/image.jpg"}}
+         *        {{media url="s3://endpoint/bucket/image.png"}}
+         *        {{media url="file:///path/to/image.jpg"}}
+         *        ```
+         *
+         *        **Supported URL Schemes:**
+         *        - `data:` - Base64 encoded data URIs (e.g., `data:image/jpeg;base64,...`)
+         *        - `http://` / `https://` - Web URLs with automatic content type detection
+         *        - `file://` - Local filesystem paths
+         *        - `s3://` - S3-compatible storage (format: `s3://endpoint/bucket/key`)
+         *
+         *        **Automatic Content Processing:**
+         *        - **Images**: Downloaded, resized (if needed), converted to data URIs
+         *        - **PDFs**: Text extracted or first page rendered as image
+         *        - **HTML**: Readable text extracted using Mozilla Readability
+         *
+         *        **Security Controls:**
+         *        Downloads are protected by content security settings (see Configuration Reference):
+         *        - Allowed host whitelist
+         *        - Private IP blocking (prevents SSRF attacks)
+         *        - Download size limits (default: 100MB)
+         *        - Download timeouts (default: 30s)
+         *        - Image dimension limits (default: 2048px, auto-resized)
+         *
+         *        See: https://antfly.io/docs/configuration#security--cors
+         *
+         *     4. **encodeToon** - Encode data in TOON format (Token-Oriented Object Notation)
+         *        ```handlebars
+         *        {{encodeToon this.fields}}
+         *        {{encodeToon this.fields lengthMarker=false indent=4}}
+         *        {{encodeToon this.fields delimiter="\t"}}
+         *        ```
+         *
+         *        **What is TOON?**
+         *        TOON is a compact, human-readable format designed for passing structured data to LLMs.
+         *        It provides **30-60% token reduction** compared to JSON while maintaining high LLM
+         *        comprehension accuracy.
+         *
+         *        **Key Features:**
+         *        - Compact syntax using `:` for key-value pairs
+         *        - Array length markers: `tags[#3]: ai,search,ml`
+         *        - Tabular format for uniform data structures
+         *        - Optimized for LLM parsing and understanding
+         *        - Maintains human readability
+         *
+         *        **Benefits:**
+         *        - **Lower API costs** - Reduced token usage means lower LLM API costs
+         *        - **Faster responses** - Less tokens to process
+         *        - **More context** - Fit more documents within token limits
+         *
+         *        **Options:**
+         *        - `lengthMarker` (bool): Add # prefix to array counts like `[#3]` (default: true)
+         *        - `indent` (int): Indentation spacing for nested objects (default: 2)
+         *        - `delimiter` (string): Field separator for tabular arrays (default: none, use `"\t"` for tabs)
+         *
+         *        **Example output:**
+         *        ```
+         *        title: Introduction to Vector Search
+         *        author: Jane Doe
+         *        tags[#3]: ai,search,ml
+         *        metadata:
+         *          edition: 2
+         *          pages: 450
+         *        ```
+         *
+         *        **Default in RAG:** TOON is the default format for document rendering in RAG queries.
+         *
+         *        **References:**
+         *        - TOON Specification: https://github.com/toon-format/toon
+         *        - Go Implementation: https://github.com/alpkeskin/gotoon
+         *
+         *     **Template Examples:**
+         *
+         *     RAG summarization with document references:
+         *     ```handlebars
+         *     Based on these documents, provide a comprehensive summary:
+         *
+         *     {{#each documents}}
+         *     Document {{this.id}}:
+         *     {{scrubHtml this.content}}
+         *
+         *     {{/each}}
+         *
+         *     Valid document IDs: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
+         *     ```
+         *
+         *     Conditional formatting:
+         *     ```handlebars
+         *     {{#if system_prompt}}System: {{system_prompt}}{{/if}}
+         *
+         *     User Query: {{query}}
+         *
+         *     {{#if context}}
+         *     Context:
+         *     {{#each context}}
+         *     - {{this}}
+         *     {{/each}}
+         *     {{/if}}
+         *     ```
+         *
+         *     Multimodal prompt with images:
+         *     ```handlebars
+         *     Analyze this image:
+         *     {{media url=image_url}}
+         *
+         *     Focus on: {{focus_area}}
+         *     ```
+         *
+         *     Structured data encoding:
+         *     ```handlebars
+         *     User Profile:
+         *     {{encodeToon user_data indent=2 lengthMarker=true}}
+         *
+         *     Please analyze this profile.
+         *     ```
+         *
+         *     **Common Use Cases:**
+         *     - **RAG (Retrieval-Augmented Generation)**: Format retrieved documents with citations
+         *     - **Summarization**: Clean HTML content and structure summaries
+         *     - **Query Classification**: Format queries with metadata for better classification
+         *     - **Multimodal**: Include images/audio/video in prompts
+         *     - **Data Formatting**: Convert structured data to readable text
+         *
+         *     **Best Practices:**
+         *     - Keep templates simple - complex logic belongs in application code
+         *     - Use clear, descriptive field names in context
+         *     - Handle missing fields gracefully (templates use "missingkey=zero" by default)
+         *     - Test templates with representative data before production use
+         * @example {
+         *       "provider": "openai",
+         *       "model": "gpt-4.1",
+         *       "temperature": 0.7,
+         *       "max_tokens": 2048
+         *     }
+         */
+        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"] | components["schemas"]["CohereGeneratorConfig"]) & {
+            provider: components["schemas"]["GeneratorProvider"];
+        };
+        /** @description Retry configuration for generator calls */
+        RetryConfig: {
+            /**
+             * @description Maximum number of retry attempts
+             * @default 3
+             */
+            max_attempts?: number;
+            /**
+             * @description Initial backoff delay in milliseconds
+             * @default 1000
+             */
+            initial_backoff_ms?: number;
+            /**
+             * Format: float
+             * @description Multiplier for exponential backoff
+             * @default 2
+             */
+            backoff_multiplier?: number;
+            /**
+             * @description Maximum backoff delay in milliseconds
+             * @default 30000
+             */
+            max_backoff_ms?: number;
+        };
+        /**
+         * @description Condition for trying the next generator in chain:
+         *     - always: Always try next regardless of outcome
+         *     - on_error: Try next on any error (default)
+         *     - on_timeout: Try next only on timeout errors
+         *     - on_rate_limit: Try next only on rate limit errors
+         * @default on_error
+         * @enum {string}
+         */
+        ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
+        /** @description A single link in a generator chain with optional retry and condition */
+        ChainLink: {
+            generator: components["schemas"]["GeneratorConfig"];
+            /** @description Retry configuration for this generator */
+            retry?: components["schemas"]["RetryConfig"];
+            /** @description When to try the next generator in chain */
+            condition?: components["schemas"]["ChainCondition"];
+        };
+        /**
+         * @description Available evaluator types:
+         *
+         *     **Retrieval metrics** (require ground_truth.relevant_ids):
+         *     - recall: Recall@k - fraction of relevant docs retrieved
+         *     - precision: Precision@k - fraction of retrieved docs that are relevant
+         *     - ndcg: Normalized Discounted Cumulative Gain
+         *     - mrr: Mean Reciprocal Rank
+         *     - map: Mean Average Precision
+         *
+         *     **LLM-as-judge metrics** (require judge config):
+         *     - relevance: Is output relevant to query? (works on retrieval-only too)
+         *     - faithfulness: Is output grounded in context?
+         *     - completeness: Does output fully address query?
+         *     - coherence: Is output well-structured?
+         *     - safety: Is output safe/appropriate?
+         *     - helpfulness: Is output useful?
+         *     - correctness: Is output factually correct? (uses expectations)
+         *     - citation_quality: Are citations accurate?
+         * @enum {string}
+         */
+        EvaluatorName: "recall" | "precision" | "ndcg" | "mrr" | "map" | "relevance" | "faithfulness" | "completeness" | "coherence" | "safety" | "helpfulness" | "correctness" | "citation_quality";
+        /** @description Ground truth data for evaluation */
+        GroundTruth: {
+            /** @description Document IDs known to be relevant (for retrieval metrics) */
+            relevant_ids?: string[];
+            /**
+             * @description Context for evaluators about what to expect in the response.
+             *     Provides guidance for LLM judges (e.g., "Should mention pricing tiers").
+             */
+            expectations?: string;
+        };
+        /** @description Options for evaluation behavior */
+        EvalOptions: {
+            /**
+             * @description K value for @K metrics (precision@k, recall@k, ndcg@k)
+             * @default 10
+             */
+            k?: number;
+            /**
+             * Format: float
+             * @description Score threshold for pass/fail determination
+             * @default 0.5
+             */
+            pass_threshold?: number;
+            /**
+             * @description Timeout for evaluation in seconds
+             * @default 30
+             */
+            timeout_seconds?: number;
+        };
+        /**
+         * @description Configuration for inline evaluation of query results.
+         *     Add to RAGRequest, QueryRequest, or AnswerAgentRequest.
+         */
+        EvalConfig: {
+            /** @description List of evaluators to run */
+            evaluators?: components["schemas"]["EvaluatorName"][];
+            /**
+             * @description LLM configuration for judge-based evaluators.
+             *     Falls back to default if not specified.
+             */
+            judge?: components["schemas"]["GeneratorConfig"];
+            /** @description Ground truth data for retrieval metrics */
+            ground_truth?: components["schemas"]["GroundTruth"];
+            /** @description Evaluation options (k, thresholds, etc.) */
+            options?: components["schemas"]["EvalOptions"];
+        };
+        /** @description Result of a summarization operation. The summary is formatted as markdown with inline resource references using [resource_id <id>] or [resource_id <id1>, <id2>] format. */
+        SummarizeResult: {
+            /** @description The generated summary text in markdown format with inline resource references like [resource_id res1] or [resource_id res1, res2] */
+            summary: string;
+        };
+        /** @description Result from a single evaluator */
+        EvaluatorScore: {
+            /**
+             * Format: float
+             * @description Numeric score (0-1)
+             */
+            score?: number;
+            /** @description Whether the evaluation passed the threshold */
+            pass?: boolean;
+            /** @description Human-readable explanation of the result */
+            reason?: string;
+            /** @description Additional evaluator-specific data */
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Scores organized by category */
+        EvalScores: {
+            /** @description Retrieval metric scores (recall, precision, ndcg, etc.) */
+            retrieval?: {
+                [key: string]: components["schemas"]["EvaluatorScore"];
+            };
+            /** @description Generation quality scores (faithfulness, relevance, etc.) */
+            generation?: {
+                [key: string]: components["schemas"]["EvaluatorScore"];
+            };
+        };
+        /** @description Aggregate statistics across all evaluators */
+        EvalSummary: {
+            /**
+             * Format: float
+             * @description Average score across all evaluators
+             */
+            average_score?: number;
+            /** @description Number of evaluators that passed */
+            passed?: number;
+            /** @description Number of evaluators that failed */
+            failed?: number;
+            /** @description Total number of evaluators run */
+            total?: number;
+        };
+        /** @description Complete evaluation result */
+        EvalResult: {
+            /** @description Scores organized by category */
+            scores?: components["schemas"]["EvalScores"];
+            /** @description Aggregate statistics */
+            summary?: components["schemas"]["EvalSummary"];
+            /** @description Total evaluation duration in milliseconds */
+            duration_ms?: number;
+        };
+        /**
+         * @description Strategy for query transformation and retrieval:
+         *     - simple: Direct query with multi-phrase expansion. Best for straightforward factual queries.
+         *     - decompose: Break complex queries into sub-questions, retrieve for each. Best for multi-part questions.
+         *     - step_back: Generate broader background query first, then specific query. Best for questions needing context.
+         *     - hyde: Generate hypothetical answer document, embed that for retrieval. Best for abstract/conceptual questions.
+         * @enum {string}
+         */
+        QueryStrategy: "simple" | "decompose" | "step_back" | "hyde";
+        /**
+         * @description Mode for semantic query generation:
+         *     - rewrite: Transform query into expanded keywords/concepts optimized for vector search (Level 2 optimization)
+         *     - hypothetical: Generate a hypothetical answer that would appear in relevant documents (HyDE - Level 3 optimization)
+         * @enum {string}
+         */
+        SemanticQueryMode: "rewrite" | "hypothetical";
+        /**
+         * @description Configuration for the classification step. This step analyzes the query,
+         *     selects the optimal retrieval strategy, and generates semantic transformations.
+         */
+        ClassificationStepConfig: {
+            /** @description Generator to use for classification. If not specified, uses the default summarizer. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Include pre-retrieval reasoning explaining query analysis and strategy selection
+             * @default false
+             */
+            with_reasoning?: boolean;
+            /** @description Override LLM strategy selection. If not set, the LLM chooses optimal strategy. */
+            force_strategy?: components["schemas"]["QueryStrategy"];
+            /** @description Override semantic query mode selection. */
+            force_semantic_mode?: components["schemas"]["SemanticQueryMode"];
+            /**
+             * @description Number of alternative query phrasings to generate
+             * @default 3
+             */
+            multi_phrase_count?: number;
+        };
+        /**
+         * @description Configuration for the answer generation step. This step generates the final
+         *     answer from retrieved documents using the reasoning as context.
+         */
+        AnswerStepConfig: {
+            /** @description Generator to use for answer generation. If not specified, uses the default summarizer. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /** @description Custom system prompt for answer generation */
+            system_prompt?: string;
+            /**
+             * @description Custom guidance for answer tone, detail level, and style
+             * @example Be concise and technical. Include code examples where relevant.
+             */
+            answer_context?: string;
+        };
+        /**
+         * @description Configuration for generating follow-up questions. Uses a separate generator
+         *     call which can use a cheaper/faster model.
+         */
+        FollowupStepConfig: {
+            /**
+             * @description Enable follow-up question generation
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator for follow-up questions. If not specified, uses the answer step's generator. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Number of follow-up questions to generate
+             * @default 3
+             */
+            count?: number;
+            /**
+             * @description Custom guidance for follow-up question focus and style
+             * @example Focus on implementation details and edge cases
+             */
+            context?: string;
+        };
+        /**
+         * @description Configuration for confidence assessment. Evaluates answer quality and
+         *     resource relevance. Can use a model calibrated for scoring tasks.
+         */
+        ConfidenceStepConfig: {
+            /**
+             * @description Enable confidence scoring
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator for confidence assessment. If not specified, uses the answer step's generator. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Custom guidance for confidence assessment approach
+             * @example Be conservative - only give high confidence if resources directly address the question
+             */
+            context?: string;
+        };
+        /**
+         * @description Per-step configuration for the answer agent pipeline. Each step can have
+         *     its own generator (or chain of generators) and step-specific options.
+         *     If a step is not configured, it uses the top-level generator as default.
+         */
+        AnswerAgentSteps: {
+            /** @description Configuration for query classification and transformation */
+            classification?: components["schemas"]["ClassificationStepConfig"];
+            /** @description Configuration for answer generation */
+            answer?: components["schemas"]["AnswerStepConfig"];
+            /** @description Configuration for follow-up question generation */
+            followup?: components["schemas"]["FollowupStepConfig"];
+            /** @description Configuration for confidence assessment */
+            confidence?: components["schemas"]["ConfidenceStepConfig"];
+        };
+        /**
+         * @description Classification of query type: question (specific factual query) or search (exploratory query)
+         * @enum {string}
+         */
+        RouteType: "question" | "search";
+        /** @description Query classification and transformation result combining all query enhancements including strategy selection and semantic optimization */
+        ClassificationTransformationResult: {
+            route_type: components["schemas"]["RouteType"];
+            strategy: components["schemas"]["QueryStrategy"];
+            semantic_mode: components["schemas"]["SemanticQueryMode"];
+            /** @description Clarified query with added context for answer generation (human-readable) */
+            improved_query: string;
+            /** @description Optimized query for vector/semantic search. Content style depends on semantic_mode: keywords for 'rewrite', hypothetical answer for 'hypothetical' */
+            semantic_query: string;
+            /** @description Broader background query for context (only present when strategy is 'step_back') */
+            step_back_query?: string;
+            /** @description Decomposed sub-questions (only present when strategy is 'decompose') */
+            sub_questions?: string[];
+            /** @description Alternative phrasings of the query for expanded retrieval coverage */
+            multi_phrases?: string[];
+            /** @description Pre-retrieval reasoning explaining query analysis and strategy selection (only present when with_classification_reasoning is enabled) */
+            reasoning?: string;
+            /**
+             * Format: float
+             * @description Classification confidence (0.0 to 1.0)
+             */
+            confidence: number;
+        };
+        /**
+         * @description Role of the message sender in the conversation
+         * @enum {string}
+         */
+        ChatMessageRole: "user" | "assistant" | "system" | "tool";
+        /** @description A tool call made by the assistant */
+        ChatToolCall: {
+            /** @description Unique identifier for this tool call */
+            id: string;
+            /** @description Name of the tool being called */
+            name: string;
+            /** @description Arguments passed to the tool as key-value pairs */
+            arguments: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Result from executing a tool call */
+        ChatToolResult: {
+            /** @description ID of the tool call this result corresponds to */
+            tool_call_id: string;
+            /** @description Result data from the tool execution */
+            result: {
+                [key: string]: unknown;
+            };
+            /** @description Error message if tool execution failed */
+            error?: string;
+        };
+        /** @description A message in the conversation history */
+        ChatMessage: {
+            role: components["schemas"]["ChatMessageRole"];
+            /** @description Text content of the message */
+            content: string;
+            /** @description Tool calls made by the assistant (only for assistant role) */
+            tool_calls?: components["schemas"]["ChatToolCall"][];
+            /** @description Results from tool executions (only for tool role) */
+            tool_results?: components["schemas"]["ChatToolResult"][];
+        };
+        /**
+         * @description Available tool names for the chat agent.
+         *     - add_filter: Add search filters (field constraints)
+         *     - ask_clarification: Ask user for clarification
+         *     - search: Execute semantic searches
+         *     - websearch: Search the web (requires websearch_config)
+         *     - fetch: Fetch URL content (subject to security controls)
+         * @enum {string}
+         */
+        ChatToolName: "add_filter" | "ask_clarification" | "search" | "websearch" | "fetch";
+        /**
+         * @description A unified configuration for web search providers.
+         *
+         *     Each provider has specific configuration requirements. Use the appropriate
+         *     provider-specific config or set common options at the top level.
+         *
+         *     **Environment Variables (fallbacks):**
+         *     - GOOGLE_CSE_API_KEY, GOOGLE_CSE_ID
+         *     - BING_SEARCH_API_KEY
+         *     - SERPER_API_KEY
+         *     - TAVILY_API_KEY
+         *     - BRAVE_API_KEY
+         */
+        WebSearchConfig: {
+            provider: components["schemas"]["WebSearchProvider"];
+            /**
+             * @description Maximum number of search results to return
+             * @default 5
+             */
+            max_results?: number;
+            /**
+             * @description Request timeout in milliseconds
+             * @default 10000
+             */
+            timeout_ms?: number;
+            /**
+             * @description Enable safe search filtering
+             * @default true
+             */
+            safe_search?: boolean;
+            /**
+             * @description Preferred language for results (e.g., 'en', 'es', 'fr')
+             * @example en
+             */
+            language?: string;
+            /**
+             * @description Preferred region for results (e.g., 'us', 'uk', 'de')
+             * @example us
+             */
+            region?: string;
+        };
+        /**
+         * @description Configuration for Google Custom Search API.
+         *
+         *     Requires a Custom Search Engine (CSE) to be configured in Google Cloud Console.
+         *
+         *     **Setup:**
+         *     1. Create a project at https://console.cloud.google.com
+         *     2. Enable Custom Search API
+         *     3. Create a Custom Search Engine at https://cse.google.com
+         *     4. Get API key and CSE ID
+         *
+         *     **Docs:** https://developers.google.com/custom-search/v1/overview
+         */
+        GoogleSearchConfig: Omit<components["schemas"]["WebSearchConfig"], "provider"> & {
+            /** @description Google API key (or set GOOGLE_CSE_API_KEY env var) */
+            api_key?: string;
+            /** @description Custom Search Engine ID (or set GOOGLE_CSE_ID env var) */
+            cse_id?: string;
+            /**
+             * @description Type of search to perform
+             * @default web
+             * @enum {string}
+             */
+            search_type?: "web" | "image";
+            /**
+             * @description Restrict results by date (e.g., 'd7' for last 7 days, 'm1' for last month)
+             * @example m1
+             */
+            date_restrict?: string;
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "google";
+        };
+        /**
+         * @description Configuration for Microsoft Bing Web Search API.
+         *
+         *     **Setup:**
+         *     1. Create Azure account at https://portal.azure.com
+         *     2. Create a Bing Search resource
+         *     3. Get API key from resource keys
+         *
+         *     **Docs:** https://docs.microsoft.com/en-us/bing/search-apis/bing-web-search/overview
+         */
+        BingSearchConfig: Omit<components["schemas"]["WebSearchConfig"], "provider"> & {
+            /** @description Bing Search API key (or set BING_SEARCH_API_KEY env var) */
+            api_key?: string;
+            /**
+             * Format: uri
+             * @description Bing API endpoint URL
+             * @default https://api.bing.microsoft.com/v7.0/search
+             */
+            endpoint?: string;
+            /**
+             * @description Filter results by freshness
+             * @enum {string}
+             */
+            freshness?: "Day" | "Week" | "Month";
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "bing";
+        };
+        /**
+         * @description Configuration for Serper.dev Google Search API.
+         *
+         *     Serper provides a simpler alternative to Google Custom Search with
+         *     competitive pricing and easy setup.
+         *
+         *     **Setup:**
+         *     1. Sign up at https://serper.dev
+         *     2. Get API key from dashboard
+         *
+         *     **Docs:** https://serper.dev/docs
+         */
+        SerperSearchConfig: Omit<components["schemas"]["WebSearchConfig"], "provider"> & {
+            /** @description Serper API key (or set SERPER_API_KEY env var) */
+            api_key?: string;
+            /**
+             * @description Type of search to perform
+             * @default search
+             * @enum {string}
+             */
+            search_type?: "search" | "news" | "images" | "places" | "shopping";
+            /**
+             * @description Time period filter: d=day, w=week, m=month, y=year
+             * @enum {string}
+             */
+            time_period?: "d" | "w" | "m" | "y";
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "serper";
+        };
+        /**
+         * @description Configuration for Tavily AI Search API.
+         *
+         *     Tavily is optimized for RAG and AI applications, providing
+         *     pre-processed results with summaries and relevance scoring.
+         *
+         *     **Setup:**
+         *     1. Sign up at https://tavily.com
+         *     2. Get API key from dashboard
+         *
+         *     **Docs:** https://docs.tavily.com
+         */
+        TavilySearchConfig: Omit<components["schemas"]["WebSearchConfig"], "provider"> & {
+            /** @description Tavily API key (or set TAVILY_API_KEY env var) */
+            api_key?: string;
+            /**
+             * @description Search depth:
+             *     - basic: Fast search with standard results
+             *     - advanced: Deeper search with more comprehensive results
+             * @default basic
+             * @enum {string}
+             */
+            search_depth?: "basic" | "advanced";
+            /**
+             * @description Include AI-generated answer summary
+             * @default true
+             */
+            include_answer?: boolean;
+            /**
+             * @description Include raw HTML content of pages
+             * @default false
+             */
+            include_raw_content?: boolean;
+            /** @description Only include results from these domains */
+            include_domains?: string[];
+            /** @description Exclude results from these domains */
+            exclude_domains?: string[];
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "tavily";
+        };
+        /**
+         * @description Configuration for Brave Search API.
+         *
+         *     Brave Search provides privacy-focused search with its own independent index.
+         *
+         *     **Setup:**
+         *     1. Sign up at https://brave.com/search/api/
+         *     2. Get API key from dashboard
+         *
+         *     **Docs:** https://api.search.brave.com/app/documentation
+         */
+        BraveSearchConfig: Omit<components["schemas"]["WebSearchConfig"], "provider"> & {
+            /** @description Brave Search API key (or set BRAVE_API_KEY env var) */
+            api_key?: string;
+            /**
+             * @description Freshness filter: pd=day, pw=week, pm=month, py=year
+             * @enum {string}
+             */
+            freshness?: "pd" | "pw" | "pm" | "py";
+            /**
+             * @description Include text decorations (bold, italic markers)
+             * @default false
+             */
+            text_decorations?: boolean;
+            /**
+             * @description Enable spellcheck suggestions
+             * @default true
+             */
+            spellcheck?: boolean;
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "brave";
+        };
+        /**
+         * @description Configuration for DuckDuckGo Instant Answer API.
+         *
+         *     DuckDuckGo provides limited free search without requiring an API key.
+         *     Best for simple queries; may not return results for all searches.
+         *
+         *     **Note:** This uses the Instant Answer API which has limitations.
+         *     For production use, consider other providers.
+         *
+         *     **Docs:** https://duckduckgo.com/api
+         */
+        DuckDuckGoSearchConfig: Omit<components["schemas"]["WebSearchConfig"], "provider"> & {
+            /**
+             * @description Skip HTTP redirect for bang queries
+             * @default true
+             */
+            no_redirect?: boolean;
+            /**
+             * @description Remove HTML from results
+             * @default true
+             */
+            no_html?: boolean;
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            provider: "duckduckgo";
+        };
+        /**
+         * @description The web search provider to use.
+         *
+         *     - **google**: Google Custom Search API (requires CSE setup)
+         *     - **bing**: Microsoft Bing Web Search API
+         *     - **serper**: Serper.dev Google Search API (simpler setup)
+         *     - **tavily**: Tavily AI Search API (optimized for RAG)
+         *     - **brave**: Brave Search API
+         *     - **duckduckgo**: DuckDuckGo Instant Answer API (limited, no API key)
+         * @enum {string}
+         */
+        WebSearchProvider: "google" | "bing" | "serper" | "tavily" | "brave" | "duckduckgo";
+        /**
+         * @description Configuration for URL content fetching.
+         *
+         *     Uses lib/scraping for downloading and processing. Supports:
+         *     - HTTP/HTTPS URLs with security validation
+         *     - HTML pages (extracts readable text via go-readability)
+         *     - PDF files (extracts text)
+         *     - Images (returns as data URIs)
+         *     - Plain text files
+         *
+         *     Security features (from lib/scraping.ContentSecurityConfig):
+         *     - Allowed host whitelist
+         *     - Private IP blocking (SSRF prevention)
+         *     - Download size limits
+         *     - Timeout controls
+         */
+        FetchConfig: {
+            /**
+             * @description Maximum content length in characters (truncated if exceeded)
+             * @default 50000
+             */
+            max_content_length?: number;
+            /**
+             * @description Whitelist of allowed hostnames for fetching.
+             *     If empty, all hosts are allowed (except private IPs).
+             *     Example: ["docs.example.com", "api.example.com"]
+             */
+            allowed_hosts?: string[];
+            /**
+             * @description Block requests to private IP ranges (SSRF prevention).
+             *     Blocked: 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+             * @default true
+             */
+            block_private_ips?: boolean;
+            /**
+             * @description Maximum download size in bytes (default: 100MB)
+             * @default 104857600
+             */
+            max_download_size_bytes?: number;
+            /**
+             * @description Download timeout in seconds
+             * @default 30
+             */
+            timeout_seconds?: number;
+        };
+        /**
+         * @description Configuration for chat agent tools.
+         *
+         *     If `enabled_tools` is empty/omitted, defaults to: add_filter, ask_clarification, search.
+         *
+         *     For models that don't support native tool calling (e.g., Ollama),
+         *     a prompt-based fallback is used with structured output parsing.
+         */
+        ChatToolsConfig: {
+            /**
+             * @description List of tools to enable. If empty, defaults to filter, clarification, and search.
+             * @example [
+             *       "add_filter",
+             *       "search",
+             *       "websearch"
+             *     ]
+             */
+            enabled_tools?: components["schemas"]["ChatToolName"][];
+            /**
+             * @description Web search provider configuration. Required when websearch tool is enabled.
+             *     See lib/websearch/openapi.yaml for provider-specific options.
+             */
+            websearch_config?: components["schemas"]["WebSearchConfig"];
+            /**
+             * @description URL fetching configuration. See lib/websearch/openapi.yaml
+             *     for available options and security controls.
+             */
+            fetch_config?: components["schemas"]["FetchConfig"];
+            /**
+             * @description Maximum number of tool call iterations per turn.
+             *     Prevents infinite loops in tool execution.
+             * @default 5
+             */
+            max_tool_iterations?: number;
+        };
+        /**
+         * @description Per-step configuration for the chat agent pipeline. Similar to AnswerAgentSteps
+         *     but includes tool-specific configuration.
+         */
+        ChatAgentSteps: {
+            /** @description Configuration for query classification (used for initial query analysis) */
+            classification?: components["schemas"]["ClassificationStepConfig"];
+            /** @description Configuration for answer generation */
+            answer?: components["schemas"]["AnswerStepConfig"];
+            /** @description Configuration for tool calling behavior */
+            tools?: components["schemas"]["ChatToolsConfig"];
+        };
+        /** @description A filter specification to apply to search queries */
+        FilterSpec: {
+            /** @description Field name to filter on */
+            field: string;
+            /**
+             * @description Filter operator:
+             *     - eq: Equals
+             *     - ne: Not equals
+             *     - gt/gte: Greater than (or equal)
+             *     - lt/lte: Less than (or equal)
+             *     - contains: Contains substring
+             *     - prefix: Starts with
+             *     - range: Between two values (value should be array [min, max])
+             *     - in: Value in list (value should be array)
+             * @enum {string}
+             */
+            operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "contains" | "prefix" | "range" | "in";
+            /** @description Filter value (string, number, boolean, or array for range/in operators) */
+            value: unknown;
+        };
+        /** @description A request for clarification from the user */
+        ClarificationRequest: {
+            /** @description The clarifying question to ask the user */
+            question: string;
+            /** @description Optional list of suggested answers for the user to choose from */
+            options?: string[];
+            /**
+             * @description Whether the clarification is required before proceeding
+             * @default false
+             */
+            required?: boolean;
+        };
+        /**
+         * @description Result from the chat agent. Contains the assistant's response,
+         *     any pending clarifications, applied filters, and conversation state.
+         */
+        "schemas-ChatAgentResult": {
+            /** @description Updated conversation history including the assistant's response */
+            messages: components["schemas"]["ChatMessage"][];
+            /** @description If present, the model is requesting clarification before proceeding */
+            pending_clarification?: components["schemas"]["ClarificationRequest"];
+            /** @description Filters that have been applied in this conversation */
+            applied_filters?: components["schemas"]["FilterSpec"][];
+            /** @description Search results from executed queries */
+            query_results?: {
+                [key: string]: unknown;
+            }[];
+            /** @description Final answer text (if available) */
+            answer?: string;
+            /**
+             * Format: float
+             * @description Confidence in the answer
+             */
+            answer_confidence?: number;
+            /** @description Number of tool calls made in this turn */
+            tool_calls_made?: number;
+        };
+        /**
+         * @description Standalone evaluation request for POST /eval endpoint.
+         *     Useful for testing evaluators without running a query.
+         */
+        EvalRequest: {
+            /** @description List of evaluators to run */
+            evaluators: components["schemas"]["EvaluatorName"][];
+            /** @description LLM configuration for judge-based evaluators */
+            judge?: components["schemas"]["GeneratorConfig"];
+            /** @description Ground truth data */
+            ground_truth?: components["schemas"]["GroundTruth"];
+            /** @description Evaluation options */
+            options?: components["schemas"]["EvalOptions"];
+            /** @description Original query/input to evaluate */
+            query?: string;
+            /** @description Generated output to evaluate (optional for retrieval-only) */
+            output?: string;
+            /** @description Retrieved documents/context */
+            context?: Record<string, never>[];
+            /** @description IDs of retrieved documents (for retrieval metrics) */
+            retrieved_ids?: string[];
+        };
+        BleveIndexV2Config: {
+            /** @description Whether to use memory-only storage */
+            mem_only?: boolean;
+        };
+        /**
+         * @description Configuration for the Google AI (Gemini) embedding provider.
+         *
+         *     API key via `api_key` field or `GEMINI_API_KEY` environment variable.
+         *
+         *     **Example Models:** gemini-embedding-001 (default, 3072 dims)
+         *
+         *     **Docs:** https://ai.google.dev/gemini-api/docs/embeddings
+         * @example {
+         *       "provider": "gemini",
+         *       "model": "gemini-embedding-001",
+         *       "dimension": 3072,
+         *       "api_key": "your-api-key"
+         *     }
+         */
+        GoogleEmbedderConfig: {
+            /** @description The Google Cloud project ID (optional for Gemini API, required for Vertex AI). */
+            project_id?: string;
+            /** @description The Google Cloud location (e.g., 'us-central1'). Required for Vertex AI, optional for Gemini API. */
+            location?: string;
+            /**
+             * @description The name of the embedding model to use.
+             * @default gemini-embedding-001
+             * @example gemini-embedding-001
+             */
+            model: string;
+            /**
+             * @description The dimension of the embedding vector (768, 1536, or 3072 recommended).
+             * @default 3072
+             */
+            dimension?: number;
+            /** @description The Google API key. Can also be set via GEMINI_API_KEY environment variable. */
+            api_key?: string;
+            /**
+             * Format: uri
+             * @description The URL of the Google API endpoint (optional, uses default if not specified).
+             */
+            url?: string;
+        };
+        /**
+         * @description Configuration for Google Cloud Vertex AI embedding models (enterprise-grade).
+         *
+         *     Uses Application Default Credentials (ADC) for authentication. Requires IAM role `roles/aiplatform.user`.
+         *
+         *     **Example Models:** gemini-embedding-001 (default, 3072 dims), multimodalembedding (images/audio/video)
+         *
+         *     **Docs:** https://cloud.google.com/vertex-ai/generative-ai/docs/embeddings/get-text-embeddings
+         * @example {
+         *       "provider": "vertex",
+         *       "model": "gemini-embedding-001",
+         *       "project_id": "my-gcp-project",
+         *       "location": "us-central1",
+         *       "dimension": 3072
+         *     }
+         */
+        VertexEmbedderConfig: {
+            /**
+             * @description The name of the Vertex AI embedding model to use.
+             * @default gemini-embedding-001
+             * @example gemini-embedding-001
+             */
+            model: string;
+            /** @description Google Cloud project ID. Can also be set via GOOGLE_CLOUD_PROJECT environment variable. */
+            project_id?: string;
+            /**
+             * @description Google Cloud region for Vertex AI API (e.g., 'us-central1', 'europe-west1'). Can also be set via GOOGLE_CLOUD_LOCATION. Defaults to 'us-central1'.
+             * @default us-central1
+             */
+            location?: string;
+            /** @description Path to service account JSON key file. Alternative to ADC for non-GCP environments. */
+            credentials_path?: string;
+            /**
+             * @description The dimension of the embedding vector (768, 1536, or 3072 for gemini-embedding-001; 128-1408 for multimodalembedding).
+             * @default 3072
+             */
+            dimension?: number;
+        };
+        /**
+         * @description Configuration for the Ollama embedding provider.
+         *
+         *     Local embeddings for privacy and offline use. URL via `url` field or `OLLAMA_HOST` env var.
+         *
+         *     **Example Models:** nomic-embed-text (768 dims), mxbai-embed-large (1024 dims), all-minilm (384 dims)
+         *
+         *     **Docs:** https://ollama.com/search?c=embedding
+         * @example {
+         *       "provider": "ollama",
+         *       "model": "nomic-embed-text",
+         *       "url": "http://localhost:11434"
+         *     }
+         */
+        OllamaEmbedderConfig: {
+            /**
+             * @description The name of the Ollama model to use (e.g., 'nomic-embed-text', 'mxbai-embed-large').
+             * @example nomic-embed-text
+             */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Ollama API endpoint. Can also be set via OLLAMA_HOST environment variable.
+             * @default http://localhost:11434
+             * @example http://localhost:11434
+             */
+            url?: string;
+        };
+        /**
+         * @description Configuration for the OpenAI embedding provider.
+         *
+         *     API key via `api_key` field or `OPENAI_API_KEY` environment variable.
+         *     Supports OpenAI-compatible APIs via `url` field.
+         *
+         *     **Example Models:** text-embedding-3-small (default, 1536 dims), text-embedding-3-large (3072 dims)
+         *
+         *     **Docs:** https://platform.openai.com/docs/guides/embeddings
+         * @example {
+         *       "provider": "openai",
+         *       "model": "text-embedding-3-small",
+         *       "api_key": "sk-..."
+         *     }
+         */
+        OpenAIEmbedderConfig: {
+            /**
+             * @description The name of the OpenAI model to use.
+             * @default text-embedding-3-small
+             * @example text-embedding-3-small
+             */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the OpenAI API endpoint. Defaults to OpenAI's API. Can be set via OPENAI_BASE_URL environment variable.
+             * @default https://api.openai.com
+             * @example https://api.openai.com
+             */
+            url?: string;
+            /** @description The OpenAI API key. Can also be set via OPENAI_API_KEY environment variable. */
+            api_key?: string;
+            /** @description Output dimension for the embedding (uses MRL for dimension reduction). Recommended: 256, 512, 1024, 1536, or 3072. */
+            dimensions?: number;
+        };
+        /**
+         * @description Configuration for the AWS Bedrock embedding provider.
+         *
+         *     Uses AWS credentials from environment or IAM roles.
+         *
+         *     **Example Models:** cohere.embed-english-v4, amazon.titan-embed-text-v2:0
+         *
+         *     **Docs:** https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
+         * @example {
+         *       "provider": "bedrock",
+         *       "model": "cohere.embed-english-v4",
+         *       "region": "us-east-1"
+         *     }
+         */
+        BedrockEmbedderConfig: {
+            /**
+             * @description The Bedrock model ID to use (e.g., 'cohere.embed-english-v4', 'amazon.titan-embed-text-v2:0').
+             * @example cohere.embed-english-v4
+             */
+            model: string;
+            /**
+             * @description The AWS region for the Bedrock service (e.g., 'us-east-1').
+             * @example us-east-1
+             */
+            region?: string;
+            /**
+             * @description Whether to strip new lines from the input text before embedding.
+             * @default false
+             */
+            strip_new_lines?: boolean;
+            /**
+             * @description The batch size for embedding requests to optimize throughput.
+             * @default 1
+             */
+            batch_size?: number;
+        };
+        /**
+         * @description Configuration for the Cohere embedding provider.
+         *
+         *     API key via `api_key` field or `COHERE_API_KEY` environment variable.
+         *
+         *     **Example Models:** embed-english-v3.0 (default, 1024 dims), embed-multilingual-v3.0
+         *
+         *     **Docs:** https://docs.cohere.com/reference/embed
+         * @example {
+         *       "provider": "cohere",
+         *       "model": "embed-english-v3.0",
+         *       "input_type": "search_document"
+         *     }
+         */
+        CohereEmbedderConfig: {
+            /**
+             * @description The name of the Cohere embedding model to use.
+             * @default embed-english-v3.0
+             * @example embed-english-v3.0
+             */
+            model: string;
+            /** @description The Cohere API key. Can also be set via COHERE_API_KEY environment variable. */
+            api_key?: string;
+            /**
+             * @description Specifies the type of input for optimized embeddings.
+             * @default search_document
+             * @enum {string}
+             */
+            input_type?: "search_document" | "search_query" | "classification" | "clustering";
+            /**
+             * @description How to handle inputs longer than the max token length.
+             * @default END
+             * @enum {string}
+             */
+            truncate?: "NONE" | "START" | "END";
+        };
+        /**
+         * @description The embedding provider to use.
+         * @enum {string}
+         */
+        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "cohere" | "mock";
+        /**
+         * @description A unified configuration for an embedding provider.
+         *
+         *     Embedders can be configured with templates to customize how documents are
+         *     converted to text before embedding. Templates use Handlebars syntax and
+         *     support various built-in helpers.
+         *
+         *     **Template System:**
+         *     - **Syntax**: Handlebars templating (https://handlebarsjs.com/guide/)
+         *     - **Caching**: Templates are automatically cached with configurable TTL (default: 5 minutes)
+         *     - **Context**: Templates receive the full document as context
+         *
+         *     **Built-in Helpers:**
+         *
+         *     1. **scrubHtml** - Remove script/style tags and extract clean text from HTML
+         *        ```handlebars
+         *        {{scrubHtml html_content}}
+         *        ```
+         *        - Removes `<script>` and `<style>` tags
+         *        - Adds newlines after block elements (p, div, h1-h6, li, etc.)
+         *        - Returns plain text with preserved readability
+         *
+         *     2. **eq** - Equality comparison for conditionals
+         *        ```handlebars
+         *        {{#if (eq status "active")}}Active user{{/if}}
+         *        {{#if (eq @key "special")}}Special field{{/if}}
+         *        ```
+         *
+         *     3. **media** - GenKit dotprompt media directive for multimodal content
+         *        ```handlebars
+         *        {{media url=imageDataURI}}
+         *        {{media url=this.image_url}}
+         *        {{media url="https://example.com/image.jpg"}}
+         *        {{media url="s3://endpoint/bucket/image.png"}}
+         *        {{media url="file:///path/to/image.jpg"}}
+         *        ```
+         *
+         *        **Supported URL Schemes:**
+         *        - `data:` - Base64 encoded data URIs (e.g., `data:image/jpeg;base64,...`)
+         *        - `http://` / `https://` - Web URLs with automatic content type detection
+         *        - `file://` - Local filesystem paths
+         *        - `s3://` - S3-compatible storage (format: `s3://endpoint/bucket/key`)
+         *
+         *        **Automatic Content Processing:**
+         *        - **Images**: Downloaded, resized (if needed), converted to data URIs
+         *        - **PDFs**: Text extracted or first page rendered as image
+         *        - **HTML**: Readable text extracted using Mozilla Readability
+         *
+         *        **Security Controls:**
+         *        Downloads are protected by content security settings (see Configuration Reference):
+         *        - Allowed host whitelist
+         *        - Private IP blocking (prevents SSRF attacks)
+         *        - Download size limits (default: 100MB)
+         *        - Download timeouts (default: 30s)
+         *        - Image dimension limits (default: 2048px, auto-resized)
+         *
+         *        See: https://antfly.io/docs/configuration#security--cors
+         *
+         *     4. **encodeToon** - Encode data in TOON format (Token-Oriented Object Notation)
+         *        ```handlebars
+         *        {{encodeToon this.fields}}
+         *        {{encodeToon this.fields lengthMarker=false indent=4}}
+         *        {{encodeToon this.fields delimiter="\t"}}
+         *        ```
+         *
+         *        **What is TOON?**
+         *        TOON is a compact, human-readable format designed for passing structured data to LLMs.
+         *        It provides **30-60% token reduction** compared to JSON while maintaining high LLM
+         *        comprehension accuracy.
+         *
+         *        **Key Features:**
+         *        - Compact syntax using `:` for key-value pairs
+         *        - Array length markers: `tags[#3]: ai,search,ml`
+         *        - Tabular format for uniform data structures
+         *        - Optimized for LLM parsing and understanding
+         *        - Maintains human readability
+         *
+         *        **Benefits:**
+         *        - **Lower API costs** - Reduced token usage means lower LLM API costs
+         *        - **Faster responses** - Less tokens to process
+         *        - **More context** - Fit more documents within token limits
+         *
+         *        **Options:**
+         *        - `lengthMarker` (bool): Add # prefix to array counts like `[#3]` (default: true)
+         *        - `indent` (int): Indentation spacing for nested objects (default: 2)
+         *        - `delimiter` (string): Field separator for tabular arrays (default: none, use `"\t"` for tabs)
+         *
+         *        **Example output:**
+         *        ```
+         *        title: Introduction to Vector Search
+         *        author: Jane Doe
+         *        tags[#3]: ai,search,ml
+         *        metadata:
+         *          edition: 2
+         *          pages: 450
+         *        ```
+         *
+         *        **Default in RAG:** TOON is the default format for document rendering in RAG queries.
+         *
+         *        **References:**
+         *        - TOON Specification: https://github.com/toon-format/toon
+         *        - Go Implementation: https://github.com/alpkeskin/gotoon
+         *
+         *     **Template Examples:**
+         *
+         *     Document with metadata:
+         *     ```handlebars
+         *     Title: {{metadata.title}}
+         *     Date: {{metadata.date}}
+         *     Tags: {{#each metadata.tags}}{{this}}, {{/each}}
+         *
+         *     {{content}}
+         *     ```
+         *
+         *     HTML content extraction:
+         *     ```handlebars
+         *     Product: {{name}}
+         *     Description: {{scrubHtml description_html}}
+         *     Price: ${{price}}
+         *     ```
+         *
+         *     Multimodal with image:
+         *     ```handlebars
+         *     Product: {{title}}
+         *     {{media url=image}}
+         *     Description: {{description}}
+         *     ```
+         *
+         *     Conditional formatting:
+         *     ```handlebars
+         *     {{title}}
+         *     {{#if author}}By: {{author}}{{/if}}
+         *     {{#if (eq category "premium")}}⭐ Premium Content{{/if}}
+         *     {{body}}
+         *     ```
+         *
+         *     **Environment Variables:**
+         *     - `GEMINI_API_KEY` - API key for Google AI
+         *     - `OPENAI_API_KEY` - API key for OpenAI
+         *     - `OPENAI_BASE_URL` - Base URL for OpenAI-compatible APIs
+         *     - `OLLAMA_HOST` - Ollama server URL (e.g., http://localhost:11434)
+         *
+         *     **Importing Pre-computed Embeddings:**
+         *
+         *     You can import existing embeddings (from OpenAI, Cohere, or any provider) by including
+         *     them directly in your documents using the `_embeddings` field. This bypasses the
+         *     embedding generation step and writes vectors directly to the index.
+         *
+         *     **Steps:**
+         *     1. Create the index first with the appropriate dimension
+         *     2. Write documents with `_embeddings: { "<indexName>": [...<embedding>...] }`
+         *
+         *     **Example:**
+         *     ```json
+         *     {
+         *       "title": "My Document",
+         *       "content": "Document text...",
+         *       "_embeddings": {
+         *         "my_vector_index": [0.1, 0.2, 0.3, ...]
+         *       }
+         *     }
+         *     ```
+         *
+         *     **Use Cases:**
+         *     - Migrating from another vector database with existing embeddings
+         *     - Using embeddings generated by external systems
+         *     - Importing pre-computed OpenAI, Cohere, or other provider embeddings
+         *     - Batch processing embeddings offline before ingestion
+         * @example {
+         *       "provider": "openai",
+         *       "model": "text-embedding-3-small"
+         *     }
+         */
+        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"]) & {
+            provider: components["schemas"]["EmbedderProvider"];
+        };
+        /**
+         * @description Configuration for the Termite chunking provider.
+         *
+         *     Termite is a centralized HTTP service that provides chunking with multi-tier caching.
+         *     The model name maps to ONNX model directory names (similar to how Ollama works).
+         *
+         *     **Chunking Models:**
+         *     - fixed: Simple fixed-size chunking by token count (built-in, no ONNX required)
+         *     - Any other name will attempt to load from models/chunkers/{name}/ directory
+         *
+         *     **Caching:**
+         *     - L1: Memory cache with 2-minute TTL
+         *     - L2: Persistent Pebble database
+         *     - Singleflight deduplication for concurrent identical requests
+         * @example {
+         *       "provider": "termite",
+         *       "api_url": "http://localhost:8080",
+         *       "model": "fixed",
+         *       "target_tokens": 500,
+         *       "overlap_tokens": 50,
+         *       "separator": "\n\n",
+         *       "max_chunks": 50,
+         *       "full_text": {}
+         *     }
+         */
+        TermiteChunkerConfig: {
+            /**
+             * Format: uri
+             * @description The URL of the Termite API endpoint (e.g., 'http://localhost:8080'). Can also be set via ANTFLY_TERMITE_URL environment variable.
+             * @example http://localhost:8080
+             */
+            api_url?: string;
+            /**
+             * @description The chunking model to use. Either 'fixed' for simple token-based chunking, or a model name from models/chunkers/{name}/.
+             * @default fixed
+             * @example fixed
+             */
+            model: string;
+            /**
+             * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
+             * @default 500
+             */
+            target_tokens?: number;
+            /**
+             * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
+             * @default 50
+             */
+            overlap_tokens?: number;
+            /**
+             * @description Separator string for splitting (e.g., '\n\n' for paragraphs). Only used with fixed strategy.
+             * @default
+             */
+            separator?: string;
+            /**
+             * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
+             * @default 50
+             */
+            max_chunks?: number;
+            /**
+             * Format: float
+             * @description Minimum confidence threshold for separator detection. Only used with ONNX-based models.
+             * @default 0.5
+             */
+            threshold?: number;
+            /**
+             * @description Configuration for full-text indexing of chunks in Bleve.
+             *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
+             *     When absent, chunks use :c: suffix and are only used for vector embeddings.
+             *     This object is reserved for future options like boosting, field mapping, etc.
+             * @example {}
+             */
+            full_text?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description Configuration for the local Antfly chunking provider.
+         *
+         *     This provider runs chunking directly within the storage node process,
+         *     without requiring an external Termite service. It uses simple fixed-size
+         *     tokenizer-based chunking with no caching overhead.
+         *
+         *     **Use this when:**
+         *     - Running single-node deployments (swarm mode)
+         *     - You don't need embedding/chunk caching across nodes
+         *     - You want minimal setup complexity
+         *
+         *     **Use Termite instead when:**
+         *     - Running multi-node clusters where caching reduces costs
+         *     - You need ONNX-accelerated chunking models
+         *     - You want persistent chunk/embedding caches
+         * @example {
+         *       "provider": "antfly",
+         *       "target_tokens": 500,
+         *       "overlap_tokens": 50,
+         *       "separator": "\n\n",
+         *       "max_chunks": 50
+         *     }
+         */
+        AntflyChunkerConfig: {
+            /**
+             * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
+             * @default 500
+             */
+            target_tokens?: number;
+            /**
+             * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
+             * @default 50
+             */
+            overlap_tokens?: number;
+            /**
+             * @description Separator string for splitting (e.g., '\n\n' for paragraphs).
+             * @default
+             */
+            separator?: string;
+            /**
+             * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
+             * @default 50
+             */
+            max_chunks?: number;
+            /**
+             * @description Configuration for full-text indexing of chunks in Bleve.
+             *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
+             *     When absent, chunks use :c: suffix and are only used for vector embeddings.
+             *     This object is reserved for future options like boosting, field mapping, etc.
+             * @example {}
+             */
+            full_text?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description The chunking provider to use.
+         * @enum {string}
+         */
+        ChunkerProvider: "mock" | "termite" | "antfly";
+        /**
+         * @description A unified configuration for a chunking provider.
+         * @example {
+         *       "provider": "termite",
+         *       "model": "fixed",
+         *       "target_tokens": 500,
+         *       "overlap_tokens": 50
+         *     }
+         */
+        ChunkerConfig: (components["schemas"]["TermiteChunkerConfig"] | components["schemas"]["AntflyChunkerConfig"]) & {
+            provider: components["schemas"]["ChunkerProvider"];
+        };
+        EmbeddingIndexConfig: {
+            /** @description Vector dimension */
+            dimension: number;
+            /** @description Field to extract embeddings from */
+            field?: string;
+            /**
+             * @description Handlebars template for generating prompts. See https://handlebarsjs.com/guide/ for more information.
+             * @example Hello, {{#if (eq Name "John")}}Johnathan{{else}}{{Name}}{{/if}}! You are {{Age}} years old.
+             */
+            template?: string;
+            /** @description Whether to use in-memory only storage */
+            mem_only?: boolean;
+            /** @description Configuration for the embeddings plugin */
+            embedder?: components["schemas"]["EmbedderConfig"];
+            /** @description Configuration for the summarizer plugin */
+            summarizer?: components["schemas"]["GeneratorConfig"];
+            /** @description Configuration for the chunking plugin. When specified, documents are automatically chunked at write time before indexing. */
+            chunker?: components["schemas"]["ChunkerConfig"];
+        };
+        /** @description Configuration for a specific edge type */
+        EdgeTypeConfig: {
+            /** @description Edge type name (e.g., 'cites', 'similar_to') */
+            name: string;
+            /**
+             * Format: double
+             * @description Maximum allowed edge weight
+             * @default 1
+             */
+            max_weight?: number;
+            /**
+             * Format: double
+             * @description Minimum allowed edge weight
+             * @default 0
+             */
+            min_weight?: number;
+            /**
+             * @description Whether to allow edges from a node to itself
+             * @default true
+             */
+            allow_self_loops?: boolean;
+            /** @description Required metadata fields for this edge type */
+            required_metadata?: string[];
+        };
+        /** @description Configuration for graph_v0 index type */
+        GraphIndexV0Config: {
+            /** @description List of edge types with their configurations */
+            edge_types?: components["schemas"]["EdgeTypeConfig"][];
+            /** @description Maximum number of edges per document (0 = unlimited) */
+            max_edges_per_document?: number;
+        };
+        /**
+         * @description The type of the index.
+         * @enum {string}
+         */
+        IndexType: "full_text_v0" | "aknn_v0" | "graph_v0";
+        /** @description Configuration for an index */
+        IndexConfig: {
+            /** @description Name of the index */
+            name: string;
+            /** @description Optional description of the index and its purpose */
+            description?: string;
+            type: components["schemas"]["IndexType"];
+            /**
+             * @description List of enrichment names to apply to documents before indexing. Enrichments must be defined at the table level.
+             * @example [
+             *       "semantic_chunks",
+             *       "summary"
+             *     ]
+             */
+            enrichments?: string[];
+        } & (components["schemas"]["BleveIndexV2Config"] | components["schemas"]["EmbeddingIndexConfig"] | components["schemas"]["GraphIndexV0Config"]);
+        /** @description Defines the structure of a document type */
+        DocumentSchema: {
+            /** @description A description of the document type. */
+            description?: string;
+            /**
+             * @description A valid JSON Schema defining the document's structure.
+             *     This is used to infer indexing rules and field types.
+             */
+            schema?: {
+                [key: string]: unknown;
+            };
+        };
+        /** @description Schema definition for a table with multiple document types */
+        TableSchema: {
+            /**
+             * Format: uint32
+             * @description Version of the schema. Used for migrations.
+             */
+            version?: number;
+            /** @description Default type to use from the document_types. */
+            default_type?: string;
+            /**
+             * @description Whether to enforce that documents must match one of the provided document types.
+             *     If false, documents not matching any type will be accepted but not indexed.
+             */
+            enforce_types?: boolean;
+            /** @description A map of type names to their document json schemas. */
+            document_schemas?: {
+                [key: string]: components["schemas"]["DocumentSchema"];
+            };
+            /**
+             * @description The field containing the timestamp for TTL expiration (optional).
+             *     Defaults to "_timestamp" if ttl_duration is specified but ttl_field is not.
+             */
+            ttl_field?: string;
+            /**
+             * @description The duration after which documents should expire, based on the ttl_field timestamp (optional).
+             *     Uses Go duration format (e.g., '24h', '7d', '168h').
+             */
+            ttl_duration?: string;
+        };
+        BleveIndexV2Stats: {
+            /** @description Error message if stats could not be retrieved */
+            error?: string;
+            /**
+             * Format: uint64
+             * @description Number of documents in the index
+             */
+            total_indexed?: number;
+            /**
+             * Format: uint64
+             * @description Size of the index in bytes
+             */
+            disk_usage?: number;
+            /** @description Whether the index is currently rebuilding */
+            rebuilding?: boolean;
+        };
+        EmbeddingIndexStats: {
+            /** @description Error message if stats could not be retrieved */
+            error?: string;
+            /**
+             * Format: uint64
+             * @description Number of vectors in the index
+             */
+            total_indexed?: number;
+            /**
+             * Format: uint64
+             * @description Size of the index in bytes
+             */
+            disk_usage?: number;
+            /**
+             * Format: uint64
+             * @description Total number of nodes in the index
+             */
+            total_nodes?: number;
+        };
+        /** @description Statistics for graph_v0 index */
+        GraphIndexV0Stats: {
+            /** @description Error message if stats could not be retrieved */
+            error?: string;
+            /**
+             * Format: uint64
+             * @description Total number of edges in the graph
+             */
+            total_edges?: number;
+            /** @description Count of edges per edge type */
+            edge_types?: {
+                [key: string]: number;
+            };
+        };
+        /** @description Statistics for an index */
+        IndexStats: components["schemas"]["BleveIndexV2Stats"] | components["schemas"]["EmbeddingIndexStats"] | components["schemas"]["GraphIndexV0Stats"];
+        User: {
+            /** @example johndoe */
+            username: string;
+            /**
+             * Format: byte
+             * @description Base64 encoded password hash. Exposing this is a security risk.
+             * @example JGFyZ29uMm...
+             */
+            password_hash: string;
+        };
+        /**
+         * @description Type of the resource, e.g., table, user, or global ('*').
+         * @example table
+         * @enum {string}
+         */
+        ResourceType: "table" | "user" | "*";
+        /**
+         * @description Type of permission.
+         * @example read
+         * @enum {string}
+         */
+        PermissionType: "read" | "write" | "admin";
+        Permission: {
+            /**
+             * @description Resource name (e.g., table name, target username, or '*' for global).
+             * @example orders_table
+             */
+            resource: string;
+            resource_type: components["schemas"]["ResourceType"];
+            type: components["schemas"]["PermissionType"];
+        };
+        CreateUserRequest: {
+            /**
+             * @description Username for the new user. If provided in the path, this field can be omitted or must match the path parameter.
+             * @example johndoe
+             */
+            username?: string;
+            /**
+             * Format: password
+             * @example s3cr3tP@sswOrd
+             */
+            password: string;
+            /** @description Optional list of initial permissions for the user. */
+            initial_policies?: components["schemas"]["Permission"][] | null;
+        };
+        UpdatePasswordRequest: {
+            /**
+             * Format: password
+             * @example newS3cr3tP@sswOrd
+             */
+            new_password: string;
+        };
+        SuccessMessage: {
+            /** @example Operation completed successfully */
+            message?: string;
+        };
+    };
+    responses: {
+        /** @description Bad request */
+        BadRequest: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Resource not found */
+        NotFound: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Internal server error */
+        InternalServerError: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+    };
+    parameters: {
+        /** @description The username. */
+        UserNamePathParameter: string;
+    };
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  getStatus: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Cluster status retrieved successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["ClusterStatus"];
-        };
-      };
-      /** @description Unauthorized - authentication required */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  globalQuery: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["QueryRequest"];
-        "application/x-ndjson": string;
-      };
-    };
-    responses: {
-      /** @description Query successful */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["QueryResponses"];
-        };
-      };
-      /** @description Invalid query request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  ragQuery: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["RAGRequest"];
-      };
-    };
-    responses: {
-      /** @description RAG query successful, streaming summary or JSON response with citations and query results */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "text/event-stream": string;
-          "application/json": components["schemas"]["RAGResult"];
-        };
-      };
-      /** @description Invalid RAG request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  answerAgent: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["AnswerAgentRequest"];
-      };
-    };
-    responses: {
-      /** @description Answer agent successful, streaming events or JSON response */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "text/event-stream": string;
-          "application/json": components["schemas"]["AnswerAgentResult"];
-        };
-      };
-      /** @description Invalid answer agent request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  evaluate: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["EvalRequest"];
-      };
-    };
-    responses: {
-      /** @description Evaluation completed successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["EvalResult"];
-        };
-      };
-      /** @description Invalid evaluation request (e.g., missing required fields) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal server error (e.g., LLM judge failed) */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  queryBuilderAgent: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["QueryBuilderRequest"];
-      };
-    };
-    responses: {
-      /** @description Query built successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["QueryBuilderResult"];
-        };
-      };
-      /** @description Invalid request (e.g., empty intent or missing table) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Table not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal server error (e.g., LLM call failed) */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  listTables: {
-    parameters: {
-      query?: {
-        /**
-         * @description Filter tables by name prefix (e.g., "prod_")
-         * @example prod_
-         */
-        prefix?: string;
-        /**
-         * @description Filter tables by regex pattern (e.g., "^prod_.*_v[0-9]+$")
-         * @example ^user_.*
-         */
-        pattern?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description A list of tables */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["TableStatus"][];
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  getTable: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Table details */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["TableStatus"];
-        };
-      };
-      404: components["responses"]["NotFound"];
-    };
-  };
-  createTable: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CreateTableRequest"];
-      };
-    };
-    responses: {
-      /** @description Table created successfully with all configured indexes */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Table"];
-        };
-      };
-      400: components["responses"]["BadRequest"];
-    };
-  };
-  dropTable: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Table dropped successfully */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  queryTable: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table to query */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["QueryRequest"];
-        "application/x-ndjson": string;
-      };
-    };
-    responses: {
-      /** @description Query successful */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["QueryResponses"];
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  tableRagQuery: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table for RAG query */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["RAGRequest"];
-      };
-    };
-    responses: {
-      /** @description RAG query successful, streaming summary or JSON response with citations and query results */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "text/event-stream": string;
-          "application/json": components["schemas"]["RAGResult"];
-        };
-      };
-      /** @description Invalid RAG request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      404: components["responses"]["NotFound"];
-      /** @description Internal server error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  batch: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table for batch operation */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["BatchRequest"];
-      };
-    };
-    responses: {
-      /** @description Batch operation successful */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            /** @description Number of documents successfully inserted */
-            inserted?: number;
-            /** @description Number of documents successfully deleted */
-            deleted?: number;
-            /** @description List of failed operations with error details */
-            failed?: {
-              /** @description The document ID that failed */
-              id?: string;
-              /** @description Error message for this failure */
-              error?: string;
-            }[];
-          };
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  linearMerge: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["LinearMergeRequest"];
-      };
-    };
-    responses: {
-      /** @description Merge completed successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["LinearMergeResult"];
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  backupTable: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table to backup */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["BackupRequest"];
-      };
-    };
-    responses: {
-      /** @description Backup process initiated successfully */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            /** @example successful */
-            backup?: string;
-          };
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  restoreTable: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table to restore into */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["RestoreRequest"];
-      };
-    };
-    responses: {
-      /** @description Restore process triggered successfully */
-      202: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            /** @example triggered */
-            restore?: string;
-          };
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  updateSchema: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["TableSchema"];
-      };
-    };
-    responses: {
-      /** @description Schema updated successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Table"];
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  scanKeys: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: {
-      content: {
-        "application/json": components["schemas"]["ScanKeysRequest"];
-      };
-    };
-    responses: {
-      /** @description Keys found (streamed as NDJSON) */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/x-ndjson": string;
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  lookupKey: {
-    parameters: {
-      query?: {
-        /**
-         * @description Comma-separated list of fields to include in the response.
-         *     If not specified, returns the full document. Supports:
-         *     - Simple fields: "title,author"
-         *     - Nested paths: "user.address.city"
-         *     - Wildcards: "_chunks.*"
-         *     - Exclusions: "-_chunks.*._embedding"
-         *     - Special fields: "_embeddings,_summaries,_chunks"
-         * @example title,author,metadata.tags
-         */
-        fields?: string;
-      };
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-        /** @description Key of the record to lookup */
-        key: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Record found */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            [key: string]: unknown;
-          };
-        };
-      };
-      400: components["responses"]["BadRequest"];
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  listIndexes: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description A list of indexes for the table */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["IndexStatus"][];
-        };
-      };
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  getIndex: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-        /** @description Name of the index */
-        indexName: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Index details */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["IndexStatus"];
-        };
-      };
-      404: components["responses"]["NotFound"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  createIndex: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-        /** @description Name of the index */
-        indexName: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["IndexConfig"];
-      };
-    };
-    responses: {
-      /** @description Index added successfully */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  dropIndex: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description Name of the table */
-        tableName: string;
-        /** @description Name of the index */
-        indexName: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Index dropped successfully */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      400: components["responses"]["BadRequest"];
-      500: components["responses"]["InternalServerError"];
-    };
-  };
-  getCurrentUser: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful operation */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            /** @example johndoe */
-            username?: string;
-            permissions?: components["schemas"]["Permission"][];
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  listUsers: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful operation */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            /** @example johndoe */
-            username?: string;
-          }[];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Forbidden - requires admin permission */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  getUserByName: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful operation */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["User"];
-        };
-      };
-      /** @description Bad Request (e.g., username is required) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description User not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  createUser: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
-    };
-    /** @description User creation details */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CreateUserRequest"];
-      };
-    };
-    responses: {
-      /** @description User created successfully */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["User"];
-        };
-      };
-      /** @description Bad Request (e.g., invalid input, username/password mismatch) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Conflict (e.g., user already exists) */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  deleteUser: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description User deleted successfully */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Bad Request (e.g., username is required) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description User not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  updateUserPassword: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
-    };
-    /** @description New password details */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["UpdatePasswordRequest"];
-      };
-    };
-    responses: {
-      /** @description Password updated successfully */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["SuccessMessage"];
-        };
-      };
-      /** @description Bad Request (e.g., new password empty, username required) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description User not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  getUserPermissions: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Successful operation */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Permission"][];
-        };
-      };
-      /** @description Bad Request (e.g., username is required) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description User not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  addPermissionToUser: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
-    };
-    /** @description Permission details to add */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["Permission"];
-      };
-    };
-    responses: {
-      /** @description Permission added successfully */
-      201: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["SuccessMessage"];
-        };
-      };
-      /** @description Bad Request (e.g., invalid input, username required) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description User not found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
-  removePermissionFromUser: {
-    parameters: {
-      query: {
-        /** @description The name of the resource for the permission to be removed. */
-        resource: string;
-        /** @description The type of the resource for the permission to be removed. */
-        resourceType: components["schemas"]["ResourceType"];
-      };
-      header?: never;
-      path: {
-        /** @description The username. */
-        userName: components["parameters"]["UserNamePathParameter"];
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Permission removed successfully */
-      204: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content?: never;
-      };
-      /** @description Bad Request (e.g., missing query parameters, invalid resourceType, username required) */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description User not found or Role not found for the given resource */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Error"];
-        };
-      };
-    };
-  };
+    getStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cluster status retrieved successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterStatus"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    globalQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryRequest"];
+                "application/x-ndjson": string;
+            };
+        };
+        responses: {
+            /** @description Query successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResponses"];
+                };
+            };
+            /** @description Invalid query request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    ragQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RAGRequest"];
+            };
+        };
+        responses: {
+            /** @description RAG query successful, streaming summary or JSON response with citations and query results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["RAGResult"];
+                };
+            };
+            /** @description Invalid RAG request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    answerAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Answer agent successful, streaming events or JSON response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["AnswerAgentResult"];
+                };
+            };
+            /** @description Invalid answer agent request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    chatAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChatAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Chat agent response with conversation state */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["ChatAgentResult"];
+                };
+            };
+            /** @description Invalid chat agent request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    evaluate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvalRequest"];
+            };
+        };
+        responses: {
+            /** @description Evaluation completed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalResult"];
+                };
+            };
+            /** @description Invalid evaluation request (e.g., missing required fields) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error (e.g., LLM judge failed) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    queryBuilderAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryBuilderRequest"];
+            };
+        };
+        responses: {
+            /** @description Query built successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryBuilderResult"];
+                };
+            };
+            /** @description Invalid request (e.g., empty intent or missing table) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Table not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error (e.g., LLM call failed) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listTables: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Filter tables by name prefix (e.g., "prod_")
+                 * @example prod_
+                 */
+                prefix?: string;
+                /**
+                 * @description Filter tables by regex pattern (e.g., "^prod_.*_v[0-9]+$")
+                 * @example ^user_.*
+                 */
+                pattern?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A list of tables */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TableStatus"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Table details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TableStatus"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTableRequest"];
+            };
+        };
+        responses: {
+            /** @description Table created successfully with all configured indexes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Table"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    dropTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Table dropped successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    queryTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to query */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueryRequest"];
+                "application/x-ndjson": string;
+            };
+        };
+        responses: {
+            /** @description Query successful */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueryResponses"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    tableRagQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table for RAG query */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RAGRequest"];
+            };
+        };
+        responses: {
+            /** @description RAG query successful, streaming summary or JSON response with citations and query results */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["RAGResult"];
+                };
+            };
+            /** @description Invalid RAG request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    batch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table for batch operation */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Batch operation successful */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Number of documents successfully inserted */
+                        inserted?: number;
+                        /** @description Number of documents successfully deleted */
+                        deleted?: number;
+                        /** @description List of failed operations with error details */
+                        failed?: {
+                            /** @description The document ID that failed */
+                            id?: string;
+                            /** @description Error message for this failure */
+                            error?: string;
+                        }[];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    linearMerge: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinearMergeRequest"];
+            };
+        };
+        responses: {
+            /** @description Merge completed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinearMergeResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    backupTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to backup */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackupRequest"];
+            };
+        };
+        responses: {
+            /** @description Backup process initiated successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example successful */
+                        backup?: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    restoreTable: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table to restore into */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Restore process triggered successfully */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example triggered */
+                        restore?: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    updateSchema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TableSchema"];
+            };
+        };
+        responses: {
+            /** @description Schema updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Table"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    scanKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ScanKeysRequest"];
+            };
+        };
+        responses: {
+            /** @description Keys found (streamed as NDJSON) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-ndjson": string;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    lookupKey: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma-separated list of fields to include in the response.
+                 *     If not specified, returns the full document. Supports:
+                 *     - Simple fields: "title,author"
+                 *     - Nested paths: "user.address.city"
+                 *     - Wildcards: "_chunks.*"
+                 *     - Exclusions: "-_chunks.*._embedding"
+                 *     - Special fields: "_embeddings,_summaries,_chunks"
+                 * @example title,author,metadata.tags
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Key of the record to lookup */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Record found */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    listIndexes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A list of indexes for the table */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexStatus"][];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Name of the index */
+                indexName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Index details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IndexStatus"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    createIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Name of the index */
+                indexName: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IndexConfig"];
+            };
+        };
+        responses: {
+            /** @description Index added successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    dropIndex: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Name of the table */
+                tableName: string;
+                /** @description Name of the index */
+                indexName: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Index dropped successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    getCurrentUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example johndoe */
+                        username?: string;
+                        permissions?: components["schemas"]["Permission"][];
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listUsers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @example johndoe */
+                        username?: string;
+                    }[];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Forbidden - requires admin permission */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUserByName: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Bad Request (e.g., username is required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /** @description User creation details */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateUserRequest"];
+            };
+        };
+        responses: {
+            /** @description User created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            /** @description Bad Request (e.g., invalid input, username/password mismatch) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Conflict (e.g., user already exists) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request (e.g., username is required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    updateUserPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /** @description New password details */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Password updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMessage"];
+                };
+            };
+            /** @description Bad Request (e.g., new password empty, username required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    getUserPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Permission"][];
+                };
+            };
+            /** @description Bad Request (e.g., username is required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    addPermissionToUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /** @description Permission details to add */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Permission"];
+            };
+        };
+        responses: {
+            /** @description Permission added successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessMessage"];
+                };
+            };
+            /** @description Bad Request (e.g., invalid input, username required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    removePermissionFromUser: {
+        parameters: {
+            query: {
+                /** @description The name of the resource for the permission to be removed. */
+                resource: string;
+                /** @description The type of the resource for the permission to be removed. */
+                resourceType: components["schemas"]["ResourceType"];
+            };
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Permission removed successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request (e.g., missing query parameters, invalid resourceType, username required) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found or Role not found for the given resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
 }
