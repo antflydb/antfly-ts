@@ -1456,6 +1456,13 @@ export interface components {
              *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
              */
             eval?: components["schemas"]["EvalConfig"];
+            /**
+             * @description When true, skip AI answer generation and return search results only.
+             *     Useful when you want search quality without LLM cost, such as for
+             *     quota management or rate limiting scenarios.
+             * @default false
+             */
+            without_generation?: boolean;
         };
         AnswerAgentResult: components["schemas"]["AnswerResult"] & {
             /**
