@@ -1,6 +1,6 @@
 {
   "name": "@antfly/sdk",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "TypeScript SDK for Antfly API",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -13,7 +13,11 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "prepare": "npm run build",
@@ -31,7 +35,16 @@
     "prepublishOnly": "npm run test:ts && npm run lint && npm run test && npm run build",
     "example:node": "tsx examples/node-example.ts"
   },
-  "keywords": ["antfly", "sdk", "typescript", "api", "client", "database", "vector", "search"],
+  "keywords": [
+    "antfly",
+    "sdk",
+    "typescript",
+    "api",
+    "client",
+    "database",
+    "vector",
+    "search"
+  ],
   "author": "Antfly Contributors",
   "license": "Apache-2.0",
   "repository": {
