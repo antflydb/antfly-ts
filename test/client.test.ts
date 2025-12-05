@@ -244,4 +244,177 @@ describe("AntflyClient", () => {
       await expect(client.query(request)).rejects.toThrow("Query failed: Table not found");
     });
   });
+
+  describe("SSE parsing", () => {
+    /**
+     * Helper to create a mock ReadableStream from SSE events
+     */
+    function createSSEStream(
+      events: Array<{ event: string; data: string }>
+    ): ReadableStream<Uint8Array> {
+      const encoder = new TextEncoder();
+      let eventIndex = 0;
+
+      return new ReadableStream({
+        pull(controller) {
+          if (eventIndex < events.length) {
+            const { event, data } = events[eventIndex];
+            const sseData = `event: ${event}\ndata: ${data}\n\n`;
+            controller.enqueue(encoder.encode(sseData));
+            eventIndex++;
+          } else {
+            controller.close();
+          }
+        },
+      });
+    }
+
+    /**
+     * Helper to create a mock Response with SSE content type
+     */
+    function createSSEResponse(events: Array<{ event: string; data: string }>): Response {
+      return new Response(createSSEStream(events), {
+        status: 200,
+        headers: { "content-type": "text/event-stream" },
+      });
+    }
+
+    describe("Answer Agent SSE parsing", () => {
+      it("should JSON-parse reasoning events to preserve newlines", async () => {
+        const reasoningWithNewlines =
+          "Step 1: First thing\nStep 2: Second thing\nStep 3: Third thing";
+        const events = [
+          { event: "reasoning", data: JSON.stringify(reasoningWithNewlines) },
+          { event: "done", data: JSON.stringify({ success: true }) },
+        ];
+
+        const mockFetch = vi
+          .spyOn(globalThis, "fetch")
+          .mockResolvedValueOnce(createSSEResponse(events));
+
+        const receivedReasoning: string[] = [];
+        let doneReceived = false;
+        await client.answerAgent(
+          { table: "test", query: "test query" },
+          {
+            onReasoning: (text) => receivedReasoning.push(text),
+            onDone: () => {
+              doneReceived = true;
+            },
+          }
+        );
+
+        // Wait for stream to complete
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        expect(receivedReasoning).toHaveLength(1);
+        expect(receivedReasoning[0]).toBe(reasoningWithNewlines);
+        expect(receivedReasoning[0]).toContain("\n");
+        expect(doneReceived).toBe(true);
+
+        mockFetch.mockRestore();
+      });
+
+      it("should JSON-parse answer events to preserve newlines", async () => {
+        const answerWithNewlines = "Here is the answer:\n\n1. First point\n2. Second point";
+        const events = [
+          { event: "answer", data: JSON.stringify(answerWithNewlines) },
+          { event: "done", data: JSON.stringify({ success: true }) },
+        ];
+
+        const mockFetch = vi
+          .spyOn(globalThis, "fetch")
+          .mockResolvedValueOnce(createSSEResponse(events));
+
+        const receivedAnswers: string[] = [];
+        let doneReceived = false;
+        await client.answerAgent(
+          { table: "test", query: "test query" },
+          {
+            onAnswer: (text) => receivedAnswers.push(text),
+            onDone: () => {
+              doneReceived = true;
+            },
+          }
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        expect(receivedAnswers).toHaveLength(1);
+        expect(receivedAnswers[0]).toBe(answerWithNewlines);
+        expect(receivedAnswers[0]).toContain("\n");
+        expect(doneReceived).toBe(true);
+
+        mockFetch.mockRestore();
+      });
+
+      it("should JSON-parse followup_question events to preserve newlines", async () => {
+        const followupWithNewlines = "Would you like to know more about:\n- Option A\n- Option B";
+        const events = [
+          { event: "followup_question", data: JSON.stringify(followupWithNewlines) },
+          { event: "done", data: JSON.stringify({ success: true }) },
+        ];
+
+        const mockFetch = vi
+          .spyOn(globalThis, "fetch")
+          .mockResolvedValueOnce(createSSEResponse(events));
+
+        const receivedFollowups: string[] = [];
+        let doneReceived = false;
+        await client.answerAgent(
+          { table: "test", query: "test query" },
+          {
+            onFollowUpQuestion: (text) => receivedFollowups.push(text),
+            onDone: () => {
+              doneReceived = true;
+            },
+          }
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        expect(receivedFollowups).toHaveLength(1);
+        expect(receivedFollowups[0]).toBe(followupWithNewlines);
+        expect(receivedFollowups[0]).toContain("\n");
+        expect(doneReceived).toBe(true);
+
+        mockFetch.mockRestore();
+      });
+    });
+
+    describe("Chat Agent SSE parsing", () => {
+      it("should JSON-parse answer events to preserve newlines", async () => {
+        const answerWithNewlines = "The response is:\n\nParagraph one.\n\nParagraph two.";
+        const events = [
+          { event: "answer", data: JSON.stringify(answerWithNewlines) },
+          { event: "done", data: JSON.stringify({ success: true }) },
+        ];
+
+        const mockFetch = vi
+          .spyOn(globalThis, "fetch")
+          .mockResolvedValueOnce(createSSEResponse(events));
+
+        const receivedAnswers: string[] = [];
+        let doneReceived = false;
+        await client.chatAgent(
+          { table: "test", query: "test query" },
+          {
+            onAnswer: (text) => receivedAnswers.push(text),
+            onDone: () => {
+              doneReceived = true;
+            },
+          }
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        expect(receivedAnswers).toHaveLength(1);
+        expect(receivedAnswers[0]).toBe(answerWithNewlines);
+        expect(receivedAnswers[0]).toContain("\n");
+        expect(doneReceived).toBe(true);
+
+        mockFetch.mockRestore();
+      });
+    });
+  });
 });

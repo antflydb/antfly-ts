@@ -404,8 +404,8 @@ export class AntflyClient {
                       break;
                     case "reasoning":
                       if (callbacks.onReasoning) {
-                        // Reasoning is streamed as plain text, not JSON
-                        callbacks.onReasoning(data);
+                        // Reasoning is JSON-encoded to preserve newlines in SSE format
+                        callbacks.onReasoning(JSON.parse(data));
                       }
                       break;
                     case "hits_start":
@@ -428,8 +428,8 @@ export class AntflyClient {
                       break;
                     case "answer":
                       if (callbacks.onAnswer) {
-                        // Answer is streamed as plain text, not JSON
-                        callbacks.onAnswer(data);
+                        // Answer is JSON-encoded to preserve newlines in SSE format
+                        callbacks.onAnswer(JSON.parse(data));
                       }
                       break;
                     case "confidence":
@@ -440,8 +440,8 @@ export class AntflyClient {
                       break;
                     case "followup_question":
                       if (callbacks.onFollowUpQuestion) {
-                        // Follow-up question is streamed as plain text
-                        callbacks.onFollowUpQuestion(data);
+                        // Follow-up question is JSON-encoded to preserve newlines in SSE format
+                        callbacks.onFollowUpQuestion(JSON.parse(data));
                       }
                       break;
                     case "done":
@@ -641,8 +641,8 @@ export class AntflyClient {
                       break;
                     case "answer":
                       if (callbacks.onAnswer) {
-                        // Answer is streamed as plain text, not JSON
-                        callbacks.onAnswer(data);
+                        // Answer is JSON-encoded to preserve newlines in SSE format
+                        callbacks.onAnswer(JSON.parse(data));
                       }
                       break;
                     case "done":
