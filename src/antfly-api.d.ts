@@ -1366,6 +1366,17 @@ export interface components {
              */
             query: string;
             /**
+             * @description Background knowledge that guides the agent's understanding of the domain.
+             *     Similar to CLAUDE.md, this provides context that applies to all steps
+             *     (classification, retrieval, and answer generation).
+             *
+             *     Examples:
+             *     - "This data contains medical records. Use clinical terminology and be precise about diagnoses."
+             *     - "This is a software engineering knowledge base. Assume a technical audience."
+             *     - "This table stores legal documents. Reference laws and regulations accurately."
+             */
+            agent_knowledge?: string;
+            /**
              * @description Default generator configuration used for all pipeline steps unless overridden in `steps`.
              *     This is the simple configuration - just set this and everything works with sensible defaults.
              *     Mutually exclusive with 'chain'. Either 'generator' or 'chain' must be provided.
@@ -4403,6 +4414,22 @@ export interface components {
         EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
         };
+        /** @description Per-request configuration for chunking. All fields are optional - zero/omitted values use chunker defaults. */
+        ChunkOptions: {
+            /** @description Maximum number of chunks to generate per document. */
+            max_chunks?: number;
+            /** @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries. Only used by fixed-size chunkers. */
+            overlap_tokens?: number;
+            /** @description Separator string for splitting (e.g., '\n\n' for paragraphs). Only used by fixed-size chunkers. */
+            separator?: string;
+            /**
+             * Format: float
+             * @description Minimum confidence threshold for separator detection (0.0-1.0). Only used by ONNX models.
+             */
+            threshold?: number;
+            /** @description Target number of tokens per chunk. */
+            target_tokens?: number;
+        };
         /**
          * @description Configuration for the Termite chunking provider.
          *
@@ -4428,7 +4455,7 @@ export interface components {
          *       "full_text": {}
          *     }
          */
-        TermiteChunkerConfig: {
+        TermiteChunkerConfig: components["schemas"]["ChunkOptions"] & {
             /**
              * Format: uri
              * @description The URL of the Termite API endpoint (e.g., 'http://localhost:8080'). Can also be set via ANTFLY_TERMITE_URL environment variable.
@@ -4441,32 +4468,6 @@ export interface components {
              * @example fixed
              */
             model: string;
-            /**
-             * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
-             * @default 500
-             */
-            target_tokens?: number;
-            /**
-             * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
-             * @default 50
-             */
-            overlap_tokens?: number;
-            /**
-             * @description Separator string for splitting (e.g., '\n\n' for paragraphs). Only used with fixed strategy.
-             * @default
-             */
-            separator?: string;
-            /**
-             * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
-             * @default 50
-             */
-            max_chunks?: number;
-            /**
-             * Format: float
-             * @description Minimum confidence threshold for separator detection. Only used with ONNX-based models.
-             * @default 0.5
-             */
-            threshold?: number;
             /**
              * @description Configuration for full-text indexing of chunks in Bleve.
              *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
@@ -4502,27 +4503,7 @@ export interface components {
          *       "max_chunks": 50
          *     }
          */
-        AntflyChunkerConfig: {
-            /**
-             * @description Target number of tokens per chunk. Chunker will aim for chunks around this size.
-             * @default 500
-             */
-            target_tokens?: number;
-            /**
-             * @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries.
-             * @default 50
-             */
-            overlap_tokens?: number;
-            /**
-             * @description Separator string for splitting (e.g., '\n\n' for paragraphs).
-             * @default
-             */
-            separator?: string;
-            /**
-             * @description Maximum number of chunks to generate per document. Prevents excessive chunking of very large documents.
-             * @default 50
-             */
-            max_chunks?: number;
+        AntflyChunkerConfig: components["schemas"]["ChunkOptions"] & {
             /**
              * @description Configuration for full-text indexing of chunks in Bleve.
              *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
