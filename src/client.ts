@@ -30,6 +30,7 @@ import type {
   RAGStreamCallbacks,
   ResourceType,
   RestoreRequest,
+  ScanKeysRequest,
   TableSchema,
 } from "./types.js";
 
@@ -803,13 +804,109 @@ export class AntflyClient {
 
     /**
      * Lookup a specific key in a table
+     * @param tableName - Name of the table
+     * @param key - Key of the record to lookup
+     * @param options - Optional parameters
+     * @param options.fields - Comma-separated list of fields to include (e.g., "title,author,metadata.tags")
      */
-    lookup: async (tableName: string, key: string) => {
+    lookup: async (tableName: string, key: string, options?: { fields?: string }) => {
       const { data, error } = await this.client.GET("/tables/{tableName}/lookup/{key}", {
-        params: { path: { tableName, key } },
+        params: {
+          path: { tableName, key },
+          query: options?.fields ? { fields: options.fields } : undefined,
+        },
       });
       if (error) throw new Error(`Key lookup failed: ${error.error}`);
       return data;
+    },
+
+    /**
+     * Scan keys in a table within a key range
+     * Returns documents as an async iterable, streaming results as NDJSON.
+     * @param tableName - Name of the table
+     * @param request - Scan request with optional key range, field projection, and filtering
+     * @returns AsyncGenerator yielding documents with their keys
+     */
+    scan: (
+      tableName: string,
+      request?: ScanKeysRequest
+    ): AsyncGenerator<{ _key: string; [key: string]: unknown }> => {
+      const config = this.config;
+
+      async function* scanGenerator(): AsyncGenerator<{ _key: string; [key: string]: unknown }> {
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+          Accept: "application/x-ndjson",
+        };
+
+        // Add auth header if configured
+        if (config.auth) {
+          const auth = btoa(`${config.auth.username}:${config.auth.password}`);
+          headers["Authorization"] = `Basic ${auth}`;
+        }
+
+        // Merge with any additional headers
+        Object.assign(headers, config.headers);
+
+        const response = await fetch(`${config.baseUrl}/tables/${tableName}/lookup`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify(request || {}),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Scan failed: ${response.status} ${errorText}`);
+        }
+
+        if (!response.body) {
+          throw new Error("Response body is null");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            if (line.trim()) {
+              yield JSON.parse(line);
+            }
+          }
+        }
+
+        // Handle any remaining content in buffer
+        if (buffer.trim()) {
+          yield JSON.parse(buffer);
+        }
+      }
+
+      return scanGenerator();
+    },
+
+    /**
+     * Scan keys in a table and collect all results into an array
+     * Convenience method that consumes the scan AsyncGenerator
+     * @param tableName - Name of the table
+     * @param request - Scan request with optional key range, field projection, and filtering
+     * @returns Promise with array of all matching documents
+     */
+    scanAll: async (
+      tableName: string,
+      request?: ScanKeysRequest
+    ): Promise<Array<{ _key: string; [key: string]: unknown }>> => {
+      const results: Array<{ _key: string; [key: string]: unknown }> = [];
+      for await (const doc of this.tables.scan(tableName, request)) {
+        results.push(doc);
+      }
+      return results;
     },
 
     /**

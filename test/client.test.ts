@@ -215,6 +215,198 @@ describe("AntflyClient", () => {
         body: request,
       });
     });
+
+    it("should lookup a key without field projection", async () => {
+      const mockDocument = {
+        _key: "user:123",
+        name: "John Doe",
+        email: "john@example.com",
+        metadata: { role: "admin" },
+      };
+
+      mockGet.mockResolvedValueOnce({
+        data: mockDocument,
+        error: undefined,
+      });
+
+      const result = await client.tables.lookup("users", "user:123");
+      expect(result).toEqual(mockDocument);
+      expect(mockGet).toHaveBeenCalledWith("/tables/{tableName}/lookup/{key}", {
+        params: {
+          path: { tableName: "users", key: "user:123" },
+          query: undefined,
+        },
+      });
+    });
+
+    it("should lookup a key with field projection", async () => {
+      const mockDocument = {
+        _key: "user:123",
+        name: "John Doe",
+        email: "john@example.com",
+      };
+
+      mockGet.mockResolvedValueOnce({
+        data: mockDocument,
+        error: undefined,
+      });
+
+      const result = await client.tables.lookup("users", "user:123", {
+        fields: "name,email",
+      });
+      expect(result).toEqual(mockDocument);
+      expect(mockGet).toHaveBeenCalledWith("/tables/{tableName}/lookup/{key}", {
+        params: {
+          path: { tableName: "users", key: "user:123" },
+          query: { fields: "name,email" },
+        },
+      });
+    });
+
+    it("should throw error when lookup fails", async () => {
+      mockGet.mockResolvedValueOnce({
+        data: undefined,
+        error: { error: "Key not found" },
+      });
+
+      await expect(client.tables.lookup("users", "nonexistent")).rejects.toThrow(
+        "Key lookup failed: Key not found"
+      );
+    });
+  });
+
+  describe("tables.scan", () => {
+    /**
+     * Helper to create a mock NDJSON ReadableStream
+     */
+    function createNDJSONStream(documents: Array<Record<string, unknown>>): ReadableStream<Uint8Array> {
+      const encoder = new TextEncoder();
+      let docIndex = 0;
+
+      return new ReadableStream({
+        pull(controller) {
+          if (docIndex < documents.length) {
+            const line = JSON.stringify(documents[docIndex]) + "\n";
+            controller.enqueue(encoder.encode(line));
+            docIndex++;
+          } else {
+            controller.close();
+          }
+        },
+      });
+    }
+
+    /**
+     * Helper to create a mock Response with NDJSON content type
+     */
+    function createNDJSONResponse(documents: Array<Record<string, unknown>>): Response {
+      return new Response(createNDJSONStream(documents), {
+        status: 200,
+        headers: { "content-type": "application/x-ndjson" },
+      });
+    }
+
+    it("should scan keys and stream results", async () => {
+      const mockDocuments = [
+        { _key: "user:1", name: "Alice" },
+        { _key: "user:2", name: "Bob" },
+        { _key: "user:3", name: "Charlie" },
+      ];
+
+      const mockFetch = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(createNDJSONResponse(mockDocuments));
+
+      const results: Array<{ _key: string; [key: string]: unknown }> = [];
+      for await (const doc of client.tables.scan("users")) {
+        results.push(doc);
+      }
+
+      expect(results).toHaveLength(3);
+      expect(results[0]).toEqual({ _key: "user:1", name: "Alice" });
+      expect(results[1]).toEqual({ _key: "user:2", name: "Bob" });
+      expect(results[2]).toEqual({ _key: "user:3", name: "Charlie" });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:8080/tables/users/lookup",
+        expect.objectContaining({
+          method: "POST",
+          body: "{}",
+        })
+      );
+
+      mockFetch.mockRestore();
+    });
+
+    it("should scan keys with range and field parameters", async () => {
+      const mockDocuments = [
+        { _key: "user:100", name: "User 100" },
+        { _key: "user:101", name: "User 101" },
+      ];
+
+      const mockFetch = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(createNDJSONResponse(mockDocuments));
+
+      const results: Array<{ _key: string; [key: string]: unknown }> = [];
+      for await (const doc of client.tables.scan("users", {
+        from: "user:100",
+        to: "user:200",
+        fields: ["name"],
+        limit: 10,
+      })) {
+        results.push(doc);
+      }
+
+      expect(results).toHaveLength(2);
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:8080/tables/users/lookup",
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify({
+            from: "user:100",
+            to: "user:200",
+            fields: ["name"],
+            limit: 10,
+          }),
+        })
+      );
+
+      mockFetch.mockRestore();
+    });
+
+    it("should throw error when scan fails", async () => {
+      const mockFetch = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(new Response("Table not found", { status: 404 }));
+
+      const generator = client.tables.scan("nonexistent");
+      await expect(generator.next()).rejects.toThrow("Scan failed: 404 Table not found");
+
+      mockFetch.mockRestore();
+    });
+
+    it("should collect all results with scanAll", async () => {
+      const mockDocuments = [
+        { _key: "prod:1", title: "Product 1", price: 10 },
+        { _key: "prod:2", title: "Product 2", price: 20 },
+      ];
+
+      const mockFetch = vi
+        .spyOn(globalThis, "fetch")
+        .mockResolvedValueOnce(createNDJSONResponse(mockDocuments));
+
+      const results = await client.tables.scanAll("products", {
+        fields: ["title", "price"],
+      });
+
+      expect(results).toHaveLength(2);
+      expect(results[0]).toEqual({ _key: "prod:1", title: "Product 1", price: 10 });
+      expect(results[1]).toEqual({ _key: "prod:2", title: "Product 2", price: 20 });
+
+      mockFetch.mockRestore();
+    });
   });
 
   describe("setAuth", () => {

@@ -87,6 +87,15 @@ export type PermissionType = components["schemas"]["PermissionType"];
 export type BackupRequest = components["schemas"]["BackupRequest"];
 export type RestoreRequest = components["schemas"]["RestoreRequest"];
 
+// Lookup/Scan types
+export type ScanKeysRequest = Omit<
+  components["schemas"]["ScanKeysRequest"],
+  "filter_query"
+> & {
+  /** Full JSON Bleve filter query with proper type checking */
+  filter_query?: BleveQuery;
+};
+
 // Schema types
 export type DocumentSchema = components["schemas"]["DocumentSchema"];
 
