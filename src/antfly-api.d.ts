@@ -24,6 +24,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/backup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Backup all tables or selected tables
+         * @description Creates a backup of all tables or specified tables. Each table's backup includes:
+         *     - Table metadata (schema, indexes, shard configuration)
+         *     - All shard data (compressed with zstd)
+         *
+         *     The backup creates a cluster-level manifest that tracks all included tables
+         *     and their individual backup locations.
+         *
+         *     **Storage Locations:**
+         *     - Local filesystem: `file:///path/to/backup`
+         *     - Amazon S3: `s3://bucket-name/path/to/backup`
+         *
+         *     **Backup Structure:**
+         *     ```
+         *     {location}/
+         *     ├── {backup_id}-cluster-metadata.json   (cluster manifest)
+         *     ├── {table1}-{backup_id}-metadata.json  (table metadata)
+         *     ├── shard-1-{table1}-{backup_id}.tar.zst
+         *     ├── shard-2-{table1}-{backup_id}.tar.zst
+         *     ├── {table2}-{backup_id}-metadata.json
+         *     └── ...
+         *     ```
+         */
+        post: operations["backup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore multiple tables from a backup
+         * @description Restores tables from a cluster backup. Can restore all tables or a subset.
+         *
+         *     **Restore Modes:**
+         *     - `fail_if_exists`: Abort if any target table already exists (default)
+         *     - `skip_if_exists`: Skip existing tables and restore the rest
+         *     - `overwrite`: Drop existing tables and restore from backup
+         *
+         *     The restore is asynchronous - this endpoint triggers the restore process
+         *     and returns immediately. The actual data restoration happens via the
+         *     reconciliation loop as shards are started.
+         */
+        post: operations["restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/backups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List available backups
+         * @description Lists all cluster-level backups available at the specified location.
+         *     Returns metadata about each backup including the tables included,
+         *     timestamp, and Antfly version.
+         */
+        get: operations["listBackups"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/query": {
         parameters: {
             query?: never;
@@ -1225,6 +1316,151 @@ export interface components {
             location: string;
         };
         RestoreRequest: components["schemas"]["BackupRequest"];
+        ClusterBackupRequest: {
+            /**
+             * @description Unique identifier for this backup. Used to reference the backup for restore operations.
+             *     Choose a meaningful name that includes date/version information.
+             * @example cluster-backup-2025-01-15
+             */
+            backup_id: string;
+            /**
+             * @description Storage location for the backup. Supports multiple backends:
+             *     - Local filesystem: `file:///path/to/backup`
+             *     - Amazon S3: `s3://bucket-name/path/to/backup`
+             *
+             *     The backup includes all table data, indexes, and metadata.
+             * @example s3://mybucket/antfly-backups/cluster/2025-01-15
+             */
+            location: string;
+            /**
+             * @description Optional list of tables to backup. If omitted, all tables are backed up.
+             * @example [
+             *       "users",
+             *       "products"
+             *     ]
+             */
+            table_names?: string[];
+        };
+        ClusterBackupResponse: {
+            /**
+             * @description The backup identifier
+             * @example cluster-backup-2025-01-15
+             */
+            backup_id: string;
+            /** @description Status of each table backup */
+            tables: components["schemas"]["TableBackupStatus"][];
+            /**
+             * @description Overall backup status
+             * @example completed
+             * @enum {string}
+             */
+            status: "completed" | "partial" | "failed";
+        };
+        TableBackupStatus: {
+            /**
+             * @description Table name
+             * @example users
+             */
+            name: string;
+            /**
+             * @description Backup status for this table
+             * @example completed
+             * @enum {string}
+             */
+            status: "completed" | "failed" | "skipped";
+            /** @description Error message if backup failed */
+            error?: string;
+        };
+        ClusterRestoreRequest: {
+            /**
+             * @description Unique identifier of the backup to restore from.
+             * @example cluster-backup-2025-01-15
+             */
+            backup_id: string;
+            /**
+             * @description Storage location where the backup is stored.
+             * @example s3://mybucket/antfly-backups/cluster/2025-01-15
+             */
+            location: string;
+            /**
+             * @description Optional list of tables to restore. If omitted, all tables in the backup are restored.
+             * @example [
+             *       "users",
+             *       "products"
+             *     ]
+             */
+            table_names?: string[];
+            /**
+             * @description How to handle existing tables:
+             *     - `fail_if_exists`: Abort if any table already exists (default)
+             *     - `skip_if_exists`: Skip existing tables, restore others
+             *     - `overwrite`: Drop and recreate existing tables
+             * @default fail_if_exists
+             * @example skip_if_exists
+             * @enum {string}
+             */
+            restore_mode?: "fail_if_exists" | "skip_if_exists" | "overwrite";
+        };
+        ClusterRestoreResponse: {
+            /** @description Status of each table restore */
+            tables: components["schemas"]["TableRestoreStatus"][];
+            /**
+             * @description Overall restore status
+             * @example triggered
+             * @enum {string}
+             */
+            status: "triggered" | "partial" | "failed";
+        };
+        TableRestoreStatus: {
+            /**
+             * @description Table name
+             * @example users
+             */
+            name: string;
+            /**
+             * @description Restore status for this table
+             * @example triggered
+             * @enum {string}
+             */
+            status: "triggered" | "skipped" | "failed";
+            /** @description Error message if restore failed */
+            error?: string;
+        };
+        BackupInfo: {
+            /**
+             * @description The backup identifier
+             * @example cluster-backup-2025-01-15
+             */
+            backup_id: string;
+            /**
+             * Format: date-time
+             * @description When the backup was created
+             * @example 2025-01-15T10:30:00Z
+             */
+            timestamp: string;
+            /**
+             * @description Tables included in the backup
+             * @example [
+             *       "users",
+             *       "products"
+             *     ]
+             */
+            tables: string[];
+            /**
+             * @description Storage location of the backup
+             * @example s3://mybucket/antfly-backups/cluster/2025-01-15
+             */
+            location: string;
+            /**
+             * @description Antfly version that created the backup
+             * @example v1.0.0
+             */
+            antfly_version?: string;
+        };
+        BackupListResponse: {
+            /** @description List of available backups */
+            backups: components["schemas"]["BackupInfo"][];
+        };
         RAGRequest: {
             /**
              * @description Array of retrieval queries to execute. Each query must specify a table and can specify its own limit and document_renderer.
@@ -3847,6 +4083,33 @@ export interface components {
          * @enum {string}
          */
         WebSearchProvider: "google" | "bing" | "serper" | "tavily" | "brave" | "duckduckgo";
+        Credentials: {
+            /**
+             * @description S3-compatible endpoint (e.g., 's3.amazonaws.com' or 'localhost:9000' for MinIO)
+             * @example s3.amazonaws.com
+             */
+            endpoint?: string;
+            /**
+             * @description Enable SSL/TLS for S3 connections (default: true for AWS, false for local MinIO)
+             * @default true
+             */
+            use_ssl?: boolean;
+            /**
+             * @description AWS access key ID. Supports keystore syntax for secret lookup. Falls back to AWS_ACCESS_KEY_ID environment variable if not set.
+             * @example your-access-key-id
+             */
+            access_key_id?: string;
+            /**
+             * @description AWS secret access key. Supports keystore syntax for secret lookup. Falls back to AWS_SECRET_ACCESS_KEY environment variable if not set.
+             * @example your-secret-access-key
+             */
+            secret_access_key?: string;
+            /**
+             * @description Optional AWS session token for temporary credentials. Supports keystore syntax for secret lookup.
+             * @example your-session-token
+             */
+            session_token?: string;
+        };
         /**
          * @description Configuration for URL content fetching.
          *
@@ -3856,6 +4119,7 @@ export interface components {
          *     - PDF files (extracts text)
          *     - Images (returns as data URIs)
          *     - Plain text files
+         *     - S3 URLs (requires s3_credentials)
          *
          *     Security features (from lib/scraping.ContentSecurityConfig):
          *     - Allowed host whitelist
@@ -3864,6 +4128,8 @@ export interface components {
          *     - Timeout controls
          */
         FetchConfig: {
+            /** @description S3 credentials for fetching S3 URLs. If not set, uses package-level defaults. */
+            s3_credentials?: components["schemas"]["Credentials"];
             /**
              * @description Maximum content length in characters (truncated if exceeded)
              * @default 50000
@@ -4818,6 +5084,88 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    backup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClusterBackupRequest"];
+            };
+        };
+        responses: {
+            /** @description Backup completed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterBackupResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClusterRestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Restore triggered successfully */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterRestoreResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    listBackups: {
+        parameters: {
+            query: {
+                /**
+                 * @description Storage location to search for backups.
+                 *     - Local filesystem: `file:///path/to/backup`
+                 *     - Amazon S3: `s3://bucket-name/path/to/backup`
+                 * @example s3://mybucket/antfly-backups/
+                 */
+                location: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description List of available backups */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupListResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
             500: components["responses"]["InternalServerError"];
         };
     };
