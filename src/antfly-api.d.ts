@@ -5647,13 +5647,8 @@ export interface operations {
                         inserted?: number;
                         /** @description Number of documents successfully deleted */
                         deleted?: number;
-                        /** @description List of failed operations with error details */
-                        failed?: {
-                            /** @description The document ID that failed */
-                            id?: string;
-                            /** @description Error message for this failure */
-                            error?: string;
-                        }[];
+                        /** @description Number of documents successfully transformed */
+                        transformed?: number;
                     };
                 };
             };
