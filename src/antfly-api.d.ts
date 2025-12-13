@@ -524,7 +524,7 @@ export interface paths {
         get?: never;
         put?: never;
         /** Perform batch inserts and deletes on a table */
-        post: operations["batch"];
+        post: operations["batchWrite"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1297,6 +1297,14 @@ export interface components {
              */
             transforms?: components["schemas"]["Transform"][];
             sync_level?: components["schemas"]["SyncLevel"];
+        };
+        BatchResponse: {
+            /** @description Number of documents successfully inserted */
+            inserted?: number;
+            /** @description Number of documents successfully deleted */
+            deleted?: number;
+            /** @description Number of documents successfully transformed */
+            transformed?: number;
         };
         BackupRequest: {
             /**
@@ -3163,6 +3171,68 @@ export interface components {
             presence_penalty?: number;
         };
         /**
+         * @description Configuration for the OpenRouter generative AI provider.
+         *
+         *     OpenRouter provides a unified API for multiple LLM providers with automatic fallback routing.
+         *     API key via `api_key` field or `OPENROUTER_API_KEY` environment variable.
+         *
+         *     **Model Selection:**
+         *     - Use `model` for a single model (e.g., "openai/gpt-4.1", "anthropic/claude-sonnet-4-5-20250929")
+         *     - Use `models` array for fallback routing - OpenRouter tries models in order until one succeeds
+         *
+         *     **Example Models:** openai/gpt-4.1, anthropic/claude-sonnet-4-5-20250929, google/gemini-2.5-flash,
+         *     meta-llama/llama-3.3-70b-instruct
+         *
+         *     **Docs:** https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request
+         * @example {
+         *       "provider": "openrouter",
+         *       "model": "openai/gpt-4.1",
+         *       "temperature": 0.7,
+         *       "max_tokens": 4096
+         *     }
+         */
+        OpenRouterGeneratorConfig: {
+            /**
+             * @description Single model identifier (e.g., 'openai/gpt-4.1'). Either model or models must be provided.
+             * @example openai/gpt-4.1
+             */
+            model?: string;
+            /**
+             * @description Array of model identifiers for fallback routing. OpenRouter tries each model in order
+             *     until one succeeds. Either model or models must be provided.
+             * @example [
+             *       "openai/gpt-4.1",
+             *       "anthropic/claude-sonnet-4-5-20250929",
+             *       "google/gemini-2.5-flash"
+             *     ]
+             */
+            models?: string[];
+            /** @description The OpenRouter API key. Can also be set via OPENROUTER_API_KEY environment variable. */
+            api_key?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0). Higher values make output more random.
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate in the response. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter (0.0-1.0). Alternative to temperature.
+             */
+            top_p?: number;
+            /**
+             * Format: float
+             * @description Penalty for token frequency (-2.0 to 2.0).
+             */
+            frequency_penalty?: number;
+            /**
+             * Format: float
+             * @description Penalty for token presence (-2.0 to 2.0).
+             */
+            presence_penalty?: number;
+        };
+        /**
          * @description Configuration for the AWS Bedrock generative AI provider.
          *
          *     Provides access to models from Anthropic, Meta, Amazon, Cohere, Mistral, and others.
@@ -3291,7 +3361,7 @@ export interface components {
          * @description The generative AI provider to use.
          * @enum {string}
          */
-        GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "anthropic" | "cohere" | "mock";
+        GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "anthropic" | "cohere" | "mock";
         /**
          * @description A unified configuration for a generative AI provider.
          *
@@ -3461,7 +3531,7 @@ export interface components {
          *       "max_tokens": 2048
          *     }
          */
-        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"] | components["schemas"]["CohereGeneratorConfig"]) & {
+        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["OpenRouterGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"] | components["schemas"]["CohereGeneratorConfig"]) & {
             provider: components["schemas"]["GeneratorProvider"];
         };
         /** @description Retry configuration for generator calls */
@@ -4428,6 +4498,34 @@ export interface components {
             dimensions?: number;
         };
         /**
+         * @description Configuration for the OpenRouter embedding provider.
+         *
+         *     OpenRouter provides a unified API for multiple embedding models from different providers.
+         *     API key via `api_key` field or `OPENROUTER_API_KEY` environment variable.
+         *
+         *     **Example Models:** openai/text-embedding-3-small (default), openai/text-embedding-3-large,
+         *     google/gemini-embedding-001, qwen/qwen3-embedding-8b
+         *
+         *     **Docs:** https://openrouter.ai/docs/api/reference/embeddings
+         * @example {
+         *       "provider": "openrouter",
+         *       "model": "openai/text-embedding-3-small",
+         *       "api_key": "sk-or-..."
+         *     }
+         */
+        OpenRouterEmbedderConfig: {
+            /**
+             * @description The OpenRouter model identifier (e.g., 'openai/text-embedding-3-small', 'google/gemini-embedding-001').
+             * @default openai/text-embedding-3-small
+             * @example openai/text-embedding-3-small
+             */
+            model: string;
+            /** @description The OpenRouter API key. Can also be set via OPENROUTER_API_KEY environment variable. */
+            api_key?: string;
+            /** @description Output dimension for the embedding (if supported by the model). */
+            dimensions?: number;
+        };
+        /**
          * @description Configuration for the AWS Bedrock embedding provider.
          *
          *     Uses AWS credentials from environment or IAM roles.
@@ -4503,7 +4601,7 @@ export interface components {
          * @description The embedding provider to use.
          * @enum {string}
          */
-        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "bedrock" | "cohere" | "mock";
+        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "cohere" | "mock";
         /**
          * @description A unified configuration for an embedding provider.
          *
@@ -4677,7 +4775,7 @@ export interface components {
          *       "model": "text-embedding-3-small"
          *     }
          */
-        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"]) & {
+        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["OpenRouterEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
         };
         /** @description Per-request configuration for chunking. All fields are optional - zero/omitted values use chunker defaults. */
@@ -5620,7 +5718,7 @@ export interface operations {
             };
         };
     };
-    batch: {
+    batchWrite: {
         parameters: {
             query?: never;
             header?: never;
@@ -5642,14 +5740,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Number of documents successfully inserted */
-                        inserted?: number;
-                        /** @description Number of documents successfully deleted */
-                        deleted?: number;
-                        /** @description Number of documents successfully transformed */
-                        transformed?: number;
-                    };
+                    "application/json": components["schemas"]["BatchResponse"];
                 };
             };
             400: components["responses"]["BadRequest"];
