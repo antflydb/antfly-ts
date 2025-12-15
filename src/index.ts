@@ -125,7 +125,7 @@ export type {
   RestoreRequest,
   RouteType,
   SemanticQueryMode,
-  SummarizeResult,
+  GenerateResult,
   // Table types
   Table,
   TableSchema,

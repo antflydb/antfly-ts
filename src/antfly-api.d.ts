@@ -1533,11 +1533,11 @@ export interface components {
              */
             eval?: components["schemas"]["EvalConfig"];
         };
-        /** @description RAG result with individual query results and summary */
+        /** @description RAG result with individual query results and generation/evaluation outcome */
         RAGResult: {
             /** @description Results from each query. Check each result's status and error fields for failures. */
             query_results?: components["schemas"]["QueryResult"][];
-            summary_result?: components["schemas"]["SummarizeResult"];
+            generate_result?: components["schemas"]["GenerateResult"];
             /** @description Evaluation results when eval config was provided in the request */
             eval_result?: components["schemas"]["EvalResult"];
         };
@@ -3644,10 +3644,10 @@ export interface components {
             /** @description Evaluation options (k, thresholds, etc.) */
             options?: components["schemas"]["EvalOptions"];
         };
-        /** @description Result of a summarization operation. The summary is formatted as markdown with inline resource references using [resource_id <id>] or [resource_id <id1>, <id2>] format. */
-        SummarizeResult: {
-            /** @description The generated summary text in markdown format with inline resource references like [resource_id res1] or [resource_id res1, res2] */
-            summary: string;
+        /** @description Result of a generate operation. Formatted as markdown by default with inline resource references using [resource_id <id>] or [resource_id <id1>, <id2>] format. */
+        GenerateResult: {
+            /** @description The generated text in markdown format with inline resource references like [resource_id res1] or [resource_id res1, res2] */
+            text: string;
         };
         /** @description Result from a single evaluator */
         EvaluatorScore: {
