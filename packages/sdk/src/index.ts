@@ -97,6 +97,7 @@ export type {
   FacetResult,
   FetchConfig,
   FilterSpec,
+  GenerateResult,
   GeneratorConfig,
   GeneratorProvider,
   // Index types
@@ -125,7 +126,6 @@ export type {
   RestoreRequest,
   RouteType,
   SemanticQueryMode,
-  GenerateResult,
   // Table types
   Table,
   TableSchema,

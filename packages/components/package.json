@@ -1,0 +1,84 @@
+{
+  "name": "@antfly/components",
+  "version": "0.0.5",
+  "description": "React components for Antfly search",
+  "type": "module",
+  "main": "dist/main.js",
+  "module": "dist/main.js",
+  "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./dist/main.js"
+    },
+    "./styles": "./dist/components.css"
+  },
+  "files": ["dist", "types", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check . --write",
+    "format": "biome format --write .",
+    "storybook": "sb dev",
+    "build-storybook": "sb build",
+    "clean": "rm -rf dist types"
+  },
+  "keywords": ["antfly", "react", "search", "components", "facets", "rag"],
+  "author": "Antfly Contributors",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antflydb/antfly-ts.git",
+    "directory": "packages/components"
+  },
+  "bugs": {
+    "url": "https://github.com/antflydb/antfly-ts/issues"
+  },
+  "homepage": "https://github.com/antflydb/antfly-ts/tree/main/packages/components#readme",
+  "browserslist": [">0.03%"],
+  "peerDependencies": {
+    "react": "^16.0.0 || ^17.0 || ^18.0 || ^19.0",
+    "react-dom": "^16.0 || ^17.0 || ^18.0 || ^19.0"
+  },
+  "dependencies": {
+    "@antfly/sdk": "workspace:*",
+    "@babel/runtime": "^7.28.4",
+    "qs": "^6.14.0",
+    "react-autosuggest": "^10.1.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
+    "@storybook/addon-docs": "10.1.8",
+    "@storybook/addon-links": "^10.1.8",
+    "@storybook/react": "^10.1.8",
+    "@storybook/react-vite": "^10.1.8",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^25.0.2",
+    "@types/qs": "^6.14.0",
+    "@types/react": "^19.2.7",
+    "@types/react-autosuggest": "^10.1.11",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/ui": "^4.0.15",
+    "core-js": "^3.47.0",
+    "jsdom": "^27.3.0",
+    "lodash": "^4.17.21",
+    "msw": "^2.12.4",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "sb": "^10.1.8",
+    "storybook": "^10.1.8",
+    "streamdown": "^1.6.10",
+    "vite": "^7.2.7",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.15"
+  }
+}

@@ -244,7 +244,7 @@
             
             try {
                 results.textContent = 'Inserting data...';
-                const response = await window.client.tables.batch('products', {
+                await window.client.tables.batch('products', {
                     inserts: {
                         'prod:001': {
                             name: 'Laptop',

@@ -3,6 +3,10 @@ node_modules/
 
 # Build output
 dist/
+types/
+
+# Turbo
+.turbo/
 
 # AI
 .aider*
@@ -13,3 +17,9 @@ dist/
 
 # OS
 .DS_Store
+
+# Storybook
+storybook-static/
+
+# Lock files (use root only)
+packages/*/package-lock.json

@@ -279,7 +279,9 @@ describe("AntflyClient", () => {
     /**
      * Helper to create a mock NDJSON ReadableStream
      */
-    function createNDJSONStream(documents: Array<Record<string, unknown>>): ReadableStream<Uint8Array> {
+    function createNDJSONStream(
+      documents: Array<Record<string, unknown>>
+    ): ReadableStream<Uint8Array> {
       const encoder = new TextEncoder();
       let docIndex = 0;
 

@@ -1,61 +1,27 @@
 {
-  "name": "@antfly/sdk",
-  "version": "0.0.7",
-  "description": "TypeScript SDK for Antfly API",
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "files": ["dist", "README.md", "LICENSE"],
+  "name": "antfly-ts",
+  "private": true,
+  "description": "Antfly TypeScript monorepo - SDK and React components",
+  "workspaces": ["packages/*"],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "prepare": "npm run build",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage",
-    "test:ts": "tsc --noEmit",
-    "typecheck": "tsc --noEmit",
-    "lint": "biome check .",
-    "lint:fix": "biome check . --write",
-    "format": "biome format --write .",
-    "generate": "npx openapi-typescript ../openapi.yaml -o ./src/antfly-api.d.ts --default-non-nullable=false && npx openapi-typescript ../bleve-query-openapi.yaml --client fetch -o ./src/bleve-query.d.ts --default-non-nullable=false",
-    "prepublishOnly": "npm run test:ts && npm run lint && npm run test && npm run build",
-    "example:node": "tsx examples/node-example.ts"
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "generate": "turbo run generate",
+    "storybook": "turbo run storybook --filter=@antfly/components",
+    "build-storybook": "turbo run build-storybook --filter=@antfly/components",
+    "clean": "turbo run clean && rm -rf node_modules"
   },
-  "keywords": ["antfly", "sdk", "typescript", "api", "client", "database", "vector", "search"],
-  "author": "Antfly Contributors",
-  "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/antflydb/antfly-ts.git"
-  },
-  "bugs": {
-    "url": "https://github.com/antflydb/antfly-ts/issues"
-  },
-  "homepage": "https://github.com/antflydb/antfly-ts#readme",
   "devDependencies": {
     "@biomejs/biome": "^2.3.8",
-    "@types/node": "^24.10.1",
-    "@vitest/ui": "^4.0.15",
-    "openapi-typescript": "^7.10.1",
-    "tsup": "^8.5.1",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.15"
-  },
-  "dependencies": {
-    "openapi-fetch": "^0.15.0"
+    "turbo": "^2.6.3",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "packageManager": "pnpm@10.25.0"
 }

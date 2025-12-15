@@ -22,8 +22,7 @@ export type WildcardQuery = BleveComponents["schemas"]["WildcardQuery"];
 export type QueryStringQuery = BleveComponents["schemas"]["QueryStringQuery"];
 export type NumericRangeQuery = BleveComponents["schemas"]["NumericRangeQuery"];
 export type TermRangeQuery = BleveComponents["schemas"]["TermRangeQuery"];
-export type DateRangeStringQuery =
-  BleveComponents["schemas"]["DateRangeStringQuery"];
+export type DateRangeStringQuery = BleveComponents["schemas"]["DateRangeStringQuery"];
 export type BooleanQuery = BleveComponents["schemas"]["BooleanQuery"];
 export type ConjunctionQuery = BleveComponents["schemas"]["ConjunctionQuery"];
 export type DisjunctionQuery = BleveComponents["schemas"]["DisjunctionQuery"];
@@ -32,11 +31,9 @@ export type MatchNoneQuery = BleveComponents["schemas"]["MatchNoneQuery"];
 export type DocIdQuery = BleveComponents["schemas"]["DocIdQuery"];
 export type BoolFieldQuery = BleveComponents["schemas"]["BoolFieldQuery"];
 export type IPRangeQuery = BleveComponents["schemas"]["IPRangeQuery"];
-export type GeoBoundingBoxQuery =
-  BleveComponents["schemas"]["GeoBoundingBoxQuery"];
+export type GeoBoundingBoxQuery = BleveComponents["schemas"]["GeoBoundingBoxQuery"];
 export type GeoDistanceQuery = BleveComponents["schemas"]["GeoDistanceQuery"];
-export type GeoBoundingPolygonQuery =
-  BleveComponents["schemas"]["GeoBoundingPolygonQuery"];
+export type GeoBoundingPolygonQuery = BleveComponents["schemas"]["GeoBoundingPolygonQuery"];
 export type GeoShapeQuery = BleveComponents["schemas"]["GeoShapeQuery"];
 export type Boost = BleveComponents["schemas"]["Boost"];
 export type Fuzziness = BleveComponents["schemas"]["Fuzziness"];
@@ -58,10 +55,7 @@ export type QueryHit = components["schemas"]["QueryHit"];
 export type QueryResponses = components["schemas"]["QueryResponses"];
 
 // RAG types - Override QueryRequest with proper types
-export type RAGRequest = Omit<
-  components["schemas"]["RAGRequest"],
-  "queries"
-> & {
+export type RAGRequest = Omit<components["schemas"]["RAGRequest"], "queries"> & {
   queries: QueryRequest[];
 };
 
@@ -84,8 +78,7 @@ export type IndexStatus = components["schemas"]["IndexStatus"];
 // User and permission types
 export type User = components["schemas"]["User"];
 export type CreateUserRequest = components["schemas"]["CreateUserRequest"];
-export type UpdatePasswordRequest =
-  components["schemas"]["UpdatePasswordRequest"];
+export type UpdatePasswordRequest = components["schemas"]["UpdatePasswordRequest"];
 export type Permission = components["schemas"]["Permission"];
 export type ResourceType = components["schemas"]["ResourceType"];
 export type PermissionType = components["schemas"]["PermissionType"];
@@ -95,10 +88,7 @@ export type BackupRequest = components["schemas"]["BackupRequest"];
 export type RestoreRequest = components["schemas"]["RestoreRequest"];
 
 // Lookup/Scan types
-export type ScanKeysRequest = Omit<
-  components["schemas"]["ScanKeysRequest"],
-  "filter_query"
-> & {
+export type ScanKeysRequest = Omit<components["schemas"]["ScanKeysRequest"], "filter_query"> & {
   /** Full JSON Bleve filter query with proper type checking */
   filter_query?: BleveQuery;
 };
@@ -124,8 +114,13 @@ export const embedderProviders: components["schemas"]["EmbedderProvider"][] = [
   "bedrock",
 ];
 export type GeneratorProvider = components["schemas"]["GeneratorProvider"];
-export const generatorProviders: components["schemas"]["GeneratorProvider"][] =
-  ["ollama", "gemini", "openai", "bedrock", "anthropic"];
+export const generatorProviders: components["schemas"]["GeneratorProvider"][] = [
+  "ollama",
+  "gemini",
+  "openai",
+  "bedrock",
+  "anthropic",
+];
 
 // RAG response types
 export type GenerateResult = components["schemas"]["GenerateResult"];
@@ -156,8 +151,7 @@ export type ChatToolName = components["schemas"]["ChatToolName"];
 export type ChatToolsConfig = components["schemas"]["ChatToolsConfig"];
 export type ChatAgentSteps = components["schemas"]["ChatAgentSteps"];
 export type FilterSpec = components["schemas"]["FilterSpec"];
-export type ClarificationRequest =
-  components["schemas"]["ClarificationRequest"];
+export type ClarificationRequest = components["schemas"]["ClarificationRequest"];
 export type WebSearchConfig = components["schemas"]["WebSearchConfig"];
 export type FetchConfig = components["schemas"]["FetchConfig"];
 
@@ -165,14 +159,13 @@ export type FetchConfig = components["schemas"]["FetchConfig"];
 export type AntflyError = components["schemas"]["Error"];
 
 // Utility type for extracting response data
-export type ResponseData<T extends keyof operations> =
-  operations[T]["responses"] extends {
-    200: infer R;
-  }
-    ? R extends { content: { "application/json": infer D } }
-      ? D
-      : never
-    : never;
+export type ResponseData<T extends keyof operations> = operations[T]["responses"] extends {
+  200: infer R;
+}
+  ? R extends { content: { "application/json": infer D } }
+    ? D
+    : never
+  : never;
 
 // Configuration types for the client
 export interface AntflyConfig {
@@ -186,18 +179,9 @@ export interface AntflyConfig {
 
 // RAG streaming callbacks for structured SSE events
 export interface RAGStreamCallbacks {
-  onHitsStart?: (data: {
-    table: string;
-    status: number;
-    error?: string;
-  }) => void;
+  onHitsStart?: (data: { table: string; status: number; error?: string }) => void;
   onHit?: (hit: QueryHit) => void;
-  onHitsEnd?: (data: {
-    table: string;
-    total: number;
-    returned: number;
-    took: string;
-  }) => void;
+  onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
   onSummary?: (chunk: string) => void;
   onDone?: (data?: { complete: boolean }) => void;
   onError?: (error: string) => void;
@@ -207,18 +191,9 @@ export interface RAGStreamCallbacks {
 export interface AnswerAgentStreamCallbacks {
   onClassification?: (data: ClassificationTransformationResult) => void;
   onReasoning?: (chunk: string) => void;
-  onHitsStart?: (data: {
-    table: string;
-    status: number;
-    error?: string;
-  }) => void;
+  onHitsStart?: (data: { table: string; status: number; error?: string }) => void;
   onHit?: (hit: QueryHit) => void;
-  onHitsEnd?: (data: {
-    table: string;
-    total: number;
-    returned: number;
-    took: string;
-  }) => void;
+  onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
   onAnswer?: (chunk: string) => void;
   onConfidence?: (data: AnswerConfidence) => void;
   onFollowUpQuestion?: (question: string) => void;
@@ -240,10 +215,7 @@ export interface ChatAgentStreamCallbacks {
   onClarificationRequired?: (data: ClarificationRequest) => void;
   onFilterApplied?: (filter: FilterSpec) => void;
   onSearchExecuted?: (data: { query: string }) => void;
-  onWebSearchExecuted?: (data: {
-    query: string;
-    results: WebSearchResultItem[];
-  }) => void;
+  onWebSearchExecuted?: (data: { query: string; results: WebSearchResultItem[] }) => void;
   onFetchExecuted?: (data: { url: string; content: string }) => void;
   onHit?: (hit: QueryHit) => void;
   onAnswer?: (chunk: string) => void;
