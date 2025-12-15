@@ -24,7 +24,8 @@
     "format": "biome format --write .",
     "storybook": "sb dev",
     "build-storybook": "sb build",
-    "clean": "rm -rf dist types"
+    "clean": "rm -rf dist types",
+    "prepare": "pnpm run build"
   },
   "keywords": ["antfly", "react", "search", "components", "facets", "rag"],
   "author": "Antfly Contributors",

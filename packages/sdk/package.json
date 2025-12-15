@@ -26,7 +26,8 @@
     "format": "biome format --write .",
     "generate": "openapi-typescript ../../../openapi.yaml -o ./src/antfly-api.d.ts --default-non-nullable=false && openapi-typescript ../../../bleve-query-openapi.yaml --client fetch -o ./src/bleve-query.d.ts --default-non-nullable=false",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "prepare": "pnpm run build",
+    "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",
     "example:node": "tsx examples/node-example.ts"
   },
   "keywords": ["antfly", "sdk", "typescript", "api", "client", "database", "vector", "search"],
