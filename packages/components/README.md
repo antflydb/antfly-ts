@@ -1,8 +1,8 @@
-# React Antfly
+# Antfly React Components
 
-[![Version](https://img.shields.io/npm/v/@antfly/react-antfly.svg)](https://npmjs.org/package/@antfly/react-antfly)
-[![Downloads](https://img.shields.io/npm/dt/@antfly/react-antfly.svg)](https://npmjs.org/package/@antfly/react-antfly)
-[![License](https://img.shields.io/npm/l/@antfly/react-antfly.svg)](https://github.com/antflydb/react-antfly/blob/master/package.json)
+[![Version](https://img.shields.io/npm/v/@antfly/components.svg)](https://npmjs.org/package/@antfly/components)
+[![Downloads](https://img.shields.io/npm/dt/@antfly/components.svg)](https://npmjs.org/package/@antfly/components)
+[![License](https://img.shields.io/npm/l/@antfly/components.svg)](https://github.com/antflydb/antfly-ts/blob/main/LICENSE)
 
 UI components for React + Antfly. Create search applications using declarative components.
 ## Usage
@@ -114,8 +114,10 @@ function MyComponent() {
 
 ## Install
 
-```
-npm i @antfly/components
+```bash
+pnpm add @antfly/components
+# or
+npm install @antfly/components
 ```
 
 ## Develop
@@ -155,12 +157,12 @@ antflycli load --table example --file storybook-testdata.jsonl --id-field _id
 ### Run Storybook
 
 ```bash
-npm run storybook
+pnpm storybook
 ```
 
 ## Main features
 
-- Released under **MIT licence**.
+- Released under **Apache-2.0 licence**.
 - Each component is built with React and is **customisable**. Not too much extra features nor magic.
 - It comes with **no style** so it's the developers responsibility to implement their own.
 - **35.32KB gzipped** for the whole lib, compatible with old browsers: >0.03% usage.
@@ -176,4 +178,4 @@ This work is based off the awesome work by [react-elasticsearch](https://github.
 
 ## Contributing
 
-Open issues and PR here: https://github.com/antflydb/react-antfly
+Open issues and PR here: https://github.com/antflydb/antfly-ts

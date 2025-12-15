@@ -21,7 +21,7 @@ importers:
   packages/components:
     dependencies:
       '@antfly/sdk':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../sdk
       '@babel/runtime':
         specifier: ^7.28.4
