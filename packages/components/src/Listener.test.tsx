@@ -390,25 +390,23 @@ describe("Listener", () => {
       // Type into the search box
       await userEvent.type(input, "foo");
 
-      // Wait for queries to be fired
+      // Wait for queries to be fired including the semantic query
+      // Autosuggest may execute its query separately/asynchronously from other widgets
       await waitFor(() => {
-        expect(msearchSpy).toHaveBeenCalled();
-      });
+        const calls = msearchSpy.mock.calls;
+        expect(calls.length).toBeGreaterThan(0);
 
-      // Check that queries were executed (autosuggest may execute separately from Results in live mode)
-      const calls = msearchSpy.mock.calls;
-      expect(calls.length).toBeGreaterThan(0);
-
-      // Verify that at least one query contains semantic search configuration
-      // In the new architecture, Autosuggest inside QueryBox executes its own isolated query
-      const hasSemanticQuery = calls.some((call) => {
-        const queries = call[1];
-        return queries?.some(
-          (q: { query?: { semantic_search?: string; indexes?: string[] } }) =>
-            q.query?.semantic_search && Array.isArray(q.query?.indexes)
-        );
+        // Verify that at least one query contains semantic search configuration
+        // In the new architecture, Autosuggest inside QueryBox executes its own isolated query
+        const hasSemanticQuery = calls.some((call) => {
+          const queries = call[1];
+          return queries?.some(
+            (q: { query?: { semantic_search?: string; indexes?: string[] } }) =>
+              q.query?.semantic_search && Array.isArray(q.query?.indexes)
+          );
+        });
+        expect(hasSemanticQuery).toBeTruthy();
       });
-      expect(hasSemanticQuery).toBeTruthy();
 
       msearchSpy.mockRestore();
     });
