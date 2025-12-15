@@ -1,6 +1,10 @@
 # Publish packages to npm when tagged
 # - sdk-v* tags publish @antfly/sdk
 # - components-v* tags publish @antfly/components
+#
+# Uses npm Trusted Publishing (OIDC) - no secrets required.
+# Configure trusted publishers at: https://www.npmjs.com/package/@antfly/sdk/access
+# and https://www.npmjs.com/package/@antfly/components/access
 
 name: Publish to npm
 
@@ -13,6 +17,10 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # Required for npm provenance / trusted publishing
     steps:
       - uses: actions/checkout@v5
 
@@ -36,12 +44,8 @@ jobs:
 
       - name: Publish SDK
         if: startsWith(github.ref, 'refs/tags/sdk-v')
-        run: pnpm --filter @antfly/sdk publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm --filter @antfly/sdk publish --access public --no-git-checks --provenance
 
       - name: Publish Components
         if: startsWith(github.ref, 'refs/tags/components-v')
-        run: pnpm --filter @antfly/components publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm --filter @antfly/components publish --access public --no-git-checks --provenance
