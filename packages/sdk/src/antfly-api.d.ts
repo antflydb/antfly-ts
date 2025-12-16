@@ -4598,10 +4598,44 @@ export interface components {
             truncate?: "NONE" | "START" | "END";
         };
         /**
+         * @description Configuration for the Termite embedding provider.
+         *
+         *     Termite is Antfly's built-in ML service for local embeddings using ONNX models.
+         *     It provides embedding generation with multi-tier caching (memory + persistent).
+         *
+         *     **Features:**
+         *     - Local ONNX-based embedding generation
+         *     - L1 memory cache with configurable TTL
+         *     - L2 persistent Pebble database cache
+         *     - Singleflight deduplication for concurrent identical requests
+         *
+         *     **Example Models:** bge-base-en-v1.5 (768 dims), all-MiniLM-L6-v2 (384 dims)
+         *
+         *     Models are loaded from the `models/embedders/{name}/` directory.
+         * @example {
+         *       "provider": "termite",
+         *       "model": "bge-base-en-v1.5",
+         *       "api_url": "http://localhost:8082"
+         *     }
+         */
+        TermiteEmbedderConfig: {
+            /**
+             * @description The embedding model name (maps to models/embedders/{name}/ directory).
+             * @example bge-base-en-v1.5
+             */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Termite API endpoint. Can also be set via ANTFLY_TERMITE_URL environment variable.
+             * @example http://localhost:8082
+             */
+            api_url?: string;
+        };
+        /**
          * @description The embedding provider to use.
          * @enum {string}
          */
-        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "cohere" | "mock";
+        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "cohere" | "mock" | "termite";
         /**
          * @description A unified configuration for an embedding provider.
          *
@@ -4775,7 +4809,7 @@ export interface components {
          *       "model": "text-embedding-3-small"
          *     }
          */
-        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["OpenRouterEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"]) & {
+        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["OpenRouterEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"] | components["schemas"]["TermiteEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
         };
         /** @description Per-request configuration for chunking. All fields are optional - zero/omitted values use chunker defaults. */
