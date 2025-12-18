@@ -12,7 +12,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x, 22.x]
+        node-version: [18.x, 20.x, 22.x]
 
     steps:
       - uses: actions/checkout@v5
@@ -29,14 +29,38 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run linter
+      # Run linter for all packages on Node 20+, exclude antfarm on Node 18
+      - name: Run linter (all packages)
+        if: ${{ !startsWith(matrix.node-version, '18') }}
         run: pnpm lint
 
-      - name: Run type checking
+      - name: Run linter (packages only)
+        if: ${{ startsWith(matrix.node-version, '18') }}
+        run: pnpm lint --filter='!antfarm'
+
+      # Run type checking for all packages on Node 20+, exclude antfarm on Node 18
+      - name: Run type checking (all packages)
+        if: ${{ !startsWith(matrix.node-version, '18') }}
         run: pnpm typecheck
 
-      - name: Build
+      - name: Run type checking (packages only)
+        if: ${{ startsWith(matrix.node-version, '18') }}
+        run: pnpm typecheck --filter='!antfarm'
+
+      # Build all packages on Node 20+, exclude antfarm on Node 18
+      - name: Build (all packages)
+        if: ${{ !startsWith(matrix.node-version, '18') }}
         run: pnpm build
 
-      - name: Run tests
+      - name: Build (packages only)
+        if: ${{ startsWith(matrix.node-version, '18') }}
+        run: pnpm build --filter='!antfarm'
+
+      # Run tests for all packages on Node 20+, exclude antfarm on Node 18
+      - name: Run tests (all packages)
+        if: ${{ !startsWith(matrix.node-version, '18') }}
         run: pnpm test
+
+      - name: Run tests (packages only)
+        if: ${{ startsWith(matrix.node-version, '18') }}
+        run: pnpm test --filter='!antfarm'
