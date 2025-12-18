@@ -108,10 +108,15 @@ export type RerankerConfig = components["schemas"]["RerankerConfig"];
 export type GeneratorConfig = components["schemas"]["GeneratorConfig"];
 export type EmbedderProvider = components["schemas"]["EmbedderProvider"];
 export const embedderProviders: components["schemas"]["EmbedderProvider"][] = [
+  "termite",
   "ollama",
   "gemini",
+  "vertex",
   "openai",
+  "openrouter",
   "bedrock",
+  "cohere",
+  "mock",
 ];
 export type GeneratorProvider = components["schemas"]["GeneratorProvider"];
 export const generatorProviders: components["schemas"]["GeneratorProvider"][] = [

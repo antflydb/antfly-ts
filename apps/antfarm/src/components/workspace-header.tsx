@@ -1,0 +1,110 @@
+import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
+import { Command, LogOut, Maximize2, Minimize2, User } from "lucide-react";
+import type * as React from "react";
+import { useNavigate } from "react-router-dom";
+import { useCommandPalette } from "@/components/command-palette-provider";
+import { useContentWidth } from "@/components/content-width-provider";
+import { SettingsDialog } from "@/components/SettingsDialog";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
+import { cn } from "@/lib/utils";
+
+interface WorkspaceHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  title?: string;
+}
+
+export function WorkspaceHeader({ title, className, ...props }: WorkspaceHeaderProps) {
+  const { toggle: toggleCommandPalette } = useCommandPalette();
+  const { contentWidth, toggleContentWidth } = useContentWidth();
+  const { theme, setTheme } = useTheme();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  return (
+    <header
+      className={cn("sticky top-0 z-10 flex h-14 items-center gap-4 bg-background px-4", className)}
+      {...props}
+    >
+      {title && <h1 className="text-lg font-semibold">{title}</h1>}
+
+      <div className="ml-auto flex items-center gap-2">
+        {/* Command Palette Trigger */}
+        <Button variant="outline" size="sm" onClick={toggleCommandPalette} className="gap-2">
+          <Command className="size-4" />
+          <span className="hidden md:inline">⌘K</span>
+        </Button>
+
+        {/* Settings */}
+        <SettingsDialog />
+
+        {/* Dark Mode Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+        >
+          {theme === "light" ? <MoonIcon className="size-4" /> : <SunIcon className="size-4" />}
+        </Button>
+
+        {/* Content Width Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleContentWidth}
+          title={contentWidth === "restricted" ? "Expand Content Width" : "Restrict Content Width"}
+        >
+          {contentWidth === "restricted" ? (
+            <Maximize2 className="size-4" />
+          ) : (
+            <Minimize2 className="size-4" />
+          )}
+        </Button>
+
+        {/* User Menu */}
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" title="User menu">
+                <User className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{user.username}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {user.permissions.length} permission(s)
+                  </span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 size-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </div>
+    </header>
+  );
+}
