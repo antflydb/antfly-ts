@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { ApiConfigProvider } from "@/components/api-config-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { CommandPaletteProvider } from "@/components/command-palette-provider";
@@ -8,6 +8,7 @@ import { PrivateRoute } from "@/components/private-route";
 import { AppSidebar } from "@/components/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WorkspaceHeader } from "@/components/workspace-header";
+import { type ProductId, defaultProduct, getDefaultRoute, isProductEnabled } from "@/config/products";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import ChunkingPlaygroundPage from "./pages/ChunkingPlaygroundPage";
@@ -19,6 +20,7 @@ import { UsersPage } from "./pages/UsersPage";
 
 function AppContent() {
   const [currentSection, setCurrentSection] = useState("indexes");
+  const [currentProduct, setCurrentProduct] = useState<ProductId>(defaultProduct);
   const { contentWidth } = useContentWidth();
 
   return (
@@ -29,7 +31,12 @@ function AppContent() {
         element={
           <PrivateRoute>
             <SidebarProvider>
-              <AppSidebar currentSection={currentSection} onSectionChange={setCurrentSection} />
+              <AppSidebar
+                currentSection={currentSection}
+                onSectionChange={setCurrentSection}
+                currentProduct={currentProduct}
+                onProductChange={setCurrentProduct}
+              />
               <SidebarInset>
                 <WorkspaceHeader />
                 <div
@@ -39,19 +46,33 @@ function AppContent() {
                   )}
                 >
                   <Routes>
-                    <Route path="/" element={<TablesListPage />} />
-                    <Route path="/create" element={<CreateTablePage />} />
-                    <Route
-                      path="/tables/:tableName"
-                      element={
-                        <TableDetailsPage
-                          currentSection={currentSection}
-                          onSectionChange={setCurrentSection}
+                    {/* Antfly routes */}
+                    {isProductEnabled("antfly") && (
+                      <>
+                        <Route path="/" element={<TablesListPage />} />
+                        <Route path="/create" element={<CreateTablePage />} />
+                        <Route
+                          path="/tables/:tableName"
+                          element={
+                            <TableDetailsPage
+                              currentSection={currentSection}
+                              onSectionChange={setCurrentSection}
+                            />
+                          }
                         />
-                      }
-                    />
-                    <Route path="/users" element={<UsersPage />} />
-                    <Route path="/playground/chunking" element={<ChunkingPlaygroundPage />} />
+                        <Route path="/users" element={<UsersPage />} />
+                      </>
+                    )}
+
+                    {/* Termite routes */}
+                    {isProductEnabled("termite") && (
+                      <>
+                        <Route path="/playground/chunking" element={<ChunkingPlaygroundPage />} />
+                      </>
+                    )}
+
+                    {/* Default redirect based on enabled products */}
+                    <Route path="*" element={<Navigate to={getDefaultRoute()} replace />} />
                   </Routes>
                 </div>
               </SidebarInset>

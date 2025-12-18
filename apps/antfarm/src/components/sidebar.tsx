@@ -22,8 +22,9 @@ import {
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/api";
-import AntflyLogo from "@/components/antfly-logo";
+import { ProductSwitcher } from "@/components/product-switcher";
 import { SidebarUser } from "@/components/sidebar-user";
+import { type ProductId, isProductEnabled } from "@/config/products";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -58,9 +59,17 @@ import { cn } from "@/lib/utils";
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   currentSection?: string;
   onSectionChange?: (section: string) => void;
+  currentProduct: ProductId;
+  onProductChange: (product: ProductId) => void;
 }
 
-export function AppSidebar({ currentSection, onSectionChange, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  currentSection,
+  onSectionChange,
+  currentProduct,
+  onProductChange,
+  ...props
+}: AppSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { state: sidebarState, toggleSidebar, isMobile } = useSidebar();
@@ -146,25 +155,11 @@ export function AppSidebar({ currentSection, onSectionChange, ...props }: AppSid
         <SidebarMenu>
           <SidebarMenuItem>
             <div className="flex items-center justify-between gap-2">
-              <SidebarMenuButton
-                size="lg"
-                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground shadow-none border-0"
-              >
-                {sidebarState === "collapsed" ? (
-                  <div className="flex items-center justify-center min-w-8 h-8">
-                    <AntflyLogo size={32} variant="auto" />
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 min-w-6">
-                    <AntflyLogo size={24} variant="auto" />
-                  </div>
-                )}
-                <div className="grid flex-1 text-left text-xl leading-tight group-data-[collapsible=icon]:hidden font-aeonik">
-                  <span className="truncate font-semibold">
-                    <span style={{ fontWeight: 400 }}>antfarm</span>
-                  </span>
-                </div>
-              </SidebarMenuButton>
+              <ProductSwitcher
+                currentProduct={currentProduct}
+                onProductChange={onProductChange}
+                collapsed={sidebarState === "collapsed"}
+              />
               {isMounted && (isMobile || sidebarState !== "collapsed") && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
@@ -198,8 +193,8 @@ export function AppSidebar({ currentSection, onSectionChange, ...props }: AppSid
       </SidebarHeader>
 
       <SidebarContent className="border-r border-t-0 group-data-[collapsible=icon]:border-r-0">
-        {/* Table Selector - show when tables are available */}
-        {tables.length > 0 && (
+        {/* Table Selector - show when tables are available (Antfly only) */}
+        {isProductEnabled("antfly") && tables.length > 0 && (
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>Table</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -248,13 +243,14 @@ export function AppSidebar({ currentSection, onSectionChange, ...props }: AppSid
           </SidebarGroup>
         )}
 
-        {/* Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {/* Tables Link */}
-              <Collapsible defaultOpen>
+        {/* Antfly Navigation */}
+        {isProductEnabled("antfly") && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {/* Tables Link */}
+                <Collapsible defaultOpen>
                 <SidebarMenuItem>
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton
@@ -443,13 +439,15 @@ export function AppSidebar({ currentSection, onSectionChange, ...props }: AppSid
                   </SidebarMenuItem>
                 </Collapsible>
               )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        {/* Tools Section */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Tools</SidebarGroupLabel>
+        {/* Termite Tools Section */}
+        {isProductEnabled("termite") && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Tools</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <Collapsible defaultOpen>
@@ -487,9 +485,10 @@ export function AppSidebar({ currentSection, onSectionChange, ...props }: AppSid
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-r group-data-[collapsible=icon]:border-r-0">
