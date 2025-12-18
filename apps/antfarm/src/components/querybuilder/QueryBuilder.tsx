@@ -173,7 +173,6 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
               {queryRequest.order_by &&
                 Object.entries(queryRequest.order_by).map(([field, asc], index) => (
                   <div
-                    // biome-ignore lint/suspicious/noArrayIndexKey: Object.entries order is stable
                     key={index}
                     className="flex items-center gap-2 p-2 bg-muted/30 rounded border"
                   >

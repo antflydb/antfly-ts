@@ -255,7 +255,6 @@ const QueryNode: React.FC<QueryNodeProps> = ({
                 className="h-8"
               />
               <div className="flex items-center gap-2">
-                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders native input inside label */}
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={q.inclusive_min ?? true}
@@ -265,7 +264,6 @@ const QueryNode: React.FC<QueryNodeProps> = ({
                 </label>
               </div>
               <div className="flex items-center gap-2">
-                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders native input inside label */}
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={q.inclusive_max ?? true}
@@ -416,7 +414,6 @@ const QueryGroup: React.FC<QueryGroupProps> = ({
       <div className="space-y-1.5">
         {queries.map((subQuery, i) => (
           <QueryNode
-            // biome-ignore lint/suspicious/noArrayIndexKey: Query items have no stable ID
             key={i}
             query={subQuery}
             onChange={(newSubQuery) => updateQuery(i, newSubQuery)}

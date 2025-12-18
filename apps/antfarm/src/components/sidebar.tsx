@@ -126,7 +126,6 @@ export function AppSidebar({
     <Sidebar collapsible="icon" {...props}>
       {/* Hover overlay expand button for collapsed state */}
       {sidebarState === "collapsed" && !isMobile && (
-        // biome-ignore lint/a11y/noStaticElementInteractions: Hover zone for tooltip trigger
         <div
           className="absolute top-4 left-2 z-40 opacity-0 hover:opacity-100 transition-opacity duration-200 pointer-events-none"
           onMouseEnter={() => setIsHovering(true)}
