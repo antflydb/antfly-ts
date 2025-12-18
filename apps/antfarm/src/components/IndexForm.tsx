@@ -179,7 +179,7 @@ const IndexForm: React.FC<IndexFormProps> = ({ fieldPrefix = "", schemaFields = 
                   (suggestion) => ({
                     value: suggestion,
                     label: suggestion,
-                  }),
+                  })
                 )}
                 value={field.value}
                 onChange={field.onChange}

@@ -221,7 +221,7 @@ const FieldValueDisplay: React.FC<FieldValueDisplayProps> = ({
 
     // Handle simple arrays (strings, numbers, booleans)
     const isSimpleArray = value.every(
-      (v) => typeof v === "string" || typeof v === "number" || typeof v === "boolean",
+      (v) => typeof v === "string" || typeof v === "number" || typeof v === "boolean"
     );
 
     if (isSimpleArray && value.length <= 5) {

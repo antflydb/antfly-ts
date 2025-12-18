@@ -90,7 +90,7 @@ export function UsersPage() {
       const data = await client.users.list();
       // Filter out any users with undefined usernames
       const validUsers = (data || []).filter(
-        (user): user is UserListItem => typeof user.username === "string",
+        (user): user is UserListItem => typeof user.username === "string"
       );
       setUsers(validUsers);
     } catch (err) {
@@ -111,7 +111,7 @@ export function UsersPage() {
         setError(err instanceof Error ? err.message : "Failed to load permissions");
       }
     },
-    [client],
+    [client]
   );
 
   // Create new user

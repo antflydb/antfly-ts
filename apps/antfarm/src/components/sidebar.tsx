@@ -24,7 +24,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { api } from "@/api";
 import { ProductSwitcher } from "@/components/product-switcher";
 import { SidebarUser } from "@/components/sidebar-user";
-import { type ProductId, isProductEnabled } from "@/config/products";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -53,6 +52,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { isProductEnabled, type ProductId } from "@/config/products";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 
@@ -169,7 +169,7 @@ export function AppSidebar({
                         size="icon"
                         className={cn(
                           "size-7 shrink-0",
-                          isMobile ? "cursor-pointer" : "cursor-w-resize",
+                          isMobile ? "cursor-pointer" : "cursor-w-resize"
                         )}
                         onClick={toggleSidebar}
                         onMouseEnter={() => setTooltipOpen(true)}
@@ -228,7 +228,7 @@ export function AppSidebar({
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                tableName === table.name ? "opacity-100" : "opacity-0",
+                                tableName === table.name ? "opacity-100" : "opacity-0"
                               )}
                             />
                             {table.name}
@@ -251,194 +251,194 @@ export function AppSidebar({
               <SidebarMenu>
                 {/* Tables Link */}
                 <Collapsible defaultOpen>
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={location.pathname === "/" || location.pathname === "/create"}
+                        tooltip="Tables"
+                      >
+                        <a
+                          href="/"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate("/");
+                          }}
+                        >
+                          <TableIcon className="size-4" />
+                          <span>Tables</span>
+                          <ChevronRight className="ml-auto size-4 transition-transform data-[state=open]:rotate-90" />
+                        </a>
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild isActive={location.pathname === "/create"}>
+                            <a
+                              href="/create"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/create");
+                              }}
+                            >
+                              <Plus className="size-4" />
+                              <span>Create</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+
+                {/* Users Link - only show if user has admin permission */}
+                {hasPermission("*", "*", "admin") && (
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
-                      isActive={location.pathname === "/" || location.pathname === "/create"}
-                      tooltip="Tables"
+                      isActive={location.pathname === "/users"}
+                      tooltip="User Management"
                     >
                       <a
-                        href="/"
+                        href="/users"
                         onClick={(e) => {
                           e.preventDefault();
-                          navigate("/");
+                          navigate("/users");
                         }}
                       >
-                        <TableIcon className="size-4" />
-                        <span>Tables</span>
-                        <ChevronRight className="ml-auto size-4 transition-transform data-[state=open]:rotate-90" />
+                        <Shield className="size-4" />
+                        <span>Users</span>
                       </a>
                     </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild isActive={location.pathname === "/create"}>
-                          <a
-                            href="/create"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              navigate("/create");
-                            }}
-                          >
-                            <Plus className="size-4" />
-                            <span>Create</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-
-              {/* Users Link - only show if user has admin permission */}
-              {hasPermission("*", "*", "admin") && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location.pathname === "/users"}
-                    tooltip="User Management"
-                  >
-                    <a
-                      href="/users"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate("/users");
-                      }}
-                    >
-                      <Shield className="size-4" />
-                      <span>Users</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-
-              {/* Overview Section - only show when on a table page */}
-              {isOnTablePage && tableName && (
-                <Collapsible open={overviewOpen} onOpenChange={setOverviewOpen}>
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip="Overview">
-                        <LayoutList className="size-4" />
-                        <span>Overview</span>
-                        <ChevronRight
-                          className={`ml-auto size-4 transition-transform ${overviewOpen ? "rotate-90" : ""}`}
-                        />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={currentSection === "indexes"}
-                            onClick={() => handleSectionClick("indexes")}
-                          >
-                            <button type="button">
-                              <Database className="size-4" />
-                              <span>Indexes</span>
-                            </button>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={currentSection === "chunking"}
-                            onClick={() => handleSectionClick("chunking")}
-                          >
-                            <button type="button">
-                              <Sparkles className="size-4" />
-                              <span>Chunking</span>
-                            </button>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={currentSection === "schema"}
-                            onClick={() => handleSectionClick("schema")}
-                          >
-                            <button type="button">
-                              <FileText className="size-4" />
-                              <span>Schema</span>
-                            </button>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
                   </SidebarMenuItem>
-                </Collapsible>
-              )}
+                )}
 
-              {/* Data Section - only show when on a table page */}
-              {isOnTablePage && tableName && (
-                <Collapsible open={dataOpen} onOpenChange={setDataOpen}>
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip="Data">
-                        <Database className="size-4" />
-                        <span>Data</span>
-                        <ChevronRight
-                          className={`ml-auto size-4 transition-transform ${dataOpen ? "rotate-90" : ""}`}
-                        />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={currentSection === "semantic"}
-                            onClick={() => handleSectionClick("semantic")}
-                          >
-                            <button type="button">
-                              <Search className="size-4" />
-                              <span>Search</span>
-                            </button>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={currentSection === "faceted"}
-                            onClick={() => handleSectionClick("faceted")}
-                          >
-                            <button type="button">
-                              <FileText className="size-4" />
-                              <span>Component Builder</span>
-                            </button>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={currentSection === "bulk"}
-                            onClick={() => handleSectionClick("bulk")}
-                          >
-                            <button type="button">
-                              <Upload className="size-4" />
-                              <span>Upload</span>
-                            </button>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={currentSection === "document-builder"}
-                            onClick={() => handleSectionClick("document-builder")}
-                          >
-                            <button type="button">
-                              <FileInput className="size-4" />
-                              <span>Document Builder</span>
-                            </button>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              )}
+                {/* Overview Section - only show when on a table page */}
+                {isOnTablePage && tableName && (
+                  <Collapsible open={overviewOpen} onOpenChange={setOverviewOpen}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton tooltip="Overview">
+                          <LayoutList className="size-4" />
+                          <span>Overview</span>
+                          <ChevronRight
+                            className={`ml-auto size-4 transition-transform ${overviewOpen ? "rotate-90" : ""}`}
+                          />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={currentSection === "indexes"}
+                              onClick={() => handleSectionClick("indexes")}
+                            >
+                              <button type="button">
+                                <Database className="size-4" />
+                                <span>Indexes</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={currentSection === "chunking"}
+                              onClick={() => handleSectionClick("chunking")}
+                            >
+                              <button type="button">
+                                <Sparkles className="size-4" />
+                                <span>Chunking</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={currentSection === "schema"}
+                              onClick={() => handleSectionClick("schema")}
+                            >
+                              <button type="button">
+                                <FileText className="size-4" />
+                                <span>Schema</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                )}
+
+                {/* Data Section - only show when on a table page */}
+                {isOnTablePage && tableName && (
+                  <Collapsible open={dataOpen} onOpenChange={setDataOpen}>
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton tooltip="Data">
+                          <Database className="size-4" />
+                          <span>Data</span>
+                          <ChevronRight
+                            className={`ml-auto size-4 transition-transform ${dataOpen ? "rotate-90" : ""}`}
+                          />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={currentSection === "semantic"}
+                              onClick={() => handleSectionClick("semantic")}
+                            >
+                              <button type="button">
+                                <Search className="size-4" />
+                                <span>Search</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={currentSection === "faceted"}
+                              onClick={() => handleSectionClick("faceted")}
+                            >
+                              <button type="button">
+                                <FileText className="size-4" />
+                                <span>Component Builder</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={currentSection === "bulk"}
+                              onClick={() => handleSectionClick("bulk")}
+                            >
+                              <button type="button">
+                                <Upload className="size-4" />
+                                <span>Upload</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={currentSection === "document-builder"}
+                              onClick={() => handleSectionClick("document-builder")}
+                            >
+                              <button type="button">
+                                <FileInput className="size-4" />
+                                <span>Document Builder</span>
+                              </button>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -448,43 +448,43 @@ export function AppSidebar({
         {isProductEnabled("termite") && (
           <SidebarGroup>
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <Collapsible defaultOpen>
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      isActive={location.pathname.startsWith("/playground")}
-                      tooltip="Playgrounds"
-                    >
-                      <Wrench className="size-4" />
-                      <span>Playgrounds</span>
-                      <ChevronRight className="ml-auto size-4 transition-transform data-[state=open]:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          asChild
-                          isActive={location.pathname === "/playground/chunking"}
-                        >
-                          <a
-                            href="/playground/chunking"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              navigate("/playground/chunking");
-                            }}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <Collapsible defaultOpen>
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                        isActive={location.pathname.startsWith("/playground")}
+                        tooltip="Playgrounds"
+                      >
+                        <Wrench className="size-4" />
+                        <span>Playgrounds</span>
+                        <ChevronRight className="ml-auto size-4 transition-transform data-[state=open]:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === "/playground/chunking"}
                           >
-                            <Scissors className="size-4" />
-                            <span>Chunking</span>
-                          </a>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+                            <a
+                              href="/playground/chunking"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/chunking");
+                              }}
+                            >
+                              <Scissors className="size-4" />
+                              <span>Chunking</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

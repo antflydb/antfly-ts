@@ -27,7 +27,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ...(username && password ? { auth: { username, password } } : {}),
       });
     },
-    [apiUrl],
+    [apiUrl]
   );
 
   // Get stored credentials
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         throw new Error("Failed to fetch user info");
       }
     },
-    [createClient],
+    [createClient]
   );
 
   // Refresh user info
@@ -134,7 +134,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsLoading(false);
       }
     },
-    [fetchCurrentUser, storeCredentials],
+    [fetchCurrentUser, storeCredentials]
   );
 
   // Logout
@@ -158,7 +158,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return resourceMatch && typeMatch && permMatch;
       });
     },
-    [user],
+    [user]
   );
 
   // Check authentication on mount

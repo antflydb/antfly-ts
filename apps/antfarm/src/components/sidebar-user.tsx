@@ -79,7 +79,7 @@ export function SidebarUser(): React.JSX.Element | null {
               className={cn(
                 "data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
                 isCollapsed &&
-                  "group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! relative z-50 pointer-events-auto",
+                  "group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-0! relative z-50 pointer-events-auto"
               )}
             >
               <Avatar className="h-8 w-8 rounded-lg">

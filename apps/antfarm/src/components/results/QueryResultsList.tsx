@@ -95,7 +95,7 @@ const QueryResultsList: React.FC<QueryResultsListProps> = ({ result, className }
         setExpandedItems(new Set());
       }
     },
-    [sortedHits],
+    [sortedHits]
   );
 
   // Export functionality
@@ -115,7 +115,7 @@ const QueryResultsList: React.FC<QueryResultsListProps> = ({ result, className }
 
         // Get all fields from all hits
         const allFields = Array.from(
-          new Set(result.hits.hits.flatMap((hit) => (hit._source ? Object.keys(hit._source) : []))),
+          new Set(result.hits.hits.flatMap((hit) => (hit._source ? Object.keys(hit._source) : [])))
         ).sort();
 
         // Add metadata fields
@@ -151,13 +151,13 @@ const QueryResultsList: React.FC<QueryResultsListProps> = ({ result, className }
         URL.revokeObjectURL(url);
       }
     },
-    [result],
+    [result]
   );
 
   // Table view columns (visible fields only)
   const tableColumns = useMemo(() => {
     return ["_id", "_score", ...Array.from(visibleFields)].filter(
-      (field, index, arr) => arr.indexOf(field) === index,
+      (field, index, arr) => arr.indexOf(field) === index
     );
   }, [visibleFields]);
 

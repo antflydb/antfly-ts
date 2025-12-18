@@ -407,7 +407,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
       acc[type].push(index);
       return acc;
     },
-    {} as Record<string, IndexStatus[]>,
+    {} as Record<string, IndexStatus[]>
   );
 
   const sortedIndexTypes = Object.keys(groupedIndexes).sort();
@@ -510,7 +510,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
           const isExplicitlyNotIndexed = property["x-antfly-index"] === false;
           const antflyTypes = property["x-antfly-types"] || [];
           const hasNonIndexedTypes = antflyTypes.some(
-            (type) => type === "embedding" || type === "blob",
+            (type) => type === "embedding" || type === "blob"
           );
 
           if (!isExplicitlyNotIndexed && !hasNonIndexedTypes) {
@@ -684,7 +684,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                           <div className="flex flex-wrap gap-1.5">
                             {selectedFields.map((field) => {
                               const fieldInfo = availableBasicFields.find(
-                                (f) => f.fieldName === field,
+                                (f) => f.fieldName === field
                               );
                               return (
                                 <Badge
@@ -701,7 +701,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                         )}
                         <FieldSelector
                           availableFields={availableBasicFields.filter(
-                            (f) => !selectedFields.includes(f.fieldName),
+                            (f) => !selectedFields.includes(f.fieldName)
                           )}
                           onFieldSelect={handleAddAvailableField}
                         />

@@ -49,8 +49,7 @@ const parseEnabledProducts = (): ProductId[] => {
 
 export const enabledProducts = parseEnabledProducts();
 
-export const isProductEnabled = (product: ProductId): boolean =>
-  enabledProducts.includes(product);
+export const isProductEnabled = (product: ProductId): boolean => enabledProducts.includes(product);
 
 export const showProductSwitcher = enabledProducts.length > 1;
 

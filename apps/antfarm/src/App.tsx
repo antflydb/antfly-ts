@@ -8,7 +8,12 @@ import { PrivateRoute } from "@/components/private-route";
 import { AppSidebar } from "@/components/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WorkspaceHeader } from "@/components/workspace-header";
-import { type ProductId, defaultProduct, getDefaultRoute, isProductEnabled } from "@/config/products";
+import {
+  defaultProduct,
+  getDefaultRoute,
+  isProductEnabled,
+  type ProductId,
+} from "@/config/products";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import ChunkingPlaygroundPage from "./pages/ChunkingPlaygroundPage";
@@ -42,7 +47,7 @@ function AppContent() {
                 <div
                   className={cn(
                     "flex-1 p-4 transition-all",
-                    contentWidth === "restricted" ? "container mx-auto max-w-7xl" : "w-full",
+                    contentWidth === "restricted" ? "container mx-auto max-w-7xl" : "w-full"
                   )}
                 >
                   <Routes>

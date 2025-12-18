@@ -1,14 +1,6 @@
 import { Bug, ChevronsUpDown, Database } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
-  type Product,
-  type ProductId,
-  PRODUCTS,
-  enabledProducts,
-  showProductSwitcher,
-} from "@/config/products";
-import { cn } from "@/lib/utils";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -16,6 +8,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
+import {
+  enabledProducts,
+  PRODUCTS,
+  type Product,
+  type ProductId,
+  showProductSwitcher,
+} from "@/config/products";
+import { cn } from "@/lib/utils";
 
 interface ProductSwitcherProps {
   currentProduct: ProductId;
@@ -77,7 +77,9 @@ export function ProductSwitcher({
             <>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">{current.name}</span>
-                <span className="truncate text-xs text-muted-foreground">{current.description}</span>
+                <span className="truncate text-xs text-muted-foreground">
+                  {current.description}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </>

@@ -153,7 +153,7 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
                 updateValue(
                   property.type === "integer"
                     ? parseInt(e.target.value, 10) || 0
-                    : parseFloat(e.target.value) || 0,
+                    : parseFloat(e.target.value) || 0
                 )
               }
               placeholder={property.description || `Enter ${fieldName}`}
@@ -269,7 +269,7 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
                 <h4 className="text-lg font-semibold">Document Fields</h4>
                 {Object.entries(schema.document_schemas[selectedSchemaType].schema.properties).map(
                   ([fieldName, property]) =>
-                    renderFormField(fieldName, property, documentValues[fieldName]),
+                    renderFormField(fieldName, property, documentValues[fieldName])
                 )}
 
                 <Button

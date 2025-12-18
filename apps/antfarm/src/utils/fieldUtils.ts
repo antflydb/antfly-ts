@@ -16,7 +16,7 @@ export interface BasicField {
 export function generateSearchableFields(
   field: string,
   schemaTypes: string[],
-  antflyTypes: string[],
+  antflyTypes: string[]
 ): SearchableField[] {
   const searchableFields: SearchableField[] = [];
   const hasMultipleAntflyTypes = antflyTypes.length > 1;

@@ -44,7 +44,7 @@ const SchemaField: React.FC<SchemaFieldProps> = ({ schemaIndex, fieldIndex, onRe
 
   const fieldName = `document_schemas.${schemaIndex}.properties.${fieldIndex}.name`;
   const isIndexed = watch(
-    `document_schemas.${schemaIndex}.properties.${fieldIndex}.x-antfly-index`,
+    `document_schemas.${schemaIndex}.properties.${fieldIndex}.x-antfly-index`
   );
   const fieldError = get(errors, fieldName);
 
