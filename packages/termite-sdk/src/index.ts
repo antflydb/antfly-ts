@@ -1,0 +1,83 @@
+/**
+ * Termite SDK for TypeScript
+ *
+ * A TypeScript SDK for interacting with the Termite ML inference API.
+ * Termite provides local ML inference for embeddings, chunking, and reranking.
+ *
+ * @example
+ * ```typescript
+ * import { TermiteClient } from '@antfly/termite-sdk';
+ *
+ * const client = new TermiteClient({
+ *   baseUrl: 'http://localhost:8080/api'
+ * });
+ *
+ * // Generate embeddings
+ * const embedResult = await client.embed('bge-small-en-v1.5', ['hello world']);
+ * console.log(embedResult.embeddings[0]);
+ *
+ * // Chunk text
+ * const chunkResult = await client.chunk('Long document text...', {
+ *   model: 'fixed',
+ *   target_tokens: 500
+ * });
+ *
+ * // Rerank by relevance
+ * const rerankResult = await client.rerank(
+ *   'bge-reranker-v2-m3',
+ *   'search query',
+ *   ['doc1 text', 'doc2 text']
+ * );
+ *
+ * // List available models
+ * const models = await client.listModels();
+ * ```
+ */
+
+// Main client export
+export { TermiteClient } from "./client.js";
+// Re-export the generated types for advanced users
+export type { components, operations, paths } from "./termite-api.js";
+
+// Type exports
+export type {
+  // Request/Response types
+  Chunk,
+  ChunkConfig,
+  ChunkRequest,
+  ChunkResponse,
+  // Configuration types
+  Config,
+  ContentPart,
+  ContentSecurityConfig,
+  Credentials,
+  EmbedInput,
+  EmbedRequest,
+  EmbedResponse,
+  GPUMode,
+  ImageURL,
+  ImageURLContentPart,
+  Level,
+  ModelsResponse,
+  RerankRequest,
+  RerankResponse,
+  // Utility types
+  ResponseData,
+  Style,
+  // Client configuration
+  TermiteConfig,
+  // Error type
+  TermiteError,
+  TextContentPart,
+  VersionResponse,
+} from "./types.js";
+
+// Constant exports
+export { gpuModes, logLevels, logStyles } from "./types.js";
+
+// Binary codec utilities for advanced usage
+export { deserializeEmbeddings, serializeEmbeddings } from "./codec.js";
+
+// Default export for convenience
+import { TermiteClient } from "./client.js";
+export default TermiteClient;

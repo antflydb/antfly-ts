@@ -318,6 +318,31 @@ importers:
         specifier: ^4.0.15
         version: 4.0.15(@types/node@25.0.2)(@vitest/ui@4.0.15)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.2)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
 
+  packages/termite-sdk:
+    dependencies:
+      openapi-fetch:
+        specifier: ^0.15.0
+        version: 0.15.0
+    devDependencies:
+      '@types/node':
+        specifier: ^25.0.2
+        version: 25.0.2
+      '@vitest/ui':
+        specifier: ^4.0.15
+        version: 4.0.15(vitest@4.0.15)
+      openapi-typescript:
+        specifier: ^7.10.1
+        version: 7.10.1(typescript@5.9.3)
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(@microsoft/api-extractor@7.55.2(@types/node@25.0.2))(jiti@2.6.1)(postcss@8.5.6)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      vitest:
+        specifier: ^4.0.15
+        version: 4.0.15(@types/node@25.0.2)(@vitest/ui@4.0.15)(jiti@2.6.1)(jsdom@27.3.0(postcss@8.5.6))(lightningcss@1.30.2)(msw@2.12.4(@types/node@25.0.2)(typescript@5.9.3))(tsx@4.21.0)(yaml@2.8.2)
+
 packages:
 
   '@acemir/cssom@0.9.29':

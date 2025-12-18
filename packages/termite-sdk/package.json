@@ -1,0 +1,69 @@
+{
+  "name": "@antfly/termite-sdk",
+  "version": "0.0.1",
+  "description": "TypeScript SDK for Termite ML inference API",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check . --write",
+    "format": "biome format --write .",
+    "generate": "openapi-typescript ../../../termite/openapi.yaml -o ./src/termite-api.d.ts --default-non-nullable=false",
+    "clean": "rm -rf dist",
+    "prepare": "pnpm run build",
+    "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build"
+  },
+  "keywords": [
+    "termite",
+    "sdk",
+    "typescript",
+    "api",
+    "client",
+    "embeddings",
+    "ml",
+    "inference",
+    "chunking",
+    "reranking"
+  ],
+  "author": "Antfly Contributors",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/antflydb/antfly-ts.git",
+    "directory": "packages/termite-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/antflydb/antfly-ts/issues"
+  },
+  "homepage": "https://github.com/antflydb/antfly-ts/tree/main/packages/termite-sdk#readme",
+  "devDependencies": {
+    "@types/node": "^25.0.2",
+    "@vitest/ui": "^4.0.15",
+    "openapi-typescript": "^7.10.1",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.15.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
