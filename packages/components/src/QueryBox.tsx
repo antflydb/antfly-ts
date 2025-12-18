@@ -283,14 +283,16 @@ export default function QueryBox({
 
       setValue(valueToSet);
 
-      // Update widget based on mode
-      if (mode === "live") {
-        updateWidget(valueToSet);
-      } else {
-        updateWidget(valueToSet, true);
+      // Call onInputChange to notify parent of the new value
+      if (onInputChange) {
+        onInputChange(valueToSet);
       }
+
+      // Update widget state with the new value but DON'T auto-submit in submit mode
+      // This allows the user to review the selected value before pressing Enter to submit
+      updateWidget(valueToSet, mode === "live");
     },
-    [mode, updateWidget, children]
+    [mode, updateWidget, onInputChange, children]
   );
 
   // Cleanup on unmount
