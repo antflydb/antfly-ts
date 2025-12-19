@@ -124,7 +124,7 @@ export default function SearchBoxBuilder({
           const isExplicitlyNotIndexed = property["x-antfly-index"] === false;
           const antflyTypes = property["x-antfly-types"] || [];
           const hasNonIndexedTypes = antflyTypes.some(
-            (type) => type === "embedding" || type === "blob",
+            (type) => type === "embedding" || type === "blob"
           );
 
           if (!isExplicitlyNotIndexed && !hasNonIndexedTypes) {
@@ -150,7 +150,7 @@ export default function SearchBoxBuilder({
         acc[type].push(index.config.name);
         return acc;
       },
-      {} as Record<string, string[]>,
+      {} as Record<string, string[]>
     );
 
     // Sort indexes within each group
@@ -360,7 +360,7 @@ export default function SearchBoxBuilder({
           })
         : [];
     },
-    [resultFields, useThumbnails, thumbnailField, displayTextField, getThumbnailSizeClass],
+    [resultFields, useThumbnails, thumbnailField, displayTextField, getThumbnailSizeClass]
   );
 
   const generateReactCode = () => {
@@ -374,7 +374,7 @@ export default function SearchBoxBuilder({
           fields={[${facet.fields.map((f) => `"${f}"`).join(", ")}]}
           seeMore="See more"
           placeholder="Filter ${facet.title}..."
-        />`,
+        />`
             )
             .join("\n")
         : "";
@@ -698,7 +698,7 @@ ${facetsCode}${resultsCode}
                       <div className="flex flex-wrap gap-2 mt-2">
                         {searchFields.map((searchField) => {
                           const fieldInfo = availableFields.find(
-                            (f) => f.searchField === searchField,
+                            (f) => f.searchField === searchField
                           );
                           const displayName = fieldInfo ? fieldInfo.displayName : searchField;
                           return (
@@ -877,7 +877,7 @@ ${facetsCode}${resultsCode}
                             <div className="flex flex-wrap gap-2 mt-2">
                               {autosuggestFields.map((field) => {
                                 const fieldInfo = availableFields.find(
-                                  (f) => f.searchField === field,
+                                  (f) => f.searchField === field
                                 );
                                 const displayName = fieldInfo ? fieldInfo.displayName : field;
                                 return (
@@ -900,7 +900,7 @@ ${facetsCode}${resultsCode}
                             <div className="flex flex-wrap gap-2 mt-2">
                               {availableFields
                                 .filter(
-                                  ({ searchField }) => !autosuggestFields.includes(searchField),
+                                  ({ searchField }) => !autosuggestFields.includes(searchField)
                                 )
                                 .map((fieldInfo) => (
                                   <Badge
@@ -1075,7 +1075,7 @@ ${facetsCode}${resultsCode}
                           <div className="flex flex-wrap gap-2 mt-2">
                             {resultFields.map((field) => {
                               const fieldInfo = availableBasicFields.find(
-                                (f) => f.fieldName === field,
+                                (f) => f.fieldName === field
                               );
                               const displayName = fieldInfo ? fieldInfo.displayName : field;
                               return (

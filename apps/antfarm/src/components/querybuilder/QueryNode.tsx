@@ -84,7 +84,7 @@ const QueryNode: React.FC<QueryNodeProps> = ({
   // Helper function to render field selection with input + badges
   const renderFieldSelection = (
     currentField: string | undefined,
-    onFieldSelect: (field: string) => void,
+    onFieldSelect: (field: string) => void
   ) => (
     <div className="flex flex-col gap-2 mt-2">
       <div>
@@ -204,7 +204,7 @@ const QueryNode: React.FC<QueryNodeProps> = ({
                 onChange={(e) =>
                   handleFieldChange(
                     "fuzziness",
-                    e.target.value ? parseInt(e.target.value, 10) : null,
+                    e.target.value ? parseInt(e.target.value, 10) : null
                   )
                 }
                 className="w-20 h-8"
@@ -237,7 +237,7 @@ const QueryNode: React.FC<QueryNodeProps> = ({
                 onChange={(e) =>
                   handleFieldChange(
                     "min",
-                    e.target.value === "" ? null : parseFloat(e.target.value),
+                    e.target.value === "" ? null : parseFloat(e.target.value)
                   )
                 }
                 className="h-8"
@@ -249,13 +249,12 @@ const QueryNode: React.FC<QueryNodeProps> = ({
                 onChange={(e) =>
                   handleFieldChange(
                     "max",
-                    e.target.value === "" ? null : parseFloat(e.target.value),
+                    e.target.value === "" ? null : parseFloat(e.target.value)
                   )
                 }
                 className="h-8"
               />
               <div className="flex items-center gap-2">
-                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders native input inside label */}
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={q.inclusive_min ?? true}
@@ -265,7 +264,6 @@ const QueryNode: React.FC<QueryNodeProps> = ({
                 </label>
               </div>
               <div className="flex items-center gap-2">
-                {/* biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders native input inside label */}
                 <label className="flex items-center gap-2">
                   <Checkbox
                     checked={q.inclusive_max ?? true}
@@ -416,7 +414,6 @@ const QueryGroup: React.FC<QueryGroupProps> = ({
       <div className="space-y-1.5">
         {queries.map((subQuery, i) => (
           <QueryNode
-            // biome-ignore lint/suspicious/noArrayIndexKey: Query items have no stable ID
             key={i}
             query={subQuery}
             onChange={(newSubQuery) => updateQuery(i, newSubQuery)}

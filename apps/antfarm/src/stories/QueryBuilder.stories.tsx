@@ -42,7 +42,7 @@ export const Default: Story = {
         },
       },
       null,
-      2,
+      2
     ),
   },
 };
@@ -65,7 +65,7 @@ export const WithoutQueryNode: Story = {
         },
       },
       null,
-      2,
+      2
     ),
     showQueryNode: false,
   },
@@ -89,7 +89,7 @@ export const WithoutOrderByAndFacets: Story = {
         },
       },
       null,
-      2,
+      2
     ),
     showOrderByAndFacets: false,
   },

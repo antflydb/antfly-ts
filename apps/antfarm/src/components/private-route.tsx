@@ -39,7 +39,7 @@ export function PrivateRoute({ children, requiredPermission }: PrivateRouteProps
     !hasPermission(
       requiredPermission.resource,
       requiredPermission.resourceType,
-      requiredPermission.permissionType,
+      requiredPermission.permissionType
     )
   ) {
     return (

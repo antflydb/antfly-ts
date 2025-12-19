@@ -64,7 +64,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
         navigate(href);
       }
     },
-    [navigate, theme, setTheme, toggleContentWidth],
+    [navigate, theme, setTheme, toggleContentWidth]
   );
 
   const navigationCommands = [{ icon: Table, label: "Tables", href: "/" }];

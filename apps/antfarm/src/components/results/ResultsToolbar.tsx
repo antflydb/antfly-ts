@@ -54,7 +54,7 @@ const ResultsToolbar: React.FC<ResultsToolbarProps> = ({
 }) => {
   const allFieldsSelected = useMemo(
     () => availableFields.every((field) => visibleFields.has(field)),
-    [availableFields, visibleFields],
+    [availableFields, visibleFields]
   );
 
   const handleToggleAllFields = () => {

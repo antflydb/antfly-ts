@@ -140,7 +140,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to connect to Termite. Make sure Termite is running on localhost:11433",
+          : "Failed to connect to Termite. Make sure Termite is running on localhost:11433"
       );
     } finally {
       setIsLoading(false);
@@ -179,7 +179,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
         elements.push(
           <span key={`gap-${chunk.id}`} className="text-muted-foreground/50">
             {inputText.slice(lastEnd, chunk.start_char)}
-          </span>,
+          </span>
         );
       }
 
@@ -192,7 +192,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
           title={`Chunk ${chunk.id}`}
         >
           {inputText.slice(chunk.start_char, chunk.end_char)}
-        </span>,
+        </span>
       );
 
       lastEnd = chunk.end_char;
@@ -203,7 +203,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
       elements.push(
         <span key="end" className="text-muted-foreground/50">
           {inputText.slice(lastEnd)}
-        </span>,
+        </span>
       );
     }
 

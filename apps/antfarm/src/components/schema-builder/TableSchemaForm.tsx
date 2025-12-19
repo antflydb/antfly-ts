@@ -124,7 +124,7 @@ const TableSchemaForm: React.FC<TableSchemaFormProps> = ({ onSubmit }) => {
   });
 
   const schemaFields = Object.values(currentSchema.document_schemas || {}).flatMap((docSchema) =>
-    Object.keys(docSchema.schema?.properties || {}),
+    Object.keys(docSchema.schema?.properties || {})
   );
 
   const handleSchemaChange = (schema: TableSchema) => {

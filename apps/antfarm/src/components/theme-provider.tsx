@@ -34,7 +34,7 @@ export function ThemeProvider({ children, defaultTheme = "light" }: ThemeProvide
       theme,
       setTheme,
     }),
-    [theme],
+    [theme]
   );
 
   return <ThemeProviderContext.Provider value={value}>{children}</ThemeProviderContext.Provider>;

@@ -51,7 +51,6 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
       <PopoverContent className="w-[--radix-popover-trigger-width]">
         <div className="flex flex-col gap-2">
           {options.map((option) => (
-            // biome-ignore lint/a11y/noLabelWithoutControl: Checkbox renders native input inside label
             <label key={option.value} className="flex items-center gap-2">
               <Checkbox
                 checked={value.includes(option.value)}

@@ -130,7 +130,6 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
     switch (property.type) {
       case "string":
         return (
-          // biome-ignore lint/a11y/noLabelWithoutControl: Input renders native input inside label
           <label key={fieldName} className="block space-y-2">
             <span className="text-sm font-medium">{fieldName}</span>
             <Input
@@ -143,7 +142,6 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
       case "number":
       case "integer":
         return (
-          // biome-ignore lint/a11y/noLabelWithoutControl: Input renders native input inside label
           <label key={fieldName} className="block space-y-2">
             <span className="text-sm font-medium">{fieldName}</span>
             <Input
@@ -153,7 +151,7 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
                 updateValue(
                   property.type === "integer"
                     ? parseInt(e.target.value, 10) || 0
-                    : parseFloat(e.target.value) || 0,
+                    : parseFloat(e.target.value) || 0
                 )
               }
               placeholder={property.description || `Enter ${fieldName}`}
@@ -177,7 +175,6 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
       case "array":
       case "object":
         return (
-          // biome-ignore lint/a11y/noLabelWithoutControl: Textarea renders native textarea inside label
           <label key={fieldName} className="block space-y-2">
             <span className="text-sm font-medium">{fieldName}</span>
             <Textarea
@@ -198,7 +195,6 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
         );
       default:
         return (
-          // biome-ignore lint/a11y/noLabelWithoutControl: Input renders native input inside label
           <label key={fieldName} className="block space-y-2">
             <span className="text-sm font-medium">{fieldName}</span>
             <Input
@@ -256,7 +252,6 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
 
             {selectedSchemaType && schema.document_schemas[selectedSchemaType] && (
               <div className="space-y-4">
-                {/* biome-ignore lint/a11y/noLabelWithoutControl: Input renders native input inside label */}
                 <label className="block space-y-2">
                   <span className="text-sm font-medium">Document ID *</span>
                   <Input
@@ -269,7 +264,7 @@ const DocumentBuilder: React.FC<DocumentBuilderProps> = ({ tableName, schema }) 
                 <h4 className="text-lg font-semibold">Document Fields</h4>
                 {Object.entries(schema.document_schemas[selectedSchemaType].schema.properties).map(
                   ([fieldName, property]) =>
-                    renderFormField(fieldName, property, documentValues[fieldName]),
+                    renderFormField(fieldName, property, documentValues[fieldName])
                 )}
 
                 <Button

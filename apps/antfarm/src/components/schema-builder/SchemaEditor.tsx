@@ -170,7 +170,7 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) =>
               // Only include text-based fields (text, html, keyword, search_as_you_type, link)
               const antflyTypes = prop["x-antfly-types"] || [];
               const hasTextTypes = antflyTypes.some((t: string) =>
-                ["text", "html", "keyword", "search_as_you_type", "link"].includes(t),
+                ["text", "html", "keyword", "search_as_you_type", "link"].includes(t)
               );
               // If no x-antfly-types specified, check if it's a string type (defaults to text)
               const isStringType = prop.type === "string" && antflyTypes.length === 0;

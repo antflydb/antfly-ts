@@ -196,7 +196,7 @@ test.describe("Editing", () => {
     await expect(
       todoItem.locator("label", {
         hasText: TODO_ITEMS[1],
-      }),
+      })
     ).not.toBeVisible();
     await checkNumberOfTodosInLocalStorage(page, 3);
   });
@@ -411,7 +411,7 @@ async function checkNumberOfCompletedTodosInLocalStorage(page: Page, expected: n
   return await page.waitForFunction((e) => {
     return (
       JSON.parse(localStorage["react-todos"]).filter(
-        (todo: { completed: boolean }) => todo.completed,
+        (todo: { completed: boolean }) => todo.completed
       ).length === e
     );
   }, expected);

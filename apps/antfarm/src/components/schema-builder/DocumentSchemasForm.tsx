@@ -103,9 +103,9 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
                     "x-antfly-index": prop["x-antfly-index"],
                     "x-antfly-types": prop["x-antfly-types"],
                   };
-                },
+                }
               ),
-            }),
+            })
           )
         : [],
     },
@@ -140,14 +140,14 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
                     propAcc[name] = rest as JSONSchemaProperty;
                     return propAcc;
                   },
-                  {} as { [key: string]: JSONSchemaProperty },
+                  {} as { [key: string]: JSONSchemaProperty }
                 ),
               };
 
               // Add x-antfly-include-in-all if present and non-empty
               const includeInAll =
                 schema["x-antfly-include-in-all"]?.filter(
-                  (f): f is string => typeof f === "string",
+                  (f): f is string => typeof f === "string"
                 ) || [];
               if (includeInAll.length > 0) {
                 jsonSchema["x-antfly-include-in-all"] = includeInAll;
@@ -158,7 +158,7 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
               };
               return acc;
             },
-            {} as { [key: string]: { schema: JSONSchema } },
+            {} as { [key: string]: { schema: JSONSchema } }
           ),
         };
 
@@ -190,7 +190,7 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
                 propAcc[name] = rest;
                 return propAcc;
               },
-              {} as { [key: string]: JSONSchemaProperty },
+              {} as { [key: string]: JSONSchemaProperty }
             ),
           };
 
@@ -207,7 +207,7 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
           };
           return acc;
         },
-        {} as { [key: string]: { schema: JSONSchema } },
+        {} as { [key: string]: { schema: JSONSchema } }
       ),
     };
 
@@ -234,9 +234,9 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
                   "x-antfly-index": prop["x-antfly-index"],
                   "x-antfly-types": prop["x-antfly-types"],
                 };
-              },
+              }
             ),
-          }),
+          })
         );
 
         const newData: DocumentSchemasFormData = {

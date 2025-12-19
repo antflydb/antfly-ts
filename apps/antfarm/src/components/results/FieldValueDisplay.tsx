@@ -221,7 +221,7 @@ const FieldValueDisplay: React.FC<FieldValueDisplayProps> = ({
 
     // Handle simple arrays (strings, numbers, booleans)
     const isSimpleArray = value.every(
-      (v) => typeof v === "string" || typeof v === "number" || typeof v === "boolean",
+      (v) => typeof v === "string" || typeof v === "number" || typeof v === "boolean"
     );
 
     if (isSimpleArray && value.length <= 5) {
@@ -264,7 +264,6 @@ const FieldValueDisplay: React.FC<FieldValueDisplayProps> = ({
         <CollapsibleContent className="mt-2">
           <div className="pl-4 border-l-2 border-muted space-y-2">
             {value.map((item, idx) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: Array items have no stable ID
               <div key={idx} className="text-sm">
                 <span className="text-muted-foreground font-mono mr-2">[{idx}]</span>
                 <FieldValueDisplay value={item} fieldName={`${fieldName}[${idx}]`} compact={true} />
