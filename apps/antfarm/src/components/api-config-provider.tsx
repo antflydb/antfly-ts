@@ -4,9 +4,7 @@ import { useState } from "react";
 import { ApiConfigContext } from "@/contexts/api-config-context";
 
 const getDefaultApiUrl = () => {
-  // In development, default to localhost
-  // In production (built), use relative path
-  return import.meta.env.MODE === "development" ? "http://localhost:8082/api/v1" : "/api/v1";
+  return "/api/v1";
 };
 
 const STORAGE_KEY = "antfarm-api-url";

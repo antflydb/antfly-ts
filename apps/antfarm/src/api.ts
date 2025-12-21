@@ -1,7 +1,7 @@
 import type { AntflyType } from "@antfly/sdk";
 import { AntflyClient } from "@antfly/sdk";
 
-const baseUrl = import.meta.env.MODE === "development" ? "http://localhost:8082/api/v1" : "/api/v1";
+const baseUrl = "/api/v1";
 
 /**
  * @deprecated Use the `useApi()` hook from `@/hooks/use-api-config` instead
