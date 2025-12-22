@@ -92,6 +92,13 @@ export type {
   // Model and reranker types
   EmbedderConfig,
   EmbedderProvider,
+  // Eval types
+  EvalConfig,
+  EvalResult,
+  EvalScores,
+  EvalSummary,
+  EvaluatorName,
+  EvaluatorScore,
   // Search and facet types
   FacetOption,
   FacetResult,

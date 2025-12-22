@@ -3,6 +3,9 @@ import type {
   AnswerAgentResult,
   AnswerConfidence,
   ClassificationTransformationResult,
+  EvalConfig,
+  EvalResult,
+  EvaluatorScore,
   GeneratorConfig,
   QueryHit,
 } from "@antfly/sdk";
@@ -22,12 +25,16 @@ export interface AnswerResultsProps {
   fields?: string[];
   semanticIndexes?: string[];
 
+  // Eval configuration - enables inline evaluation of answer quality
+  eval?: EvalConfig;
+
   // Visibility controls
   showClassification?: boolean;
   showReasoning?: boolean;
   showFollowUpQuestions?: boolean;
   showConfidence?: boolean;
   showHits?: boolean;
+  showEval?: boolean;
 
   // Custom renderers
   renderLoading?: () => ReactNode;
@@ -38,6 +45,7 @@ export interface AnswerResultsProps {
   renderConfidence?: (confidence: AnswerConfidence) => ReactNode;
   renderFollowUpQuestions?: (questions: string[]) => ReactNode;
   renderHits?: (hits: QueryHit[]) => ReactNode;
+  renderEvalResult?: (evalResult: EvalResult) => ReactNode;
 
   // Callbacks
   onStreamStart?: () => void;
@@ -57,11 +65,13 @@ export default function AnswerResults({
   exclusionQuery,
   fields,
   semanticIndexes,
+  eval: evalConfig,
   showClassification = false,
   showReasoning = false,
   showFollowUpQuestions = true,
   showConfidence = false,
   showHits = false,
+  showEval,
   renderLoading,
   renderEmpty,
   renderClassification,
@@ -70,12 +80,16 @@ export default function AnswerResults({
   renderConfidence,
   renderFollowUpQuestions,
   renderHits,
+  renderEvalResult,
   onStreamStart,
   onStreamEnd,
   onError: onErrorCallback,
   children,
 }: AnswerResultsProps) {
   const [{ widgets, url, table: defaultTable, headers }, dispatch] = useSharedContext();
+
+  // Default showEval to true if eval config is provided
+  const shouldShowEval = showEval ?? !!evalConfig;
 
   // Answer agent state
   const [classification, setClassification] = useState<ClassificationTransformationResult | null>(
@@ -86,6 +100,7 @@ export default function AnswerResults({
   const [answer, setAnswer] = useState("");
   const [confidence, setConfidence] = useState<AnswerConfidence | null>(null);
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
+  const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -155,6 +170,7 @@ export default function AnswerResults({
           enabled: showConfidence,
         },
       },
+      eval: evalConfig,
     };
 
     // Start streaming
@@ -166,6 +182,7 @@ export default function AnswerResults({
       setAnswer("");
       setConfidence(null);
       setFollowUpQuestions([]);
+      setEvalResult(null);
       setError(null);
       setIsStreaming(true);
 
@@ -193,6 +210,9 @@ export default function AnswerResults({
           onFollowUpQuestion: (question) => {
             setFollowUpQuestions((prev) => [...prev, question]);
           },
+          onEvalResult: (data) => {
+            setEvalResult(data);
+          },
           onComplete: () => {
             setIsStreaming(false);
             if (onStreamEnd) {
@@ -218,6 +238,10 @@ export default function AnswerResults({
                 answer_confidence: result.answer_confidence,
                 context_relevance: result.context_relevance,
               });
+            }
+            // Handle eval result from non-streaming response
+            if (result.eval_result) {
+              setEvalResult(result.eval_result);
             }
             setIsStreaming(false);
             if (onStreamEnd) {
@@ -259,6 +283,7 @@ export default function AnswerResults({
     semanticIndexes,
     filterQuery,
     exclusionQuery,
+    evalConfig,
     showReasoning,
     showFollowUpQuestions,
     showConfidence,
@@ -388,6 +413,60 @@ export default function AnswerResults({
     []
   );
 
+  const defaultRenderEvalResult = useCallback((result: EvalResult) => {
+    const summary = result.summary;
+    const scores = result.scores;
+
+    const renderScoreEntry = ([name, score]: [string, EvaluatorScore]) => (
+      <li key={name}>
+        {name}: {((score.score ?? 0) * 100).toFixed(1)}% {score.pass ? "✓" : "✗"}
+        {score.reason && <span className="eval-reason"> - {score.reason}</span>}
+      </li>
+    );
+
+    return (
+      <details className="react-af-answer-eval">
+        <summary>
+          Evaluation Results
+          {summary && (
+            <span>
+              {" "}
+              - {summary.passed}/{summary.total} passed (avg:{" "}
+              {((summary.average_score ?? 0) * 100).toFixed(0)}%)
+            </span>
+          )}
+        </summary>
+        <div className="react-af-answer-eval-content">
+          {scores?.retrieval && Object.keys(scores.retrieval).length > 0 && (
+            <div className="react-af-answer-eval-category">
+              <strong>Retrieval Metrics:</strong>
+              <ul>
+                {(Object.entries(scores.retrieval) as [string, EvaluatorScore][]).map(
+                  renderScoreEntry
+                )}
+              </ul>
+            </div>
+          )}
+          {scores?.generation && Object.keys(scores.generation).length > 0 && (
+            <div className="react-af-answer-eval-category">
+              <strong>Generation Metrics:</strong>
+              <ul>
+                {(Object.entries(scores.generation) as [string, EvaluatorScore][]).map(
+                  renderScoreEntry
+                )}
+              </ul>
+            </div>
+          )}
+          {result.duration_ms !== undefined && (
+            <div className="react-af-answer-eval-duration">
+              <small>Evaluation took {result.duration_ms}ms</small>
+            </div>
+          )}
+        </div>
+      </details>
+    );
+  }, []);
+
   // Build context value for child components (e.g., AnswerFeedback)
   const contextValue = useMemo<AnswerResultsContextValue>(() => {
     const result: AnswerAgentResult | null = answer
@@ -419,6 +498,7 @@ export default function AnswerResults({
       isStreaming,
       result,
       confidence,
+      evalResult,
     };
   }, [
     currentQuery,
@@ -430,6 +510,7 @@ export default function AnswerResults({
     followUpQuestions,
     isStreaming,
     confidence,
+    evalResult,
   ]);
 
   return (
@@ -484,6 +565,10 @@ export default function AnswerResults({
             ? renderFollowUpQuestions(followUpQuestions)
             : defaultRenderFollowUpQuestions(followUpQuestions))}
         {showHits && hits.length > 0 && (renderHits ? renderHits(hits) : defaultRenderHits(hits))}
+        {shouldShowEval &&
+          evalResult &&
+          !isStreaming &&
+          (renderEvalResult ? renderEvalResult(evalResult) : defaultRenderEvalResult(evalResult))}
       </div>
       {children}
     </AnswerResultsContext.Provider>

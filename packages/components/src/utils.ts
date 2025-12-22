@@ -2,6 +2,7 @@ import type {
   AnswerAgentStreamCallbacks,
   AnswerConfidence,
   ClassificationTransformationResult,
+  EvalResult,
   QueryHit,
   RAGStreamCallbacks,
 } from "@antfly/sdk";
@@ -280,6 +281,7 @@ export interface AnswerCallbacks {
   onAnswer?: (chunk: string) => void;
   onConfidence?: (data: AnswerConfidence) => void;
   onFollowUpQuestion?: (question: string) => void;
+  onEvalResult?: (data: EvalResult) => void;
   onComplete?: () => void;
   onError?: (error: Error | string) => void;
   onAnswerAgentResult?: (result: AnswerAgentResult) => void;
@@ -331,6 +333,7 @@ export async function streamAnswer(
           onAnswer: callbacks.onAnswer,
           onConfidence: callbacks.onConfidence,
           onFollowUpQuestion: callbacks.onFollowUpQuestion,
+          onEvalResult: callbacks.onEvalResult,
           onDone: () => {
             if (callbacks.onComplete) {
               callbacks.onComplete();

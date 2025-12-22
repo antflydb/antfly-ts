@@ -160,6 +160,14 @@ export type ClarificationRequest = components["schemas"]["ClarificationRequest"]
 export type WebSearchConfig = components["schemas"]["WebSearchConfig"];
 export type FetchConfig = components["schemas"]["FetchConfig"];
 
+// Eval types
+export type EvalConfig = components["schemas"]["EvalConfig"];
+export type EvalResult = components["schemas"]["EvalResult"];
+export type EvalScores = components["schemas"]["EvalScores"];
+export type EvaluatorScore = components["schemas"]["EvaluatorScore"];
+export type EvalSummary = components["schemas"]["EvalSummary"];
+export type EvaluatorName = components["schemas"]["EvaluatorName"];
+
 // Error type
 export type AntflyError = components["schemas"]["Error"];
 
@@ -202,6 +210,7 @@ export interface AnswerAgentStreamCallbacks {
   onAnswer?: (chunk: string) => void;
   onConfidence?: (data: AnswerConfidence) => void;
   onFollowUpQuestion?: (question: string) => void;
+  onEvalResult?: (data: EvalResult) => void;
   onDone?: (data?: { complete: boolean }) => void;
   onError?: (error: string) => void;
 }

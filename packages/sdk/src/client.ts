@@ -445,6 +445,12 @@ export class AntflyClient {
                         callbacks.onFollowUpQuestion(JSON.parse(data));
                       }
                       break;
+                    case "eval":
+                      if (callbacks.onEvalResult) {
+                        const evalResult = JSON.parse(data);
+                        callbacks.onEvalResult(evalResult);
+                      }
+                      break;
                     case "done":
                       if (callbacks.onDone) {
                         const doneData = JSON.parse(data);
