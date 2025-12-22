@@ -235,16 +235,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /**
-         * @description GPU/accelerator mode. Configurable via TERMITE_GPU env var (viper auto-binding).
-         *     - "auto": Auto-detect (default). TPU > CUDA/CoreML > CPU based on availability.
-         *     - "tpu": Force TPU. Fails if TPU not available.
-         *     - "cuda": Force CUDA. Fails if CUDA not available.
-         *     - "coreml": Force CoreML (macOS only).
-         *     - "off": CPU only, disable all GPU acceleration.
-         * @enum {string}
-         */
-        GPUMode: "auto" | "tpu" | "cuda" | "coreml" | "off";
         Error: {
             /** @description Error message */
             error: string;
@@ -505,8 +495,43 @@ export interface components {
              * @example 3
              */
             max_loaded_models?: number;
-            /** @default auto */
-            gpu?: components["schemas"]["GPUMode"];
+            /**
+             * @description Backend priority order for model loading with optional device specifiers.
+             *     Format: `backend` or `backend:device` where device defaults to `auto`.
+             *
+             *     Termite tries entries in order and uses the first available backend+device
+             *     combination that supports the model.
+             *
+             *     **Backends** (depend on build tags):
+             *     - `go` - Pure Go inference (always available, CPU only, slowest)
+             *     - `onnx` - ONNX Runtime (requires -tags="onnx,ORT", fastest)
+             *     - `xla` - GoMLX XLA (requires -tags="xla,XLA", TPU/CUDA/CPU)
+             *
+             *     **Devices**:
+             *     - `auto` - Auto-detect best available (default)
+             *     - `cuda` - NVIDIA CUDA GPU
+             *     - `coreml` - Apple CoreML (macOS only, used by ONNX)
+             *     - `tpu` - Google TPU (used by XLA)
+             *     - `cpu` - Force CPU only
+             *
+             *     **Examples**:
+             *     - `["onnx", "xla", "go"]` - Try backends with auto device detection
+             *     - `["onnx:cuda", "xla:tpu", "onnx:cpu", "go"]` - Prefer GPU, fall back to CPU
+             *     - `["onnx:coreml", "go"]` - macOS with CoreML acceleration
+             * @default [
+             *       "onnx",
+             *       "xla",
+             *       "go"
+             *     ]
+             * @example [
+             *       "onnx:cuda",
+             *       "xla:tpu",
+             *       "onnx:cpu",
+             *       "xla:cpu",
+             *       "go"
+             *     ]
+             */
+            backend_priority?: string[];
             /**
              * @description Maximum number of concurrent inference requests allowed.
              *     Additional requests will be queued up to max_queue_size.

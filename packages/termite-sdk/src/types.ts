@@ -30,7 +30,6 @@ export type ImageURL = components["schemas"]["ImageURL"];
 export type Config = components["schemas"]["Config"];
 export type ContentSecurityConfig = components["schemas"]["ContentSecurityConfig"];
 export type Credentials = components["schemas"]["Credentials"];
-export type GPUMode = components["schemas"]["GPUMode"];
 export type Level = components["schemas"]["Level"];
 export type Style = components["schemas"]["Style"];
 
@@ -56,9 +55,6 @@ export interface TermiteConfig {
 
 // Helper type for embedding input - supports all three formats
 export type EmbedInput = string | string[] | ContentPart[];
-
-// GPU mode values for convenience
-export const gpuModes: GPUMode[] = ["auto", "tpu", "cuda", "coreml", "off"];
 
 // Log level values for convenience
 export const logLevels: Level[] = ["debug", "info", "warn", "error"];

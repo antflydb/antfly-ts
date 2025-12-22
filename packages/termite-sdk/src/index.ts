@@ -54,7 +54,6 @@ export type {
   EmbedInput,
   EmbedRequest,
   EmbedResponse,
-  GPUMode,
   ImageURL,
   ImageURLContentPart,
   Level,
@@ -73,7 +72,7 @@ export type {
 } from "./types.js";
 
 // Constant exports
-export { gpuModes, logLevels, logStyles } from "./types.js";
+export { logLevels, logStyles } from "./types.js";
 
 // Binary codec utilities for advanced usage
 export { deserializeEmbeddings, serializeEmbeddings } from "./codec.js";
