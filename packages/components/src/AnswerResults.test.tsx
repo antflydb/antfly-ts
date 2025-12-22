@@ -225,50 +225,6 @@ describe("AnswerResults", () => {
       expect(evalElement?.textContent).toContain("75%");
     });
 
-    it("should hide eval results when showEval is explicitly false", async () => {
-      const mockStreamAnswer = vi.mocked(utils.streamAnswer);
-      mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Test answer");
-        callbacks.onEvalResult?.(mockEvalResult);
-        callbacks.onComplete?.();
-        return new AbortController();
-      });
-
-      const { container } = render(
-        <TestWrapper>
-          <QueryBox id="question" mode="submit" />
-          <AnswerResults
-            id="answer"
-            searchBoxId="question"
-            generator={mockGenerator}
-            fields={["content"]}
-            eval={{
-              evaluators: ["relevance"],
-            }}
-            showEval={false}
-          />
-        </TestWrapper>
-      );
-
-      const input = screen.getByPlaceholderText(/ask a question/i);
-      const button = screen.getByRole("button", { name: /submit/i });
-
-      await act(async () => {
-        await userEvent.type(input, "test question");
-        await userEvent.click(button);
-      });
-
-      // Wait for answer to appear
-      await waitFor(() => {
-        const answer = container.querySelector(".react-af-answer-text");
-        expect(answer).toBeTruthy();
-      });
-
-      // Eval should NOT be displayed
-      const evalElement = container.querySelector(".react-af-answer-eval");
-      expect(evalElement).toBeNull();
-    });
-
     it("should not display eval results when no eval config provided", async () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {

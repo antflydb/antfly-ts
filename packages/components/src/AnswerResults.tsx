@@ -34,7 +34,6 @@ export interface AnswerResultsProps {
   showFollowUpQuestions?: boolean;
   showConfidence?: boolean;
   showHits?: boolean;
-  showEval?: boolean;
 
   // Custom renderers
   renderLoading?: () => ReactNode;
@@ -71,7 +70,6 @@ export default function AnswerResults({
   showFollowUpQuestions = true,
   showConfidence = false,
   showHits = false,
-  showEval,
   renderLoading,
   renderEmpty,
   renderClassification,
@@ -87,9 +85,6 @@ export default function AnswerResults({
   children,
 }: AnswerResultsProps) {
   const [{ widgets, url, table: defaultTable, headers }, dispatch] = useSharedContext();
-
-  // Default showEval to true if eval config is provided
-  const shouldShowEval = showEval ?? !!evalConfig;
 
   // Answer agent state
   const [classification, setClassification] = useState<ClassificationTransformationResult | null>(
@@ -565,7 +560,7 @@ export default function AnswerResults({
             ? renderFollowUpQuestions(followUpQuestions)
             : defaultRenderFollowUpQuestions(followUpQuestions))}
         {showHits && hits.length > 0 && (renderHits ? renderHits(hits) : defaultRenderHits(hits))}
-        {shouldShowEval &&
+        {evalConfig &&
           evalResult &&
           !isStreaming &&
           (renderEvalResult ? renderEvalResult(evalResult) : defaultRenderEvalResult(evalResult))}
