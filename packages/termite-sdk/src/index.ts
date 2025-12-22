@@ -36,9 +36,10 @@
 
 // Main client export
 export { TermiteClient } from "./client.js";
+// Binary codec utilities for advanced usage
+export { deserializeEmbeddings, serializeEmbeddings } from "./codec.js";
 // Re-export the generated types for advanced users
 export type { components, operations, paths } from "./termite-api.js";
-
 // Type exports
 export type {
   // Request/Response types
@@ -58,6 +59,8 @@ export type {
   ImageURLContentPart,
   Level,
   ModelsResponse,
+  // Request options
+  RequestOptions,
   RerankRequest,
   RerankResponse,
   // Utility types
@@ -70,12 +73,8 @@ export type {
   TextContentPart,
   VersionResponse,
 } from "./types.js";
-
 // Constant exports
 export { logLevels, logStyles } from "./types.js";
-
-// Binary codec utilities for advanced usage
-export { deserializeEmbeddings, serializeEmbeddings } from "./codec.js";
 
 // Default export for convenience
 import { TermiteClient } from "./client.js";

@@ -1,7 +1,8 @@
+import { type ChunkResponse, TermiteClient } from "@antfly/termite-sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { Clock, Database, Hash, RotateCcw, Scissors, Zap } from "lucide-react";
 import type React from "react";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,21 +18,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 
-// Chunk response types matching Termite API
-interface ChunkItem {
-  id: number;
-  text: string;
-  start_char: number;
-  end_char: number;
-}
-
-interface ChunkResponse {
-  chunks: ChunkItem[];
-  model: string;
-  cache_hit: boolean;
-}
-
-// Configuration state
+// Configuration state (extends SDK config with UI-specific fields)
 interface ChunkConfig {
   model: string;
   target_tokens: number;
@@ -84,6 +71,8 @@ const ChunkingPlaygroundPage: React.FC = () => {
   const [processingTime, setProcessingTime] = useState<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  const termiteClient = useMemo(() => new TermiteClient({ baseUrl: TERMITE_API_URL }), []);
+
   const handleChunk = async () => {
     if (!inputText.trim()) {
       setError("Please enter some text to chunk");
@@ -106,31 +95,19 @@ const ChunkingPlaygroundPage: React.FC = () => {
       // Convert escaped separator back to actual characters
       const actualSeparator = config.separator.replace(/\\n/g, "\n").replace(/\\t/g, "\t");
 
-      const response = await fetch(`${TERMITE_API_URL}/api/chunk`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const data = await termiteClient.chunk(
+        inputText,
+        {
+          model: config.model,
+          target_tokens: config.target_tokens,
+          overlap_tokens: config.overlap_tokens,
+          separator: actualSeparator,
+          max_chunks: config.max_chunks,
+          threshold: config.threshold,
         },
-        body: JSON.stringify({
-          text: inputText,
-          config: {
-            model: config.model,
-            target_tokens: config.target_tokens,
-            overlap_tokens: config.overlap_tokens,
-            separator: actualSeparator,
-            max_chunks: config.max_chunks,
-            threshold: config.threshold,
-          },
-        }),
-        signal: abortControllerRef.current.signal,
-      });
+        { signal: abortControllerRef.current.signal }
+      );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `HTTP ${response.status}`);
-      }
-
-      const data: ChunkResponse = await response.json();
       setResult(data);
       setProcessingTime(performance.now() - startTime);
     } catch (err) {

@@ -61,3 +61,9 @@ export const logLevels: Level[] = ["debug", "info", "warn", "error"];
 
 // Log style values for convenience
 export const logStyles: Style[] = ["terminal", "json", "logfmt", "noop"];
+
+// Request options for SDK methods
+export interface RequestOptions {
+  /** AbortSignal to cancel the request */
+  signal?: AbortSignal;
+}

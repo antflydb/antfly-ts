@@ -12,6 +12,7 @@ import type {
   EmbedInput,
   EmbedResponse,
   ModelsResponse,
+  RequestOptions,
   RerankResponse,
   TermiteConfig,
   VersionResponse,
@@ -135,6 +136,7 @@ export class TermiteClient {
    *
    * @param text - Text to chunk
    * @param config - Optional chunking configuration
+   * @param options - Optional request options (e.g., abort signal)
    * @returns ChunkResponse with array of chunks and metadata
    *
    * @example Fixed chunking
@@ -156,13 +158,27 @@ export class TermiteClient {
    *   threshold: 0.5
    * });
    * ```
+   *
+   * @example With abort signal
+   * ```typescript
+   * const controller = new AbortController();
+   * const result = await client.chunk("Long text...", { model: "fixed" }, {
+   *   signal: controller.signal
+   * });
+   * // Call controller.abort() to cancel the request
+   * ```
    */
-  async chunk(text: string, config?: ChunkConfig): Promise<ChunkResponse> {
+  async chunk(
+    text: string,
+    config?: ChunkConfig,
+    options?: RequestOptions
+  ): Promise<ChunkResponse> {
     const { data, error } = await this.client.POST("/chunk", {
       body: {
         text,
         config,
       },
+      signal: options?.signal,
     });
     if (error) throw new Error(`Chunk failed: ${error.error}`);
     return data!;
