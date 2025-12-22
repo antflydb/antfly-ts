@@ -183,7 +183,9 @@ describe("TermiteClient with mock fetch", () => {
         baseUrl: "http://localhost:8080/api",
       });
 
-      await expect(client.embedBinary("invalid-model", ["test"])).rejects.toThrow("Embed failed: 400 Invalid model");
+      await expect(client.embedBinary("invalid-model", ["test"])).rejects.toThrow(
+        "Embed failed: 400 Invalid model"
+      );
     });
 
     it("should handle high-dimensional embeddings in binary format", async () => {

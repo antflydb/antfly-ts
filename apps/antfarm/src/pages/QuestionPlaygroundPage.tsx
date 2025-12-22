@@ -357,7 +357,9 @@ const QuestionPlaygroundPage: React.FC = () => {
 
                 {/* Context with highlighted answer */}
                 <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">Context (answer highlighted)</Label>
+                  <Label className="text-sm text-muted-foreground">
+                    Context (answer highlighted)
+                  </Label>
                   <div className="p-3 bg-muted/50 rounded-lg border text-sm leading-relaxed">
                     {renderHighlightedContext()}
                   </div>

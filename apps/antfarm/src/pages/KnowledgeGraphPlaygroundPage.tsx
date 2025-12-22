@@ -1,15 +1,5 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import {
-  Clock,
-  FileText,
-  GitBranch,
-  Hash,
-  Network,
-  Plus,
-  RotateCcw,
-  X,
-  Zap,
-} from "lucide-react";
+import { Clock, FileText, GitBranch, Hash, Network, Plus, RotateCcw, X, Zap } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -384,11 +374,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
           const isSelected = selectedEdge?.id === edge.id;
 
           return (
-            <g
-              key={edge.id}
-              className="cursor-pointer"
-              onClick={() => setSelectedEdge(edge)}
-            >
+            <g key={edge.id} className="cursor-pointer" onClick={() => setSelectedEdge(edge)}>
               <line
                 x1={x1}
                 y1={y1}
@@ -419,11 +405,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
           const color = getNodeColor(node.type);
 
           return (
-            <g
-              key={node.id}
-              className="cursor-pointer"
-              onClick={() => setSelectedNode(node)}
-            >
+            <g key={node.id} className="cursor-pointer" onClick={() => setSelectedNode(node)}>
               <circle
                 cx={pos.x}
                 cy={pos.y}
@@ -531,7 +513,10 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                 step={0.05}
                 value={config.similarity_threshold}
                 onChange={(e) =>
-                  setConfig({ ...config, similarity_threshold: Number.parseFloat(e.target.value) || 0.85 })
+                  setConfig({
+                    ...config,
+                    similarity_threshold: Number.parseFloat(e.target.value) || 0.85,
+                  })
                 }
               />
             </div>
@@ -590,10 +575,17 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                     placeholder="Add entity label..."
                     value={newEntityLabel}
                     onChange={(e) => setNewEntityLabel(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddEntityLabel())}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), handleAddEntityLabel())
+                    }
                     className="flex-1"
                   />
-                  <Button variant="outline" size="sm" onClick={handleAddEntityLabel} disabled={!newEntityLabel.trim()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddEntityLabel}
+                    disabled={!newEntityLabel.trim()}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -621,10 +613,17 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                     placeholder="Add relation label..."
                     value={newRelationLabel}
                     onChange={(e) => setNewRelationLabel(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddRelationLabel())}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), handleAddRelationLabel())
+                    }
                     className="flex-1"
                   />
-                  <Button variant="outline" size="sm" onClick={handleAddRelationLabel} disabled={!newRelationLabel.trim()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddRelationLabel}
+                    disabled={!newRelationLabel.trim()}
+                  >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
@@ -637,21 +636,27 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
             <label className="flex items-center gap-2">
               <Checkbox
                 checked={config.type_must_match}
-                onCheckedChange={(checked) => setConfig({ ...config, type_must_match: checked === true })}
+                onCheckedChange={(checked) =>
+                  setConfig({ ...config, type_must_match: checked === true })
+                }
               />
               Type must match for merge
             </label>
             <label className="flex items-center gap-2">
               <Checkbox
                 checked={config.deduplicate_relations}
-                onCheckedChange={(checked) => setConfig({ ...config, deduplicate_relations: checked === true })}
+                onCheckedChange={(checked) =>
+                  setConfig({ ...config, deduplicate_relations: checked === true })
+                }
               />
               Deduplicate relations
             </label>
             <label className="flex items-center gap-2">
               <Checkbox
                 checked={config.track_provenance}
-                onCheckedChange={(checked) => setConfig({ ...config, track_provenance: checked === true })}
+                onCheckedChange={(checked) =>
+                  setConfig({ ...config, track_provenance: checked === true })
+                }
               />
               Track provenance
             </label>
@@ -750,9 +755,11 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                       {selectedEdge && (
                         <div>
                           <div className="font-medium">
-                            {nodeMap.get(selectedEdge.source_id)?.canonical_name || selectedEdge.source_id}
+                            {nodeMap.get(selectedEdge.source_id)?.canonical_name ||
+                              selectedEdge.source_id}
                             {" → "}
-                            {nodeMap.get(selectedEdge.target_id)?.canonical_name || selectedEdge.target_id}
+                            {nodeMap.get(selectedEdge.target_id)?.canonical_name ||
+                              selectedEdge.target_id}
                           </div>
                           <div className="text-muted-foreground">Relation: {selectedEdge.type}</div>
                           <div className="text-muted-foreground">
@@ -781,7 +788,10 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                               <div>{node.canonical_name}</div>
                               {node.mentions && node.mentions.length > 1 && (
                                 <div className="text-xs text-muted-foreground">
-                                  Also: {node.mentions.filter((m) => m !== node.canonical_name).join(", ")}
+                                  Also:{" "}
+                                  {node.mentions
+                                    .filter((m) => m !== node.canonical_name)
+                                    .join(", ")}
                                 </div>
                               )}
                             </td>
@@ -854,12 +864,13 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
       {/* Help text */}
       <div className="mt-6 text-xs text-muted-foreground space-y-1">
         <p>
-          <strong>Knowledge Graphs:</strong> Extracts entities and relationships from text, then resolves
-          co-references (e.g., "Elon Musk" and "Musk" → single entity) using similarity matching.
+          <strong>Knowledge Graphs:</strong> Extracts entities and relationships from text, then
+          resolves co-references (e.g., "Elon Musk" and "Musk" → single entity) using similarity
+          matching.
         </p>
         <p>
-          <strong>REBEL (Recommended):</strong> End-to-end relation extraction using seq2seq generation.
-          Supports 200+ relation types automatically without needing predefined labels.
+          <strong>REBEL (Recommended):</strong> End-to-end relation extraction using seq2seq
+          generation. Supports 200+ relation types automatically without needing predefined labels.
         </p>
         <p>
           <strong>GLiNER:</strong> Zero-shot entity and relation extraction with custom labels.

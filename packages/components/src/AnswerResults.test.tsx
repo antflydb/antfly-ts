@@ -3,8 +3,8 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Antfly from "./Antfly";
 import AnswerResults from "./AnswerResults";
+import Antfly from "./Antfly";
 import QueryBox from "./QueryBox";
 import * as utils from "./utils";
 

@@ -26,6 +26,9 @@ importers:
       '@antfly/sdk':
         specifier: workspace:*
         version: link:../../packages/sdk
+      '@antfly/termite-sdk':
+        specifier: workspace:*
+        version: link:../../packages/termite-sdk
       '@hookform/resolvers':
         specifier: ^5.2.2
         version: 5.2.2(react-hook-form@7.68.0(react@19.2.3))

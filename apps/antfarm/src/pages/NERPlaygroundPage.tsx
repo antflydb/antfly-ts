@@ -1,15 +1,5 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import {
-  Clock,
-  FileText,
-  Hash,
-  Percent,
-  Plus,
-  RotateCcw,
-  Tag,
-  X,
-  Zap,
-} from "lucide-react";
+import { Clock, FileText, Hash, Percent, Plus, RotateCcw, Tag, X, Zap } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -354,9 +344,7 @@ const NERPlaygroundPage: React.FC = () => {
       elements.push(<span key="end">{inputText.slice(lastEnd)}</span>);
     }
 
-    return (
-      <div className="whitespace-pre-wrap text-sm font-mono leading-relaxed">{elements}</div>
-    );
+    return <div className="whitespace-pre-wrap text-sm font-mono leading-relaxed">{elements}</div>;
   };
 
   // Get unique labels from results for legend
@@ -500,7 +488,12 @@ const NERPlaygroundPage: React.FC = () => {
                 onKeyDown={handleKeyDown}
                 className="max-w-xs"
               />
-              <Button variant="outline" size="sm" onClick={handleAddLabel} disabled={!newLabel.trim()}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddLabel}
+                disabled={!newLabel.trim()}
+              >
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
