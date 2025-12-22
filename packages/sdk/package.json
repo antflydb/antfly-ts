@@ -13,7 +13,11 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts --clean",
     "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
@@ -30,7 +34,16 @@
     "prepublishOnly": "pnpm run typecheck && pnpm run lint && pnpm run test && pnpm run build",
     "example:node": "tsx examples/node-example.ts"
   },
-  "keywords": ["antfly", "sdk", "typescript", "api", "client", "database", "vector", "search"],
+  "keywords": [
+    "antfly",
+    "sdk",
+    "typescript",
+    "api",
+    "client",
+    "database",
+    "vector",
+    "search"
+  ],
   "author": "Antfly Contributors",
   "license": "Apache-2.0",
   "repository": {
@@ -43,12 +56,12 @@
   },
   "homepage": "https://github.com/antflydb/antfly-ts/tree/main/packages/sdk#readme",
   "devDependencies": {
-    "@types/node": "^25.0.2",
-    "@vitest/ui": "^4.0.15",
+    "@types/node": "^25.0.3",
+    "@vitest/ui": "^4.0.16",
     "openapi-typescript": "^7.10.1",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.16"
   },
   "dependencies": {
     "openapi-fetch": "^0.15.0"

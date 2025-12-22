@@ -2,7 +2,9 @@
   "name": "antfly-ts",
   "private": true,
   "description": "Antfly TypeScript monorepo - SDK and React components",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -16,12 +18,12 @@
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.8",
-    "turbo": "^2.6.3",
+    "@biomejs/biome": "^2.3.10",
+    "turbo": "^2.7.1",
     "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20.19"
   },
-  "packageManager": "pnpm@10.25.0"
+  "packageManager": "pnpm@10.26.1"
 }

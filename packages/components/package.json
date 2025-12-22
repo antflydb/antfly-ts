@@ -13,7 +13,12 @@
     },
     "./styles": "./dist/components.css"
   },
-  "files": ["dist", "types", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "types",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
@@ -27,7 +32,14 @@
     "clean": "rm -rf dist types",
     "prepare": "pnpm run build"
   },
-  "keywords": ["antfly", "react", "search", "components", "facets", "rag"],
+  "keywords": [
+    "antfly",
+    "react",
+    "search",
+    "components",
+    "facets",
+    "rag"
+  ],
   "author": "Antfly Contributors",
   "license": "Apache-2.0",
   "repository": {
@@ -39,7 +51,9 @@
     "url": "https://github.com/antflydb/antfly-ts/issues"
   },
   "homepage": "https://github.com/antflydb/antfly-ts/tree/main/packages/components#readme",
-  "browserslist": [">0.03%"],
+  "browserslist": [
+    ">0.03%"
+  ],
   "peerDependencies": {
     "@antfly/sdk": "workspace:*",
     "react": "^16.0.0 || ^17.0 || ^18.0 || ^19.0",
@@ -56,30 +70,30 @@
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
     "@storybook/addon-docs": "10.1.8",
-    "@storybook/addon-links": "^10.1.8",
-    "@storybook/react": "^10.1.8",
-    "@storybook/react-vite": "^10.1.8",
+    "@storybook/addon-links": "^10.1.10",
+    "@storybook/react": "^10.1.10",
+    "@storybook/react-vite": "^10.1.10",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.0",
+    "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^25.0.2",
+    "@types/node": "^25.0.3",
     "@types/qs": "^6.14.0",
     "@types/react": "^19.2.7",
     "@types/react-autosuggest": "^10.1.11",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.2",
-    "@vitest/ui": "^4.0.15",
+    "@vitest/ui": "^4.0.16",
     "core-js": "^3.47.0",
     "jsdom": "^27.3.0",
     "lodash": "^4.17.21",
     "msw": "^2.12.4",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "sb": "^10.1.8",
-    "storybook": "^10.1.8",
+    "sb": "^10.1.10",
+    "storybook": "^10.1.10",
     "streamdown": "^1.6.10",
-    "vite": "^7.2.7",
+    "vite": "^7.3.0",
     "vite-plugin-dts": "^4.5.4",
-    "vitest": "^4.0.15"
+    "vitest": "^4.0.16"
   }
 }
