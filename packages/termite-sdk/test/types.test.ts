@@ -6,13 +6,12 @@ import type {
   ContentPart,
   EmbedInput,
   EmbedResponse,
-  GPUMode,
   ModelsResponse,
   RerankResponse,
   TermiteConfig,
   VersionResponse,
 } from "../src/index.js";
-import { gpuModes, logLevels, logStyles } from "../src/index.js";
+import { logLevels, logStyles } from "../src/index.js";
 
 describe("Type exports", () => {
   it("should export TermiteConfig type", () => {
@@ -114,11 +113,6 @@ describe("Type exports", () => {
     expect(response.version).toBe("v1.0.0");
   });
 
-  it("should export GPUMode type", () => {
-    const modes: GPUMode[] = ["auto", "tpu", "cuda", "coreml", "off"];
-    expect(modes).toEqual(gpuModes);
-  });
-
   it("should export ContentPart type", () => {
     const textPart: ContentPart = { type: "text", text: "hello" };
     const imagePart: ContentPart = {
@@ -131,10 +125,6 @@ describe("Type exports", () => {
 });
 
 describe("Constant exports", () => {
-  it("should export gpuModes array", () => {
-    expect(gpuModes).toEqual(["auto", "tpu", "cuda", "coreml", "off"]);
-  });
-
   it("should export logLevels array", () => {
     expect(logLevels).toEqual(["debug", "info", "warn", "error"]);
   });
