@@ -1,8 +1,9 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.8/schema.json",
+  "root": false,
+  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
   "extends": ["../../biome.json"],
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": false },
-  "files": { "includes": ["**", "!!**/dist", "!!types"] },
+  "files": { "includes": ["!!**/dist", "!!types"] },
   "linter": {
     "enabled": true,
     "rules": {
