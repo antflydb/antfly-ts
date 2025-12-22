@@ -1797,6 +1797,15 @@ export interface components {
              */
             with_streaming?: boolean;
             /**
+             * @description Background knowledge that guides the agent's understanding of the domain.
+             *     Similar to CLAUDE.md, this provides context that applies to all steps
+             *     (classification, retrieval, and answer generation).
+             *
+             *     Example: "This is a technical documentation search. Results should be
+             *     filtered to only include official documentation, not community posts."
+             */
+            agent_knowledge?: string;
+            /**
              * @description Filters accumulated from previous conversation turns.
              *     These are applied to all queries automatically.
              *     New filters discovered in this turn will be added to this list in the response.
@@ -4272,6 +4281,8 @@ export interface components {
             classification?: components["schemas"]["ClassificationStepConfig"];
             /** @description Configuration for answer generation */
             answer?: components["schemas"]["AnswerStepConfig"];
+            /** @description Configuration for confidence scoring */
+            confidence?: components["schemas"]["ConfidenceStepConfig"];
             /** @description Configuration for tool calling behavior */
             tools?: components["schemas"]["ChatToolsConfig"];
         };
