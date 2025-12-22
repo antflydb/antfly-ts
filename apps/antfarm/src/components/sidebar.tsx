@@ -6,7 +6,9 @@ import {
   Database,
   FileInput,
   FileText,
+  HelpCircle,
   LayoutList,
+  Network,
   PanelLeft,
   PanelLeftOpen,
   Plus,
@@ -15,6 +17,7 @@ import {
   Shield,
   Sparkles,
   Table as TableIcon,
+  Tag,
   Upload,
   Wrench,
   X,
@@ -477,6 +480,57 @@ export function AppSidebar({
                             >
                               <Scissors className="size-4" />
                               <span>Chunking</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === "/playground/recognize"}
+                          >
+                            <a
+                              href="/playground/recognize"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/recognize");
+                              }}
+                            >
+                              <Tag className="size-4" />
+                              <span>NER</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === "/playground/question"}
+                          >
+                            <a
+                              href="/playground/question"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/question");
+                              }}
+                            >
+                              <HelpCircle className="size-4" />
+                              <span>Question Gen</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === "/playground/kg"}
+                          >
+                            <a
+                              href="/playground/kg"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/kg");
+                              }}
+                            >
+                              <Network className="size-4" />
+                              <span>Knowledge Graph</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
