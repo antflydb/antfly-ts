@@ -78,6 +78,7 @@ interface ModelsResponse {
   ner: string[];
   embedders: string[];
   generators: string[];
+  rel: string[];
 }
 
 interface KGBuilderConfig {
@@ -144,13 +145,14 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         const response = await fetch(`${TERMITE_API_URL}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
+          // REBEL models (preferred for relation extraction)
+          const rebelModels = (data.rel || []).map((m) => `rel:${m}`);
           // Filter for GLiNER models which support relation extraction
           const glinerModels = (data.ner || []).filter(
             (m) => m.toLowerCase().includes("gliner") && m.toLowerCase().includes("multi")
           );
-          const allNerModels = data.ner || [];
-          // Prefer gliner-multitask models, fall back to all NER models
-          const models = glinerModels.length > 0 ? glinerModels : allNerModels;
+          // Combine: prefer REBEL models, then GLiNER
+          const models = [...rebelModels, ...glinerModels];
           setAvailableModels(models);
           if (models.length > 0) {
             setSelectedModel(models[0]);
@@ -169,6 +171,17 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
     return ENTITY_TYPE_COLORS[type.toLowerCase()] || ENTITY_TYPE_COLORS.default;
   };
 
+  // Check if the selected model is a REBEL model
+  const isRebelModel = selectedModel.startsWith("rel:");
+
+  // Get the actual model name (strip prefix)
+  const getModelName = (model: string) => {
+    if (model.startsWith("rel:")) {
+      return model.slice(4); // Remove "rel:" prefix
+    }
+    return model;
+  };
+
   const handleBuildGraph = async () => {
     if (!inputText.trim()) {
       setError("Please enter some text to build a knowledge graph from");
@@ -180,7 +193,8 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
       return;
     }
 
-    if (entityLabels.length === 0) {
+    // Only require entity labels for GLiNER models (REBEL doesn't need them)
+    if (!isRebelModel && entityLabels.length === 0) {
       setError("Please add at least one entity label");
       return;
     }
@@ -206,18 +220,27 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
+      // Build request body - REBEL models don't need labels
+      const requestBody: Record<string, unknown> = {
+        model: getModelName(selectedModel),
+        texts: texts,
+        config: config,
+      };
+
+      // Only include labels for GLiNER models
+      if (!isRebelModel) {
+        requestBody.entity_labels = entityLabels;
+        if (relationLabels.length > 0) {
+          requestBody.relation_labels = relationLabels;
+        }
+      }
+
       const response = await fetch(`${TERMITE_API_URL}/api/knowledgegraph`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: selectedModel,
-          texts: texts,
-          entity_labels: entityLabels,
-          relation_labels: relationLabels.length > 0 ? relationLabels : undefined,
-          config: config,
-        }),
+        body: JSON.stringify(requestBody),
         signal: abortControllerRef.current.signal,
       });
 
@@ -442,7 +465,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold">Knowledge Graph Playground</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Build knowledge graphs from text using GLiNER entity and relation extraction
+            Build knowledge graphs from text using REBEL or GLiNER models
           </p>
         </div>
         <div className="flex gap-2">
@@ -466,7 +489,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
           {/* Model and Build Button */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="model">Model (GLiNER)</Label>
+              <Label htmlFor="model">Model</Label>
               <Select
                 value={selectedModel}
                 onValueChange={setSelectedModel}
@@ -478,7 +501,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                       !modelsLoaded
                         ? "Loading models..."
                         : availableModels.length === 0
-                          ? "No GLiNER models available"
+                          ? "No KG models available"
                           : "Select a model"
                     }
                   />
@@ -486,11 +509,16 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                 <SelectContent>
                   {availableModels.map((model) => (
                     <SelectItem key={model} value={model}>
-                      {model}
+                      {model.startsWith("rel:") ? `${model.slice(4)} (REBEL)` : `${model} (GLiNER)`}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {isRebelModel && (
+                <p className="text-xs text-muted-foreground">
+                  REBEL models extract 200+ relation types automatically
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -529,78 +557,80 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Labels Configuration */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Entity Labels */}
-            <div className="space-y-2">
-              <Label>Entity Labels</Label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {entityLabels.map((label) => (
-                  <Badge
-                    key={label}
-                    variant="secondary"
-                    style={{
-                      backgroundColor: `${getNodeColor(label)}20`,
-                      borderColor: getNodeColor(label),
-                    }}
-                    className="border gap-1"
-                  >
-                    {label}
-                    <button
-                      type="button"
-                      onClick={() => setEntityLabels(entityLabels.filter((l) => l !== label))}
-                      className="ml-1 hover:opacity-70"
+          {/* Labels Configuration - only for GLiNER models */}
+          {!isRebelModel && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Entity Labels */}
+              <div className="space-y-2">
+                <Label>Entity Labels</Label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {entityLabels.map((label) => (
+                    <Badge
+                      key={label}
+                      variant="secondary"
+                      style={{
+                        backgroundColor: `${getNodeColor(label)}20`,
+                        borderColor: getNodeColor(label),
+                      }}
+                      className="border gap-1"
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
+                      {label}
+                      <button
+                        type="button"
+                        onClick={() => setEntityLabels(entityLabels.filter((l) => l !== label))}
+                        className="ml-1 hover:opacity-70"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add entity label..."
+                    value={newEntityLabel}
+                    onChange={(e) => setNewEntityLabel(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddEntityLabel())}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="sm" onClick={handleAddEntityLabel} disabled={!newEntityLabel.trim()}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add entity label..."
-                  value={newEntityLabel}
-                  onChange={(e) => setNewEntityLabel(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddEntityLabel())}
-                  className="flex-1"
-                />
-                <Button variant="outline" size="sm" onClick={handleAddEntityLabel} disabled={!newEntityLabel.trim()}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
 
-            {/* Relation Labels */}
-            <div className="space-y-2">
-              <Label>Relation Labels</Label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {relationLabels.map((label) => (
-                  <Badge key={label} variant="outline" className="gap-1">
-                    {label}
-                    <button
-                      type="button"
-                      onClick={() => setRelationLabels(relationLabels.filter((l) => l !== label))}
-                      className="ml-1 hover:opacity-70"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add relation label..."
-                  value={newRelationLabel}
-                  onChange={(e) => setNewRelationLabel(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddRelationLabel())}
-                  className="flex-1"
-                />
-                <Button variant="outline" size="sm" onClick={handleAddRelationLabel} disabled={!newRelationLabel.trim()}>
-                  <Plus className="h-4 w-4" />
-                </Button>
+              {/* Relation Labels */}
+              <div className="space-y-2">
+                <Label>Relation Labels</Label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {relationLabels.map((label) => (
+                    <Badge key={label} variant="outline" className="gap-1">
+                      {label}
+                      <button
+                        type="button"
+                        onClick={() => setRelationLabels(relationLabels.filter((l) => l !== label))}
+                        className="ml-1 hover:opacity-70"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Add relation label..."
+                    value={newRelationLabel}
+                    onChange={(e) => setNewRelationLabel(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddRelationLabel())}
+                    className="flex-1"
+                  />
+                  <Button variant="outline" size="sm" onClick={handleAddRelationLabel} disabled={!newRelationLabel.trim()}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Advanced Options */}
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
@@ -828,8 +858,12 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
           co-references (e.g., "Elon Musk" and "Musk" → single entity) using similarity matching.
         </p>
         <p>
-          <strong>GLiNER Multitask:</strong> Uses GLiNER models that support both entity and relation
-          extraction for zero-shot knowledge graph construction.
+          <strong>REBEL (Recommended):</strong> End-to-end relation extraction using seq2seq generation.
+          Supports 200+ relation types automatically without needing predefined labels.
+        </p>
+        <p>
+          <strong>GLiNER:</strong> Zero-shot entity and relation extraction with custom labels.
+          Requires specifying entity and relation types to extract.
         </p>
       </div>
     </div>
