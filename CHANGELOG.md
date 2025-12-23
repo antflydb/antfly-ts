@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [@antfly/sdk@0.0.11] - 2025-12-22
+
+### Added
+- Add eval streaming support for Answer Agent with `onEvalResult` callback
+- Export eval-related types: `EvalConfig`, `EvalResult`, `EvalScores`, `EvaluatorScore`, `EvalSummary`, `EvaluatorName`
+
+### Changed
+- Update autogen from chat agent API updates
+- Migrate biome config to 2.3.10 and apply lint fixes
+- Update dependencies and fix peer dependency mismatches
+
+## [@antfly/components@0.0.9] - 2025-12-22
+
+### Added
+- Add eval streaming support for Answer Agent in AnswerResults component
+- Add tests for eval result handling
+
+### Changed
+- Remove redundant `showEval` prop from AnswerResults (eval results now shown when `evalConfig` is provided)
+- Migrate biome config to 2.3.10 and apply lint fixes
+- Update dependencies and fix peer dependency mismatches
+
+## [Previous]
+
 ### Added
 - GitHub issue templates for bug reports and feature requests
 - Changelog file to track version history

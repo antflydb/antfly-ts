@@ -1,6 +1,6 @@
 {
   "name": "@antfly/sdk",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "TypeScript SDK for Antfly API",
   "type": "module",
   "main": "./dist/index.cjs",
