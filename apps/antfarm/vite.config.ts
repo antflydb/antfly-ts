@@ -36,6 +36,16 @@ export default defineConfig({
   },
   test: {
     projects: [
+      // Unit tests for hooks and utilities
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+          environment: "jsdom",
+        },
+      },
+      // Storybook component tests
       {
         extends: true,
         plugins: [

@@ -162,6 +162,7 @@ export type FetchConfig = components["schemas"]["FetchConfig"];
 
 // Eval types
 export type EvalConfig = components["schemas"]["EvalConfig"];
+export type EvalRequest = components["schemas"]["EvalRequest"];
 export type EvalResult = components["schemas"]["EvalResult"];
 export type EvalScores = components["schemas"]["EvalScores"];
 export type EvaluatorScore = components["schemas"]["EvaluatorScore"];

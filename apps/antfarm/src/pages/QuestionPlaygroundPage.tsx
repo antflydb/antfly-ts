@@ -1,10 +1,19 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { Clock, FileText, HelpCircle, MessageCircle, RotateCcw, Zap } from "lucide-react";
+import { Clock, FileText, HelpCircle, ListPlus, MessageCircle, Plus, RotateCcw, Zap } from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -14,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useEvalSets } from "@/hooks/use-eval-sets";
 
 // Generate response types matching Termite API
 interface GenerateResponse {
@@ -46,6 +56,14 @@ const QuestionPlaygroundPage: React.FC = () => {
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Eval set integration
+  const { evalSets, createEvalSet, addItem, getEvalSetNames } = useEvalSets();
+  const [showEvalSetDialog, setShowEvalSetDialog] = useState(false);
+  const [selectedEvalSet, setSelectedEvalSet] = useState("");
+  const [newEvalSetName, setNewEvalSetName] = useState("");
+  const [selectedQuestion, setSelectedQuestion] = useState("");
+  const [evalSetSuccess, setEvalSetSuccess] = useState(false);
 
   // Fetch available models on mount
   useEffect(() => {
@@ -160,6 +178,45 @@ const QuestionPlaygroundPage: React.FC = () => {
   const loadSampleText = () => {
     setContext(SAMPLE_CONTEXT);
     setAnswer(SAMPLE_ANSWER);
+  };
+
+  const openAddToEvalSetDialog = (question: string) => {
+    setSelectedQuestion(question);
+    setShowEvalSetDialog(true);
+    setEvalSetSuccess(false);
+    // Select first eval set by default if available
+    const names = getEvalSetNames();
+    if (names.length > 0 && !selectedEvalSet) {
+      setSelectedEvalSet(names[0]);
+    }
+  };
+
+  const handleAddToEvalSet = () => {
+    let targetSetName = selectedEvalSet;
+
+    // If creating a new set, create it first
+    if (newEvalSetName.trim()) {
+      const created = createEvalSet(newEvalSetName.trim());
+      if (created) {
+        targetSetName = created.name;
+        setSelectedEvalSet(targetSetName);
+      } else {
+        return; // Set already exists or invalid name
+      }
+    }
+
+    if (!targetSetName) return;
+
+    // Add the Q+A pair to the eval set
+    addItem(targetSetName, selectedQuestion, answer);
+    setEvalSetSuccess(true);
+    setNewEvalSetName("");
+
+    // Close dialog after short delay to show success state
+    setTimeout(() => {
+      setShowEvalSetDialog(false);
+      setEvalSetSuccess(false);
+    }, 1000);
   };
 
   // Highlight the answer in the context for display
@@ -348,7 +405,18 @@ const QuestionPlaygroundPage: React.FC = () => {
                       >
                         <div className="flex items-start gap-3">
                           <MessageCircle className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-                          <p className="text-lg font-medium">{question}</p>
+                          <div className="flex-1">
+                            <p className="text-lg font-medium">{question}</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-3"
+                              onClick={() => openAddToEvalSetDialog(question)}
+                            >
+                              <ListPlus className="h-4 w-4 mr-1" />
+                              Add to Eval Set
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -397,6 +465,92 @@ const QuestionPlaygroundPage: React.FC = () => {
           Generation) models. The input is automatically formatted with answer highlighting.
         </p>
       </div>
+
+      {/* Add to Eval Set Dialog */}
+      <Dialog open={showEvalSetDialog} onOpenChange={setShowEvalSetDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add to Eval Set</DialogTitle>
+            <DialogDescription>
+              Add this Q+A pair to an evaluation set.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            {/* Show the Q+A pair */}
+            <div className="space-y-2 p-3 bg-muted/50 rounded-lg text-sm">
+              <div>
+                <span className="font-medium">Q:</span> {selectedQuestion}
+              </div>
+              <div>
+                <span className="font-medium">A:</span> {answer}
+              </div>
+            </div>
+
+            {/* Select existing eval set */}
+            {getEvalSetNames().length > 0 && (
+              <div className="space-y-2">
+                <Label>Select Eval Set</Label>
+                <Select value={selectedEvalSet} onValueChange={setSelectedEvalSet}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose an eval set..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {getEvalSetNames().map((name) => (
+                      <SelectItem key={name} value={name}>
+                        {name} ({evalSets[name]?.items.length || 0} items)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Or create new */}
+            <div className="space-y-2">
+              <Label>Or Create New</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={newEvalSetName}
+                  onChange={(e) => setNewEvalSetName(e.target.value)}
+                  placeholder="New eval set name..."
+                  className="flex-1"
+                />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={!newEvalSetName.trim()}
+                  onClick={() => {
+                    const created = createEvalSet(newEvalSetName.trim());
+                    if (created) {
+                      setSelectedEvalSet(created.name);
+                      setNewEvalSetName("");
+                    }
+                  }}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            {evalSetSuccess ? (
+              <div className="text-green-600 font-medium">Added successfully!</div>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setShowEvalSetDialog(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAddToEvalSet}
+                  disabled={!selectedEvalSet && !newEvalSetName.trim()}
+                >
+                  Add
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
