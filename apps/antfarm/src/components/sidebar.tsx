@@ -3,6 +3,7 @@ import {
   Check,
   ChevronRight,
   ChevronsUpDown,
+  ClipboardCheck,
   Database,
   FileInput,
   FileText,
@@ -531,6 +532,23 @@ export function AppSidebar({
                             >
                               <Network className="size-4" />
                               <span>Knowledge Graph</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === "/playground/evals"}
+                          >
+                            <a
+                              href="/playground/evals"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/evals");
+                              }}
+                            >
+                              <ClipboardCheck className="size-4" />
+                              <span>Evals</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

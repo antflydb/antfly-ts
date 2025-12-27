@@ -1088,6 +1088,22 @@ export class AntflyClient {
   };
 
   /**
+   * Standalone evaluation for testing evaluators without running a query.
+   * Evaluates a generated output against ground truth using LLM-as-judge metrics.
+   * @param request - Eval request with evaluators, judge config, query, output, and ground truth
+   * @returns Evaluation result with scores for each evaluator
+   */
+  async evaluate(
+    request: import("./types.js").EvalRequest
+  ): Promise<import("./types.js").EvalResult> {
+    const { data, error } = await this.client.POST("/eval", {
+      body: request,
+    });
+    if (error) throw new Error(`Evaluation failed: ${error.error}`);
+    return data;
+  }
+
+  /**
    * Get the underlying OpenAPI client for advanced use cases
    */
   getRawClient() {

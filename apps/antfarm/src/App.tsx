@@ -18,6 +18,7 @@ import { ThemeProvider } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 import ChunkingPlaygroundPage from "./pages/ChunkingPlaygroundPage";
 import CreateTablePage from "./pages/CreateTablePage";
+import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
 import KnowledgeGraphPlaygroundPage from "./pages/KnowledgeGraphPlaygroundPage";
 import { LoginPage } from "./pages/LoginPage";
 import NERPlaygroundPage from "./pages/NERPlaygroundPage";
@@ -79,6 +80,7 @@ function AppContent() {
                         <Route path="/playground/recognize" element={<NERPlaygroundPage />} />
                         <Route path="/playground/question" element={<QuestionPlaygroundPage />} />
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
+                        <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
                       </>
                     )}
 
