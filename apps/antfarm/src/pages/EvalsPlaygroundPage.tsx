@@ -520,7 +520,7 @@ const EvalsPlaygroundPage: React.FC = () => {
             <div className="space-y-2">
               <Label>Table</Label>
               <Select value={selectedTable} onValueChange={setSelectedTable}>
-                <SelectTrigger>
+                <SelectTrigger className="max-w-[200px]">
                   <SelectValue placeholder="Select table..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -765,6 +765,12 @@ const EvalsPlaygroundPage: React.FC = () => {
                             </div>
                           ) : (
                             <>
+                              <div>
+                                <span className="font-medium text-muted-foreground">
+                                  Question:
+                                </span>
+                                <p className="mt-1">{result.question}</p>
+                              </div>
                               <div>
                                 <span className="font-medium text-muted-foreground">
                                   Reference:
