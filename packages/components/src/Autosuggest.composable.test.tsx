@@ -1,4 +1,4 @@
-import type { QueryHit, TermFacetResult } from "@antfly/sdk";
+import type { AggregationBucket, QueryHit } from "@antfly/sdk";
 import { render, waitFor } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { setupServer } from "msw/node";
@@ -22,17 +22,17 @@ const server = setupServer(
             ],
             total: 2,
           },
-          facets: {
+          aggregations: {
             category__keyword: {
-              terms: [
-                { term: "Category A", count: 10 },
-                { term: "Category B", count: 5 },
+              buckets: [
+                { key: "Category A", doc_count: 10 },
+                { key: "Category B", doc_count: 5 },
               ],
             },
             author__keyword: {
-              terms: [
-                { term: "Author X", count: 8 },
-                { term: "Author Y", count: 3 },
+              buckets: [
+                { key: "Author X", doc_count: 8 },
+                { key: "Author Y", doc_count: 3 },
               ],
             },
           },
@@ -317,9 +317,9 @@ describe("Composable Autosuggest", () => {
     });
 
     it("should accept custom renderItem function", () => {
-      const customRender = vi.fn((facet: TermFacetResult) => (
+      const customRender = vi.fn((bucket: AggregationBucket) => (
         <div>
-          {facet.term}: {facet.count}
+          {bucket.key}: {bucket.doc_count}
         </div>
       ));
 
@@ -336,12 +336,12 @@ describe("Composable Autosuggest", () => {
 
     it("should accept custom renderSection function", () => {
       const customRenderSection = vi.fn(
-        (_field: string, label: string, terms: TermFacetResult[]) => (
+        (_field: string, label: string, buckets: AggregationBucket[]) => (
           <div>
             <h3>{label}</h3>
             <ul>
-              {terms.map((t) => (
-                <li key={t.term}>{t.term}</li>
+              {buckets.map((b) => (
+                <li key={b.key}>{b.key}</li>
               ))}
             </ul>
           </div>
@@ -396,7 +396,7 @@ describe("Composable Autosuggest", () => {
     });
 
     it("should accept filter function", () => {
-      const filterFn = vi.fn((facet: TermFacetResult) => facet.count > 10);
+      const filterFn = vi.fn((bucket: AggregationBucket) => bucket.doc_count > 10);
 
       const { container } = render(
         <TestWrapper>

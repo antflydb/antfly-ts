@@ -988,41 +988,198 @@ export interface components {
             };
             schema?: components["schemas"]["TableSchema"];
         };
-        DateRange: {
+        /**
+         * @description Type of aggregation to compute:
+         *     - Metrics: sum, avg, min, max, count, sumsquares, stats, cardinality
+         *     - Bucketing: terms, range, date_range, histogram, date_histogram
+         *     - Geo: geohash_grid, geo_distance
+         *     - Analytics: significant_terms
+         * @enum {string}
+         */
+        AggregationType: "sum" | "avg" | "min" | "max" | "count" | "sumsquares" | "stats" | "cardinality" | "terms" | "range" | "date_range" | "histogram" | "date_histogram" | "geohash_grid" | "geo_distance" | "significant_terms";
+        AggregationRange: {
+            /** @description Name of the range bucket */
             name: string;
-            from?: string;
-            to?: string;
-        };
-        NumericRange: {
-            name: string;
-            /** Format: float */
+            /**
+             * Format: float
+             * @description Lower bound (inclusive)
+             */
             from?: number;
-            /** Format: float */
+            /**
+             * Format: float
+             * @description Upper bound (exclusive)
+             */
             to?: number;
         };
-        TermFacetResult: {
-            term: string;
-            count: number;
+        AggregationDateRange: {
+            /** @description Name of the date range bucket */
+            name: string;
+            /** @description Start date (ISO 8601 or relative like "now-7d") */
+            from?: string;
+            /** @description End date (ISO 8601 or relative like "now") */
+            to?: string;
         };
-        DateRangeResult: components["schemas"]["DateRange"] & {
-            count: number;
+        /**
+         * @description Calendar-aware interval for date_histogram aggregations
+         * @enum {string}
+         */
+        CalendarInterval: "minute" | "hour" | "day" | "week" | "month" | "quarter" | "year";
+        /**
+         * @description Distance unit for geo aggregations:
+         *     - m: meters
+         *     - km: kilometers
+         *     - mi: miles
+         *     - ft: feet
+         *     - yd: yards
+         * @enum {string}
+         */
+        DistanceUnit: "m" | "km" | "mi" | "ft" | "yd";
+        DistanceRange: {
+            /** @description Name of the distance range bucket */
+            name: string;
+            /**
+             * Format: float
+             * @description Minimum distance (inclusive)
+             */
+            from?: number;
+            /**
+             * Format: float
+             * @description Maximum distance (exclusive)
+             */
+            to?: number;
         };
-        NumericRangeResult: components["schemas"]["NumericRange"] & {
-            count: number;
-        };
-        FacetOption: {
-            field?: string;
+        /**
+         * @description Algorithm for computing term significance:
+         *     - jlh: JLH algorithm (default)
+         *     - mutual_information: Mutual Information
+         *     - chi_squared: Chi-squared test
+         *     - percentage: Simple percentage comparison
+         * @enum {string}
+         */
+        SignificanceAlgorithm: "jlh" | "mutual_information" | "chi_squared" | "percentage";
+        AggregationRequest: {
+            type: components["schemas"]["AggregationType"];
+            /** @description Field to aggregate on */
+            field: string;
+            /**
+             * @description Maximum number of buckets to return (for bucketing aggregations)
+             * @example 10
+             */
             size?: number;
-            date_ranges?: components["schemas"]["DateRange"][];
-            numeric_ranges?: components["schemas"]["NumericRange"][];
+            /** @description Ranges for range aggregations */
+            ranges?: components["schemas"]["AggregationRange"][];
+            /** @description Date ranges for date_range aggregations */
+            date_ranges?: components["schemas"]["AggregationDateRange"][];
+            /**
+             * Format: float
+             * @description Fixed interval for histogram aggregations
+             */
+            interval?: number;
+            /** @description Calendar-aware interval for date_histogram aggregations */
+            calendar_interval?: components["schemas"]["CalendarInterval"];
+            /**
+             * @description Origin for geohash_grid aggregation (format: "lat,lon")
+             *     Example: "37.7749,-122.4194"
+             */
+            origin?: string;
+            /** @description Geohash precision (1-12) for geohash_grid aggregations */
+            precision?: number;
+            /** @description Distance ranges for geo_distance aggregations */
+            distance_ranges?: components["schemas"]["DistanceRange"][];
+            /** @description Distance unit for geo_distance aggregations */
+            unit?: components["schemas"]["DistanceUnit"];
+            /**
+             * @description Minimum document count for a bucket to be included
+             * @example 1
+             */
+            min_doc_count?: number;
+            /** @description Background filter for significant_terms aggregations */
+            background_filter?: components["schemas"]["Query"] & unknown;
+            /** @description Significance algorithm for significant_terms aggregations */
+            algorithm?: components["schemas"]["SignificanceAlgorithm"];
+            /** @description Nested sub-aggregations */
+            sub_aggregations?: {
+                [key: string]: components["schemas"]["AggregationRequest"];
+            };
         };
-        FacetResult: {
-            field?: string;
-            total?: number;
-            missing?: number;
-            terms?: components["schemas"]["TermFacetResult"][];
-            date_ranges?: components["schemas"]["DateRangeResult"][];
-            numeric_ranges?: components["schemas"]["NumericRangeResult"][];
+        AggregationBucket: {
+            /** @description Bucket key (term, range name, date, etc.) */
+            key: string;
+            /** @description Formatted key for display (e.g., formatted dates) */
+            key_as_string?: string;
+            /** @description Number of documents in this bucket */
+            doc_count: number;
+            /**
+             * Format: float
+             * @description Lower bound for range buckets
+             */
+            from?: number;
+            /**
+             * Format: float
+             * @description Upper bound for range buckets
+             */
+            to?: number;
+            /** @description Formatted lower bound */
+            from_as_string?: string;
+            /** @description Formatted upper bound */
+            to_as_string?: string;
+            /**
+             * Format: float
+             * @description Significance score (for significant_terms)
+             */
+            score?: number;
+            /** @description Background count (for significant_terms) */
+            bg_count?: number;
+            /** @description Results of nested sub-aggregations */
+            sub_aggregations?: {
+                [key: string]: components["schemas"]["AggregationResult"];
+            };
+        };
+        AggregationResult: {
+            /**
+             * Format: float
+             * @description Single value for metric aggregations (sum, avg, min, max, count, cardinality)
+             */
+            value?: number;
+            /** @description Document count for stats aggregations */
+            count?: number;
+            /**
+             * Format: float
+             * @description Minimum value for stats aggregations
+             */
+            min?: number;
+            /**
+             * Format: float
+             * @description Maximum value for stats aggregations
+             */
+            max?: number;
+            /**
+             * Format: float
+             * @description Sum for stats aggregations
+             */
+            sum?: number;
+            /**
+             * Format: float
+             * @description Sum of squares for stats aggregations
+             */
+            sum_of_squares?: number;
+            /**
+             * Format: float
+             * @description Average for stats aggregations
+             */
+            avg?: number;
+            /**
+             * Format: float
+             * @description Standard deviation for stats aggregations
+             */
+            std_deviation?: number;
+            /**
+             * Format: float
+             * @description Variance for stats aggregations
+             */
+            variance?: number;
+            /** @description Buckets for bucketing aggregations (terms, range, histogram, etc.) */
+            buckets?: components["schemas"]["AggregationBucket"][];
         };
         IndexStatus: {
             shard_status: {
@@ -1966,11 +2123,30 @@ export interface components {
              */
             exclusion_query?: components["schemas"]["Query"] & unknown;
             /**
-             * @description Faceting configuration for aggregating results by field values.
-             *     Useful for building faceted navigation and filters.
+             * @description Aggregation requests for computing metrics and bucketing results.
+             *     Each key is a user-defined name for the aggregation, and the value specifies the aggregation configuration.
+             *
+             *     Supports metric aggregations (sum, avg, min, max, count, stats, cardinality),
+             *     bucketing aggregations (terms, range, date_range, histogram, date_histogram),
+             *     geo aggregations (geohash_grid, geo_distance), and analytics (significant_terms).
+             *
+             *     Example:
+             *     ```json
+             *     {
+             *       "price_stats": {
+             *         "type": "stats",
+             *         "field": "price"
+             *       },
+             *       "categories": {
+             *         "type": "terms",
+             *         "field": "category",
+             *         "size": 10
+             *       }
+             *     }
+             *     ```
              */
-            facets?: {
-                [key: string]: components["schemas"]["FacetOption"];
+            aggregations?: {
+                [key: string]: components["schemas"]["AggregationRequest"];
             };
             /**
              * @description Pre-computed embeddings to use for semantic searches instead of embedding the semantic_search string.
@@ -2198,8 +2374,12 @@ export interface components {
         /** @description Result of a query operation as an array of results and a count. */
         QueryResult: {
             hits?: components["schemas"]["QueryHits"];
-            facets?: {
-                [key: string]: components["schemas"]["FacetResult"];
+            /**
+             * @description Aggregation results keyed by the user-defined aggregation names from the request.
+             *     Contains computed metrics or buckets depending on the aggregation type.
+             */
+            aggregations?: {
+                [key: string]: components["schemas"]["AggregationResult"];
             };
             /** @description Analysis results like PCA and t-SNE per index embeddings. */
             analyses?: {
@@ -5024,6 +5204,71 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * @description Field type annotations for schema fields
+         * @enum {string}
+         */
+        "schemas-AntflyType": "text" | "html" | "keyword" | "numeric" | "boolean" | "datetime" | "geopoint" | "geoshape" | "embedding" | "blob" | "link" | "search_as_you_type";
+        /** @description Field mapping to apply when a dynamic template matches */
+        TemplateFieldMapping: {
+            type?: components["schemas"]["schemas-AntflyType"];
+            /**
+             * @description Analyzer name (e.g., "standard", "keyword", "en", "html_analyzer").
+             *     Used for text fields to control tokenization and normalization.
+             */
+            analyzer?: string;
+            /**
+             * @description Whether to index the field (default true)
+             * @default true
+             */
+            index?: boolean;
+            /**
+             * @description Whether to store the field value (default false)
+             * @default false
+             */
+            store?: boolean;
+            /**
+             * @description Whether to include in the _all field for cross-field search
+             * @default false
+             */
+            include_in_all?: boolean;
+            /**
+             * @description Whether to enable doc values for sorting/faceting
+             * @default false
+             */
+            doc_values?: boolean;
+        };
+        /**
+         * @description A rule for mapping dynamically detected fields. Templates are checked in order
+         *     and the first matching template's mapping is used.
+         */
+        DynamicTemplate: {
+            /** @description Optional identifier for the template (useful for debugging) */
+            name?: string;
+            /**
+             * @description Glob pattern for field name (last path element).
+             *     Supports * and ** wildcards. Example: "*_text" matches "title_text", "body_text"
+             */
+            match?: string;
+            /**
+             * @description Exclusion pattern for field name. If it matches, the template is skipped.
+             *     Example: "skip_*" would exclude fields like "skip_this"
+             */
+            unmatch?: string;
+            /**
+             * @description Glob pattern for the full dotted path. Supports ** for matching multiple segments.
+             *     Example: "metadata.**" matches "metadata.author", "metadata.tags.primary"
+             */
+            path_match?: string;
+            /** @description Path exclusion pattern. If it matches the full path, the template is skipped. */
+            path_unmatch?: string;
+            /**
+             * @description Filter by detected JSON type
+             * @enum {string}
+             */
+            match_mapping_type?: "string" | "number" | "boolean" | "date" | "object";
+            mapping?: components["schemas"]["TemplateFieldMapping"];
+        };
         /** @description Schema definition for a table with multiple document types */
         TableSchema: {
             /**
@@ -5052,6 +5297,12 @@ export interface components {
              *     Uses Go duration format (e.g., '24h', '7d', '168h').
              */
             ttl_duration?: string;
+            /**
+             * @description Rules for mapping dynamically detected fields. When a document contains fields
+             *     that don't have explicit mappings and dynamic mapping is enabled, templates are
+             *     evaluated in order to determine how those fields should be indexed.
+             */
+            dynamic_templates?: components["schemas"]["DynamicTemplate"][];
         };
         BleveIndexV2Stats: {
             /** @description Error message if stats could not be retrieved */

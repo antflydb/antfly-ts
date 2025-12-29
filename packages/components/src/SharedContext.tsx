@@ -1,4 +1,4 @@
-import type { QueryHit, TermFacetResult } from "@antfly/sdk";
+import type { QueryHit, AggregationBucket } from "@antfly/sdk";
 import { createContext, type Dispatch, useContext } from "react";
 
 export interface Widget {
@@ -29,7 +29,7 @@ export interface Widget {
   };
   result?: {
     data?: QueryHit[];
-    facetData?: TermFacetResult[] | TermFacetResult[][]; // Can be array of arrays for multiple facets
+    facetData?: AggregationBucket[] | AggregationBucket[][]; // Can be array of arrays for multiple facets
     total?: number | { value: number };
     error?: string;
   };

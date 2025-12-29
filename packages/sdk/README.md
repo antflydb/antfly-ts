@@ -183,8 +183,9 @@ const results = await client.query({
     query: 'important document'
   },
   limit: 50,
-  facets: {
+  aggregations: {
     category: {
+      type: 'terms',
       field: 'category',
       size: 10
     }

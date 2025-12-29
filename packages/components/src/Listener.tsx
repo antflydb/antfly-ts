@@ -1,4 +1,4 @@
-import type { QueryHit, QueryResult, TermFacetResult } from "@antfly/sdk";
+import type { QueryHit, QueryResult, AggregationBucket } from "@antfly/sdk";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useSharedContext, type Widget } from "./SharedContext";
 import { conjunctsFrom, defer, type MultiqueryRequest, multiquery, resolveTable } from "./utils";
@@ -30,7 +30,7 @@ interface SemanticQueryConfig {
 interface MSSearchItem {
   query: unknown;
   data: (result: QueryResult) => QueryHit[];
-  facetData: (result: QueryResult) => TermFacetResult[];
+  facetData: (result: QueryResult) => AggregationBucket[];
   total: (result: QueryResult) => number;
   id: string;
 }
@@ -48,7 +48,7 @@ interface QueryResponse {
     hits: QueryHit[];
     total: number;
   };
-  facets?: Record<string, { terms: TermFacetResult[] }>;
+  aggregations?: Record<string, { buckets?: AggregationBucket[] }>;
 }
 
 interface MultiqueryResult {
@@ -217,13 +217,17 @@ export default function Listener({ children, onChange }: ListenerProps) {
                 if (r.exclusionQuery) {
                   queryObj.exclusion_query = r.exclusionQuery;
                 }
-                // Add facet options if present (for autosuggest facets)
+                // Add aggregation options if present (for autosuggest facets)
                 if (r.facetOptions && r.facetOptions.length > 0) {
-                  const facets: Record<string, { field: string; size: number }> = {};
+                  const aggregations: Record<string, { type: string; field: string; size: number }> = {};
                   r.facetOptions.forEach((opt: { field: string; size?: number }) => {
-                    facets[opt.field] = { field: opt.field, size: opt.size || 5 };
+                    aggregations[opt.field] = {
+                      type: "terms",
+                      field: opt.field,
+                      size: opt.size || 5
+                    };
                   });
-                  queryObj.facets = facets;
+                  queryObj.aggregations = aggregations;
                 }
 
                 // If there is no indexes, use the default one.
@@ -231,12 +235,12 @@ export default function Listener({ children, onChange }: ListenerProps) {
                   query: queryObj,
                   data: (result: QueryResult) => result.hits?.hits || [],
                   facetData: (result: QueryResult) => {
-                    // Extract facet data if facets were requested
+                    // Extract aggregation data if aggregations were requested
                     // For widgets with facetOptions (like autosuggest), return array of arrays
-                    if (r.facetOptions && r.facetOptions.length > 0 && result.facets) {
+                    if (r.facetOptions && r.facetOptions.length > 0 && result.aggregations) {
                       return r.facetOptions.map((opt: { field: string }) => {
-                        return result.facets?.[opt.field]?.terms || [];
-                      }) as unknown as TermFacetResult[];
+                        return result.aggregations?.[opt.field]?.buckets || [];
+                      }) as unknown as AggregationBucket[];
                     }
                     return [];
                   },
@@ -265,9 +269,9 @@ export default function Listener({ children, onChange }: ListenerProps) {
                     q.delete(id);
                     return q;
                   }
-                  // Transform a single field to agg query
+                  // Transform a single field to agg query (using new aggregations API)
                   function aggFromField(field: string) {
-                    const t = { field, size };
+                    const t = { type: "terms", field, size };
                     return { [field]: t };
                   }
                   // Actually build the query from fields
@@ -314,7 +318,7 @@ export default function Listener({ children, onChange }: ListenerProps) {
                     indexes: semanticQuery ? indexes : undefined,
                     limit: semanticQuery ? limit : 0,
                     full_text_search: fullTextQuery,
-                    facets: result,
+                    aggregations: result,
                   };
                   if (f.filterQuery) {
                     facetQueryObj.filter_query = f.filterQuery;
@@ -339,26 +343,26 @@ export default function Listener({ children, onChange }: ListenerProps) {
                     }
                     fields
                       .map((f: string) => {
-                        if (!result.facets || !result.facets[f] || !result.facets[f].terms) {
+                        if (!result.aggregations || !result.aggregations[f] || !result.aggregations[f].buckets) {
                           return [];
                         }
                         // Only use filterValue for legacy mode (non-custom queries)
                         if (filterValue && !useCustomQuery) {
-                          return result.facets[f].terms.filter((i: TermFacetResult) =>
-                            i.term.toLowerCase().includes(filterValue.toLowerCase())
+                          return result.aggregations[f].buckets!.filter((i: AggregationBucket) =>
+                            i.key.toLowerCase().includes(filterValue.toLowerCase())
                           );
                         }
-                        return result.facets[f].terms;
+                        return result.aggregations[f].buckets;
                       })
-                      .reduce((a: TermFacetResult[], b: TermFacetResult[]) => a.concat(b), [])
-                      .forEach((i: TermFacetResult) => {
-                        map.set(i.term, {
-                          term: i.term,
-                          count: map.has(i.term) ? i.count + map.get(i.term).count : i.count,
+                      .reduce((a: AggregationBucket[], b: AggregationBucket[]) => a.concat(b), [])
+                      .forEach((i: AggregationBucket) => {
+                        map.set(i.key, {
+                          key: i.key,
+                          doc_count: map.has(i.key) ? i.doc_count + map.get(i.key).doc_count : i.doc_count,
                         });
                       });
                     return [...map.values()]
-                      .sort((x: TermFacetResult, y: TermFacetResult) => y.count - x.count)
+                      .sort((x: AggregationBucket, y: AggregationBucket) => y.doc_count - x.doc_count)
                       .slice(0, size);
                   },
                   total: (result: QueryResult) => result.hits?.total || 0,

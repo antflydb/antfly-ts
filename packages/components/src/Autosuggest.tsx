@@ -1,4 +1,4 @@
-import type { QueryHit, TermFacetResult } from "@antfly/sdk";
+import type { QueryHit, AggregationBucket } from "@antfly/sdk";
 import React, {
   Children,
   createContext,
@@ -18,7 +18,7 @@ import { conjunctsFrom, disjunctsFrom } from "./utils";
 export interface AutosuggestContextValue {
   query: string;
   results: QueryHit[];
-  facetData: Map<string, TermFacetResult[]>;
+  facetData: Map<string, AggregationBucket[]>;
   selectedIndex: number;
   handleSelect: (value: string) => void;
   isLoading: boolean;
@@ -80,11 +80,11 @@ export interface AutosuggestFacetsProps {
   size?: number;
   label?: string;
   order?: "count" | "term" | "reverse_count" | "reverse_term";
-  renderItem?: (facet: TermFacetResult, index: number) => ReactNode;
-  renderSection?: (field: string, label: string, terms: TermFacetResult[]) => ReactNode;
-  onSelect?: (facet: TermFacetResult) => void;
+  renderItem?: (facet: AggregationBucket, index: number) => ReactNode;
+  renderSection?: (field: string, label: string, terms: AggregationBucket[]) => ReactNode;
+  onSelect?: (facet: AggregationBucket) => void;
   clickable?: boolean;
-  filter?: (facet: TermFacetResult) => boolean;
+  filter?: (facet: AggregationBucket) => boolean;
   className?: string;
   itemClassName?: string;
   sectionClassName?: string;
@@ -153,11 +153,11 @@ export default function Autosuggest({
 
   // Extract facet data from widget result
   const facetData = useMemo(() => {
-    const data = new Map<string, TermFacetResult[]>();
+    const data = new Map<string, AggregationBucket[]>();
     if (widget?.result?.facetData) {
       // facetData is an array of arrays, one per facet configuration
       facetConfigs.forEach((config, index) => {
-        const facetTerms = widget.result?.facetData?.[index] as TermFacetResult[] | undefined;
+        const facetTerms = widget.result?.facetData?.[index] as AggregationBucket[] | undefined;
         if (facetTerms) {
           data.set(config.field, facetTerms);
         }
@@ -717,16 +717,16 @@ export function AutosuggestFacets({
     const terms = [...rawTerms];
     switch (order) {
       case "count":
-        terms.sort((a, b) => b.count - a.count);
+        terms.sort((a, b) => b.doc_count - a.doc_count);
         break;
       case "reverse_count":
-        terms.sort((a, b) => a.count - b.count);
+        terms.sort((a, b) => a.doc_count - b.doc_count);
         break;
       case "term":
-        terms.sort((a, b) => a.term.localeCompare(b.term));
+        terms.sort((a, b) => a.key.localeCompare(b.key));
         break;
       case "reverse_term":
-        terms.sort((a, b) => b.term.localeCompare(a.term));
+        terms.sort((a, b) => b.key.localeCompare(a.key));
         break;
     }
     return terms;
@@ -745,28 +745,28 @@ export function AutosuggestFacets({
 
     const itemIndices = itemIndicesRef.current;
     displayTerms.forEach((term) => {
-      const itemId = `facet-${field}-${term.term}`;
+      const itemId = `facet-${field}-${term.key}`;
       const index = registerItem(itemId);
-      itemIndices.set(term.term, index);
+      itemIndices.set(term.key, index);
     });
 
     return () => {
       displayTerms.forEach((term) => {
-        const itemId = `facet-${field}-${term.term}`;
+        const itemId = `facet-${field}-${term.key}`;
         unregisterItem(itemId);
-        itemIndices.delete(term.term);
+        itemIndices.delete(term.key);
       });
     };
   }, [displayTerms, clickable, field, registerItem, unregisterItem]);
 
   // Handle click
   const handleClick = useCallback(
-    (facet: TermFacetResult) => {
+    (facet: AggregationBucket) => {
       if (!clickable) return;
       if (onSelectProp) {
         onSelectProp(facet);
       }
-      handleSelect(facet.term);
+      handleSelect(facet.key);
     },
     [clickable, onSelectProp, handleSelect]
   );
@@ -778,7 +778,7 @@ export function AutosuggestFacets({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && selectedIndex >= 0) {
         const facet = displayTerms.find(
-          (t) => itemIndicesRef.current.get(t.term) === selectedIndex
+          (t) => itemIndicesRef.current.get(t.key) === selectedIndex
         );
         if (facet) {
           e.preventDefault();
@@ -792,9 +792,9 @@ export function AutosuggestFacets({
   }, [clickable, selectedIndex, displayTerms, handleClick]);
 
   // Default renderer
-  const defaultRenderItem = (facet: TermFacetResult) => (
+  const defaultRenderItem = (facet: AggregationBucket) => (
     <span className="react-af-autosuggest-facet-term">
-      {facet.term} <span className="react-af-autosuggest-facet-count">({facet.count})</span>
+      {facet.key} <span className="react-af-autosuggest-facet-count">({facet.doc_count})</span>
     </span>
   );
 
@@ -824,7 +824,7 @@ export function AutosuggestFacets({
       <ul className="react-af-autosuggest-facets-list">
         {/* eslint-disable-next-line react-hooks/refs */}
         {displayTerms.map((facet, index) => {
-          const itemIndex = itemIndicesRef.current.get(facet.term);
+          const itemIndex = itemIndicesRef.current.get(facet.key);
           const isSelected = itemIndex === selectedIndex;
           const itemClass = `react-af-autosuggest-facet-item ${itemClassName || ""} ${
             isSelected ? "react-af-autosuggest-item-selected" : ""
@@ -832,7 +832,7 @@ export function AutosuggestFacets({
 
           return (
             <li
-              key={facet.term}
+              key={facet.key}
               className={itemClass}
               onClick={() => handleClick(facet)}
               onKeyDown={(e) => e.key === "Enter" && handleClick(facet)}

@@ -96,10 +96,17 @@ export type ScanKeysRequest = Omit<components["schemas"]["ScanKeysRequest"], "fi
 // Schema types
 export type DocumentSchema = components["schemas"]["DocumentSchema"];
 
-// Search and facet types
-export type FacetOption = components["schemas"]["FacetOption"];
-export type FacetResult = components["schemas"]["FacetResult"];
-export type TermFacetResult = components["schemas"]["TermFacetResult"];
+// Search and aggregation types
+export type AggregationType = components["schemas"]["AggregationType"];
+export type AggregationRequest = components["schemas"]["AggregationRequest"];
+export type AggregationResult = components["schemas"]["AggregationResult"];
+export type AggregationBucket = components["schemas"]["AggregationBucket"];
+export type CalendarInterval = components["schemas"]["CalendarInterval"];
+export type DistanceUnit = components["schemas"]["DistanceUnit"];
+export type SignificanceAlgorithm = components["schemas"]["SignificanceAlgorithm"];
+export type AggregationRange = components["schemas"]["AggregationRange"];
+export type AggregationDateRange = components["schemas"]["AggregationDateRange"];
+export type DistanceRange = components["schemas"]["DistanceRange"];
 export type AntflyType = components["schemas"]["AntflyType"];
 
 // Model and reranker types
@@ -247,5 +254,5 @@ export interface QueryOptions {
   offset?: number;
   fields?: string[];
   orderBy?: Record<string, boolean>;
-  facets?: Record<string, FacetOption>;
+  aggregations?: Record<string, AggregationRequest>;
 }

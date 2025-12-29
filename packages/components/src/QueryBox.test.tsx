@@ -30,7 +30,7 @@ const server = setupServer(
             ],
             total: 2,
           },
-          facets: {},
+          aggregations: {},
         },
       ],
     });

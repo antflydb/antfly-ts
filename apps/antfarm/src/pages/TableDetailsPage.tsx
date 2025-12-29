@@ -221,7 +221,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     }
     try {
       const semanticQueryObject = JSON.parse(semanticQuery);
-      queryRequest.facets = semanticQueryObject.facets;
+      queryRequest.aggregations = semanticQueryObject.aggregations;
       queryRequest.limit = semanticQueryObject.limit;
       // Only include offset if semantic search is disabled
       if (!isSemanticSearchEnabled && semanticQueryObject.offset !== undefined) {
@@ -290,13 +290,13 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
         } else {
           setFilterQuery(JSON.stringify({}, null, 2));
         }
-        const { facets, limit, offset } = queryRequest;
+        const { aggregations, limit, offset } = queryRequest;
         const semanticPart: {
-          facets?: unknown;
+          aggregations?: unknown;
           limit?: unknown;
           offset?: unknown;
         } = {};
-        if (facets) semanticPart.facets = facets;
+        if (aggregations) semanticPart.aggregations = aggregations;
         if (limit !== undefined) semanticPart.limit = limit;
         if (offset !== undefined) semanticPart.offset = offset;
         setSemanticQuery(JSON.stringify(semanticPart, null, 2));
