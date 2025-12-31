@@ -110,7 +110,7 @@ export const FacetWithCustomRenderItems = () => {
         fields={["AUTR"]}
         items={(data, { handleChange, isChecked }) => {
           return data.map((item) => (
-            <label key={item.term} style={{ display: "block" }}>
+            <label key={item.key} style={{ display: "block" }}>
               <input
                 type="checkbox"
                 checked={isChecked(item)}
@@ -118,7 +118,7 @@ export const FacetWithCustomRenderItems = () => {
                 style={{ marginRight: "8px" }}
               />
               <span style={{ color: isChecked(item) ? "green" : "black" }}>
-                -`{">"}` {item.term}
+                -`{">"}` {item.key}
               </span>
             </label>
           ));

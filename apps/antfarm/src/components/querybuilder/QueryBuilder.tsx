@@ -107,11 +107,11 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
 
   const addFacet = () => {
     if (newFacetName && newFacetField) {
-      const newFacets = {
-        ...queryRequest.facets,
-        [newFacetName]: { field: newFacetField, size: 5 },
+      const newAggregations = {
+        ...queryRequest.aggregations,
+        [newFacetName]: { type: "terms" as const, field: newFacetField, size: 5 },
       };
-      const newQueryRequest = { ...queryRequest, facets: newFacets };
+      const newQueryRequest = { ...queryRequest, aggregations: newAggregations };
       onChange(JSON.stringify(newQueryRequest, null, 2));
       setNewFacetName("");
       setNewFacetField("");
@@ -119,9 +119,9 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
   };
 
   const removeFacet = (name: string) => {
-    const newFacets = { ...queryRequest.facets };
-    delete newFacets[name];
-    const newQueryRequest = { ...queryRequest, facets: newFacets };
+    const newAggregations = { ...queryRequest.aggregations };
+    delete newAggregations[name];
+    const newQueryRequest = { ...queryRequest, aggregations: newAggregations };
     onChange(JSON.stringify(newQueryRequest, null, 2));
   };
 
@@ -216,13 +216,13 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="facets" className="border rounded-lg bg-card/50 px-3">
+          <AccordionItem value="aggregations" className="border rounded-lg bg-card/50 px-3">
             <AccordionTrigger className="py-2.5 hover:no-underline">
-              <span className="font-medium text-sm">Facets</span>
+              <span className="font-medium text-sm">Aggregations</span>
             </AccordionTrigger>
             <AccordionContent className="pb-3 pt-1 space-y-2">
-              {queryRequest.facets &&
-                Object.entries(queryRequest.facets).map(([name, facet]) => (
+              {queryRequest.aggregations &&
+                Object.entries(queryRequest.aggregations).map(([name, aggregation]) => (
                   <div
                     key={name}
                     className="flex items-start justify-between p-2 bg-muted/30 rounded border"
@@ -231,10 +231,12 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
                       <div className="font-medium text-sm">{name}</div>
                       <div className="text-xs text-muted-foreground">
                         <code className="bg-muted px-1 py-0.5 rounded">
-                          {facet.field || "none"}
+                          {aggregation.field || "none"}
                         </code>
                         {" • "}
-                        Size: {facet.size || 5}
+                        Type: {aggregation.type || "terms"}
+                        {" • "}
+                        Size: {aggregation.size || 5}
                       </div>
                     </div>
                     <Button
@@ -271,7 +273,7 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
                 </div>
                 <Button onClick={addFacet} className="w-full h-8" size="sm">
                   <PlusIcon className="h-3 w-3 mr-1" />
-                  Add Facet
+                  Add Aggregation
                 </Button>
                 <FieldSelector
                   availableFields={availableFields}

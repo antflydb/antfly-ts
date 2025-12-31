@@ -1,4 +1,4 @@
-import type { TermFacetResult } from "@antfly/sdk";
+import type { AggregationBucket } from "@antfly/sdk";
 import { type ReactNode, useEffect, useState } from "react";
 import { useSharedContext } from "./SharedContext";
 import { disjunctsFrom, toTermQueries } from "./utils";
@@ -14,10 +14,10 @@ export interface FacetProps {
   itemsPerBlock?: number;
   table?: string; // Optional table override (Phase 1: single table only)
   items?: (
-    data: TermFacetResult[],
+    data: AggregationBucket[],
     options: {
-      handleChange: (item: TermFacetResult, checked: boolean) => void;
-      isChecked: (item: TermFacetResult) => boolean;
+      handleChange: (item: AggregationBucket, checked: boolean) => void;
+      isChecked: (item: AggregationBucket) => boolean;
     }
   ) => ReactNode;
 }
@@ -46,9 +46,9 @@ export default function Facet({
   const { result } = widget || {};
   // Facet component always expects a single array, not array of arrays
   const rawFacetData = result?.facetData;
-  const data: TermFacetResult[] =
+  const data: AggregationBucket[] =
     rawFacetData && Array.isArray(rawFacetData) && !Array.isArray(rawFacetData[0])
-      ? (rawFacetData as TermFacetResult[])
+      ? (rawFacetData as AggregationBucket[])
       : [];
 
   // Update widgets properties on state change.
@@ -93,16 +93,16 @@ export default function Facet({
   useEffect(() => () => dispatch({ type: "deleteWidget", key: id }), [dispatch, id]);
 
   // On checkbox status change, add or remove current agg to selected
-  function handleChange(item: TermFacetResult, checked: boolean) {
+  function handleChange(item: AggregationBucket, checked: boolean) {
     const newValue = checked
-      ? [...new Set([...value, item.term])]
-      : value.filter((f) => f !== item.term);
+      ? [...new Set([...value, item.key])]
+      : value.filter((f) => f !== item.key);
     setValue(newValue);
   }
 
   // Is current item checked?
-  function isChecked(item: TermFacetResult): boolean {
-    return value.includes(item.term);
+  function isChecked(item: AggregationBucket): boolean {
+    return value.includes(item.key);
   }
 
   return (
@@ -120,13 +120,13 @@ export default function Facet({
       {items
         ? items(data, { handleChange, isChecked })
         : data.map((item) => (
-            <label key={item.term}>
+            <label key={item.key}>
               <input
                 type="checkbox"
                 checked={isChecked(item)}
                 onChange={(e) => handleChange(item, e.target.checked)}
               />
-              {item.term} ({item.count})
+              {item.key} ({item.doc_count})
             </label>
           ))}
       {data.length === size ? (
