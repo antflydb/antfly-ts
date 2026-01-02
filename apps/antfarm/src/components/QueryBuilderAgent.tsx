@@ -29,6 +29,7 @@ const PROVIDER_DEFAULTS: Record<GeneratorProvider, string> = {
   bedrock: "anthropic.claude-sonnet-4-5-20250929-v1:0",
   anthropic: "claude-sonnet-4-5-20250929",
   cohere: "command-r-plus",
+  termite: "gemma-3-1b-it",
   mock: "mock",
 };
 
@@ -41,6 +42,7 @@ const PROVIDER_LABELS: Record<GeneratorProvider, string> = {
   bedrock: "AWS Bedrock",
   anthropic: "Anthropic (Claude)",
   cohere: "Cohere",
+  termite: "Termite (Local)",
   mock: "Mock (Testing)",
 };
 

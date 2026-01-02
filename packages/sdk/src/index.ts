@@ -59,6 +59,13 @@ export {
 } from "./query-helpers.js";
 // Type exports
 export type {
+  AggregationBucket,
+  AggregationDateRange,
+  AggregationRange,
+  AggregationRequest,
+  AggregationResult,
+  // Search and aggregation types
+  AggregationType,
   // Answer Agent types
   AnswerAgentRequest,
   AnswerAgentResult,
@@ -72,6 +79,7 @@ export type {
   // Backup/Restore types
   BackupRequest,
   BatchRequest, // Now using our custom type
+  CalendarInterval,
   // Chat Agent types
   ChatAgentRequest,
   ChatAgentResult,
@@ -87,6 +95,8 @@ export type {
   ClassificationTransformationResult,
   CreateTableRequest,
   CreateUserRequest,
+  DistanceRange,
+  DistanceUnit,
   // Schema types
   DocumentSchema,
   // Model and reranker types
@@ -101,17 +111,6 @@ export type {
   EvaluatorScore,
   FetchConfig,
   FilterSpec,
-  // Search and aggregation types
-  AggregationType,
-  AggregationRequest,
-  AggregationResult,
-  AggregationBucket,
-  CalendarInterval,
-  DistanceUnit,
-  SignificanceAlgorithm,
-  AggregationRange,
-  AggregationDateRange,
-  DistanceRange,
   GenerateResult,
   GeneratorConfig,
   GeneratorProvider,
@@ -141,6 +140,7 @@ export type {
   RestoreRequest,
   RouteType,
   SemanticQueryMode,
+  SignificanceAlgorithm,
   // Table types
   Table,
   TableSchema,

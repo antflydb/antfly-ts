@@ -3316,6 +3316,47 @@ export interface components {
             top_k?: number;
         };
         /**
+         * @description Configuration for the Termite generative AI provider.
+         *
+         *     Termite is Antfly's built-in ML service for local LLM inference using
+         *     ONNX Runtime GenAI models. It provides text generation with automatic
+         *     model discovery from the `models/generators/` directory.
+         *
+         *     **Example Models:** onnxruntime/Gemma-3-ONNX (from HuggingFace)
+         *
+         *     **Features:**
+         *     - Local inference with no external API dependencies
+         *     - ONNX Runtime GenAI for efficient CPU/GPU execution
+         *     - Auto-discovery of models from `models/generators/` directory
+         *     - OpenAI-compatible chat format
+         */
+        TermiteGeneratorConfig: {
+            /**
+             * @description The name of the generator model (maps to models/generators/{name}/ directory).
+             * @example onnxruntime/Gemma-3-ONNX
+             */
+            model: string;
+            /**
+             * Format: uri
+             * @description The URL of the Termite API endpoint.
+             */
+            api_url?: string;
+            /**
+             * Format: float
+             * @description Controls randomness in generation (0.0-2.0).
+             */
+            temperature?: number;
+            /** @description Maximum number of tokens to generate. */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling parameter.
+             */
+            top_p?: number;
+            /** @description Top-k sampling parameter. */
+            top_k?: number;
+        };
+        /**
          * @description Configuration for the OpenAI generative AI provider.
          *
          *     **Example Models:** gpt-4.1 (default), gpt-4.1-mini, o3, o4-mini
@@ -3550,7 +3591,7 @@ export interface components {
          * @description The generative AI provider to use.
          * @enum {string}
          */
-        GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "anthropic" | "cohere" | "mock";
+        GeneratorProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "anthropic" | "cohere" | "termite" | "mock";
         /**
          * @description A unified configuration for a generative AI provider.
          *
@@ -3720,7 +3761,7 @@ export interface components {
          *       "max_tokens": 2048
          *     }
          */
-        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["OpenRouterGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"] | components["schemas"]["CohereGeneratorConfig"]) & {
+        GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["TermiteGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["OpenRouterGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"] | components["schemas"]["CohereGeneratorConfig"]) & {
             provider: components["schemas"]["GeneratorProvider"];
         };
         /** @description Retry configuration for generator calls */

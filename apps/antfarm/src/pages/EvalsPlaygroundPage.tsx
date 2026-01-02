@@ -1,3 +1,4 @@
+import type { TableStatus } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   Check,
@@ -19,16 +20,11 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { TableStatus } from "@antfly/sdk";
 import { api } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -83,8 +79,7 @@ const SAMPLE_EVAL_SET = {
     },
     {
       question: "Who designed the Eiffel Tower?",
-      referenceAnswer:
-        "The Eiffel Tower was designed by Gustave Eiffel's engineering company.",
+      referenceAnswer: "The Eiffel Tower was designed by Gustave Eiffel's engineering company.",
     },
   ],
 };
@@ -160,8 +155,9 @@ const EvalsPlaygroundPage: React.FC = () => {
         const response = await apiClient.indexes.list(selectedTable);
         // Filter to only embedding indexes (aknn type)
         const embeddingIdxs = (response || [])
-          .filter((idx: { config?: { type?: string } }) =>
-            idx.config?.type?.includes("aknn") || idx.config?.type?.includes("embedding")
+          .filter(
+            (idx: { config?: { type?: string } }) =>
+              idx.config?.type?.includes("aknn") || idx.config?.type?.includes("embedding")
           )
           .map((idx: { config?: { name?: string } }) => idx.config?.name || "")
           .filter(Boolean);
@@ -564,13 +560,13 @@ const EvalsPlaygroundPage: React.FC = () => {
             {/* Run Button */}
             <div className="space-y-2 flex flex-col items-stretch">
               {!selectedIndex && selectedTable && (
-                <p className="text-sm text-amber-600">
-                  No embedding index found for this table
-                </p>
+                <p className="text-sm text-amber-600">No embedding index found for this table</p>
               )}
               <Button
                 onClick={runEvals}
-                disabled={isLoading || !selectedSet || selectedSet.items.length === 0 || !selectedIndex}
+                disabled={
+                  isLoading || !selectedSet || selectedSet.items.length === 0 || !selectedIndex
+                }
                 className="w-full"
               >
                 {isLoading && progress ? (
@@ -594,11 +590,7 @@ const EvalsPlaygroundPage: React.FC = () => {
               <Plus className="h-4 w-4 mr-1" />
               New Set
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fileInputRef.current?.click()}
-            >
+            <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
               <Upload className="h-4 w-4 mr-1" />
               Import
             </Button>
@@ -609,12 +601,7 @@ const EvalsPlaygroundPage: React.FC = () => {
               onChange={handleImportFile}
               className="hidden"
             />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              disabled={!selectedSetName}
-            >
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={!selectedSetName}>
               <Download className="h-4 w-4 mr-1" />
               Export
             </Button>
@@ -739,9 +726,7 @@ const EvalsPlaygroundPage: React.FC = () => {
                           ) : (
                             <ChevronRight className="h-4 w-4" />
                           )}
-                          <span className="text-muted-foreground text-sm w-6">
-                            #{index + 1}
-                          </span>
+                          <span className="text-muted-foreground text-sm w-6">#{index + 1}</span>
                           {result.error ? (
                             <span title={result.error}>❗</span>
                           ) : result.pass ? (
@@ -749,9 +734,7 @@ const EvalsPlaygroundPage: React.FC = () => {
                           ) : (
                             <X className="h-4 w-4 text-red-600" />
                           )}
-                          <span className="flex-1 truncate text-sm">
-                            {result.question}
-                          </span>
+                          <span className="flex-1 truncate text-sm">{result.question}</span>
                           <Badge variant="secondary" className="text-xs">
                             {(result.score * 100).toFixed(0)}%
                           </Badge>
@@ -766,9 +749,7 @@ const EvalsPlaygroundPage: React.FC = () => {
                           ) : (
                             <>
                               <div>
-                                <span className="font-medium text-muted-foreground">
-                                  Question:
-                                </span>
+                                <span className="font-medium text-muted-foreground">Question:</span>
                                 <p className="mt-1">{result.question}</p>
                               </div>
                               <div>
@@ -778,19 +759,13 @@ const EvalsPlaygroundPage: React.FC = () => {
                                 <p className="mt-1">{result.referenceAnswer}</p>
                               </div>
                               <div>
-                                <span className="font-medium text-muted-foreground">
-                                  Actual:
-                                </span>
+                                <span className="font-medium text-muted-foreground">Actual:</span>
                                 <p className="mt-1">{result.actualAnswer}</p>
                               </div>
                               {result.reason && (
                                 <div>
-                                  <span className="font-medium text-muted-foreground">
-                                    Reason:
-                                  </span>
-                                  <p className="mt-1 text-muted-foreground">
-                                    {result.reason}
-                                  </p>
+                                  <span className="font-medium text-muted-foreground">Reason:</span>
+                                  <p className="mt-1 text-muted-foreground">{result.reason}</p>
                                 </div>
                               )}
                             </>
@@ -811,9 +786,7 @@ const EvalsPlaygroundPage: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Eval Set</DialogTitle>
-            <DialogDescription>
-              Enter a name for your new evaluation set.
-            </DialogDescription>
+            <DialogDescription>Enter a name for your new evaluation set.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -843,9 +816,7 @@ const EvalsPlaygroundPage: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Eval Item</DialogTitle>
-            <DialogDescription>
-              Add a question and reference answer pair.
-            </DialogDescription>
+            <DialogDescription>Add a question and reference answer pair.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -924,7 +895,9 @@ const EvalsPlaygroundPage: React.FC = () => {
                           </p>
                           {parsed.slice(0, 3).map((entry, i) => (
                             <div key={i} className="p-2 bg-background rounded border">
-                              <p className="font-medium truncate">Q: {entry.vars?.question || "—"}</p>
+                              <p className="font-medium truncate">
+                                Q: {entry.vars?.question || "—"}
+                              </p>
                               <p className="text-muted-foreground truncate">
                                 A: {entry.vars?.reference_answer || "—"}
                               </p>
@@ -939,19 +912,26 @@ const EvalsPlaygroundPage: React.FC = () => {
                       // Native format
                       return (
                         <div className="space-y-2">
-                          <p className="text-muted-foreground">
-                            Found {parsed.items.length} items
-                          </p>
-                          {parsed.items.slice(0, 3).map((item: { question?: string; referenceAnswer?: string }, i: number) => (
-                            <div key={i} className="p-2 bg-background rounded border">
-                              <p className="font-medium truncate">Q: {item.question || "—"}</p>
-                              <p className="text-muted-foreground truncate">
-                                A: {item.referenceAnswer || "—"}
-                              </p>
-                            </div>
-                          ))}
+                          <p className="text-muted-foreground">Found {parsed.items.length} items</p>
+                          {parsed.items
+                            .slice(0, 3)
+                            .map(
+                              (
+                                item: { question?: string; referenceAnswer?: string },
+                                i: number
+                              ) => (
+                                <div key={i} className="p-2 bg-background rounded border">
+                                  <p className="font-medium truncate">Q: {item.question || "—"}</p>
+                                  <p className="text-muted-foreground truncate">
+                                    A: {item.referenceAnswer || "—"}
+                                  </p>
+                                </div>
+                              )
+                            )}
                           {parsed.items.length > 3 && (
-                            <p className="text-muted-foreground">...and {parsed.items.length - 3} more</p>
+                            <p className="text-muted-foreground">
+                              ...and {parsed.items.length - 3} more
+                            </p>
                           )}
                         </div>
                       );
@@ -968,10 +948,7 @@ const EvalsPlaygroundPage: React.FC = () => {
             <Button variant="outline" onClick={() => setShowImportDialog(false)}>
               Cancel
             </Button>
-            <Button
-              onClick={handleImport}
-              disabled={!importJson.trim() || !importSetName.trim()}
-            >
+            <Button onClick={handleImport} disabled={!importJson.trim() || !importSetName.trim()}>
               Import
             </Button>
           </DialogFooter>
@@ -983,18 +960,14 @@ const EvalsPlaygroundPage: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Judge Settings</DialogTitle>
-            <DialogDescription>
-              Configure the LLM judge for evaluating answers.
-            </DialogDescription>
+            <DialogDescription>Configure the LLM judge for evaluating answers.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Provider</Label>
               <Select
                 value={judge.provider}
-                onValueChange={(v) =>
-                  setJudge((j) => ({ ...j, provider: v as GeneratorProvider }))
-                }
+                onValueChange={(v) => setJudge((j) => ({ ...j, provider: v as GeneratorProvider }))}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -1018,12 +991,7 @@ const EvalsPlaygroundPage: React.FC = () => {
             </div>
             <div className="space-y-2">
               <Label className="text-muted-foreground">Temperature</Label>
-              <Input
-                type="number"
-                value={0}
-                disabled
-                className="bg-muted"
-              />
+              <Input type="number" value={0} disabled className="bg-muted" />
               <p className="text-xs text-muted-foreground">
                 Backend hardcodes temperature=0. Use models that support it (e.g., gpt-4o).
               </p>
@@ -1040,9 +1008,9 @@ const EvalsPlaygroundPage: React.FC = () => {
       {/* Help text */}
       <div className="mt-6 text-xs text-muted-foreground space-y-1">
         <p>
-          <strong>Evals Playground:</strong> Build evaluation sets with Q+A pairs, then
-          run them against your RAG system. The correctness evaluator uses an LLM judge
-          to compare the RAG answer against your reference answer.
+          <strong>Evals Playground:</strong> Build evaluation sets with Q+A pairs, then run them
+          against your RAG system. The correctness evaluator uses an LLM judge to compare the RAG
+          answer against your reference answer.
         </p>
       </div>
     </div>
@@ -1050,13 +1018,7 @@ const EvalsPlaygroundPage: React.FC = () => {
 };
 
 // Sub-component for eval item display
-function EvalItemCard({
-  item,
-  onRemove,
-}: {
-  item: EvalItem;
-  onRemove: () => void;
-}) {
+function EvalItemCard({ item, onRemove }: { item: EvalItem; onRemove: () => void }) {
   return (
     <div className="p-3 border rounded-lg group relative">
       <Button
@@ -1074,9 +1036,7 @@ function EvalItemCard({
         </div>
         <div>
           <span className="text-xs text-muted-foreground font-medium">A:</span>
-          <p className="text-sm mt-0.5 text-muted-foreground">
-            {item.referenceAnswer}
-          </p>
+          <p className="text-sm mt-0.5 text-muted-foreground">{item.referenceAnswer}</p>
         </div>
       </div>
     </div>
