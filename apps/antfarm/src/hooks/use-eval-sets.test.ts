@@ -324,9 +324,7 @@ describe("useEvalSets", () => {
     it("should fail when name is empty", () => {
       const { result } = renderHook(() => useEvalSets());
 
-      const promptfooData = JSON.stringify([
-        { vars: { question: "Q1", reference_answer: "A1" } },
-      ]);
+      const promptfooData = JSON.stringify([{ vars: { question: "Q1", reference_answer: "A1" } }]);
 
       let importResult: ReturnType<typeof result.current.importPromptfooSet>;
       act(() => {
@@ -344,9 +342,7 @@ describe("useEvalSets", () => {
         result.current.createEvalSet("Existing Set");
       });
 
-      const promptfooData = JSON.stringify([
-        { vars: { question: "Q1", reference_answer: "A1" } },
-      ]);
+      const promptfooData = JSON.stringify([{ vars: { question: "Q1", reference_answer: "A1" } }]);
 
       let importResult: ReturnType<typeof result.current.importPromptfooSet>;
       act(() => {

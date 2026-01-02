@@ -174,6 +174,164 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/generate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Generate text using LLM (OpenAI-compatible)
+         * @description Generates text using local LLM models (e.g., Gemma 3).
+         *     Fully compatible with the OpenAI Chat Completions API.
+         *
+         *     ## Models
+         *
+         *     Models are auto-discovered from `models_dir/generators/` at startup.
+         *     Use the `/api/models` endpoint to list available models.
+         *
+         *     ## Streaming
+         *
+         *     Set `stream: true` to receive Server-Sent Events (SSE) with incremental
+         *     token deltas. Each event contains a `ChatCompletionChunk` object.
+         *     The stream ends with `data: [DONE]`.
+         *
+         *     ## Input Format
+         *
+         *     Uses OpenAI-compatible chat format with messages array:
+         *     ```json
+         *     {
+         *       "model": "gemma-3-1b-it",
+         *       "messages": [
+         *         {"role": "system", "content": "You are a helpful assistant."},
+         *         {"role": "user", "content": "Hello!"}
+         *       ],
+         *       "max_tokens": 256,
+         *       "stream": false
+         *     }
+         *     ```
+         *
+         *     ## Example (Non-streaming)
+         *
+         *     ```bash
+         *     curl -X POST http://localhost:8080/api/generate \
+         *       -H "Content-Type: application/json" \
+         *       -d '{
+         *         "model": "gemma-3-1b-it",
+         *         "messages": [{"role": "user", "content": "What is machine learning?"}],
+         *         "max_tokens": 100
+         *       }'
+         *     ```
+         *
+         *     ## Example (Streaming)
+         *
+         *     ```bash
+         *     curl -X POST http://localhost:8080/api/generate \
+         *       -H "Content-Type: application/json" \
+         *       -d '{
+         *         "model": "gemma-3-1b-it",
+         *         "messages": [{"role": "user", "content": "Hello!"}],
+         *         "stream": true
+         *       }'
+         *     ```
+         */
+        post: operations["generateContent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/recognize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recognize named entities
+         * @description Recognizes named entities (persons, organizations, locations, etc.) from text using ONNX recognition models.
+         *
+         *     ## Entity Types
+         *
+         *     Standard CoNLL entity types:
+         *     - **PER**: Person names (e.g., "John Smith")
+         *     - **ORG**: Organizations (e.g., "Google", "Apple Inc.")
+         *     - **LOC**: Locations (e.g., "New York", "France")
+         *     - **MISC**: Miscellaneous entities
+         *
+         *     ## Models
+         *
+         *     - Models are auto-discovered from `models_dir/recognizers/`
+         *     - Supports quantized variants (model_i8.onnx)
+         *     - Compatible with HuggingFace BERT-based recognition models
+         *     - GLiNER models support custom entity labels via the `labels` parameter
+         *
+         *     ## Example
+         *
+         *     ```json
+         *     {
+         *       "model": "bert-base-ner",
+         *       "texts": ["John Smith works at Google.", "Apple Inc. is in Cupertino."]
+         *     }
+         *     ```
+         */
+        post: operations["recognizeEntities"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rewrite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rewrite text using Seq2Seq models
+         * @description Rewrite/transform text using Seq2Seq models (T5, FLAN-T5, BART, etc.).
+         *
+         *     ## Models
+         *
+         *     - Models are auto-discovered from `models_dir/rewriters/`
+         *     - Seq2Seq models have encoder.onnx, decoder-init.onnx, and decoder.onnx files
+         *     - Compatible with LMQG question generation models
+         *
+         *     ## Use Cases
+         *
+         *     - **Question Generation**: Generate questions from answer-context pairs
+         *     - **Query Generation**: Generate search queries from documents
+         *     - **Paraphrasing**: Rewrite text in different words
+         *     - **Translation**: Translate text between languages
+         *
+         *     ## Example
+         *
+         *     For question generation with LMQG models:
+         *     ```json
+         *     {
+         *       "model": "flan-t5-small-squad-qg",
+         *       "inputs": ["generate question: <hl> Beyonce <hl> Beyonce starred as Etta James in Cadillac Records."]
+         *     }
+         *     ```
+         */
+        post: operations["rewriteText"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/models": {
         parameters: {
             query?: never;
@@ -183,7 +341,7 @@ export interface paths {
         };
         /**
          * List available models
-         * @description Returns lists of available embedding, chunking, and reranking models.
+         * @description Returns lists of available embedding, chunking, reranking, generator, NER, and rewriter models.
          *
          *     ## Embedders
          *
@@ -199,6 +357,21 @@ export interface paths {
          *
          *     - ONNX models from `models_dir/rerankers/`
          *     - Empty if no models configured
+         *
+         *     ## Generators
+         *
+         *     - LLM models from `models_dir/generators/`
+         *     - Empty if no models configured
+         *
+         *     ## Recognizers
+         *
+         *     - ONNX models from `models_dir/recognizers/`
+         *     - Includes GLiNER models for zero-shot recognition
+         *
+         *     ## Rewriters
+         *
+         *     - Seq2Seq models from `models_dir/rewriters/`
+         *     - T5, FLAN-T5, BART, and LMQG question generation models
          *
          *     Models are discovered at service startup and cached.
          */
@@ -432,6 +605,121 @@ export interface components {
             /** @description Relevance scores (one per prompt, same order as input) */
             scores: number[];
         };
+        RecognizeEntity: {
+            /**
+             * @description The entity text
+             * @example John Smith
+             */
+            text: string;
+            /**
+             * @description Entity type (PER, ORG, LOC, MISC)
+             * @example PER
+             */
+            label: string;
+            /**
+             * @description Character offset where entity begins
+             * @example 0
+             */
+            start: number;
+            /**
+             * @description Character offset where entity ends (exclusive)
+             * @example 10
+             */
+            end: number;
+            /**
+             * Format: float
+             * @description Confidence score (0.0 to 1.0)
+             * @example 0.99
+             */
+            score: number;
+        };
+        RecognizeRequest: {
+            /**
+             * @description Name of recognizer model from models_dir/recognizers/
+             * @example bert-base-ner
+             */
+            model: string;
+            /**
+             * @description Texts to extract entities from
+             * @example [
+             *       "John Smith works at Google.",
+             *       "Apple Inc. is in Cupertino."
+             *     ]
+             */
+            texts: string[];
+            /**
+             * @description Custom entity labels to extract (GLiNER models only).
+             *     When using a GLiNER model, you can specify any entity types to extract,
+             *     enabling zero-shot NER without model retraining.
+             *     If not provided, the model's default labels are used.
+             * @example [
+             *       "person",
+             *       "company",
+             *       "product",
+             *       "date"
+             *     ]
+             */
+            labels?: string[];
+            /**
+             * @description Relation types to extract (for models with 'relations' capability).
+             *     Only used when the model supports relation extraction (GLiNER multitask, REBEL).
+             *     If not provided, the model extracts all relations it can detect.
+             * @example [
+             *       "founded",
+             *       "works_at",
+             *       "located_in"
+             *     ]
+             */
+            relation_labels?: string[];
+        };
+        Relation: {
+            /** @description The subject/head entity in the relationship */
+            head: components["schemas"]["RecognizeEntity"];
+            /** @description The object/tail entity in the relationship */
+            tail: components["schemas"]["RecognizeEntity"];
+            /**
+             * @description The relationship type
+             * @example founded
+             */
+            label: string;
+            /**
+             * Format: float
+             * @description Confidence score for the relation (0.0 to 1.0)
+             * @example 0.95
+             */
+            score: number;
+        };
+        RecognizeResponse: {
+            /** @description Name of model used for NER */
+            model: string;
+            /** @description Array of entity arrays (one per input text) */
+            entities: components["schemas"]["RecognizeEntity"][][];
+            /**
+             * @description Array of relation arrays (one per input text).
+             *     Only present when using a model with 'relations' capability (GLiNER multitask, REBEL).
+             */
+            relations?: components["schemas"]["Relation"][][];
+        };
+        RewriteRequest: {
+            /**
+             * @description Name of Seq2Seq rewriter model from models_dir/rewriters/
+             * @example flan-t5-small
+             */
+            model: string;
+            /**
+             * @description Input texts to rewrite/transform
+             * @example [
+             *       "Translate to German: Hello, how are you?"
+             *     ]
+             */
+            inputs: string[];
+        };
+        RewriteResponse: {
+            /** @description Name of model used for rewriting */
+            model: string;
+            /** @description Rewritten texts (array of arrays, one per input, multiple per beam) */
+            texts: string[][];
+        };
         ModelsResponse: {
             /**
              * @description Available chunking models (always includes "fixed")
@@ -456,6 +744,210 @@ export interface components {
              *     ]
              */
             embedders: string[];
+            /**
+             * @description Available generator/LLM models from models_dir/generators/
+             * @example [
+             *       "gemma-3-1b-it",
+             *       "tiny-random-gemma-3"
+             *     ]
+             */
+            generators: string[];
+            /**
+             * @description Available recognizer models from models_dir/recognizers/
+             * @example [
+             *       "bert-base-ner",
+             *       "distilbert-ner",
+             *       "gliner-small"
+             *     ]
+             */
+            recognizers: string[];
+            /**
+             * @description Available GLiNER extractor models (zero-shot recognition with custom labels)
+             * @example [
+             *       "gliner-small",
+             *       "gliner-multitask"
+             *     ]
+             */
+            extractors?: string[];
+            /**
+             * @description Available Seq2Seq rewriter models from models_dir/rewriters/
+             * @example [
+             *       "flan-t5-small",
+             *       "lmqg-question-generation"
+             *     ]
+             */
+            rewriters: string[];
+            /**
+             * @description Detailed information about recognizer models including capabilities.
+             *     Map of model name to model info. Use this to determine what capabilities
+             *     each recognizer supports (labels, zeroshot, relations, answers).
+             * @example {
+             *       "bert-base-ner": {
+             *         "capabilities": [
+             *           "labels"
+             *         ]
+             *       },
+             *       "gliner-small": {
+             *         "capabilities": [
+             *           "labels",
+             *           "zeroshot"
+             *         ]
+             *       },
+             *       "gliner-multitask": {
+             *         "capabilities": [
+             *           "labels",
+             *           "zeroshot",
+             *           "relations",
+             *           "answers"
+             *         ]
+             *       }
+             *     }
+             */
+            recognizer_info?: {
+                [key: string]: components["schemas"]["RecognizerModelInfo"];
+            };
+        };
+        /**
+         * @description Capability that a recognizer model supports:
+         *     - labels: Entity extraction (NER) - extracts labeled spans like PER, ORG, LOC
+         *     - zeroshot: Supports arbitrary labels at inference time (GLiNER models)
+         *     - relations: Relation extraction between entities (GLiNER multitask, REBEL)
+         *     - answers: Extractive question answering (GLiNER multitask)
+         * @enum {string}
+         */
+        RecognizerCapability: "labels" | "zeroshot" | "relations" | "answers";
+        /** @description Detailed information about a recognizer model */
+        RecognizerModelInfo: {
+            /**
+             * @description List of capabilities this recognizer model supports
+             * @example [
+             *       "labels",
+             *       "zeroshot"
+             *     ]
+             */
+            capabilities?: components["schemas"]["RecognizerCapability"][];
+        };
+        /**
+         * @description The role of a message sender in a conversation
+         * @enum {string}
+         */
+        Role: "system" | "user" | "assistant";
+        /**
+         * @description Reason why generation stopped
+         * @enum {string}
+         */
+        FinishReason: "stop" | "length" | "tool_calls" | "content_filter" | "function_call";
+        /**
+         * @description Message content. Supports two formats:
+         *     - Simple string: "Hello, how are you?"
+         *     - Array of content parts (OpenAI multimodal format): [{"type": "text", "text": "Hello"}]
+         */
+        ChatMessageContent: string | components["schemas"]["ContentPart"][];
+        ChatMessage: {
+            role: components["schemas"]["Role"];
+            content: components["schemas"]["ChatMessageContent"];
+        };
+        GenerateRequest: {
+            /**
+             * @description Name of the generator model from models_dir/generators/
+             * @example gemma-3-1b-it
+             */
+            model: string;
+            /** @description Conversation messages (OpenAI-compatible format) */
+            messages: components["schemas"]["ChatMessage"][];
+            /**
+             * @description Maximum tokens to generate
+             * @default 256
+             * @example 256
+             */
+            max_tokens?: number;
+            /**
+             * Format: float
+             * @description Sampling temperature (0.0 = deterministic, higher = more random)
+             * @default 1
+             * @example 0.7
+             */
+            temperature?: number;
+            /**
+             * Format: float
+             * @description Nucleus sampling probability
+             * @default 1
+             */
+            top_p?: number;
+            /**
+             * @description Top-k sampling (Termite extension, not in OpenAI API)
+             * @default 50
+             */
+            top_k?: number;
+            /**
+             * @description If true, partial message deltas will be sent as SSE events
+             * @default false
+             */
+            stream?: boolean;
+        };
+        /** @description OpenAI-compatible chat completion response */
+        GenerateResponse: {
+            /**
+             * @description A unique identifier for the chat completion
+             * @example chatcmpl-abc123
+             */
+            id: string;
+            /**
+             * @description The object type, always "chat.completion"
+             * @enum {string}
+             */
+            object: "chat.completion";
+            /**
+             * @description Unix timestamp (seconds) when the completion was created
+             * @example 1704123456
+             */
+            created: number;
+            /** @description Model used for generation */
+            model: string;
+            /** @description List of completion choices (currently always 1) */
+            choices: components["schemas"]["GenerateChoice"][];
+            usage: components["schemas"]["GenerateUsage"];
+        };
+        GenerateChoice: {
+            /** @description Index of this choice in the list */
+            index: number;
+            message: components["schemas"]["GenerateMessage"];
+            finish_reason: components["schemas"]["FinishReason"];
+            /** @description Log probability information (not supported, always null) */
+            logprobs?: Record<string, never> | null;
+        };
+        GenerateMessage: {
+            role: components["schemas"]["Role"];
+            /** @description The generated message content */
+            content: string;
+        };
+        GenerateUsage: {
+            /** @description Number of tokens in the prompt */
+            prompt_tokens: number;
+            /** @description Number of tokens in the completion */
+            completion_tokens: number;
+            /** @description Total tokens used (prompt + completion) */
+            total_tokens: number;
+        };
+        /** @description Streaming generation chunk (SSE event data) */
+        GenerateChunk: {
+            id: string;
+            /** @enum {string} */
+            object: "chat.completion.chunk";
+            created: number;
+            model: string;
+            choices: components["schemas"]["GenerateChunkChoice"][];
+        };
+        GenerateChunkChoice: {
+            index: number;
+            delta: components["schemas"]["GenerateDelta"];
+            finish_reason?: components["schemas"]["FinishReason"];
+        };
+        /** @description Delta content for streaming */
+        GenerateDelta: {
+            role?: components["schemas"]["Role"];
+            /** @description Token content delta */
+            content?: string | null;
         };
         Config: {
             /**
@@ -469,6 +961,8 @@ export interface components {
              *     - `{models_dir}/embedders/` - Embedding models (ONNX)
              *     - `{models_dir}/chunkers/` - Chunking models (ONNX)
              *     - `{models_dir}/rerankers/` - Reranking models (ONNX)
+             *     - `{models_dir}/recognizers/` - Recognition models (ONNX)
+             *     - `{models_dir}/rewriters/` - Seq2Seq rewriter models (ONNX)
              *
              *     Defaults to ~/.termite/models (set via viper). If not set, only built-in fixed chunking is available.
              * @example ~/.termite/models
@@ -861,6 +1355,190 @@ export interface operations {
                 };
             };
             /** @description Reranking service unavailable (no models configured) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    generateContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GenerateRequest"];
+            };
+        };
+        responses: {
+            /**
+             * @description Chat completion response. Returns JSON for non-streaming requests,
+             *     or Server-Sent Events for streaming requests (stream: true).
+             */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GenerateResponse"];
+                    "text/event-stream": components["schemas"]["GenerateChunk"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Model not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Generation service unavailable (no models configured) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    recognizeEntities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecognizeRequest"];
+            };
+        };
+        responses: {
+            /** @description Entities extracted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecognizeResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Model not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Recognition service unavailable (no models configured) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    rewriteText: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RewriteRequest"];
+            };
+        };
+        responses: {
+            /** @description Text rewritten successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RewriteResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Model not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Generation service unavailable (no models configured) */
             503: {
                 headers: {
                     [name: string]: unknown;

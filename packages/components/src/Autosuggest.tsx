@@ -1,4 +1,4 @@
-import type { QueryHit, AggregationBucket } from "@antfly/sdk";
+import type { AggregationBucket, QueryHit } from "@antfly/sdk";
 import React, {
   Children,
   createContext,
@@ -777,9 +777,7 @@ export function AutosuggestFacets({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && selectedIndex >= 0) {
-        const facet = displayTerms.find(
-          (t) => itemIndicesRef.current.get(t.key) === selectedIndex
-        );
+        const facet = displayTerms.find((t) => itemIndicesRef.current.get(t.key) === selectedIndex);
         if (facet) {
           e.preventDefault();
           handleClick(facet);

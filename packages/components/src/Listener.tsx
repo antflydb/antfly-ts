@@ -1,4 +1,4 @@
-import type { QueryHit, QueryResult, AggregationBucket } from "@antfly/sdk";
+import type { AggregationBucket, QueryHit, QueryResult } from "@antfly/sdk";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useSharedContext, type Widget } from "./SharedContext";
 import { conjunctsFrom, defer, type MultiqueryRequest, multiquery, resolveTable } from "./utils";
@@ -219,12 +219,15 @@ export default function Listener({ children, onChange }: ListenerProps) {
                 }
                 // Add aggregation options if present (for autosuggest facets)
                 if (r.facetOptions && r.facetOptions.length > 0) {
-                  const aggregations: Record<string, { type: string; field: string; size: number }> = {};
+                  const aggregations: Record<
+                    string,
+                    { type: string; field: string; size: number }
+                  > = {};
                   r.facetOptions.forEach((opt: { field: string; size?: number }) => {
                     aggregations[opt.field] = {
                       type: "terms",
                       field: opt.field,
-                      size: opt.size || 5
+                      size: opt.size || 5,
                     };
                   });
                   queryObj.aggregations = aggregations;
@@ -343,7 +346,11 @@ export default function Listener({ children, onChange }: ListenerProps) {
                     }
                     fields
                       .map((f: string) => {
-                        if (!result.aggregations || !result.aggregations[f] || !result.aggregations[f].buckets) {
+                        if (
+                          !result.aggregations ||
+                          !result.aggregations[f] ||
+                          !result.aggregations[f].buckets
+                        ) {
                           return [];
                         }
                         // Only use filterValue for legacy mode (non-custom queries)
@@ -358,11 +365,15 @@ export default function Listener({ children, onChange }: ListenerProps) {
                       .forEach((i: AggregationBucket) => {
                         map.set(i.key, {
                           key: i.key,
-                          doc_count: map.has(i.key) ? i.doc_count + map.get(i.key).doc_count : i.doc_count,
+                          doc_count: map.has(i.key)
+                            ? i.doc_count + map.get(i.key).doc_count
+                            : i.doc_count,
                         });
                       });
                     return [...map.values()]
-                      .sort((x: AggregationBucket, y: AggregationBucket) => y.doc_count - x.doc_count)
+                      .sort(
+                        (x: AggregationBucket, y: AggregationBucket) => y.doc_count - x.doc_count
+                      )
                       .slice(0, size);
                   },
                   total: (result: QueryResult) => result.hits?.total || 0,

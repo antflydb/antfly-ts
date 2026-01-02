@@ -1,5 +1,14 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { Clock, FileText, HelpCircle, ListPlus, MessageCircle, Plus, RotateCcw, Zap } from "lucide-react";
+import {
+  Clock,
+  FileText,
+  HelpCircle,
+  ListPlus,
+  MessageCircle,
+  Plus,
+  RotateCcw,
+  Zap,
+} from "lucide-react";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -471,9 +480,7 @@ const QuestionPlaygroundPage: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add to Eval Set</DialogTitle>
-            <DialogDescription>
-              Add this Q+A pair to an evaluation set.
-            </DialogDescription>
+            <DialogDescription>Add this Q+A pair to an evaluation set.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             {/* Show the Q+A pair */}

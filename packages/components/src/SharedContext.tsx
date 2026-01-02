@@ -1,4 +1,4 @@
-import type { QueryHit, AggregationBucket } from "@antfly/sdk";
+import type { AggregationBucket, QueryHit } from "@antfly/sdk";
 import { createContext, type Dispatch, useContext } from "react";
 
 export interface Widget {

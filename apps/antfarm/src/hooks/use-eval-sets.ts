@@ -33,40 +33,46 @@ export function useEvalSets() {
     saveToStorage(evalSets);
   }, [evalSets]);
 
-  const createEvalSet = useCallback((name: string): EvalSet | null => {
-    if (!name.trim()) return null;
+  const createEvalSet = useCallback(
+    (name: string): EvalSet | null => {
+      if (!name.trim()) return null;
 
-    const trimmedName = name.trim();
-    if (evalSets[trimmedName]) {
-      console.warn(`Eval set "${trimmedName}" already exists`);
-      return null;
-    }
+      const trimmedName = name.trim();
+      if (evalSets[trimmedName]) {
+        console.warn(`Eval set "${trimmedName}" already exists`);
+        return null;
+      }
 
-    const newSet: EvalSet = {
-      name: trimmedName,
-      createdAt: new Date().toISOString(),
-      items: [],
-    };
+      const newSet: EvalSet = {
+        name: trimmedName,
+        createdAt: new Date().toISOString(),
+        items: [],
+      };
 
-    setEvalSets((prev) => ({
-      ...prev,
-      [trimmedName]: newSet,
-    }));
+      setEvalSets((prev) => ({
+        ...prev,
+        [trimmedName]: newSet,
+      }));
 
-    return newSet;
-  }, [evalSets]);
+      return newSet;
+    },
+    [evalSets]
+  );
 
-  const deleteEvalSet = useCallback((name: string): boolean => {
-    if (!evalSets[name]) return false;
+  const deleteEvalSet = useCallback(
+    (name: string): boolean => {
+      if (!evalSets[name]) return false;
 
-    setEvalSets((prev) => {
-      const next = { ...prev };
-      delete next[name];
-      return next;
-    });
+      setEvalSets((prev) => {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      });
 
-    return true;
-  }, [evalSets]);
+      return true;
+    },
+    [evalSets]
+  );
 
   const addItem = useCallback(
     (setName: string, question: string, referenceAnswer: string): EvalItem | null => {
