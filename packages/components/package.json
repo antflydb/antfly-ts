@@ -51,6 +51,7 @@
     "react-autosuggest": "^10.1.0"
   },
   "devDependencies": {
+    "@antfly/sdk": "workspace:*",
     "@babel/core": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.28.5",
