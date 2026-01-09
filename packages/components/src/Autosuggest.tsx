@@ -535,6 +535,8 @@ export default function Autosuggest({
         <div
           className={containerClass}
           ref={suggestionsRef as React.RefObject<HTMLDivElement | null>}
+          data-has-content={hasResults || hasFacets ? "true" : "false"}
+          data-is-loading={isCurrentlyLoading ? "true" : "false"}
         >
           <div className={dropdownClass}>{children}</div>
         </div>

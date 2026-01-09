@@ -90,9 +90,10 @@
     visibility 0.15s ease-in-out;
 }
 
-/* Show autosuggest container when it has content - prevents empty container flash */
-.react-af-autosuggest-container:has(.react-af-autosuggest-facets-list),
-.react-af-autosuggest-container:has(.react-af-autosuggest-results-list) {
+/* Show autosuggest container when it has content - prevents empty container flash.
+   Uses data-attributes set by the component for robust visibility control that
+   can't be accidentally overridden by downstream CSS class styling. */
+.react-af-autosuggest-container[data-has-content="true"] {
   opacity: 1;
   visibility: visible;
 }
