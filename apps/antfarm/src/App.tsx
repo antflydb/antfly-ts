@@ -3,7 +3,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { ApiConfigProvider } from "@/components/api-config-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { CommandPaletteProvider } from "@/components/command-palette-provider";
+import { ConnectionStatusBanner } from "@/components/connection-status-banner";
 import { ContentWidthProvider, useContentWidth } from "@/components/content-width-provider";
+import { ErrorBoundary } from "@/components/error-boundary";
 import { PrivateRoute } from "@/components/private-route";
 import { AppSidebar } from "@/components/sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -21,6 +23,7 @@ import CreateTablePage from "./pages/CreateTablePage";
 import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
 import KnowledgeGraphPlaygroundPage from "./pages/KnowledgeGraphPlaygroundPage";
 import { LoginPage } from "./pages/LoginPage";
+import ModelsPage from "./pages/ModelsPage";
 import NERPlaygroundPage from "./pages/NERPlaygroundPage";
 import QuestionPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import TableDetailsPage from "./pages/TableDetailsPage";
@@ -48,6 +51,7 @@ function AppContent() {
               />
               <SidebarInset>
                 <WorkspaceHeader />
+                <ConnectionStatusBanner />
                 <div
                   className={cn(
                     "flex-1 p-4 transition-all",
@@ -76,6 +80,7 @@ function AppContent() {
                     {/* Termite routes */}
                     {isProductEnabled("termite") && (
                       <>
+                        <Route path="/models" element={<ModelsPage />} />
                         <Route path="/playground/chunking" element={<ChunkingPlaygroundPage />} />
                         <Route path="/playground/recognize" element={<NERPlaygroundPage />} />
                         <Route path="/playground/question" element={<QuestionPlaygroundPage />} />
@@ -100,15 +105,17 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <ApiConfigProvider>
-        <AuthProvider>
-          <ContentWidthProvider>
-            <CommandPaletteProvider>
-              <AppContent />
-            </CommandPaletteProvider>
-          </ContentWidthProvider>
-        </AuthProvider>
-      </ApiConfigProvider>
+      <ErrorBoundary>
+        <ApiConfigProvider>
+          <AuthProvider>
+            <ContentWidthProvider>
+              <CommandPaletteProvider>
+                <AppContent />
+              </CommandPaletteProvider>
+            </ContentWidthProvider>
+          </AuthProvider>
+        </ApiConfigProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

@@ -9,6 +9,7 @@ import {
   FileText,
   HelpCircle,
   LayoutList,
+  Library,
   Network,
   PanelLeft,
   PanelLeftOpen,
@@ -103,12 +104,18 @@ export function AppSidebar({
   };
 
   React.useEffect(() => {
+    if (!isProductEnabled("antfly")) return;
+
     const fetchTables = async () => {
       try {
         const response = await api.tables.list();
-        setTables(response as TableStatus[]);
-      } catch (e) {
-        console.error("Failed to fetch tables:", e);
+        if (response && Array.isArray(response)) {
+          setTables(response as TableStatus[]);
+        }
+      } catch {
+        // Silently fail - table list will be empty when server is down
+        // The ConnectionStatusBanner will show the appropriate error
+        setTables([]);
       }
     };
     fetchTables();
@@ -453,6 +460,26 @@ export function AppSidebar({
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                {/* Models Directory */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/models"}
+                    tooltip="Model Directory"
+                  >
+                    <a
+                      href="/models"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/models");
+                      }}
+                    >
+                      <Library className="size-4" />
+                      <span>Models</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
                 <Collapsible defaultOpen>
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
