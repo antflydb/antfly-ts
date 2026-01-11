@@ -9,6 +9,7 @@ import {
   FileText,
   HelpCircle,
   LayoutList,
+  MessageSquare,
   Network,
   PanelLeft,
   PanelLeftOpen,
@@ -453,6 +454,26 @@ export function AppSidebar({
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                {/* Chat Link */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/chat"}
+                    tooltip="Chat"
+                  >
+                    <a
+                      href="/chat"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/chat");
+                      }}
+                    >
+                      <MessageSquare className="size-4" />
+                      <span>Chat</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+
                 <Collapsible defaultOpen>
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>

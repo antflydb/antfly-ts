@@ -16,6 +16,7 @@ import {
 } from "@/config/products";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
+import ChatsPage from "./pages/ChatsPage";
 import ChunkingPlaygroundPage from "./pages/ChunkingPlaygroundPage";
 import CreateTablePage from "./pages/CreateTablePage";
 import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
@@ -76,6 +77,7 @@ function AppContent() {
                     {/* Termite routes */}
                     {isProductEnabled("termite") && (
                       <>
+                        <Route path="/chat" element={<ChatsPage />} />
                         <Route path="/playground/chunking" element={<ChunkingPlaygroundPage />} />
                         <Route path="/playground/recognize" element={<NERPlaygroundPage />} />
                         <Route path="/playground/question" element={<QuestionPlaygroundPage />} />
