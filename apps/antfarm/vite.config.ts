@@ -18,6 +18,11 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      "/registry": {
+        target: "https://registry.antfly.io/v1",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/registry/, ""),
+      },
     },
   },
   // optimizeDeps: {
