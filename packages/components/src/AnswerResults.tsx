@@ -10,7 +10,10 @@ import type {
   QueryHit,
 } from "@antfly/sdk";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Streamdown } from "streamdown";
 import { AnswerResultsContext, type AnswerResultsContextValue } from "./AnswerResultsContext";
+import { replaceCitations, renderAsMarkdownLinks } from "./citations";
+import { preprocessStreamingText } from "./markdown";
 import { useSharedContext } from "./SharedContext";
 import { resolveTable, streamAnswer } from "./utils";
 
@@ -339,26 +342,35 @@ export default function AnswerResults({
   );
 
   const defaultRenderReasoning = useCallback(
-    (reasoningText: string, streaming: boolean) => (
-      <div className="react-af-answer-reasoning">
-        <strong>Reasoning:</strong>
-        <p>
-          {reasoningText}
-          {streaming && <span className="react-af-answer-streaming"> ...</span>}
-        </p>
-      </div>
-    ),
+    (reasoningText: string, streaming: boolean) => {
+      const processedText = preprocessStreamingText(reasoningText);
+      return (
+        <div className="react-af-answer-reasoning">
+          <strong>Reasoning:</strong>
+          <div>
+            <Streamdown isAnimating={streaming}>{processedText}</Streamdown>
+          </div>
+        </div>
+      );
+    },
     []
   );
 
   const defaultRenderAnswer = useCallback(
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    (answerText: string, streaming: boolean, _hits?: QueryHit[]) => (
-      <div className="react-af-answer-text">
-        {answerText}
-        {streaming && <span className="react-af-answer-streaming"> ...</span>}
-      </div>
-    ),
+    (answerText: string, streaming: boolean, _hits?: QueryHit[]) => {
+      const processedText = preprocessStreamingText(answerText);
+      const textWithLinks = processedText
+        ? replaceCitations(processedText, {
+            renderCitation: renderAsMarkdownLinks,
+          })
+        : "";
+
+      return (
+        <div className="react-af-answer-text">
+          <Streamdown isAnimating={streaming}>{textWithLinks}</Streamdown>
+        </div>
+      );
+    },
     []
   );
 
