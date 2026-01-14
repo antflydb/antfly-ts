@@ -2327,10 +2327,244 @@ export interface components {
              *     ```
              */
             pruner?: components["schemas"]["Pruner"];
+            /**
+             * @description Cross-table join configuration for combining results from multiple tables.
+             *
+             *     Joins allow you to enrich query results with data from related tables,
+             *     similar to SQL JOINs but optimized for distributed execution.
+             *
+             *     **Join Types:**
+             *     - `inner`: Only return rows that have matches in both tables
+             *     - `left`: Return all rows from the primary table, with NULL for non-matching right rows
+             *     - `right`: Return all rows from the joined table, with NULL for non-matching left rows
+             *
+             *     **Join Strategies** (auto-selected based on table sizes):
+             *     - `broadcast`: Small table broadcast to all shards (best for dimension tables < 10MB)
+             *     - `index_lookup`: Batch key lookups using indexes (best for selective joins)
+             *     - `shuffle`: Hash-partition both tables (best for large-large joins)
+             *
+             *     **Example - Enrich orders with customer data:**
+             *     ```json
+             *     {
+             *       "table": "orders",
+             *       "full_text_search": {"query": "status:pending"},
+             *       "join": {
+             *         "right_table": "customers",
+             *         "join_type": "inner",
+             *         "on": {
+             *           "left_field": "customer_id",
+             *           "right_field": "id"
+             *         },
+             *         "right_filters": {
+             *           "filter_query": {"query": "tier:premium"}
+             *         }
+             *       },
+             *       "fields": ["order_id", "amount", "customers.name", "customers.email"]
+             *     }
+             *     ```
+             *
+             *     **Multi-way joins** (nested):
+             *     ```json
+             *     {
+             *       "table": "orders",
+             *       "join": {
+             *         "right_table": "customers",
+             *         "on": {"left_field": "customer_id", "right_field": "id"},
+             *         "nested_join": {
+             *           "right_table": "addresses",
+             *           "on": {"left_field": "customers.address_id", "right_field": "id"}
+             *         }
+             *       }
+             *     }
+             *     ```
+             *
+             *     **Performance Tips:**
+             *     - Filter the driving table first to reduce join input size
+             *     - Put the smaller table on the right side for broadcast joins
+             *     - Use indexed fields in join conditions for index_lookup strategy
+             *     - Limit result fields to reduce data transfer
+             */
+            join?: components["schemas"]["JoinClause"];
         };
         Analyses: {
             pca?: boolean;
             tsne?: boolean;
+        };
+        /**
+         * @description Configuration for joining data from another table.
+         *     Supports inner, left, and right joins with automatic strategy selection.
+         */
+        JoinClause: {
+            /**
+             * @description Name of the table to join with.
+             * @example customers
+             */
+            right_table: string;
+            /** @description Type of join to perform. Defaults to "inner". */
+            join_type?: components["schemas"]["JoinType"];
+            /** @description Join condition specifying which fields to match. */
+            on: components["schemas"]["JoinCondition"];
+            /**
+             * @description Optional filters to apply to the right table before joining.
+             *     Use to reduce the amount of data being joined.
+             */
+            right_filters?: components["schemas"]["JoinFilters"];
+            /**
+             * @description Fields to include from the right table in the result.
+             *     If not specified, all fields from the right table are included.
+             *     Fields are prefixed with the right table name in the result.
+             * @example [
+             *       "name",
+             *       "email",
+             *       "tier"
+             *     ]
+             */
+            right_fields?: string[];
+            /**
+             * @description Optional hint for which join strategy to use.
+             *     If not specified, the planner automatically selects based on table statistics.
+             */
+            strategy_hint?: components["schemas"]["JoinStrategy"];
+            /**
+             * @description Optional nested join for multi-way joins.
+             *     The nested join operates on the result of the current join.
+             */
+            nested_join?: components["schemas"]["JoinClause"] | null;
+        };
+        /**
+         * @description Type of join to perform:
+         *     - `inner`: Only return rows with matches in both tables
+         *     - `left`: Return all rows from left table, NULL for non-matching right rows
+         *     - `right`: Return all rows from right table, NULL for non-matching left rows
+         * @default inner
+         * @enum {string}
+         */
+        JoinType: "inner" | "left" | "right";
+        /** @description Condition for matching rows between tables. */
+        JoinCondition: {
+            /**
+             * @description Field from the left (primary) table to match on.
+             * @example customer_id
+             */
+            left_field: string;
+            /**
+             * @description Field from the right (joined) table to match on.
+             * @example id
+             */
+            right_field: string;
+            /** @description Comparison operator. Defaults to "eq" (equality). */
+            operator?: components["schemas"]["JoinOperator"];
+        };
+        /**
+         * @description Comparison operator for join condition:
+         *     - `eq`: Equal (default)
+         *     - `neq`: Not equal
+         *     - `lt`: Less than
+         *     - `lte`: Less than or equal
+         *     - `gt`: Greater than
+         *     - `gte`: Greater than or equal
+         * @default eq
+         * @enum {string}
+         */
+        JoinOperator: "eq" | "neq" | "lt" | "lte" | "gt" | "gte";
+        /** @description Filters to apply to a table before joining. */
+        JoinFilters: {
+            /** @description Bleve query to filter rows before joining. */
+            filter_query?: components["schemas"]["Query"] & unknown;
+            /**
+             * Format: byte
+             * @description Key prefix filter for the table.
+             */
+            filter_prefix?: string;
+            /** @description Maximum number of rows to include from this table. */
+            limit?: number;
+        };
+        /**
+         * @description Strategy for executing the join:
+         *     - `broadcast`: Broadcast small table to all shards of large table.
+         *       Best for dimension tables < 10MB. O(small_table) memory per shard.
+         *     - `index_lookup`: Use batch key lookups via indexes.
+         *       Best for selective joins with indexed join keys. Low memory overhead.
+         *     - `shuffle`: Hash-partition both tables by join key.
+         *       Best for large-large table joins. Requires data movement.
+         * @enum {string}
+         */
+        JoinStrategy: "broadcast" | "index_lookup" | "shuffle";
+        /** @description Statistics and metadata about join execution. */
+        JoinResult: {
+            /** @description The join strategy that was used. */
+            strategy_used?: components["schemas"]["JoinStrategy"];
+            /**
+             * Format: int64
+             * @description Number of rows scanned from the left table.
+             */
+            left_rows_scanned?: number;
+            /**
+             * Format: int64
+             * @description Number of rows scanned from the right table.
+             */
+            right_rows_scanned?: number;
+            /**
+             * Format: int64
+             * @description Number of rows that matched the join condition.
+             */
+            rows_matched?: number;
+            /**
+             * Format: int64
+             * @description Number of left rows without a match (for left/full joins).
+             */
+            rows_unmatched_left?: number;
+            /**
+             * Format: int64
+             * @description Number of right rows without a match (for right/full joins).
+             */
+            rows_unmatched_right?: number;
+            /**
+             * Format: int64
+             * @description Time spent executing the join in milliseconds.
+             */
+            join_time_ms?: number;
+        };
+        /** @description Statistics about a table used for query planning. */
+        TableStatistics: {
+            /**
+             * Format: int64
+             * @description Approximate number of rows in the table.
+             */
+            row_count?: number;
+            /**
+             * Format: int64
+             * @description Approximate size of the table in bytes.
+             */
+            size_bytes?: number;
+            /** @description Per-field statistics for query optimization. */
+            field_stats?: {
+                [key: string]: components["schemas"]["FieldStatistics"];
+            };
+            /**
+             * Format: date-time
+             * @description When these statistics were last computed.
+             */
+            last_updated?: string;
+        };
+        /** @description Statistics about a specific field. */
+        FieldStatistics: {
+            /**
+             * Format: int64
+             * @description Approximate number of unique values (via HyperLogLog).
+             */
+            cardinality?: number;
+            /**
+             * Format: int64
+             * @description Number of rows with null values for this field.
+             */
+            null_count?: number;
+            /** @description Minimum value for numeric/date fields. */
+            min_value?: unknown;
+            /** @description Maximum value for numeric/date fields. */
+            max_value?: unknown;
+            /** @description Average size in bytes for variable-length fields. */
+            avg_size?: number;
         };
         AnalysesResult: {
             pca?: number[];
@@ -2389,6 +2623,8 @@ export interface components {
             graph_results?: {
                 [key: string]: components["schemas"]["GraphQueryResult"];
             };
+            /** @description Statistics and metadata about join execution (when join was used). */
+            join_result?: components["schemas"]["JoinResult"];
             /**
              * Format: int64
              * @description Duration of the query in milliseconds.

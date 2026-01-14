@@ -117,6 +117,14 @@ export type {
   // Index types
   IndexConfig,
   IndexStatus,
+  // Join types
+  JoinClause,
+  JoinCondition,
+  JoinFilters,
+  JoinOperator,
+  JoinResult,
+  JoinStrategy,
+  JoinType,
   Permission,
   PermissionType,
   // Query Builder Agent types

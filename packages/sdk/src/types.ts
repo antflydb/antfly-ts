@@ -179,6 +179,15 @@ export type EvaluatorName = components["schemas"]["EvaluatorName"];
 // Error type
 export type AntflyError = components["schemas"]["Error"];
 
+// Join types
+export type JoinClause = components["schemas"]["JoinClause"];
+export type JoinCondition = components["schemas"]["JoinCondition"];
+export type JoinFilters = components["schemas"]["JoinFilters"];
+export type JoinOperator = components["schemas"]["JoinOperator"];
+export type JoinResult = components["schemas"]["JoinResult"];
+export type JoinStrategy = components["schemas"]["JoinStrategy"];
+export type JoinType = components["schemas"]["JoinType"];
+
 // Utility type for extracting response data
 export type ResponseData<T extends keyof operations> = operations[T]["responses"] extends {
   200: infer R;

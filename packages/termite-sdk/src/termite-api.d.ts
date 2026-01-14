@@ -24,7 +24,7 @@ export interface paths {
          *     Models are auto-discovered from `models_dir/embedders/` at startup.
          *     Use the `/api/models` endpoint to list available models.
          *
-         *     - **Text-only models** (e.g., bge-small-en-v1.5): Accept text strings
+         *     - **Text-only models** (e.g., BAAI/bge-small-en-v1.5): Accept text strings
          *     - **Multimodal models** (e.g., CLIP): Accept text and images via data URIs
          *
          *     ## Input Formats
@@ -50,7 +50,7 @@ export interface paths {
          *     Text embedding (Ollama-compatible):
          *     ```json
          *     {
-         *       "model": "bge-small-en-v1.5",
+         *       "model": "BAAI/bge-small-en-v1.5",
          *       "input": ["hello world", "machine learning"]
          *     }
          *     ```
@@ -58,7 +58,7 @@ export interface paths {
          *     Multimodal embedding (OpenAI-compatible):
          *     ```json
          *     {
-         *       "model": "clip-vit-base-patch32",
+         *       "model": "openai/clip-vit-base-patch32",
          *       "input": [
          *         {"type": "text", "text": "a photo of a cat"},
          *         {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0..."}}
@@ -155,7 +155,7 @@ export interface paths {
          *
          *     ```json
          *     {
-         *       "model": "bge-reranker-v2-m3",
+         *       "model": "BAAI/bge-reranker-v2-m3",
          *       "query": "machine learning applications",
          *       "prompts": [
          *         "Introduction to Machine Learning: This guide covers...",
@@ -204,7 +204,7 @@ export interface paths {
          *     Uses OpenAI-compatible chat format with messages array:
          *     ```json
          *     {
-         *       "model": "gemma-3-1b-it",
+         *       "model": "google/gemma-3-1b-it",
          *       "messages": [
          *         {"role": "system", "content": "You are a helpful assistant."},
          *         {"role": "user", "content": "Hello!"}
@@ -220,7 +220,7 @@ export interface paths {
          *     curl -X POST http://localhost:8080/api/generate \
          *       -H "Content-Type: application/json" \
          *       -d '{
-         *         "model": "gemma-3-1b-it",
+         *         "model": "google/gemma-3-1b-it",
          *         "messages": [{"role": "user", "content": "What is machine learning?"}],
          *         "max_tokens": 100
          *       }'
@@ -232,7 +232,7 @@ export interface paths {
          *     curl -X POST http://localhost:8080/api/generate \
          *       -H "Content-Type: application/json" \
          *       -d '{
-         *         "model": "gemma-3-1b-it",
+         *         "model": "google/gemma-3-1b-it",
          *         "messages": [{"role": "user", "content": "Hello!"}],
          *         "stream": true
          *       }'
@@ -277,12 +277,74 @@ export interface paths {
          *
          *     ```json
          *     {
-         *       "model": "bert-base-ner",
+         *       "model": "dslim/bert-base-NER",
          *       "texts": ["John Smith works at Google.", "Apple Inc. is in Cupertino."]
          *     }
          *     ```
          */
         post: operations["recognizeEntities"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/classify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Zero-shot text classification
+         * @description Classifies text into arbitrary categories using NLI-based zero-shot classification models.
+         *
+         *     ## How It Works
+         *
+         *     Zero-shot classification uses Natural Language Inference (NLI) to classify text
+         *     without requiring training data for the specific categories. The model determines
+         *     how well a text "entails" each candidate label.
+         *
+         *     ## Models
+         *
+         *     - Models are auto-discovered from `models_dir/classifiers/`
+         *     - Supports multilingual models like mDeBERTa-mnli-xnli
+         *     - Compatible with HuggingFace NLI/MNLI models exported to ONNX
+         *
+         *     ## Use Cases
+         *
+         *     - **Sentiment Analysis**: Classify as positive/negative/neutral
+         *     - **Topic Classification**: Categorize by topic without training
+         *     - **Intent Detection**: Identify user intents from text
+         *     - **Content Moderation**: Detect inappropriate content types
+         *
+         *     ## Example
+         *
+         *     ```json
+         *     {
+         *       "model": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
+         *       "texts": ["I love this product!", "The service was terrible."],
+         *       "labels": ["positive", "negative", "neutral"]
+         *     }
+         *     ```
+         *
+         *     ## Multilingual Support
+         *
+         *     The mDeBERTa-mnli-xnli model supports 100+ languages. You can classify text
+         *     in any supported language using labels in that language:
+         *
+         *     ```json
+         *     {
+         *       "model": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
+         *       "texts": ["J'adore ce produit!"],
+         *       "labels": ["positif", "négatif", "neutre"]
+         *     }
+         *     ```
+         */
+        post: operations["classifyText"];
         delete?: never;
         options?: never;
         head?: never;
@@ -320,7 +382,7 @@ export interface paths {
          *     For question generation with LMQG models:
          *     ```json
          *     {
-         *       "model": "flan-t5-small-squad-qg",
+         *       "model": "lmqg/flan-t5-small-squad-qg",
          *       "inputs": ["generate question: <hl> Beyonce <hl> Beyonce starred as Etta James in Cadillac Records."]
          *     }
          *     ```
@@ -438,7 +500,7 @@ export interface components {
         EmbedRequest: {
             /**
              * @description Name of the embedder model from models_dir/embedders/
-             * @example bge-small-en-v1.5
+             * @example BAAI/bge-small-en-v1.5
              */
             model: string;
             /**
@@ -460,7 +522,7 @@ export interface components {
         };
         /**
          * @example {
-         *       "model": "bge-small-en-v1.5",
+         *       "model": "BAAI/bge-small-en-v1.5",
          *       "embeddings": [
          *         [
          *           0.0123,
@@ -478,7 +540,7 @@ export interface components {
         EmbedResponse: {
             /**
              * @description Model used for embedding
-             * @example bge-small-en-v1.5
+             * @example BAAI/bge-small-en-v1.5
              */
             model: string;
             /** @description Array of embedding vectors (one per input string) */
@@ -581,7 +643,7 @@ export interface components {
         RerankRequest: {
             /**
              * @description Name of reranking model from models_dir/rerankers/
-             * @example bge-reranker-v2-m3
+             * @example BAAI/bge-reranker-v2-m3
              */
             model: string;
             /**
@@ -636,7 +698,7 @@ export interface components {
         RecognizeRequest: {
             /**
              * @description Name of recognizer model from models_dir/recognizers/
-             * @example bert-base-ner
+             * @example dslim/bert-base-NER
              */
             model: string;
             /**
@@ -703,7 +765,7 @@ export interface components {
         RewriteRequest: {
             /**
              * @description Name of Seq2Seq rewriter model from models_dir/rewriters/
-             * @example flan-t5-small
+             * @example lmqg/flan-t5-small-squad-qg
              */
             model: string;
             /**
@@ -720,60 +782,127 @@ export interface components {
             /** @description Rewritten texts (array of arrays, one per input, multiple per beam) */
             texts: string[][];
         };
+        ClassifyRequest: {
+            /**
+             * @description Name of classifier model from models_dir/classifiers/
+             * @example MoritzLaurer/mDeBERTa-v3-base-mnli-xnli
+             */
+            model: string;
+            /**
+             * @description Texts to classify
+             * @example [
+             *       "I love this product!",
+             *       "The service was terrible."
+             *     ]
+             */
+            texts: string[];
+            /**
+             * @description Candidate labels for zero-shot classification.
+             *     The model will predict which label(s) best describe each text.
+             * @example [
+             *       "positive",
+             *       "negative",
+             *       "neutral"
+             *     ]
+             */
+            labels: string[];
+            /**
+             * @description Custom hypothesis template for NLI-based classification.
+             *     Use "{}" as placeholder for the label.
+             *     Default: "This example is {}."
+             * @example This text expresses a {} sentiment.
+             */
+            hypothesis_template?: string;
+            /**
+             * @description If true, allows multiple labels per text (independent scoring).
+             *     If false (default), scores are normalized across labels.
+             * @default false
+             */
+            multi_label?: boolean;
+        };
+        ClassifyResult: {
+            /**
+             * @description The predicted class/category
+             * @example positive
+             */
+            label: string;
+            /**
+             * Format: float
+             * @description Confidence score (0.0 to 1.0)
+             * @example 0.95
+             */
+            score: number;
+        };
+        ClassifyResponse: {
+            /** @description Name of model used for classification */
+            model: string;
+            /**
+             * @description Array of classification results (one per input text).
+             *     Each result is an array of ClassifyResult sorted by score descending.
+             */
+            classifications: components["schemas"]["ClassifyResult"][][];
+        };
         ModelsResponse: {
             /**
              * @description Available chunking models (always includes "fixed")
              * @example [
              *       "fixed",
-             *       "chonky-mmbert-small-multilingual-1"
+             *       "mirth/chonky-mmbert-small-multilingual-1"
              *     ]
              */
             chunkers: string[];
             /**
              * @description Available reranking models
              * @example [
-             *       "bge-reranker-v2-m3"
+             *       "BAAI/bge-reranker-v2-m3"
              *     ]
              */
             rerankers: string[];
             /**
+             * @description Available zero-shot classification models
+             * @example [
+             *       "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
+             *     ]
+             */
+            classifiers: string[];
+            /**
              * @description Available embedding models from models_dir/embedders/
              * @example [
-             *       "bge-small-en-v1.5",
-             *       "bge-small-en-v1.5-i8-qt"
+             *       "BAAI/bge-small-en-v1.5",
+             *       "BAAI/bge-small-en-v1.5:i8"
              *     ]
              */
             embedders: string[];
             /**
              * @description Available generator/LLM models from models_dir/generators/
              * @example [
-             *       "gemma-3-1b-it",
-             *       "tiny-random-gemma-3"
+             *       "google/gemma-3-1b-it",
+             *       "onnxruntime/Gemma-3-ONNX"
              *     ]
              */
             generators: string[];
             /**
              * @description Available recognizer models from models_dir/recognizers/
              * @example [
-             *       "bert-base-ner",
-             *       "distilbert-ner",
-             *       "gliner-small"
+             *       "dslim/bert-base-NER",
+             *       "dslim/bert-large-NER",
+             *       "onnx-community/gliner_small-v2.1"
              *     ]
              */
             recognizers: string[];
             /**
              * @description Available GLiNER extractor models (zero-shot recognition with custom labels)
              * @example [
-             *       "gliner-small",
-             *       "gliner-multitask"
+             *       "onnx-community/gliner_small-v2.1",
+             *       "onnx-community/gliner-multitask"
              *     ]
              */
             extractors?: string[];
             /**
              * @description Available Seq2Seq rewriter models from models_dir/rewriters/
              * @example [
-             *       "flan-t5-small",
-             *       "lmqg-question-generation"
+             *       "lmqg/flan-t5-small-squad-qg",
+             *       "lmqg/flan-t5-base-squad-qg"
              *     ]
              */
             rewriters: string[];
@@ -782,18 +911,18 @@ export interface components {
              *     Map of model name to model info. Use this to determine what capabilities
              *     each recognizer supports (labels, zeroshot, relations, answers).
              * @example {
-             *       "bert-base-ner": {
+             *       "dslim/bert-base-NER": {
              *         "capabilities": [
              *           "labels"
              *         ]
              *       },
-             *       "gliner-small": {
+             *       "onnx-community/gliner_small-v2.1": {
              *         "capabilities": [
              *           "labels",
              *           "zeroshot"
              *         ]
              *       },
-             *       "gliner-multitask": {
+             *       "onnx-community/gliner-multitask": {
              *         "capabilities": [
              *           "labels",
              *           "zeroshot",
@@ -827,11 +956,98 @@ export interface components {
              */
             capabilities?: components["schemas"]["RecognizerCapability"][];
         };
+        /** @description A tool (function) that the model can call */
+        Tool: {
+            /**
+             * @description The type of tool (currently only "function" is supported)
+             * @enum {string}
+             */
+            type: "function";
+            function: components["schemas"]["FunctionDefinition"];
+        };
+        /** @description Definition of a function that can be called by the model */
+        FunctionDefinition: {
+            /**
+             * @description The name of the function to call
+             * @example get_weather
+             */
+            name: string;
+            /**
+             * @description A description of what the function does
+             * @example Get the current weather in a location
+             */
+            description?: string;
+            /**
+             * @description JSON Schema object describing the function parameters
+             * @example {
+             *       "type": "object",
+             *       "properties": {
+             *         "location": {
+             *           "type": "string",
+             *           "description": "The city and state, e.g. San Francisco, CA"
+             *         }
+             *       },
+             *       "required": [
+             *         "location"
+             *       ]
+             *     }
+             */
+            parameters?: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description Whether to enforce strict parameter validation
+             * @default false
+             */
+            strict?: boolean;
+        };
+        /** @description A tool call made by the model */
+        ToolCall: {
+            /**
+             * @description Unique identifier for this tool call
+             * @example call_abc123
+             */
+            id: string;
+            /**
+             * @description The type of tool call (currently only "function")
+             * @enum {string}
+             */
+            type: "function";
+            function: components["schemas"]["ToolCallFunction"];
+        };
+        /** @description The function called by the model */
+        ToolCallFunction: {
+            /**
+             * @description The name of the function called
+             * @example get_weather
+             */
+            name: string;
+            /**
+             * @description JSON string of the arguments to the function
+             * @example {"location": "San Francisco, CA"}
+             */
+            arguments: string;
+        };
+        /**
+         * @description Controls how the model uses tools. Options:
+         *     - "auto": Model decides whether to call a tool (default)
+         *     - "none": Model will not call any tools
+         *     - "required": Model must call at least one tool
+         *     - object: Force a specific function to be called
+         */
+        ToolChoice: ("auto" | "none" | "required") | {
+            /** @enum {string} */
+            type: "function";
+            function: {
+                /** @description The name of the function to call */
+                name: string;
+            };
+        };
         /**
          * @description The role of a message sender in a conversation
          * @enum {string}
          */
-        Role: "system" | "user" | "assistant";
+        Role: "system" | "user" | "assistant" | "tool";
         /**
          * @description Reason why generation stopped
          * @enum {string}
@@ -845,12 +1061,16 @@ export interface components {
         ChatMessageContent: string | components["schemas"]["ContentPart"][];
         ChatMessage: {
             role: components["schemas"]["Role"];
-            content: components["schemas"]["ChatMessageContent"];
+            content?: components["schemas"]["ChatMessageContent"];
+            /** @description Tool calls made by the assistant (only for role=assistant) */
+            tool_calls?: components["schemas"]["ToolCall"][];
+            /** @description ID of the tool call this message is responding to (only for role=tool) */
+            tool_call_id?: string;
         };
         GenerateRequest: {
             /**
              * @description Name of the generator model from models_dir/generators/
-             * @example gemma-3-1b-it
+             * @example google/gemma-3-1b-it
              */
             model: string;
             /** @description Conversation messages (OpenAI-compatible format) */
@@ -884,6 +1104,13 @@ export interface components {
              * @default false
              */
             stream?: boolean;
+            /**
+             * @description List of tools (functions) the model can call.
+             *     Only supported by models with tool_call_format configured.
+             */
+            tools?: components["schemas"]["Tool"][];
+            /** @description Controls how the model uses tools */
+            tool_choice?: components["schemas"]["ToolChoice"];
         };
         /** @description OpenAI-compatible chat completion response */
         GenerateResponse: {
@@ -918,8 +1145,10 @@ export interface components {
         };
         GenerateMessage: {
             role: components["schemas"]["Role"];
-            /** @description The generated message content */
-            content: string;
+            /** @description The generated message content (null when tool_calls is present) */
+            content?: string | null;
+            /** @description Tool calls made by the model (only present when finish_reason is tool_calls) */
+            tool_calls?: components["schemas"]["ToolCall"][];
         };
         GenerateUsage: {
             /** @description Number of tokens in the prompt */
@@ -948,6 +1177,28 @@ export interface components {
             role?: components["schemas"]["Role"];
             /** @description Token content delta */
             content?: string | null;
+            /** @description Tool call deltas for streaming tool calls */
+            tool_calls?: components["schemas"]["ToolCallDelta"][];
+        };
+        /** @description Incremental tool call data for streaming */
+        ToolCallDelta: {
+            /** @description Index of the tool call in the array */
+            index?: number;
+            /** @description Unique identifier (only in first delta for this index) */
+            id?: string;
+            /**
+             * @description The type of tool call (only in first delta)
+             * @enum {string}
+             */
+            type?: "function";
+            function?: components["schemas"]["ToolCallFunctionDelta"];
+        };
+        /** @description Incremental function call data for streaming */
+        ToolCallFunctionDelta: {
+            /** @description Function name (only in first delta) */
+            name?: string;
+            /** @description Incremental arguments JSON string */
+            arguments?: string;
         };
         Config: {
             /**
@@ -975,9 +1226,10 @@ export interface components {
             /**
              * @description How long to keep models loaded in memory after last use (Ollama-compatible).
              *     Models are automatically unloaded after this duration of inactivity.
-             *     Use Go duration format: "5m" (5 minutes), "1h" (1 hour), "0" (never unload, eager loading).
-             *     When set to "0" or omitted, models are loaded eagerly at startup and never unloaded (legacy behavior).
-             * @default 0
+             *     Use Go duration format: "5m" (5 minutes), "1h" (1 hour), "0" (eager loading).
+             *     Defaults to "5m" (lazy loading) like Ollama. Set to "0" to explicitly enable eager loading
+             *     where all models are loaded at startup and never unloaded.
+             * @default 5m
              * @example 5m
              */
             keep_alive?: string;
@@ -989,6 +1241,14 @@ export interface components {
              * @example 3
              */
             max_loaded_models?: number;
+            /**
+             * @description Number of concurrent inference pipelines per model. Each pipeline loads
+             *     a copy of the model, so higher values use more memory but allow more
+             *     concurrent requests. Set to 0 to use the default (min(NumCPU, 4)).
+             * @default 0
+             * @example 1
+             */
+            pool_size?: number;
             /**
              * @description Backend priority order for model loading with optional device specifiers.
              *     Format: `backend` or `backend:device` where device defaults to `auto`.
@@ -1053,11 +1313,11 @@ export interface components {
             /**
              * @description List of model names to preload at startup (Ollama-compatible).
              *     These models are loaded immediately when Termite starts, avoiding first-request latency.
-             *     Model names should match those in models_dir/embedders/ (e.g., "bge-small-en-v1.5").
+             *     Model names should match those in models_dir/embedders/ (e.g., "BAAI/bge-small-en-v1.5").
              *     Only effective when keep_alive is non-zero (lazy loading mode).
              * @example [
-             *       "bge-small-en-v1.5",
-             *       "clip-vit-base-patch32"
+             *       "BAAI/bge-small-en-v1.5",
+             *       "openai/clip-vit-base-patch32"
              *     ]
              */
             preload?: string[];
@@ -1074,8 +1334,8 @@ export interface components {
             /**
              * @description Per-model loading strategy overrides. Maps model names to their loading strategy.
              *     Models not in this map use the default strategy based on keep_alive:
-             *     - If keep_alive="0" (default): eager loading (load at startup, never unload)
-             *     - If keep_alive>0: lazy loading (load on demand, unload after idle)
+             *     - If keep_alive>0 (default "5m"): lazy loading (load on demand, unload after idle)
+             *     - If keep_alive="0": eager loading (load at startup, never unload)
              *
              *     When a model has strategy "eager" in this map:
              *     - It is loaded at startup (as part of preload)
@@ -1083,8 +1343,8 @@ export interface components {
              *
              *     This allows mixing eager and lazy models in the same pool.
              * @example {
-             *       "bge-small-en-v1.5": "eager",
-             *       "chonky": "lazy"
+             *       "BAAI/bge-small-en-v1.5": "eager",
+             *       "mirth/chonky-mmbert-small-multilingual-1": "lazy"
              *     }
              */
             model_strategies?: {
@@ -1479,6 +1739,66 @@ export interface operations {
                 };
             };
             /** @description Recognition service unavailable (no models configured) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    classifyText: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Classification completed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassifyResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Model not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Classification service unavailable (no models configured) */
             503: {
                 headers: {
                     [name: string]: unknown;
