@@ -394,6 +394,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Read text from images (OCR/document understanding)
+         * @description Extracts text from images using Vision2Seq models like TrOCR, Donut, or Florence-2.
+         *
+         *     ## Models
+         *
+         *     Models are auto-discovered from `models_dir/readers/` at startup.
+         *     Use the `/api/models` endpoint to list available models.
+         *
+         *     - **TrOCR**: Pure OCR for printed/handwritten text
+         *     - **Donut**: Document understanding with structured output (receipts, forms)
+         *     - **Florence-2**: Multi-task vision model (OCR, captioning, VQA)
+         *
+         *     ## Task Prompts
+         *
+         *     Some models support task prompts for different extraction modes:
+         *
+         *     - **Donut CORD**: `<s_cord-v2>` for receipt parsing
+         *     - **Donut DocVQA**: `<s_docvqa><s_question>...</s_question><s_answer>` for visual QA
+         *     - **Florence-2 OCR**: `<OCR>` for text extraction
+         *     - **Florence-2 Caption**: `<CAPTION>` for image description
+         *
+         *     ## Example
+         *
+         *     ```json
+         *     {
+         *       "model": "microsoft/trocr-base-printed",
+         *       "images": [
+         *         {"url": "data:image/png;base64,iVBORw0KGgo..."}
+         *       ],
+         *       "max_tokens": 256
+         *     }
+         *     ```
+         *
+         *     With Donut for receipt parsing:
+         *     ```json
+         *     {
+         *       "model": "naver-clova-ix/donut-base-finetuned-cord-v2",
+         *       "images": [{"url": "data:image/png;base64,..."}],
+         *       "prompt": "<s_cord-v2>"
+         *     }
+         *     ```
+         */
+        post: operations["readImages"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/models": {
         parameters: {
             query?: never;
@@ -403,7 +462,7 @@ export interface paths {
         };
         /**
          * List available models
-         * @description Returns lists of available embedding, chunking, reranking, generator, NER, and rewriter models.
+         * @description Returns lists of available embedding, chunking, reranking, generator, NER, rewriter, and reader models.
          *
          *     ## Embedders
          *
@@ -434,6 +493,11 @@ export interface paths {
          *
          *     - Seq2Seq models from `models_dir/rewriters/`
          *     - T5, FLAN-T5, BART, and LMQG question generation models
+         *
+         *     ## Readers
+         *
+         *     - Vision2Seq models from `models_dir/readers/`
+         *     - TrOCR, Donut, Florence-2 for OCR and document understanding
          *
          *     Models are discovered at service startup and cached.
          */
@@ -842,6 +906,65 @@ export interface components {
              */
             classifications: components["schemas"]["ClassifyResult"][][];
         };
+        ReadRequest: {
+            /**
+             * @description Name of reader model from models_dir/readers/
+             * @example microsoft/trocr-base-printed
+             */
+            model: string;
+            /**
+             * @description Images to read text from. Supports:
+             *     - Data URIs: `data:image/png;base64,...`
+             *     - URLs (if content_security allows)
+             * @example [
+             *       {
+             *         "url": "data:image/png;base64,iVBORw0KGgo..."
+             *       }
+             *     ]
+             */
+            images: components["schemas"]["ImageURL"][];
+            /**
+             * @description Optional task prompt for document understanding models.
+             *     - TrOCR: Not used (pure OCR)
+             *     - Donut CORD: "<s_cord-v2>" for receipt parsing
+             *     - Donut DocVQA: "<s_docvqa><s_question>What is the total?</s_question><s_answer>"
+             *     - Florence-2: "<OCR>" for OCR, "<CAPTION>" for captioning
+             * @example <s_cord-v2>
+             */
+            prompt?: string;
+            /**
+             * @description Maximum tokens to generate
+             * @default 256
+             * @example 256
+             */
+            max_tokens?: number;
+        };
+        ReadResult: {
+            /**
+             * @description Extracted text from the image
+             * @example Invoice Total: $123.45
+             */
+            text: string;
+            /**
+             * @description Structured fields extracted by document understanding models (Donut, Florence-2).
+             *     Fields are flattened with dot notation for nested structures.
+             *     Only present for models that output structured data.
+             * @example {
+             *       "menu.nm": "Coffee",
+             *       "menu.price": "$3.50",
+             *       "total": "$123.45"
+             *     }
+             */
+            fields?: {
+                [key: string]: string;
+            };
+        };
+        ReadResponse: {
+            /** @description Name of model used for reading */
+            model: string;
+            /** @description Array of read results (one per input image) */
+            results: components["schemas"]["ReadResult"][];
+        };
         ModelsResponse: {
             /**
              * @description Available chunking models (always includes "fixed")
@@ -906,6 +1029,14 @@ export interface components {
              *     ]
              */
             rewriters: string[];
+            /**
+             * @description Available reader/OCR models from models_dir/readers/
+             * @example [
+             *       "microsoft/trocr-base-printed",
+             *       "naver-clova-ix/donut-base-finetuned-cord-v2"
+             *     ]
+             */
+            readers: string[];
             /**
              * @description Detailed information about recognizer models including capabilities.
              *     Map of model name to model info. Use this to determine what capabilities
@@ -1859,6 +1990,66 @@ export interface operations {
                 };
             };
             /** @description Generation service unavailable (no models configured) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    readImages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReadRequest"];
+            };
+        };
+        responses: {
+            /** @description Images read successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Model not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Reader service unavailable (no models configured) */
             503: {
                 headers: {
                     [name: string]: unknown;
