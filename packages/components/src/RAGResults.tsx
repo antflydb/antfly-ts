@@ -11,6 +11,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { Streamdown } from "streamdown";
+import { replaceCitations, renderAsMarkdownLinks } from "./citations";
+import { preprocessStreamingText } from "./markdown";
 import { useSharedContext } from "./SharedContext";
 import { resolveTable, streamRAG } from "./utils";
 
@@ -243,41 +246,49 @@ export default function RAGResults({
     [dispatch, id]
   );
 
-  // Default render function - plain text with inline citations
+  // Default render function - markdown with inline citations
   const defaultRender = useCallback(
-    (summaryText: string, streaming: boolean, hitList?: QueryHit[]) => (
-      <div className="react-af-rag-results">
-        {error && (
-          <div className="react-af-rag-error" style={{ color: "red" }}>
-            Error: {error}
-          </div>
-        )}
-        {!error && !summaryText && !streaming && (
-          <div className="react-af-rag-empty">
-            No results yet. Submit a question to get started.
-          </div>
-        )}
-        {summaryText && (
-          <div className="react-af-rag-summary">
-            {summaryText}
-            {streaming && <span className="react-af-rag-streaming"> ...</span>}
-          </div>
-        )}
-        {showHits && hitList && hitList.length > 0 && (
-          <details className="react-af-rag-hits">
-            <summary>Search Results ({hitList.length})</summary>
-            <ul>
-              {hitList.map((hit, idx) => (
-                <li key={hit._id || idx}>
-                  <strong>Score:</strong> {hit._score.toFixed(3)}
-                  <pre>{JSON.stringify(hit._source, null, 2)}</pre>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </div>
-    ),
+    (summaryText: string, streaming: boolean, hitList?: QueryHit[]) => {
+      const processedText = preprocessStreamingText(summaryText);
+      const textWithLinks = processedText
+        ? replaceCitations(processedText, {
+            renderCitation: renderAsMarkdownLinks,
+          })
+        : "";
+
+      return (
+        <div className="react-af-rag-results">
+          {error && (
+            <div className="react-af-rag-error" style={{ color: "red" }}>
+              Error: {error}
+            </div>
+          )}
+          {!error && !summaryText && !streaming && (
+            <div className="react-af-rag-empty">
+              No results yet. Submit a question to get started.
+            </div>
+          )}
+          {summaryText && (
+            <div className="react-af-rag-summary">
+              <Streamdown isAnimating={streaming}>{textWithLinks}</Streamdown>
+            </div>
+          )}
+          {showHits && hitList && hitList.length > 0 && (
+            <details className="react-af-rag-hits">
+              <summary>Search Results ({hitList.length})</summary>
+              <ul>
+                {hitList.map((hit, idx) => (
+                  <li key={hit._id || idx}>
+                    <strong>Score:</strong> {hit._score.toFixed(3)}
+                    <pre>{JSON.stringify(hit._source, null, 2)}</pre>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </div>
+      );
+    },
     [error, showHits]
   );
 

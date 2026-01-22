@@ -20,6 +20,7 @@ import {
 } from "./citations";
 import Facet from "./Facet";
 import { renderNumeric, renderStars, renderThumbsUpDown } from "./feedback-renderers";
+import { preprocessStreamingText } from "./markdown";
 import { useAnswerStream } from "./hooks/useAnswerStream";
 import { useCitations } from "./hooks/useCitations";
 import { useSearchHistory } from "./hooks/useSearchHistory";
@@ -75,6 +76,7 @@ export {
   useSearchHistory,
   useAnswerStream,
   useCitations,
+  preprocessStreamingText,
 };
 
 export type {
