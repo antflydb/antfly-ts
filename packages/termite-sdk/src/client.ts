@@ -31,7 +31,7 @@ export class TermiteClient {
     };
 
     this.client = createClient<paths>({
-      baseUrl: this.baseUrl,
+      baseUrl: `${this.baseUrl}/api`,
       headers: {
         ...this.headers,
         Accept: "application/json",
@@ -109,7 +109,7 @@ export class TermiteClient {
     input: EmbedInput,
     options?: { truncate?: boolean }
   ): Promise<number[][]> {
-    const response = await fetch(`${this.baseUrl}/embed`, {
+    const response = await fetch(`${this.baseUrl}/api/embed`, {
       method: "POST",
       headers: {
         ...this.headers,

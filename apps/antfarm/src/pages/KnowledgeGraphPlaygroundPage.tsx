@@ -62,13 +62,17 @@ interface KnowledgeGraphResponse {
   edges: KGEdge[];
 }
 
+interface RecognizerModelInfo {
+  capabilities: string[];
+}
+
 interface ModelsResponse {
   chunkers: string[];
   rerankers: string[];
-  ner: string[];
+  recognizers: string[];
   embedders: string[];
   generators: string[];
-  rel: string[];
+  recognizer_info?: Record<string, RecognizerModelInfo>;
 }
 
 interface KGBuilderConfig {
@@ -135,14 +139,24 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         const response = await fetch(`${TERMITE_API_URL}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
-          // REBEL models (preferred for relation extraction)
-          const rebelModels = (data.rel || []).map((m) => `rel:${m}`);
-          // Filter for GLiNER models which support relation extraction
-          const glinerModels = (data.ner || []).filter(
-            (m) => m.toLowerCase().includes("gliner") && m.toLowerCase().includes("multi")
-          );
-          // Combine: prefer REBEL models, then GLiNER
-          const models = [...rebelModels, ...glinerModels];
+          const recognizers = data.recognizers || [];
+          const recognizerInfo = data.recognizer_info || {};
+
+          // Filter for models with "relations" capability (REBEL, GLiNER multitask)
+          const relationModels = recognizers.filter((model) => {
+            const info = recognizerInfo[model];
+            return info?.capabilities?.includes("relations");
+          });
+
+          // Mark REBEL models with prefix for special handling
+          const models = relationModels.map((m) => {
+            // REBEL models typically have "rebel" in the name
+            if (m.toLowerCase().includes("rebel")) {
+              return `rel:${m}`;
+            }
+            return m;
+          });
+
           setAvailableModels(models);
           if (models.length > 0) {
             setSelectedModel(models[0]);
