@@ -60,7 +60,7 @@ const CHUNK_TEXT_COLORS = [
   "text-indigo-700 dark:text-indigo-300",
 ];
 
-const TERMITE_API_URL = "http://localhost:11433";
+const TERMITE_API_URL = "http://localhost:11433/api";
 
 const ChunkingPlaygroundPage: React.FC = () => {
   const [inputText, setInputText] = useState("");

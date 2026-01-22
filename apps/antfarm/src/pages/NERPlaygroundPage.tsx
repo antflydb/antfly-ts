@@ -34,7 +34,7 @@ interface NERResponse {
 interface ModelsResponse {
   chunkers: string[];
   rerankers: string[];
-  ner: string[];
+  recognizers: string[];
   embedders: string[];
   generators: string[];
 }
@@ -151,9 +151,9 @@ const NERPlaygroundPage: React.FC = () => {
         const response = await fetch(`${TERMITE_API_URL}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
-          setAvailableModels(data.ner || []);
-          if (data.ner && data.ner.length > 0) {
-            setSelectedModel(data.ner[0]);
+          setAvailableModels(data.recognizers || []);
+          if (data.recognizers && data.recognizers.length > 0) {
+            setSelectedModel(data.recognizers[0]);
           }
         }
       } catch {
