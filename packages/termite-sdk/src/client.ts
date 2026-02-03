@@ -15,6 +15,7 @@ import type {
   RequestOptions,
   RerankResponse,
   TermiteConfig,
+  TranscribeResponse,
   VersionResponse,
 } from "./types.js";
 
@@ -216,6 +217,45 @@ export class TermiteClient {
       },
     });
     if (error) throw new Error(`Rerank failed: ${error.error}`);
+    return data!;
+  }
+
+  /**
+   * Transcribe audio to text (speech-to-text)
+   *
+   * @param audio - Base64-encoded audio data (WAV, MP3, FLAC, etc.)
+   * @param options - Optional parameters
+   * @param options.model - Name of transcriber model (e.g., "openai/whisper-tiny")
+   * @param options.language - Force specific language for transcription
+   * @returns TranscribeResponse with transcribed text and metadata
+   *
+   * @example Basic transcription
+   * ```typescript
+   * const audioBase64 = fs.readFileSync('audio.wav').toString('base64');
+   * const result = await client.transcribe(audioBase64);
+   * console.log(result.text); // "Hello, how are you today?"
+   * ```
+   *
+   * @example With specific model and language
+   * ```typescript
+   * const result = await client.transcribe(audioBase64, {
+   *   model: "openai/whisper-tiny",
+   *   language: "en"
+   * });
+   * ```
+   */
+  async transcribe(
+    audio: string,
+    options?: { model?: string; language?: string }
+  ): Promise<TranscribeResponse> {
+    const { data, error } = await this.client.POST("/transcribe", {
+      body: {
+        audio,
+        model: options?.model,
+        language: options?.language,
+      },
+    });
+    if (error) throw new Error(`Transcribe failed: ${error.error}`);
     return data!;
   }
 

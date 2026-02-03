@@ -453,6 +453,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/transcribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Transcribe audio to text (speech-to-text)
+         * @description Transcribes audio to text using Speech2Seq models like Whisper, Wav2Vec2, or HuBERT.
+         *
+         *     ## Models
+         *
+         *     Models are auto-discovered from `models_dir/transcribers/` at startup.
+         *     Use the `/api/models` endpoint to list available models.
+         *
+         *     - **Whisper**: OpenAI's Whisper models (multilingual, automatic language detection)
+         *     - **Wav2Vec2**: Facebook's Wav2Vec 2.0 models (English-focused)
+         *     - **HuBERT**: Facebook's HuBERT models (self-supervised)
+         *
+         *     ## Audio Input
+         *
+         *     Audio data should be base64-encoded. Supported formats depend on the model:
+         *     - WAV (recommended - raw PCM)
+         *     - MP3
+         *     - FLAC
+         *     - M4A/AAC
+         *
+         *     ## Example
+         *
+         *     ```json
+         *     {
+         *       "model": "openai/whisper-tiny",
+         *       "audio": "UklGRi..."
+         *     }
+         *     ```
+         *
+         *     With language hint:
+         *     ```json
+         *     {
+         *       "model": "openai/whisper-tiny",
+         *       "audio": "UklGRi...",
+         *       "language": "en"
+         *     }
+         *     ```
+         */
+        post: operations["transcribeAudio"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/models": {
         parameters: {
             query?: never;
@@ -462,7 +517,7 @@ export interface paths {
         };
         /**
          * List available models
-         * @description Returns lists of available embedding, chunking, reranking, generator, NER, rewriter, and reader models.
+         * @description Returns lists of available embedding, chunking, reranking, generator, NER, rewriter, reader, and transcriber models.
          *
          *     ## Embedders
          *
@@ -498,6 +553,11 @@ export interface paths {
          *
          *     - Vision2Seq models from `models_dir/readers/`
          *     - TrOCR, Donut, Florence-2 for OCR and document understanding
+         *
+         *     ## Transcribers
+         *
+         *     - Speech2Seq models from `models_dir/transcribers/`
+         *     - Whisper, Wav2Vec2, HuBERT for speech-to-text
          *
          *     Models are discovered at service startup and cached.
          */
@@ -965,6 +1025,37 @@ export interface components {
             /** @description Array of read results (one per input image) */
             results: components["schemas"]["ReadResult"][];
         };
+        TranscribeRequest: {
+            /**
+             * @description Name of transcriber model from models_dir/transcribers/
+             * @example openai/whisper-tiny
+             */
+            model?: string;
+            /**
+             * Format: byte
+             * @description Base64-encoded audio data (WAV, MP3, FLAC, etc.)
+             */
+            audio: string;
+            /**
+             * @description Force specific language for transcription (optional, model-dependent)
+             * @example en
+             */
+            language?: string;
+        };
+        TranscribeResponse: {
+            /** @description Name of model used for transcription */
+            model: string;
+            /**
+             * @description Transcribed text from the audio
+             * @example Hello, how are you today?
+             */
+            text: string;
+            /**
+             * @description Detected or forced language
+             * @example en
+             */
+            language?: string;
+        };
         ModelsResponse: {
             /**
              * @description Available chunking models (always includes "fixed")
@@ -1037,6 +1128,14 @@ export interface components {
              *     ]
              */
             readers: string[];
+            /**
+             * @description Available transcriber/speech-to-text models from models_dir/transcribers/
+             * @example [
+             *       "openai/whisper-tiny",
+             *       "openai/whisper-base"
+             *     ]
+             */
+            transcribers: string[];
             /**
              * @description Detailed information about recognizer models including capabilities.
              *     Map of model name to model info. Use this to determine what capabilities
@@ -2050,6 +2149,66 @@ export interface operations {
                 };
             };
             /** @description Reader service unavailable (no models configured) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    transcribeAudio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TranscribeRequest"];
+            };
+        };
+        responses: {
+            /** @description Audio transcribed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscribeResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Model not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Transcription service unavailable (no models configured) */
             503: {
                 headers: {
                     [name: string]: unknown;

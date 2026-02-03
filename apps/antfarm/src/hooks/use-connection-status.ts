@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { isProductEnabled } from "@/config/products";
 
 export type ServerStatus = "connected" | "disconnected" | "checking";

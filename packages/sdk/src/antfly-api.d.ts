@@ -1911,11 +1911,18 @@ export interface components {
              */
             messages: components["schemas"]["ChatMessage"][];
             /**
-             * @description Generator configuration for the chat agent.
+             * @description Default generator configuration for the chat agent.
              *     Models with native tool calling support (OpenAI, Anthropic, Gemini, Vertex)
              *     will use function calling. Other models (Ollama) use prompt-based fallback.
+             *     Mutually exclusive with 'chain'. Either 'generator' or 'chain' must be provided.
              */
-            generator: components["schemas"]["GeneratorConfig"];
+            generator?: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Chain of generators with retry/fallback semantics for the chat agent.
+             *     Each link can specify retry configuration and a condition for trying the next generator.
+             *     Mutually exclusive with 'generator'. Either 'generator' or 'chain' must be provided.
+             */
+            chain?: components["schemas"]["ChainLink"][];
             /**
              * @description Base query configurations. The chat agent will modify these queries
              *     based on conversation context, applying filters and transformations.
@@ -5317,8 +5324,7 @@ export interface components {
          *       "target_tokens": 500,
          *       "overlap_tokens": 50,
          *       "separator": "\n\n",
-         *       "max_chunks": 50,
-         *       "full_text": {}
+         *       "max_chunks": 50
          *     }
          */
         TermiteChunkerConfig: components["schemas"]["ChunkOptions"] & {
@@ -5334,16 +5340,6 @@ export interface components {
              * @example fixed
              */
             model: string;
-            /**
-             * @description Configuration for full-text indexing of chunks in Bleve.
-             *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
-             *     When absent, chunks use :c: suffix and are only used for vector embeddings.
-             *     This object is reserved for future options like boosting, field mapping, etc.
-             * @example {}
-             */
-            full_text?: {
-                [key: string]: unknown;
-            };
         };
         /**
          * @description Configuration for the local Antfly chunking provider.
@@ -5369,18 +5365,7 @@ export interface components {
          *       "max_chunks": 50
          *     }
          */
-        AntflyChunkerConfig: components["schemas"]["ChunkOptions"] & {
-            /**
-             * @description Configuration for full-text indexing of chunks in Bleve.
-             *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
-             *     When absent, chunks use :c: suffix and are only used for vector embeddings.
-             *     This object is reserved for future options like boosting, field mapping, etc.
-             * @example {}
-             */
-            full_text?: {
-                [key: string]: unknown;
-            };
-        };
+        AntflyChunkerConfig: components["schemas"]["ChunkOptions"];
         /**
          * @description The chunking provider to use.
          * @enum {string}
@@ -5397,6 +5382,19 @@ export interface components {
          */
         ChunkerConfig: (components["schemas"]["TermiteChunkerConfig"] | components["schemas"]["AntflyChunkerConfig"]) & {
             provider: components["schemas"]["ChunkerProvider"];
+            /**
+             * @description Controls whether chunk data is persisted to storage. When false (default), chunks are generated in memory and only embeddings are stored. When true, both chunks and embeddings are stored.
+             * @default false
+             */
+            store_chunks?: boolean;
+            /**
+             * @description Configuration for full-text indexing of chunks in Bleve.
+             *     When present (even if empty), chunks will be stored with :cft: suffix and indexed in Bleve's _chunks field.
+             *     When absent, chunks use :c: suffix and are only used for vector embeddings.
+             */
+            full_text_index?: {
+                [key: string]: unknown;
+            };
         };
         EmbeddingIndexConfig: {
             /** @description Vector dimension */

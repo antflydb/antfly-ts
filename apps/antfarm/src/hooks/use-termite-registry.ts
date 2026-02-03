@@ -1,12 +1,12 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
-  TermiteModel,
+  Backend,
   ModelType,
   ModelTypeInfo,
   QuantizationOption,
   QuantizationType,
   RecognizerCapability,
-  Backend,
+  TermiteModel,
 } from "@/data/termite-models";
 
 // In development, use the Vite proxy to avoid CORS issues
@@ -39,7 +39,8 @@ const MODEL_TYPES: ModelTypeInfo[] = [
   {
     type: "embedder",
     name: "Embedder",
-    description: "Generate vector embeddings from text or images for semantic search and similarity",
+    description:
+      "Generate vector embeddings from text or images for semantic search and similarity",
     icon: "Fingerprint",
   },
   {
@@ -63,7 +64,8 @@ const MODEL_TYPES: ModelTypeInfo[] = [
   {
     type: "rewriter",
     name: "Rewriter",
-    description: "Sequence-to-sequence text transformation like paraphrasing and question generation",
+    description:
+      "Sequence-to-sequence text transformation like paraphrasing and question generation",
     icon: "RefreshCw",
   },
   {
@@ -126,9 +128,7 @@ function transformModel(apiModel: RegistryModelResponse): TermiteModel {
   const id = apiModel.name.toLowerCase().replace(/_/g, "-");
 
   // Generate source URL from source (owner/model format)
-  const sourceUrl = apiModel.source
-    ? `https://huggingface.co/${apiModel.source}`
-    : "";
+  const sourceUrl = apiModel.source ? `https://huggingface.co/${apiModel.source}` : "";
 
   // Format size as human-readable string if available
   const size = apiModel.size ? formatBytes(apiModel.size) : undefined;
@@ -164,15 +164,11 @@ let registryCache: {
 } | null = null;
 
 export function useTermiteRegistry(): TermiteRegistryState {
-  const [models, setModels] = useState<TermiteModel[]>(
-    registryCache?.models ?? []
+  const [models, setModels] = useState<TermiteModel[]>(registryCache?.models ?? []);
+  const [types, setTypes] = useState<ModelTypeInfo[]>(registryCache?.types ?? []);
+  const [quantizationOptions, setQuantizationOptions] = useState<QuantizationOption[]>(
+    registryCache?.quantizationOptions ?? []
   );
-  const [types, setTypes] = useState<ModelTypeInfo[]>(
-    registryCache?.types ?? []
-  );
-  const [quantizationOptions, setQuantizationOptions] = useState<
-    QuantizationOption[]
-  >(registryCache?.quantizationOptions ?? []);
   const [loading, setLoading] = useState(!registryCache);
   const [error, setError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
@@ -212,8 +208,7 @@ export function useTermiteRegistry(): TermiteRegistryState {
       if ((err as Error).name === "AbortError") return;
       if (!isMountedRef.current) return;
 
-      const message =
-        err instanceof Error ? err.message : "Failed to fetch model registry";
+      const message = err instanceof Error ? err.message : "Failed to fetch model registry";
       setError(message);
       setLoading(false);
     }

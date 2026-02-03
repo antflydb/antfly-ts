@@ -27,11 +27,7 @@ import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import {
   Sheet,
@@ -40,12 +36,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   getDownloadCommand,
   getHardwareCapabilities,
@@ -56,8 +47,8 @@ import {
   type QuantizationType,
   type RecognizerCapability,
   type TermiteModel,
-  type VariantPreset,
   VARIANT_PRESETS,
+  type VariantPreset,
 } from "@/data/termite-models";
 import { useTermiteRegistry } from "@/hooks/use-termite-registry";
 import { cn } from "@/lib/utils";
@@ -73,7 +64,10 @@ const MODEL_TYPE_ICONS: Record<ModelType, React.FC<{ className?: string }>> = {
 };
 
 // Refined color system - bold accent colors with monochrome base
-const MODEL_TYPE_ACCENT: Record<ModelType, { bg: string; text: string; border: string; glow: string }> = {
+const MODEL_TYPE_ACCENT: Record<
+  ModelType,
+  { bg: string; text: string; border: string; glow: string }
+> = {
   embedder: {
     bg: "bg-blue-500",
     text: "text-blue-500 dark:text-blue-400",
@@ -226,10 +220,9 @@ function useHFStats(source: string): HFStats {
 
     async function fetchStats() {
       try {
-        const response = await fetch(
-          `https://huggingface.co/api/models/${source}`,
-          { signal: controller.signal }
-        );
+        const response = await fetch(`https://huggingface.co/api/models/${source}`, {
+          signal: controller.signal,
+        });
 
         // Check if aborted before processing response
         if (controller.signal.aborted) return;
@@ -281,7 +274,13 @@ const HFLogo: React.FC<{ className?: string }> = ({ className }) => (
     <path d="M47.2 0C26.6 0 9.8 16.8 9.8 37.4c0 7.8 2.4 15 6.5 21L.8 87.5l29.6-15c5.2 2.5 11 3.9 17.2 3.9 20.6 0 37.4-16.8 37.4-37.4C85 17.4 67.8 0 47.2 0zm0 67.8c-4.6 0-9-1-13-2.8l-1-.4-9.8 5.1 5.2-9.5-.8-1.2c-3.4-5.2-5.2-11.2-5.2-17.6 0-18 14.6-32.6 32.6-32.6S79.8 23.4 79.8 41.4 65.2 67.8 47.2 67.8z" />
     <circle cx="35" cy="38" r="5" />
     <circle cx="59" cy="38" r="5" />
-    <path d="M58.5 50c-2 3.5-6 6-11 6s-9-2.5-11-6" strokeWidth="3" stroke="currentColor" fill="none" strokeLinecap="round" />
+    <path
+      d="M58.5 50c-2 3.5-6 6-11 6s-9-2.5-11-6"
+      strokeWidth="3"
+      stroke="currentColor"
+      fill="none"
+      strokeLinecap="round"
+    />
   </svg>
 );
 
@@ -304,7 +303,10 @@ const ModelStats: React.FC<{ source: string; compact?: boolean }> = ({ source, c
 
   if (compact) {
     return (
-      <div className="flex items-center gap-2 text-xs text-muted-foreground" title="HuggingFace stats">
+      <div
+        className="flex items-center gap-2 text-xs text-muted-foreground"
+        title="HuggingFace stats"
+      >
         <HFLogo className="w-3 h-3 opacity-50" />
         <span className="flex items-center gap-1">
           <Download className="w-3 h-3" />
@@ -339,7 +341,7 @@ const ModelStats: React.FC<{ source: string; compact?: boolean }> = ({ source, c
 // Animated number counter for hero stats
 const AnimatedCounter: React.FC<{ value: number; duration?: number }> = ({
   value,
-  duration = 1000
+  duration = 1000,
 }) => {
   const [count, setCount] = useState(0);
   const isMountedRef = useRef(true);
@@ -508,18 +510,13 @@ const ModelCard: React.FC<{
           {model.capabilities?.slice(0, 2).map((cap) => (
             <span
               key={cap}
-              className={cn(
-                "px-2 py-0.5 rounded-md text-xs border",
-                CAPABILITY_STYLES[cap]
-              )}
+              className={cn("px-2 py-0.5 rounded-md text-xs border", CAPABILITY_STYLES[cap])}
             >
               {CAPABILITY_LABELS[cap]}
             </span>
           ))}
           {model.capabilities && model.capabilities.length > 2 && (
-            <span className="text-xs text-muted-foreground">
-              +{model.capabilities.length - 2}
-            </span>
+            <span className="text-xs text-muted-foreground">+{model.capabilities.length - 2}</span>
           )}
         </div>
 
@@ -582,12 +579,7 @@ const ModelDetailSheet: React.FC<{
         {/* Header with gradient accent */}
         <div className={cn("relative px-6 pt-6 pb-5", "border-b border-border/50")}>
           {/* Subtle gradient background */}
-          <div
-            className={cn(
-              "absolute inset-0 opacity-[0.03] dark:opacity-[0.06]",
-              accent.bg
-            )}
-          />
+          <div className={cn("absolute inset-0 opacity-[0.03] dark:opacity-[0.06]", accent.bg)} />
 
           <SheetHeader className="relative">
             <div className="flex items-start gap-3.5">
@@ -648,9 +640,7 @@ const ModelDetailSheet: React.FC<{
         {/* Content */}
         <div className="px-6 py-5 space-y-5">
           {/* Description */}
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {model.description}
-          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{model.description}</p>
 
           {/* Hardware Compatibility */}
           <div>
@@ -708,8 +698,8 @@ const ModelDetailSheet: React.FC<{
                         isSelected
                           ? "bg-foreground text-background shadow-sm"
                           : isAvailable
-                          ? "bg-background text-foreground border border-border hover:border-foreground/30"
-                          : "bg-muted/50 text-muted-foreground/50 border border-border/50 cursor-not-allowed"
+                            ? "bg-background text-foreground border border-border hover:border-foreground/30"
+                            : "bg-muted/50 text-muted-foreground/50 border border-border/50 cursor-not-allowed"
                       )}
                     >
                       <div className="flex items-center gap-2">
@@ -718,10 +708,12 @@ const ModelDetailSheet: React.FC<{
                         {preset.type === "highest-quality" && <Sparkles className="w-3.5 h-3.5" />}
                         <span className="text-xs font-medium">{preset.label}</span>
                       </div>
-                      <p className={cn(
-                        "text-[10px] mt-0.5 leading-tight",
-                        isSelected ? "text-background/70" : "text-muted-foreground"
-                      )}>
+                      <p
+                        className={cn(
+                          "text-[10px] mt-0.5 leading-tight",
+                          isSelected ? "text-background/70" : "text-muted-foreground"
+                        )}
+                      >
                         {preset.description}
                       </p>
                     </button>
@@ -732,17 +724,22 @@ const ModelDetailSheet: React.FC<{
               {/* Selected variant info */}
               {selectedVariantInfo && (
                 <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-                  <span>Selected: <span className="font-medium text-foreground">{selectedVariantInfo.name}</span></span>
+                  <span>
+                    Selected:{" "}
+                    <span className="font-medium text-foreground">{selectedVariantInfo.name}</span>
+                  </span>
                 </div>
               )}
 
               {/* Collapsible all variants */}
               <Collapsible open={showAllVariants} onOpenChange={setShowAllVariants}>
                 <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mt-3 transition-colors">
-                  <ChevronDown className={cn(
-                    "w-3.5 h-3.5 transition-transform",
-                    showAllVariants && "rotate-180"
-                  )} />
+                  <ChevronDown
+                    className={cn(
+                      "w-3.5 h-3.5 transition-transform",
+                      showAllVariants && "rotate-180"
+                    )}
+                  />
                   <span>All variants ({availableVariants.length})</span>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-3">
@@ -760,8 +757,8 @@ const ModelDetailSheet: React.FC<{
                           selectedVariant === variant.type && selectedPreset === null
                             ? "bg-foreground text-background"
                             : selectedVariant === variant.type
-                            ? "bg-foreground/10 text-foreground border border-foreground/20"
-                            : "bg-background text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20"
+                              ? "bg-foreground/10 text-foreground border border-foreground/20"
+                              : "bg-background text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20"
                         )}
                       >
                         <span className="font-medium">{variant.name}</span>
@@ -806,7 +803,9 @@ const ModelDetailSheet: React.FC<{
                 className={cn(
                   "absolute inset-x-4 bottom-full mb-2 py-1.5 px-2 rounded bg-foreground text-background text-xs text-center",
                   "transition-all duration-200",
-                  copiedCommand ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1 pointer-events-none"
+                  copiedCommand
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-1 pointer-events-none"
                 )}
               >
                 Copied to clipboard
@@ -995,8 +994,8 @@ const ModelsPage: React.FC = () => {
           {/* Title */}
           <h1 className="text-4xl font-bold tracking-tight mb-3">Model Directory</h1>
           <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
-            Browse {models.length} optimized models for embeddings, NER, chunking, and more.
-            All models run locally via ONNX.
+            Browse {models.length} optimized models for embeddings, NER, chunking, and more. All
+            models run locally via ONNX.
           </p>
 
           {/* Stats */}
@@ -1048,7 +1047,11 @@ const ModelsPage: React.FC = () => {
         </div>
 
         {/* Type filters */}
-        <div role="group" aria-label="Filter models by type" className="flex flex-wrap items-center gap-2">
+        <div
+          role="group"
+          aria-label="Filter models by type"
+          className="flex flex-wrap items-center gap-2"
+        >
           <button
             type="button"
             onClick={() => setSelectedType("all")}
@@ -1091,9 +1094,7 @@ const ModelsPage: React.FC = () => {
             <Search className="w-7 h-7 text-muted-foreground/50" />
           </div>
           <h3 className="text-lg font-semibold mb-1">No models found</h3>
-          <p className="text-muted-foreground text-sm mb-4">
-            Try adjusting your search or filters
-          </p>
+          <p className="text-muted-foreground text-sm mb-4">Try adjusting your search or filters</p>
           <Button
             variant="outline"
             size="sm"

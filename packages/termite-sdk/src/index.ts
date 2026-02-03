@@ -2,7 +2,7 @@
  * Termite SDK for TypeScript
  *
  * A TypeScript SDK for interacting with the Termite ML inference API.
- * Termite provides local ML inference for embeddings, chunking, and reranking.
+ * Termite provides local ML inference for embeddings, chunking, reranking, and transcription.
  *
  * @example
  * ```typescript
@@ -28,6 +28,12 @@
  *   'search query',
  *   ['doc1 text', 'doc2 text']
  * );
+ *
+ * // Transcribe audio to text
+ * const transcribeResult = await client.transcribe(audioBase64, {
+ *   model: 'openai/whisper-tiny'
+ * });
+ * console.log(transcribeResult.text);
  *
  * // List available models
  * const models = await client.listModels();
@@ -71,6 +77,9 @@ export type {
   // Error type
   TermiteError,
   TextContentPart,
+  // Transcription types
+  TranscribeRequest,
+  TranscribeResponse,
   VersionResponse,
 } from "./types.js";
 // Constant exports

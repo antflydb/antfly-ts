@@ -20,6 +20,9 @@ export type RerankResponse = components["schemas"]["RerankResponse"];
 export type ModelsResponse = components["schemas"]["ModelsResponse"];
 export type VersionResponse = components["schemas"]["VersionResponse"];
 
+export type TranscribeRequest = components["schemas"]["TranscribeRequest"];
+export type TranscribeResponse = components["schemas"]["TranscribeResponse"];
+
 // Content part types for multimodal embeddings
 export type ContentPart = components["schemas"]["ContentPart"];
 export type TextContentPart = components["schemas"]["TextContentPart"];

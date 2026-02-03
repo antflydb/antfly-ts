@@ -192,9 +192,7 @@ export function getModelsWithCapability(
   models: TermiteModel[],
   capability: RecognizerCapability
 ): TermiteModel[] {
-  return models.filter(
-    (model) => model.capabilities && model.capabilities.includes(capability)
-  );
+  return models.filter((model) => model.capabilities && model.capabilities.includes(capability));
 }
 
 export function getQuantizationInfo(
@@ -205,10 +203,7 @@ export function getQuantizationInfo(
 }
 
 // Generate download command for a model
-export function getDownloadCommand(
-  model: TermiteModel,
-  quantization?: QuantizationType
-): string {
+export function getDownloadCommand(model: TermiteModel, quantization?: QuantizationType): string {
   // Base command: termite pull hf:SOURCE --type TYPE
   let cmd = `termite pull hf:${model.source} --type ${model.type}`;
 

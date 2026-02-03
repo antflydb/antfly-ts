@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
 import { AlertTriangle, RefreshCw, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { isProductEnabled } from "@/config/products";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
@@ -70,9 +70,7 @@ export function ConnectionStatusBanner() {
                   <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
                     Unable to connect to {info.name} server
                   </p>
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    {info.hint}
-                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400">{info.hint}</p>
                 </div>
               );
             })}
