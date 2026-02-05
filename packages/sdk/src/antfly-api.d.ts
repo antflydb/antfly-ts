@@ -5420,6 +5420,20 @@ export interface components {
             /** @description Edge type name (e.g., 'cites', 'similar_to') */
             name: string;
             /**
+             * @description Document field containing target node key(s) for automatic edge creation.
+             *     Supports string (single target) or array of strings (multiple targets).
+             *     When omitted, edges must be provided explicitly via _edges.
+             */
+            field?: string;
+            /**
+             * @description Topology constraint for this edge type:
+             *     - tree: Single parent per node, no cycles
+             *     - graph: No constraints (default)
+             * @default graph
+             * @enum {string}
+             */
+            topology?: "tree" | "graph";
+            /**
              * Format: double
              * @description Maximum allowed edge weight
              * @default 1
@@ -5441,6 +5455,16 @@ export interface components {
         };
         /** @description Configuration for graph_v0 index type */
         GraphIndexV0Config: {
+            /** @description Configuration for generating node summaries (enables tree navigation in AnswerAgent) */
+            summarizer?: components["schemas"]["GeneratorConfig"];
+            /**
+             * @description Handlebars template for generating summarizer input text.
+             *     Uses document fields as template variables.
+             *     Same pattern as EmbeddingIndexConfig.template.
+             * @example {{title}}
+             *     {{content}}
+             */
+            template?: string;
             /** @description List of edge types with their configurations */
             edge_types?: components["schemas"]["EdgeTypeConfig"][];
             /** @description Maximum number of edges per document (0 = unlimited) */
