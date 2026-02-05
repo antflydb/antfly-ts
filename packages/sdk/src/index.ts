@@ -99,6 +99,21 @@ export type {
   DistanceUnit,
   // Schema types
   DocumentSchema,
+  // Graph index types
+  Edge,
+  EdgeDirection,
+  EdgeTopology,
+  EdgeTypeConfig,
+  EdgesResponse,
+  GraphIndexV0Config,
+  GraphNodeSelector,
+  GraphQuery,
+  GraphQueryParams,
+  GraphQueryResult,
+  GraphQueryType,
+  GraphResultNode,
+  TraversalResult,
+  TraversalRules,
   // Model and reranker types
   EmbedderConfig,
   EmbedderProvider,
@@ -117,6 +132,7 @@ export type {
   // Index types
   IndexConfig,
   IndexStatus,
+  IndexType,
   // Join types
   JoinClause,
   JoinCondition,

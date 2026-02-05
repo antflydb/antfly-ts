@@ -73,7 +73,26 @@ export type TableStatus = components["schemas"]["TableStatus"];
 
 // Index types
 export type IndexConfig = components["schemas"]["IndexConfig"];
+export type IndexType = components["schemas"]["IndexType"];
 export type IndexStatus = components["schemas"]["IndexStatus"];
+
+// Graph index types
+export type GraphIndexV0Config = components["schemas"]["GraphIndexV0Config"];
+export type EdgeTypeConfig = components["schemas"]["EdgeTypeConfig"];
+export type EdgeTopology = NonNullable<EdgeTypeConfig["topology"]>;
+
+// Graph query and traversal types
+export type Edge = components["schemas"]["Edge"];
+export type EdgeDirection = components["schemas"]["EdgeDirection"];
+export type EdgesResponse = components["schemas"]["EdgesResponse"];
+export type TraversalRules = components["schemas"]["TraversalRules"];
+export type TraversalResult = components["schemas"]["TraversalResult"];
+export type GraphQuery = components["schemas"]["GraphQuery"];
+export type GraphQueryResult = components["schemas"]["GraphQueryResult"];
+export type GraphResultNode = components["schemas"]["GraphResultNode"];
+export type GraphQueryType = components["schemas"]["GraphQueryType"];
+export type GraphNodeSelector = components["schemas"]["GraphNodeSelector"];
+export type GraphQueryParams = components["schemas"]["GraphQueryParams"];
 
 // User and permission types
 export type User = components["schemas"]["User"];
