@@ -1,6 +1,4 @@
 import type {
-  AnswerAgentRequest,
-  AnswerAgentResult,
   AnswerConfidence,
   ClassificationTransformationResult,
   EvalConfig,
@@ -8,6 +6,8 @@ import type {
   EvaluatorScore,
   GeneratorConfig,
   QueryHit,
+  RetrievalAgentRequest,
+  RetrievalAgentResult,
 } from "@antfly/sdk";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnswerResultsContext, type AnswerResultsContextValue } from "./AnswerResultsContext";
@@ -136,25 +136,35 @@ export default function AnswerResults({
     const widgetTable = table || searchBoxWidget?.table;
     const resolvedTable = resolveTable(widgetTable, defaultTable);
 
-    // Build the Answer Agent request with queries array (similar to RAG format)
+    // Build the Retrieval Agent request with generation steps
     // QueryBox only provides the text value, AnswerResults owns the query configuration
-    const answerRequest: AnswerAgentRequest = {
+    const retrievalRequest: RetrievalAgentRequest = {
       query: currentQuery,
-      queries: [
-        {
-          table: resolvedTable,
-          // Use the query value directly as semantic search
-          semantic_search: currentQuery,
-          fields: fields || [],
-          indexes: semanticIndexes || [],
-          filter_query: filterQuery,
-          exclusion_query: exclusionQuery,
-        },
-      ],
+      table: resolvedTable,
       generator: generator,
       agent_knowledge: agentKnowledge,
-      with_streaming: true,
+      stream: true,
+      // Use pipeline mode with explicit queries when search config is provided
+      ...(semanticIndexes?.length || filterQuery || exclusionQuery
+        ? {
+            max_iterations: 0,
+            queries: [
+              {
+                name: "search",
+                semantic_search: {
+                  semantic_search: currentQuery,
+                  indexes: semanticIndexes || [],
+                  fields: fields || [],
+                  filter_query: filterQuery,
+                  exclusion_query: exclusionQuery,
+                  limit: 10,
+                },
+              },
+            ],
+          }
+        : {}),
       steps: {
+        answer: {},
         classification: {
           with_reasoning: showReasoning,
         },
@@ -164,8 +174,8 @@ export default function AnswerResults({
         confidence: {
           enabled: showConfidence,
         },
+        eval: evalConfig,
       },
-      eval: evalConfig,
     };
 
     // Start streaming
@@ -186,7 +196,7 @@ export default function AnswerResults({
       }
 
       try {
-        const controller = await streamAnswer(url, answerRequest, headers || {}, {
+        const controller = await streamAnswer(url, retrievalRequest, headers || {}, {
           onClassification: (data) => {
             setClassification(data);
           },
@@ -222,12 +232,12 @@ export default function AnswerResults({
               onErrorCallback(message);
             }
           },
-          onAnswerAgentResult: (result) => {
+          onRetrievalAgentResult: (result) => {
             // Non-streaming response
-            setClassification(result.classification_transformation || null);
+            setClassification(result.classification || null);
             setAnswer(result.answer || "");
             setFollowUpQuestions(result.followup_questions || []);
-            setHits(result.query_results?.[0]?.hits?.hits || []);
+            setHits(result.hits || []);
             if (result.answer_confidence !== undefined && result.context_relevance !== undefined) {
               setConfidence({
                 answer_confidence: result.answer_confidence,
@@ -464,22 +474,13 @@ export default function AnswerResults({
 
   // Build context value for child components (e.g., AnswerFeedback)
   const contextValue = useMemo<AnswerResultsContextValue>(() => {
-    const result: AnswerAgentResult | null = answer
+    const result: RetrievalAgentResult | null = answer
       ? ({
           answer,
-          reasoning,
+          hits,
           followup_questions: followUpQuestions,
-          query_results: [
-            {
-              hits: {
-                hits,
-                total: { value: hits.length, relation: "eq" },
-              },
-              took: 0,
-              status: 200,
-            },
-          ],
-        } as unknown as AnswerAgentResult)
+          state: "complete",
+        } as RetrievalAgentResult)
       : null;
 
     return {

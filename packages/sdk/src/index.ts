@@ -66,10 +66,6 @@ export type {
   AggregationResult,
   // Search and aggregation types
   AggregationType,
-  // Answer Agent types
-  AnswerAgentRequest,
-  AnswerAgentResult,
-  AnswerAgentStreamCallbacks,
   AnswerConfidence,
   // Configuration
   AntflyConfig,
@@ -80,11 +76,10 @@ export type {
   BackupRequest,
   BatchRequest, // Now using our custom type
   CalendarInterval,
-  // Chat Agent types
-  ChatAgentRequest,
-  ChatAgentResult,
-  ChatAgentSteps,
-  ChatAgentStreamCallbacks,
+  // Chat types (used by retrieval agent)
+  // Retrieval Agent result types
+  Citation,
+  CitationStyle,
   ChatMessage,
   ChatMessageRole,
   ChatToolCall,
@@ -117,7 +112,6 @@ export type {
   EvaluatorScore,
   FetchConfig,
   FilterSpec,
-  GenerateResult,
   GeneratorConfig,
   GeneratorProvider,
   GraphIndexV0Config,
@@ -151,12 +145,13 @@ export type {
   QueryResponses,
   QueryResult,
   QueryStrategy,
-  // RAG types
-  RAGRequest,
-  RAGResult,
-  RAGStreamCallbacks,
   RerankerConfig,
   ResourceType,
+  // Retrieval Agent types
+  RetrievalAgentRequest,
+  RetrievalAgentResult,
+  RetrievalAgentSteps,
+  RetrievalAgentStreamCallbacks,
   // Utility type for response data
   ResponseData,
   RestoreRequest,

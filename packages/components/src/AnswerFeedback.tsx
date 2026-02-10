@@ -1,7 +1,6 @@
-import type { AnswerAgentResult, RAGResult } from "@antfly/sdk";
+import type { RetrievalAgentResult } from "@antfly/sdk";
 import { type ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { AnswerResultsContext } from "./AnswerResultsContext";
-import { RAGResultsContext } from "./RAGResults";
 
 export interface FeedbackResult {
   rating: number;
@@ -73,7 +72,7 @@ export interface AnswerFeedbackProps {
    */
   onFeedback: (data: {
     feedback: FeedbackResult;
-    result: RAGResult | AnswerAgentResult;
+    result: RetrievalAgentResult;
     query: string;
     context?: {
       classification?: { route_type: "question" | "search"; confidence: number };
@@ -91,21 +90,14 @@ export default function AnswerFeedback({
   renderSubmitted,
   onFeedback,
 }: AnswerFeedbackProps) {
-  // Try to use Answer context first, fall back to RAG context
   const answerContext = useContext(AnswerResultsContext);
-  const ragContext = useContext(RAGResultsContext);
 
-  // Determine which context to use
-  const activeContext = answerContext || ragContext;
-
-  if (!activeContext) {
-    throw new Error(
-      "AnswerFeedback must be used within either a RAGResults or AnswerResults component"
-    );
+  if (!answerContext) {
+    throw new Error("AnswerFeedback must be used within an AnswerResults component");
   }
 
-  const { query, isStreaming } = activeContext;
-  const result = answerContext?.result || ragContext?.result || null;
+  const { query, isStreaming } = answerContext;
+  const result = answerContext.result;
 
   const [rating, setRating] = useState<number | null>(null);
   const [comment, setComment] = useState("");
@@ -195,24 +187,8 @@ export default function AnswerFeedback({
     return null;
   }
 
-  // Check if answer/summary has actual content before showing feedback
-  // For Answer context, check that answer text exists
-  if (answerContext) {
-    if (!answerContext.answer || answerContext.answer.trim() === "") {
-      return null;
-    }
-  }
-  // For RAG context, check that summary exists
-  else if (ragContext) {
-    if (
-      !ragContext.result?.generate_result?.text ||
-      ragContext.result.generate_result.text.trim() === ""
-    ) {
-      return null;
-    }
-  }
-  // If neither context has content, don't render
-  else {
+  // Check if answer has actual content before showing feedback
+  if (!answerContext.answer || answerContext.answer.trim() === "") {
     return null;
   }
 

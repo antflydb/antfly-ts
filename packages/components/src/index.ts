@@ -26,7 +26,6 @@ import { useSearchHistory } from "./hooks/useSearchHistory";
 import Listener from "./Listener";
 import Pagination from "./Pagination";
 import QueryBox from "./QueryBox";
-import RAGResults, { useRAGResultsContext } from "./RAGResults";
 import Results from "./Results";
 import {
   fromUrlQueryString,
@@ -34,7 +33,6 @@ import {
   initializeAntflyClient,
   multiquery,
   streamAnswer,
-  streamRAG,
   toUrlQueryString,
 } from "./utils";
 
@@ -53,8 +51,6 @@ export {
   AutosuggestResults,
   AutosuggestFacets,
   useAutosuggestContext,
-  RAGResults,
-  useRAGResultsContext,
   AnswerResults,
   useAnswerResultsContext,
   AnswerFeedback,
@@ -64,7 +60,6 @@ export {
   multiquery as msearch,
   initializeAntflyClient,
   getAntflyClient,
-  streamRAG,
   streamAnswer,
   parseCitations,
   replaceCitations,
@@ -78,12 +73,9 @@ export {
 };
 
 export type {
-  AnswerAgentRequest,
-  AnswerAgentResult,
-  GenerateResult,
   GeneratorConfig,
-  RAGRequest,
-  RAGResult,
+  RetrievalAgentRequest,
+  RetrievalAgentResult,
 } from "@antfly/sdk";
 export type { ActiveFilter, ActiveFiltersProps } from "./ActiveFilters";
 export type { AnswerFeedbackProps, FeedbackResult } from "./AnswerFeedback";
@@ -108,7 +100,6 @@ export type {
 } from "./hooks/useSearchHistory";
 export type { PaginationProps } from "./Pagination";
 export type { CustomInputProps, QueryBoxProps } from "./QueryBox";
-export type { RAGResultsProps } from "./RAGResults";
 export type { ResultsProps } from "./Results";
 export type { SharedAction, SharedState, Widget } from "./SharedContext";
-export type { AnswerCallbacks, MultiqueryRequest, RAGCallbacks } from "./utils";
+export type { AnswerCallbacks, MultiqueryRequest } from "./utils";

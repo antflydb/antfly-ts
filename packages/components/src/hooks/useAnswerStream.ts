@@ -1,4 +1,4 @@
-import type { AnswerAgentRequest, QueryHit } from "@antfly/sdk";
+import type { QueryHit, RetrievalAgentRequest } from "@antfly/sdk";
 import { useCallback, useRef, useState } from "react";
 import { streamAnswer } from "../utils";
 
@@ -73,7 +73,7 @@ export function useAnswerStream() {
       headers = {},
     }: {
       url: string;
-      request: AnswerAgentRequest;
+      request: RetrievalAgentRequest;
       headers?: Record<string, string>;
     }) => {
       // Reset state

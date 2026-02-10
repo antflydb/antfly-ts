@@ -1,19 +1,16 @@
 import type {
-  AnswerAgentStreamCallbacks,
   AnswerConfidence,
   ClassificationTransformationResult,
   EvalResult,
   QueryHit,
-  RAGStreamCallbacks,
+  RetrievalAgentStreamCallbacks,
 } from "@antfly/sdk";
 import {
-  type AnswerAgentRequest,
-  type AnswerAgentResult,
   AntflyClient,
   type QueryRequest,
   type QueryResponses,
-  type RAGRequest,
-  type RAGResult,
+  type RetrievalAgentRequest,
+  type RetrievalAgentResult,
 } from "@antfly/sdk";
 import qs from "qs";
 
@@ -160,120 +157,7 @@ export function resolveTable(
   return defaultTable;
 }
 
-// RAG-related types and functions
-export interface RAGCallbacks {
-  onHit?: (hit: QueryHit) => void;
-  onSummary?: (chunk: string) => void;
-  onComplete?: () => void;
-  onError?: (error: Error | string) => void;
-  onRAGResult?: (result: RAGResult) => void;
-}
-
-/**
- * Stream RAG results from the Antfly /rag endpoint using Server-Sent Events or JSON
- * @param url - Base URL of the Antfly server (e.g., http://localhost:8080/api/v1)
- * @param tableName - Required table name for the RAG query
- * @param request - RAG request containing queries and summarizer config
- * @param headers - Optional HTTP headers for authentication
- * @param callbacks - Structured callbacks for RAG events (hit, summary, citation, complete, error, ragResult)
- * @returns AbortController to cancel the stream
- */
-export async function streamRAG(
-  url: string,
-  tableName: string,
-  request: RAGRequest,
-  headers: Record<string, string> = {},
-  callbacks: RAGCallbacks
-): Promise<AbortController> {
-  try {
-    // Always create a fresh client with the base URL
-    // (don't reuse defaultClient as it may have been initialized with a different base URL)
-    const client = new AntflyClient({
-      baseUrl: url,
-      headers,
-    });
-
-    // Determine if we should stream based on presence of streaming callbacks
-    const shouldStream = !!(callbacks.onHit || callbacks.onSummary);
-
-    // Add table to each query in the queries array
-    const queriesWithTable = (request.queries || []).map((query) => ({
-      ...query,
-      table: tableName,
-    }));
-
-    // Build the request with streaming flag and table-enriched queries
-    const ragRequest = {
-      ...request,
-      queries: queriesWithTable,
-      with_streaming: shouldStream,
-    };
-
-    // Build SDK callbacks if streaming
-    const sdkCallbacks: RAGStreamCallbacks | undefined = shouldStream
-      ? {
-          onHit: callbacks.onHit
-            ? (hit: QueryHit) => {
-                callbacks.onHit?.(hit);
-              }
-            : undefined,
-          onSummary: callbacks.onSummary
-            ? (chunk: string) => {
-                callbacks.onSummary?.(chunk);
-              }
-            : undefined,
-          onDone: () => {
-            if (callbacks.onComplete) {
-              callbacks.onComplete();
-            }
-          },
-          onError: (error: string) => {
-            if (callbacks.onError) {
-              callbacks.onError(error);
-            }
-          },
-        }
-      : undefined;
-
-    // Use global RAG endpoint (table is specified in queries array)
-    const result = await client.rag(ragRequest, sdkCallbacks);
-
-    // Handle non-streaming response (RAGResult)
-    if (result && typeof result === "object" && "query_result" in result) {
-      if (callbacks.onRAGResult) {
-        callbacks.onRAGResult(result as RAGResult);
-      }
-      if (callbacks.onComplete) {
-        callbacks.onComplete();
-      }
-      return new AbortController(); // Return a dummy controller for consistency
-    }
-
-    // Handle streaming response (AbortController)
-    if (result && typeof result === "object" && "abort" in result) {
-      return result as AbortController;
-    }
-
-    // Fallback
-    if (callbacks.onComplete) {
-      callbacks.onComplete();
-    }
-    return new AbortController();
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        // Stream was aborted - this is expected behavior
-      } else if (callbacks.onError) {
-        callbacks.onError(error);
-      }
-    } else if (callbacks.onError) {
-      callbacks.onError(new Error("Unknown error occurred during RAG streaming"));
-    }
-    return new AbortController();
-  }
-}
-
-// Answer Agent-related types and functions
+// Retrieval Agent streaming types and functions
 export interface AnswerCallbacks {
   onClassification?: (data: ClassificationTransformationResult) => void;
   onReasoning?: (chunk: string) => void;
@@ -284,20 +168,20 @@ export interface AnswerCallbacks {
   onEvalResult?: (data: EvalResult) => void;
   onComplete?: () => void;
   onError?: (error: Error | string) => void;
-  onAnswerAgentResult?: (result: AnswerAgentResult) => void;
+  onRetrievalAgentResult?: (result: RetrievalAgentResult) => void;
 }
 
 /**
- * Stream Answer Agent results from the Antfly /agents/answer endpoint using Server-Sent Events or JSON
+ * Stream Retrieval Agent results from the Antfly /agents/retrieval endpoint using Server-Sent Events or JSON
  * @param url - Base URL of the Antfly server (e.g., http://localhost:8080/api/v1)
- * @param request - Answer agent request containing query and generator config
+ * @param request - Retrieval agent request with query, mode, and optional step configs
  * @param headers - Optional HTTP headers for authentication
- * @param callbacks - Structured callbacks for answer events (classification, keywords, query, hits, reasoning, answer, follow-up, complete, error)
+ * @param callbacks - Structured callbacks for retrieval events (classification, hits, reasoning, answer, follow-up, complete, error)
  * @returns AbortController to cancel the stream
  */
 export async function streamAnswer(
   url: string,
-  request: AnswerAgentRequest,
+  request: RetrievalAgentRequest,
   headers: Record<string, string> = {},
   callbacks: AnswerCallbacks
 ): Promise<AbortController> {
@@ -319,19 +203,23 @@ export async function streamAnswer(
     );
 
     // Build the request with streaming flag
-    const answerRequest = {
+    const retrievalRequest: RetrievalAgentRequest = {
       ...request,
-      with_streaming: shouldStream,
+      stream: shouldStream,
     };
 
     // Build SDK callbacks if streaming
-    const sdkCallbacks: AnswerAgentStreamCallbacks | undefined = shouldStream
+    const sdkCallbacks: RetrievalAgentStreamCallbacks | undefined = shouldStream
       ? {
           onClassification: callbacks.onClassification,
           onReasoning: callbacks.onReasoning,
           onHit: callbacks.onHit,
           onAnswer: callbacks.onAnswer,
-          onConfidence: callbacks.onConfidence,
+          onConfidence: callbacks.onConfidence
+            ? (data: { answer_confidence: number; context_relevance: number }) => {
+                callbacks.onConfidence?.(data);
+              }
+            : undefined,
           onFollowUpQuestion: callbacks.onFollowUpQuestion,
           onEvalResult: callbacks.onEvalResult,
           onDone: () => {
@@ -347,13 +235,13 @@ export async function streamAnswer(
         }
       : undefined;
 
-    // Call the answer agent endpoint
-    const result = await client.answerAgent(answerRequest, sdkCallbacks);
+    // Call the retrieval agent endpoint
+    const result = await client.retrievalAgent(retrievalRequest, sdkCallbacks);
 
-    // Handle non-streaming response (AnswerAgentResult)
+    // Handle non-streaming response (RetrievalAgentResult)
     if (result && typeof result === "object" && "answer" in result) {
-      if (callbacks.onAnswerAgentResult) {
-        callbacks.onAnswerAgentResult(result as AnswerAgentResult);
+      if (callbacks.onRetrievalAgentResult) {
+        callbacks.onRetrievalAgentResult(result as RetrievalAgentResult);
       }
       if (callbacks.onComplete) {
         callbacks.onComplete();
@@ -379,7 +267,7 @@ export async function streamAnswer(
         callbacks.onError(error);
       }
     } else if (callbacks.onError) {
-      callbacks.onError(new Error("Unknown error occurred during Answer Agent streaming"));
+      callbacks.onError(new Error("Unknown error occurred during retrieval agent streaming"));
     }
     return new AbortController();
   }

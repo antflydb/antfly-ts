@@ -54,11 +54,6 @@ export type QueryResult = components["schemas"]["QueryResult"];
 export type QueryHit = components["schemas"]["QueryHit"];
 export type QueryResponses = components["schemas"]["QueryResponses"];
 
-// RAG types - Override QueryRequest with proper types
-export type RAGRequest = Omit<components["schemas"]["RAGRequest"], "queries"> & {
-  queries: QueryRequest[];
-};
-
 // Fix BatchRequest to allow any object for inserts
 export interface BatchRequest {
   inserts?: Record<string, unknown>;
@@ -153,34 +148,31 @@ export const generatorProviders: components["schemas"]["GeneratorProvider"][] = 
   "anthropic",
 ];
 
-// RAG response types
-export type GenerateResult = components["schemas"]["GenerateResult"];
-export type RAGResult = components["schemas"]["RAGResult"];
-
-// Answer Agent types
-export type AnswerAgentRequest = components["schemas"]["AnswerAgentRequest"];
-export type AnswerAgentResult = components["schemas"]["AnswerAgentResult"];
+// AI response types
 export type ClassificationTransformationResult =
   components["schemas"]["ClassificationTransformationResult"];
 export type RouteType = components["schemas"]["RouteType"];
 export type QueryStrategy = components["schemas"]["QueryStrategy"];
 export type SemanticQueryMode = components["schemas"]["SemanticQueryMode"];
-export type AnswerConfidence = components["schemas"]["AnswerConfidence"];
+
+// AnswerConfidence is a convenience type for the confidence assessment fields
+// on RetrievalAgentResult (answer_confidence + context_relevance)
+export interface AnswerConfidence {
+  answer_confidence: number;
+  context_relevance: number;
+}
 
 // Query Builder Agent types
 export type QueryBuilderRequest = components["schemas"]["QueryBuilderRequest"];
 export type QueryBuilderResult = components["schemas"]["QueryBuilderResult"];
 
-// Chat Agent types
-export type ChatAgentRequest = components["schemas"]["ChatAgentRequest"];
-export type ChatAgentResult = components["schemas"]["ChatAgentResult"];
+// Chat/Retrieval types (used by retrieval agent's tool-calling mode)
 export type ChatMessage = components["schemas"]["ChatMessage"];
 export type ChatMessageRole = components["schemas"]["ChatMessageRole"];
 export type ChatToolCall = components["schemas"]["ChatToolCall"];
 export type ChatToolResult = components["schemas"]["ChatToolResult"];
 export type ChatToolName = components["schemas"]["ChatToolName"];
 export type ChatToolsConfig = components["schemas"]["ChatToolsConfig"];
-export type ChatAgentSteps = components["schemas"]["ChatAgentSteps"];
 export type FilterSpec = components["schemas"]["FilterSpec"];
 export type ClarificationRequest = components["schemas"]["ClarificationRequest"];
 export type WebSearchConfig = components["schemas"]["WebSearchConfig"];
@@ -226,27 +218,26 @@ export interface AntflyConfig {
   };
 }
 
-// RAG streaming callbacks for structured SSE events
-export interface RAGStreamCallbacks {
-  onHitsStart?: (data: { table: string; status: number; error?: string }) => void;
-  onHit?: (hit: QueryHit) => void;
-  onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
-  onSummary?: (chunk: string) => void;
-  onDone?: (data?: { complete: boolean }) => void;
-  onError?: (error: string) => void;
-}
+// Retrieval Agent types
+export type RetrievalAgentRequest = components["schemas"]["RetrievalAgentRequest"];
+export type RetrievalAgentResult = components["schemas"]["RetrievalAgentResult"];
+export type RetrievalAgentSteps = components["schemas"]["RetrievalAgentSteps"];
+export type Citation = components["schemas"]["Citation"];
+export type CitationStyle = components["schemas"]["CitationStyle"];
 
-// Answer Agent streaming callbacks for structured SSE events
-export interface AnswerAgentStreamCallbacks {
+// Retrieval Agent streaming callbacks for structured SSE events
+export interface RetrievalAgentStreamCallbacks {
   onClassification?: (data: ClassificationTransformationResult) => void;
   onReasoning?: (chunk: string) => void;
-  onHitsStart?: (data: { table: string; status: number; error?: string }) => void;
   onHit?: (hit: QueryHit) => void;
-  onHitsEnd?: (data: { table: string; total: number; returned: number; took: string }) => void;
   onAnswer?: (chunk: string) => void;
-  onConfidence?: (data: AnswerConfidence) => void;
+  onCitation?: (citation: Citation) => void;
+  onConfidence?: (data: { answer_confidence: number; context_relevance: number }) => void;
   onFollowUpQuestion?: (question: string) => void;
   onEvalResult?: (data: EvalResult) => void;
+  onClarificationRequired?: (data: ClarificationRequest) => void;
+  onFilterApplied?: (filter: FilterSpec) => void;
+  onSearchExecuted?: (data: { query: string }) => void;
   onDone?: (data?: { complete: boolean }) => void;
   onError?: (error: string) => void;
 }
@@ -257,20 +248,6 @@ export interface WebSearchResultItem {
   url: string;
   snippet: string;
   source?: string;
-}
-
-// Chat Agent streaming callbacks for structured SSE events
-export interface ChatAgentStreamCallbacks {
-  onClassification?: (data: ClassificationTransformationResult) => void;
-  onClarificationRequired?: (data: ClarificationRequest) => void;
-  onFilterApplied?: (filter: FilterSpec) => void;
-  onSearchExecuted?: (data: { query: string }) => void;
-  onWebSearchExecuted?: (data: { query: string; results: WebSearchResultItem[] }) => void;
-  onFetchExecuted?: (data: { url: string; content: string }) => void;
-  onHit?: (hit: QueryHit) => void;
-  onAnswer?: (chunk: string) => void;
-  onDone?: (data: { applied_filters: FilterSpec[] }) => void;
-  onError?: (error: string) => void;
 }
 
 // Helper type for query building with proper Bleve query types
