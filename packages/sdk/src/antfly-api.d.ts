@@ -1655,12 +1655,14 @@ export interface components {
              */
             index: string;
             /**
-             * @description Reference to starting nodes for tree search:
-             *     - "$query_name" - Results from a prior named query in the pipeline
+             * @description Starting nodes for tree search:
              *     - "$roots" - Query for root nodes (nodes with no parents)
-             * @example $semantic_results
+             *     - Comma-separated explicit node IDs
+             *     When omitted and combined with a QueryRequest in a RetrievalQueryRequest,
+             *     the query results are used as start nodes.
+             * @example $roots
              */
-            start_nodes: string;
+            start_nodes?: string;
             /**
              * @description Maximum depth to traverse in the tree
              * @default 5
@@ -1673,22 +1675,14 @@ export interface components {
             beam_width?: number;
         };
         /**
-         * @description Configuration for a single query in the retrieval pipeline.
-         *     Queries can be chained, with later queries referencing earlier results.
+         * @description A query in the retrieval pipeline. Extends QueryRequest with an optional
+         *     tree search configuration. Each query specifies its own table.
+         *
+         *     When both search fields (semantic_search, full_text_search) and tree_search
+         *     are provided, the search results are used as start nodes for tree navigation.
          */
-        RetrievalQueryConfig: {
-            /**
-             * @description Unique name for this query, used for referencing in later queries
-             * @example semantic_search
-             */
-            name: string;
-            /** @description Semantic search configuration (vector similarity) */
-            semantic_search?: components["schemas"]["QueryRequest"];
-            /** @description Full-text search configuration (BM25) */
-            bm25_search?: components["schemas"]["QueryRequest"];
-            /** @description Metadata/field query configuration */
-            metadata_search?: components["schemas"]["QueryRequest"];
-            /** @description Tree navigation configuration */
+        RetrievalQueryRequest: components["schemas"]["QueryRequest"] & {
+            /** @description Optional tree search configuration */
             tree_search?: components["schemas"]["TreeSearchConfig"];
         };
         /** @description Request for clarification from the user */
@@ -1771,15 +1765,14 @@ export interface components {
             eval?: components["schemas"]["EvalConfig"];
         };
         /**
-         * @description Request for the retrieval agent. The agent uses a tool-calling loop to find
-         *     relevant documents by dynamically invoking search tools (semantic_search,
-         *     full_text_search, tree_search, graph_search, etc.).
+         * @description Request for the retrieval agent. Queries define which tables and indexes
+         *     to search, each as a QueryRequest with optional tree search configuration.
          *
-         *     **Pipeline mode**: If `queries` are provided and `max_iterations` is 0,
-         *     queries are executed directly without an LLM tool-calling loop.
+         *     **Pipeline mode** (default, max_iterations=0): Queries are executed
+         *     directly without an LLM tool-calling loop.
          *
-         *     **Agentic mode**: If `max_iterations` > 0, the LLM decides which tools to
-         *     call, iterating up to `max_iterations` rounds.
+         *     **Agentic mode** (max_iterations > 0): The LLM decides which tools to
+         *     call, using the queries to determine available tables and indexes.
          */
         RetrievalAgentRequest: {
             /**
@@ -1788,37 +1781,23 @@ export interface components {
              */
             query: string;
             /**
-             * @description Table to search
-             * @example docs
-             */
-            table: string;
-            /**
-             * @description Pipeline of queries to execute. Each query can reference results
-             *     from prior queries using "$query_name" syntax.
+             * @description Queries to execute. Each query carries its own table via the
+             *     QueryRequest table field.
              *
              *     In pipeline mode (max_iterations=0), these are executed directly.
-             *     In agentic mode, these serve as initial hint queries.
+             *     In agentic mode, these declare which table and indexes are available.
              * @example [
              *       {
-             *         "name": "semantic",
-             *         "semantic_search": {
-             *           "indexes": [
-             *             "doc_embeddings"
-             *           ],
-             *           "limit": 10
-             *         }
-             *       },
-             *       {
-             *         "name": "tree",
-             *         "tree_search": {
-             *           "index": "doc_hierarchy",
-             *           "start_nodes": "$semantic",
-             *           "max_depth": 5
-             *         }
+             *         "table": "docs",
+             *         "semantic_search": "How do I configure OAuth?",
+             *         "indexes": [
+             *           "doc_embeddings"
+             *         ],
+             *         "limit": 10
              *       }
              *     ]
              */
-            queries?: components["schemas"]["RetrievalQueryConfig"][];
+            queries: components["schemas"]["RetrievalQueryRequest"][];
             /** @description Conversation messages for multi-turn interaction */
             messages?: components["schemas"]["ChatMessage"][];
             /**
@@ -1844,7 +1823,7 @@ export interface components {
              *
              *     - 0: Pipeline mode — execute provided queries directly, no LLM loop
              *     - 1+: Agentic mode — LLM decides which tools to call
-             * @default 5
+             * @default 0
              */
             max_iterations?: number;
             /**

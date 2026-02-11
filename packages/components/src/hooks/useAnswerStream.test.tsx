@@ -72,7 +72,7 @@ describe("useAnswerStream", () => {
 
     const request: RetrievalAgentRequest = {
       query: "how does raft work",
-      table: "docs",
+      queries: [{ table: "docs", semantic_search: "how does raft work" }],
       generator: { provider: "openai", model: "gpt-4" },
     };
 
@@ -134,7 +134,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "test",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -169,7 +169,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "test",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -206,7 +206,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "first",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -232,7 +232,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "second",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -262,7 +262,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "test",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -301,7 +301,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "test",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -346,7 +346,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "test",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -383,7 +383,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "test",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -413,7 +413,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "first",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });
@@ -427,7 +427,7 @@ describe("useAnswerStream", () => {
         url: "http://localhost:8080/api/v1",
         request: {
           query: "second",
-          table: "docs",
+          queries: [{ table: "docs" }],
           generator: { provider: "openai", model: "gpt-4" },
         },
       });

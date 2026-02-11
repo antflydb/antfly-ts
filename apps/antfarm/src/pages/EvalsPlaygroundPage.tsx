@@ -367,7 +367,7 @@ const EvalsPlaygroundPage: React.FC = () => {
           const answerResult = await apiClient.retrievalAgent(
             {
               query: item.question,
-              table: selectedTable,
+              queries: [{ table: selectedTable }],
               stream: false,
               generator: {
                 provider: judge.provider,
@@ -375,7 +375,7 @@ const EvalsPlaygroundPage: React.FC = () => {
                 temperature: judge.temperature,
               },
               steps: {
-                answer: {},
+                generation: {},
                 eval: {
                   evaluators: ["correctness"],
                   judge: {
@@ -396,7 +396,7 @@ const EvalsPlaygroundPage: React.FC = () => {
             throw new Error("Unexpected streaming response");
           }
 
-          const ragAnswer = answerResult.answer || "";
+          const ragAnswer = answerResult.generation || "";
           const correctnessScore = answerResult.eval_result?.scores?.generation?.correctness;
           const reason = correctnessScore?.reason ?? "";
 

@@ -140,32 +140,26 @@ export default function AnswerResults({
     // QueryBox only provides the text value, AnswerResults owns the query configuration
     const retrievalRequest: RetrievalAgentRequest = {
       query: currentQuery,
-      table: resolvedTable,
       generator: generator,
       agent_knowledge: agentKnowledge,
       stream: true,
-      // Use pipeline mode with explicit queries when search config is provided
-      ...(semanticIndexes?.length || filterQuery || exclusionQuery
-        ? {
-            max_iterations: 0,
-            queries: [
-              {
-                name: "search",
-                semantic_search: {
-                  semantic_search: currentQuery,
-                  indexes: semanticIndexes || [],
-                  fields: fields || [],
-                  filter_query: filterQuery,
-                  exclusion_query: exclusionQuery,
-                  limit: 10,
-                },
-              },
-            ],
-          }
-        : {}),
+      queries: [
+        {
+          table: resolvedTable,
+          semantic_search: currentQuery,
+          ...(semanticIndexes?.length ? { indexes: semanticIndexes } : {}),
+          ...(fields?.length ? { fields: fields } : {}),
+          ...(filterQuery ? { filter_query: filterQuery } : {}),
+          ...(exclusionQuery ? { exclusion_query: exclusionQuery } : {}),
+          limit: 10,
+        },
+      ],
       steps: {
-        generation: {},
+        generation: {
+          enabled: true,
+        },
         classification: {
+          enabled: true,
           with_reasoning: showReasoning,
         },
         followup: {
