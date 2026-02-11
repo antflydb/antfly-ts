@@ -155,10 +155,10 @@ export type RouteType = components["schemas"]["RouteType"];
 export type QueryStrategy = components["schemas"]["QueryStrategy"];
 export type SemanticQueryMode = components["schemas"]["SemanticQueryMode"];
 
-// AnswerConfidence is a convenience type for the confidence assessment fields
-// on RetrievalAgentResult (answer_confidence + context_relevance)
-export interface AnswerConfidence {
-  answer_confidence: number;
+// GenerationConfidence is a convenience type for the confidence assessment fields
+// on RetrievalAgentResult (generation_confidence + context_relevance)
+export interface GenerationConfidence {
+  generation_confidence: number;
   context_relevance: number;
 }
 
@@ -232,7 +232,7 @@ export interface RetrievalAgentStreamCallbacks {
   onHit?: (hit: QueryHit) => void;
   onAnswer?: (chunk: string) => void;
   onCitation?: (citation: Citation) => void;
-  onConfidence?: (data: { answer_confidence: number; context_relevance: number }) => void;
+  onConfidence?: (data: { generation_confidence: number; context_relevance: number }) => void;
   onFollowUpQuestion?: (question: string) => void;
   onEvalResult?: (data: EvalResult) => void;
   onClarificationRequired?: (data: ClarificationRequest) => void;

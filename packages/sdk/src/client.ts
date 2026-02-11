@@ -273,7 +273,7 @@ export class AntflyClient {
                         callbacks.onHit(JSON.parse(data));
                       }
                       break;
-                    case "answer":
+                    case "generation":
                       if (callbacks.onAnswer) {
                         callbacks.onAnswer(JSON.parse(data));
                       }

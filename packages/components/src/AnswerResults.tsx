@@ -1,5 +1,5 @@
 import type {
-  AnswerConfidence,
+  GenerationConfidence,
   ClassificationTransformationResult,
   EvalConfig,
   EvalResult,
@@ -41,7 +41,7 @@ export interface AnswerResultsProps {
   renderClassification?: (data: ClassificationTransformationResult) => ReactNode;
   renderReasoning?: (reasoning: string, isStreaming: boolean) => ReactNode;
   renderAnswer?: (answer: string, isStreaming: boolean, hits?: QueryHit[]) => ReactNode;
-  renderConfidence?: (confidence: AnswerConfidence) => ReactNode;
+  renderConfidence?: (confidence: GenerationConfidence) => ReactNode;
   renderFollowUpQuestions?: (questions: string[]) => ReactNode;
   renderHits?: (hits: QueryHit[]) => ReactNode;
   renderEvalResult?: (evalResult: EvalResult) => ReactNode;
@@ -93,7 +93,7 @@ export default function AnswerResults({
   const [hits, setHits] = useState<QueryHit[]>([]);
   const [reasoning, setReasoning] = useState("");
   const [answer, setAnswer] = useState("");
-  const [confidence, setConfidence] = useState<AnswerConfidence | null>(null);
+  const [confidence, setConfidence] = useState<GenerationConfidence | null>(null);
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
   const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -164,7 +164,7 @@ export default function AnswerResults({
           }
         : {}),
       steps: {
-        answer: {},
+        generation: {},
         classification: {
           with_reasoning: showReasoning,
         },
@@ -235,12 +235,12 @@ export default function AnswerResults({
           onRetrievalAgentResult: (result) => {
             // Non-streaming response
             setClassification(result.classification || null);
-            setAnswer(result.answer || "");
+            setAnswer(result.generation || "");
             setFollowUpQuestions(result.followup_questions || []);
             setHits(result.hits || []);
-            if (result.answer_confidence !== undefined && result.context_relevance !== undefined) {
+            if (result.generation_confidence !== undefined && result.context_relevance !== undefined) {
               setConfidence({
-                answer_confidence: result.answer_confidence,
+                generation_confidence: result.generation_confidence,
                 context_relevance: result.context_relevance,
               });
             }
@@ -373,11 +373,11 @@ export default function AnswerResults({
   );
 
   const defaultRenderConfidence = useCallback(
-    (confidenceData: AnswerConfidence) => (
+    (confidenceData: GenerationConfidence) => (
       <div className="react-af-answer-confidence">
         <strong>Confidence Assessment:</strong>
         <div>
-          <strong>Answer Confidence:</strong> {(confidenceData.answer_confidence * 100).toFixed(1)}%
+          <strong>Generation Confidence:</strong> {(confidenceData.generation_confidence * 100).toFixed(1)}%
         </div>
         <div>
           <strong>Context Relevance:</strong> {(confidenceData.context_relevance * 100).toFixed(1)}%
@@ -476,7 +476,7 @@ export default function AnswerResults({
   const contextValue = useMemo<AnswerResultsContextValue>(() => {
     const result: RetrievalAgentResult | null = answer
       ? ({
-          answer,
+          generation: answer,
           hits,
           followup_questions: followUpQuestions,
           state: "complete",

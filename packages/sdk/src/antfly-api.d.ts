@@ -1749,23 +1749,23 @@ export interface components {
              */
             classification?: components["schemas"]["ClassificationStepConfig"];
             /**
-             * @description Configuration for answer generation from retrieved documents.
-             *     When set, generates an answer with citations after retrieval completes.
+             * @description Configuration for generation from retrieved documents.
+             *     When set, generates a response with citations after retrieval completes.
              */
-            answer?: components["schemas"]["AnswerStepConfig"];
+            generation?: components["schemas"]["GenerationStepConfig"];
             /**
              * @description Configuration for generating follow-up questions.
-             *     Requires steps.answer to be set.
+             *     Requires steps.generation to be set.
              */
             followup?: components["schemas"]["FollowupStepConfig"];
             /**
-             * @description Configuration for confidence assessment of the generated answer.
-             *     Requires steps.answer to be set.
+             * @description Configuration for confidence assessment of the generated response.
+             *     Requires steps.generation to be set.
              */
             confidence?: components["schemas"]["ConfidenceStepConfig"];
             /**
              * @description Configuration for inline evaluation. Runs evaluators on retrieved
-             *     documents and/or generated answer. Requires steps.answer for
+             *     documents and/or generated response. Requires steps.generation for
              *     generation-quality evaluators (faithfulness, completeness, etc.).
              */
             eval?: components["schemas"]["EvalConfig"];
@@ -1864,19 +1864,19 @@ export interface components {
             /** @description Tool and step configuration */
             steps?: components["schemas"]["RetrievalAgentSteps"];
             /**
-             * @description Custom system prompt for answer generation (requires steps.answer).
-             *     Overrides steps.answer.system_prompt if both are set.
+             * @description Custom system prompt for generation (requires steps.generation).
+             *     Overrides steps.generation.system_prompt if both are set.
              */
             system_prompt?: string;
             /**
-             * @description How to format citations in the generated answer (requires steps.answer).
+             * @description How to format citations in the generated response (requires steps.generation).
              *     Default: inline
              */
             citation_style?: components["schemas"]["CitationStyle"];
             /**
              * @description Handlebars template for rendering documents in the generation prompt.
              *     Default uses TOON format for token efficiency.
-             *     Requires steps.answer to be set.
+             *     Requires steps.generation to be set.
              * @example {{encodeToon this.fields}}
              */
             document_renderer?: string;
@@ -1909,17 +1909,17 @@ export interface components {
              */
             classification?: components["schemas"]["ClassificationTransformationResult"];
             /**
-             * @description Generated answer in markdown format. Present when steps.answer
+             * @description Generated response in markdown format. Present when steps.generation
              *     was configured.
              */
-            answer?: string;
-            /** @description Citations extracted from the generated answer */
+            generation?: string;
+            /** @description Citations extracted from the generated response */
             citations?: components["schemas"]["Citation"][];
             /**
              * Format: float
-             * @description Confidence in the generated answer (requires steps.confidence)
+             * @description Confidence in the generated response (requires steps.confidence)
              */
-            answer_confidence?: number;
+            generation_confidence?: number;
             /**
              * Format: float
              * @description Relevance of retrieved documents to the query (requires steps.confidence)
@@ -1931,7 +1931,7 @@ export interface components {
             eval_result?: components["schemas"]["EvalResult"];
         };
         /**
-         * @description Style for citations in the generated answer:
+         * @description Style for citations in the generated response:
          *     - inline: [resource_id doc_abc123] inline with text
          *     - footnote: Numbered references with footnotes
          *     - none: No citations
@@ -1939,7 +1939,7 @@ export interface components {
          * @enum {string}
          */
         CitationStyle: "inline" | "footnote" | "none";
-        /** @description A citation extracted from the generated answer */
+        /** @description A citation extracted from the generated response */
         Citation: {
             /** @description ID of the cited document */
             document_id: string;
@@ -4590,26 +4590,26 @@ export interface components {
             multi_phrase_count?: number;
         };
         /**
-         * @description Configuration for the answer generation step. This step generates the final
-         *     answer from retrieved documents using the reasoning as context.
+         * @description Configuration for the generation step. This step generates the final
+         *     response from retrieved documents using the reasoning as context.
          */
-        AnswerStepConfig: {
+        GenerationStepConfig: {
             /**
-             * @description Enable answer generation from retrieved documents
+             * @description Enable generation from retrieved documents
              * @default false
              */
             enabled?: boolean;
-            /** @description Generator to use for answer generation. If not specified, uses the default summarizer. */
+            /** @description Generator to use for generation. If not specified, uses the default summarizer. */
             generator?: components["schemas"]["GeneratorConfig"];
             /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
             chain?: components["schemas"]["ChainLink"][];
             /** @description Custom system prompt for answer generation */
             system_prompt?: string;
             /**
-             * @description Custom guidance for answer tone, detail level, and style
+             * @description Custom guidance for generation tone, detail level, and style
              * @example Be concise and technical. Include code examples where relevant.
              */
-            answer_context?: string;
+            generation_context?: string;
         };
         /**
          * @description Configuration for generating follow-up questions. Uses a separate generator

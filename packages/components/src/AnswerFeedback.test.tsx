@@ -13,7 +13,7 @@ const MockAnswerResultsProvider = ({
   query = "test query",
   answer = "Test answer",
   result = {
-    answer: "Test answer",
+    generation: "Test answer",
     hits: [
       {
         _id: "1",

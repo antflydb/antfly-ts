@@ -66,7 +66,7 @@ export type {
   AggregationResult,
   // Search and aggregation types
   AggregationType,
-  AnswerConfidence,
+  GenerationConfidence,
   // Configuration
   AntflyConfig,
   // Error type

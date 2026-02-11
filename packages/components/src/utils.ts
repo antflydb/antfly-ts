@@ -1,5 +1,5 @@
 import type {
-  AnswerConfidence,
+  GenerationConfidence,
   ClassificationTransformationResult,
   EvalResult,
   QueryHit,
@@ -163,7 +163,7 @@ export interface AnswerCallbacks {
   onReasoning?: (chunk: string) => void;
   onHit?: (hit: QueryHit) => void;
   onAnswer?: (chunk: string) => void;
-  onConfidence?: (data: AnswerConfidence) => void;
+  onConfidence?: (data: GenerationConfidence) => void;
   onFollowUpQuestion?: (question: string) => void;
   onEvalResult?: (data: EvalResult) => void;
   onComplete?: () => void;
@@ -216,7 +216,7 @@ export async function streamAnswer(
           onHit: callbacks.onHit,
           onAnswer: callbacks.onAnswer,
           onConfidence: callbacks.onConfidence
-            ? (data: { answer_confidence: number; context_relevance: number }) => {
+            ? (data: { generation_confidence: number; context_relevance: number }) => {
                 callbacks.onConfidence?.(data);
               }
             : undefined,
@@ -239,7 +239,7 @@ export async function streamAnswer(
     const result = await client.retrievalAgent(retrievalRequest, sdkCallbacks);
 
     // Handle non-streaming response (RetrievalAgentResult)
-    if (result && typeof result === "object" && "answer" in result) {
+    if (result && typeof result === "object" && "generation" in result) {
       if (callbacks.onRetrievalAgentResult) {
         callbacks.onRetrievalAgentResult(result as RetrievalAgentResult);
       }
