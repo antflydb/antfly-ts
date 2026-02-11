@@ -53,15 +53,15 @@
   },
   "homepage": "https://github.com/antflydb/antfly-ts/tree/main/packages/termite-sdk#readme",
   "devDependencies": {
-    "@types/node": "^25.0.3",
-    "@vitest/ui": "^4.0.16",
-    "openapi-typescript": "^7.10.1",
+    "@types/node": "^25.2.3",
+    "@vitest/ui": "^4.0.18",
+    "openapi-typescript": "^7.12.0",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.18"
   },
   "dependencies": {
-    "openapi-fetch": "^0.15.0"
+    "openapi-fetch": "^0.16.0"
   },
   "engines": {
     "node": ">=18"
