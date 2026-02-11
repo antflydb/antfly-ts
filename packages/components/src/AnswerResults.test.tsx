@@ -147,7 +147,7 @@ describe("AnswerResults", () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, request, _headers, callbacks) => {
         // Verify eval config is in the request
-        expect(request.eval).toEqual({
+        expect(request.steps?.eval).toEqual({
           evaluators: ["relevance", "faithfulness"],
         });
         callbacks.onComplete?.();

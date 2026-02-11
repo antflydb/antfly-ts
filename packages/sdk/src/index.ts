@@ -76,16 +76,16 @@ export type {
   BackupRequest,
   BatchRequest, // Now using our custom type
   CalendarInterval,
-  // Chat types (used by retrieval agent)
-  // Retrieval Agent result types
-  Citation,
-  CitationStyle,
   ChatMessage,
   ChatMessageRole,
   ChatToolCall,
   ChatToolName,
   ChatToolResult,
   ChatToolsConfig,
+  // Chat types (used by retrieval agent)
+  // Retrieval Agent result types
+  Citation,
+  CitationStyle,
   ClarificationRequest,
   ClassificationTransformationResult,
   CreateTableRequest,
@@ -147,14 +147,14 @@ export type {
   QueryStrategy,
   RerankerConfig,
   ResourceType,
+  // Utility type for response data
+  ResponseData,
+  RestoreRequest,
   // Retrieval Agent types
   RetrievalAgentRequest,
   RetrievalAgentResult,
   RetrievalAgentSteps,
   RetrievalAgentStreamCallbacks,
-  // Utility type for response data
-  ResponseData,
-  RestoreRequest,
   RouteType,
   SemanticQueryMode,
   SignificanceAlgorithm,

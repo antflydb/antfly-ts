@@ -18,11 +18,11 @@ import type {
   QueryRequest,
   QueryResponses,
   QueryResult,
+  ResourceType,
+  RestoreRequest,
   RetrievalAgentRequest,
   RetrievalAgentResult,
   RetrievalAgentStreamCallbacks,
-  ResourceType,
-  RestoreRequest,
   ScanKeysRequest,
   TableSchema,
 } from "./types.js";
@@ -573,7 +573,6 @@ export class AntflyClient {
       }
       return results;
     },
-
   };
 
   /**

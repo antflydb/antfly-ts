@@ -473,7 +473,7 @@ describe("AntflyClient", () => {
       });
     }
 
-    describe("Answer Agent SSE parsing", () => {
+    describe("Retrieval Agent SSE parsing", () => {
       it("should JSON-parse reasoning events to preserve newlines", async () => {
         const reasoningWithNewlines =
           "Step 1: First thing\nStep 2: Second thing\nStep 3: Third thing";
@@ -488,7 +488,7 @@ describe("AntflyClient", () => {
 
         const receivedReasoning: string[] = [];
         let doneReceived = false;
-        await client.answerAgent(
+        await client.retrievalAgent(
           { table: "test", query: "test query" },
           {
             onReasoning: (text) => receivedReasoning.push(text),
@@ -522,7 +522,7 @@ describe("AntflyClient", () => {
 
         const receivedAnswers: string[] = [];
         let doneReceived = false;
-        await client.answerAgent(
+        await client.retrievalAgent(
           { table: "test", query: "test query" },
           {
             onAnswer: (text) => receivedAnswers.push(text),
@@ -555,7 +555,7 @@ describe("AntflyClient", () => {
 
         const receivedFollowups: string[] = [];
         let doneReceived = false;
-        await client.answerAgent(
+        await client.retrievalAgent(
           { table: "test", query: "test query" },
           {
             onFollowUpQuestion: (text) => receivedFollowups.push(text),
@@ -576,7 +576,7 @@ describe("AntflyClient", () => {
       });
     });
 
-    describe("Chat Agent SSE parsing", () => {
+    describe("Retrieval Agent SSE parsing (multi-paragraph)", () => {
       it("should JSON-parse answer events to preserve newlines", async () => {
         const answerWithNewlines = "The response is:\n\nParagraph one.\n\nParagraph two.";
         const events = [
@@ -590,7 +590,7 @@ describe("AntflyClient", () => {
 
         const receivedAnswers: string[] = [];
         let doneReceived = false;
-        await client.chatAgent(
+        await client.retrievalAgent(
           { table: "test", query: "test query" },
           {
             onAnswer: (text) => receivedAnswers.push(text),
