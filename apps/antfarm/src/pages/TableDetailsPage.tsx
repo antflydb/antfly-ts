@@ -42,6 +42,7 @@ import { api, type ChunkerConfig, type TableSchema } from "../api";
 import ChunkingForm from "../components/ChunkingForm";
 import CreateIndexDialog from "../components/CreateIndexDialog";
 import DocumentBuilder from "../components/DocumentBuilder";
+import FieldExplorer from "../components/FieldExplorer";
 import BulkInsert from "../components/Insert";
 import JsonViewer from "../components/JsonViewer";
 import MultiSelect from "../components/MultiSelect";
@@ -916,10 +917,16 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                   initialSchema={tableSchema}
                 />
               </div>
-            ) : tableSchema ? (
+            ) : tableSchema?.document_schemas && Object.keys(tableSchema.document_schemas).length > 0 ? (
               <JsonViewer json={tableSchema} />
             ) : (
-              <div className="text-muted-foreground">No schema available for this table.</div>
+              <FieldExplorer
+                tableName={tableName || ""}
+                onSchemaGenerated={(schema) => {
+                  setTableSchema(schema);
+                  setIsEditingSchema(true);
+                }}
+              />
             )}
           </div>
         )}
