@@ -278,11 +278,6 @@ export class AntflyClient {
                         callbacks.onAnswer(JSON.parse(data));
                       }
                       break;
-                    case "citation":
-                      if (callbacks.onCitation) {
-                        callbacks.onCitation(JSON.parse(data));
-                      }
-                      break;
                     case "confidence":
                       if (callbacks.onConfidence) {
                         callbacks.onConfidence(JSON.parse(data));

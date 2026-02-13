@@ -215,6 +215,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * [DEPRECATED] Answer Agent - use /agents/retrieval instead
+         * @deprecated
+         * @description DEPRECATED: Use /agents/retrieval instead.
+         *     This endpoint accepts the old AnswerAgentRequest format and internally
+         *     delegates to the retrieval agent for backward compatibility.
+         */
+        post: operations["answerAgent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/query-builder": {
         parameters: {
             query?: never;
@@ -1832,6 +1855,14 @@ export interface components {
              */
             max_context_tokens?: number;
             /**
+             * @description Tokens to reserve for system prompt, answer generation, and other overhead.
+             *     Subtracted from max_context_tokens to determine available context budget.
+             *     Defaults to 4000 if max_context_tokens is set.
+             * @default 4000
+             * @example 4000
+             */
+            reserve_tokens?: number;
+            /**
              * @description Enable SSE streaming vs JSON response
              * @default true
              */
@@ -1842,16 +1873,6 @@ export interface components {
             chain?: components["schemas"]["ChainLink"][];
             /** @description Tool and step configuration */
             steps?: components["schemas"]["RetrievalAgentSteps"];
-            /**
-             * @description Custom system prompt for generation (requires steps.generation).
-             *     Overrides steps.generation.system_prompt if both are set.
-             */
-            system_prompt?: string;
-            /**
-             * @description How to format citations in the generated response (requires steps.generation).
-             *     Default: inline
-             */
-            citation_style?: components["schemas"]["CitationStyle"];
             /**
              * @description Handlebars template for rendering documents in the generation prompt.
              *     Default uses TOON format for token efficiency.
@@ -1892,8 +1913,6 @@ export interface components {
              *     was configured.
              */
             generation?: string;
-            /** @description Citations extracted from the generated response */
-            citations?: components["schemas"]["Citation"][];
             /**
              * Format: float
              * @description Confidence in the generated response (requires steps.confidence)
@@ -1910,25 +1929,103 @@ export interface components {
             eval_result?: components["schemas"]["EvalResult"];
         };
         /**
-         * @description Style for citations in the generated response:
-         *     - inline: [resource_id doc_abc123] inline with text
-         *     - footnote: Numbered references with footnotes
-         *     - none: No citations
-         * @default inline
-         * @enum {string}
+         * @deprecated
+         * @description DEPRECATED: Use RetrievalAgentSteps instead.
+         *     Configuration for the answer agent's pipeline steps.
          */
-        CitationStyle: "inline" | "footnote" | "none";
-        /** @description A citation extracted from the generated response */
-        Citation: {
-            /** @description ID of the cited document */
-            document_id: string;
-            /** @description Relevant text from the document */
-            text?: string;
+        AnswerAgentSteps: {
+            /** @description Configuration for query classification and transformation. */
+            classification?: components["schemas"]["ClassificationStepConfig"];
+            /**
+             * @description DEPRECATED: Use steps.generation on RetrievalAgentRequest instead.
+             *     Configuration for answer generation from retrieved documents.
+             */
+            answer?: components["schemas"]["GenerationStepConfig"];
+            /** @description Configuration for generating follow-up questions. */
+            followup?: components["schemas"]["FollowupStepConfig"];
+            /** @description Configuration for confidence assessment. */
+            confidence?: components["schemas"]["ConfidenceStepConfig"];
+        };
+        /**
+         * @deprecated
+         * @description DEPRECATED: Use RetrievalAgentRequest instead.
+         *     Request for the answer agent. Accepts the old request format and
+         *     internally delegates to the retrieval agent.
+         */
+        AnswerAgentRequest: {
+            /** @description User's natural language query */
+            query: string;
+            /** @description Queries to execute. Each query specifies its own table. */
+            queries: components["schemas"]["QueryRequest"][];
+            /**
+             * @description DEPRECATED: Use stream on RetrievalAgentRequest instead.
+             *     Enable SSE streaming vs JSON response.
+             * @default true
+             */
+            with_streaming?: boolean;
+            /** @description Generator for LLM calls */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators */
+            chain?: components["schemas"]["ChainLink"][];
+            /** @description Domain-specific knowledge for the agent */
+            agent_knowledge?: string;
+            /** @description Maximum tokens for document context */
+            max_context_tokens?: number;
+            /**
+             * @description Tokens to reserve for overhead
+             * @default 4000
+             */
+            reserve_tokens?: number;
+            /** @description Step configuration */
+            steps?: components["schemas"]["AnswerAgentSteps"];
+            /**
+             * @description DEPRECATED: Use steps.eval on RetrievalAgentRequest instead.
+             *     Evaluation configuration (moved to steps.eval in new API).
+             */
+            eval?: components["schemas"]["EvalConfig"];
+            /**
+             * @description DEPRECATED: Omit steps.generation on RetrievalAgentRequest instead.
+             *     If true, skip the generation step.
+             * @default false
+             */
+            without_generation?: boolean;
+        };
+        /**
+         * @deprecated
+         * @description DEPRECATED: Use RetrievalAgentResult instead.
+         *     Result from the answer agent.
+         */
+        AnswerAgentResult: {
+            /**
+             * @description DEPRECATED: Use generation on RetrievalAgentResult instead.
+             *     Generated answer in markdown format.
+             */
+            answer?: string;
             /**
              * Format: float
-             * @description Relevance score of the citation
+             * @description DEPRECATED: Use generation_confidence on RetrievalAgentResult instead.
+             *     Confidence in the generated answer.
              */
-            score?: number;
+            answer_confidence?: number;
+            /**
+             * Format: float
+             * @description Relevance of retrieved documents to the query
+             */
+            context_relevance?: number;
+            /**
+             * @description DEPRECATED: Use classification on RetrievalAgentResult instead.
+             *     Query classification and transformation result.
+             */
+            classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
+            /**
+             * @description DEPRECATED: Use hits on RetrievalAgentResult instead.
+             *     Query results grouped by table.
+             */
+            query_results?: components["schemas"]["QueryResult"][];
+            /** @description Suggested follow-up questions */
+            followup_questions?: string[];
+            /** @description Evaluation results */
+            eval_result?: components["schemas"]["EvalResult"];
         };
         QueryRequest: {
             /**
@@ -4038,6 +4135,205 @@ export interface components {
             /** @description Total evaluation duration in milliseconds */
             duration_ms?: number;
         };
+        /** @description Retry configuration for generator calls */
+        RetryConfig: {
+            /**
+             * @description Maximum number of retry attempts
+             * @default 3
+             */
+            max_attempts?: number;
+            /**
+             * @description Initial backoff delay in milliseconds
+             * @default 1000
+             */
+            initial_backoff_ms?: number;
+            /**
+             * Format: float
+             * @description Multiplier for exponential backoff
+             * @default 2
+             */
+            backoff_multiplier?: number;
+            /**
+             * @description Maximum backoff delay in milliseconds
+             * @default 30000
+             */
+            max_backoff_ms?: number;
+        };
+        /**
+         * @description Condition for trying the next generator in chain:
+         *     - always: Always try next regardless of outcome
+         *     - on_error: Try next on any error (default)
+         *     - on_timeout: Try next only on timeout errors
+         *     - on_rate_limit: Try next only on rate limit errors
+         * @default on_error
+         * @enum {string}
+         */
+        ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
+        /** @description A single link in a generator chain with optional retry and condition */
+        ChainLink: {
+            generator: components["schemas"]["GeneratorConfig"];
+            /** @description Retry configuration for this generator */
+            retry?: components["schemas"]["RetryConfig"];
+            /** @description When to try the next generator in chain */
+            condition?: components["schemas"]["ChainCondition"];
+        };
+        /**
+         * @description Strategy for query transformation and retrieval:
+         *     - simple: Direct query with multi-phrase expansion. Best for straightforward factual queries.
+         *     - decompose: Break complex queries into sub-questions, retrieve for each. Best for multi-part questions.
+         *     - step_back: Generate broader background query first, then specific query. Best for questions needing context.
+         *     - hyde: Generate hypothetical answer document, embed that for retrieval. Best for abstract/conceptual questions.
+         * @enum {string}
+         */
+        QueryStrategy: "simple" | "decompose" | "step_back" | "hyde";
+        /**
+         * @description Mode for semantic query generation:
+         *     - rewrite: Transform query into expanded keywords/concepts optimized for vector search (Level 2 optimization)
+         *     - hypothetical: Generate a hypothetical answer that would appear in relevant documents (HyDE - Level 3 optimization)
+         * @enum {string}
+         */
+        SemanticQueryMode: "rewrite" | "hypothetical";
+        /**
+         * @description Configuration for the classification step. This step analyzes the query,
+         *     selects the optimal retrieval strategy, and generates semantic transformations.
+         */
+        ClassificationStepConfig: {
+            /**
+             * @description Enable query classification and strategy selection
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator to use for classification. If not specified, uses the default summarizer. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Include pre-retrieval reasoning explaining query analysis and strategy selection
+             * @default false
+             */
+            with_reasoning?: boolean;
+            /** @description Override LLM strategy selection. If not set, the LLM chooses optimal strategy. */
+            force_strategy?: components["schemas"]["QueryStrategy"];
+            /** @description Override semantic query mode selection. */
+            force_semantic_mode?: components["schemas"]["SemanticQueryMode"];
+            /**
+             * @description Number of alternative query phrasings to generate
+             * @default 3
+             */
+            multi_phrase_count?: number;
+        };
+        /**
+         * @description Configuration for the generation step. This step generates the final
+         *     response from retrieved documents using the reasoning as context.
+         */
+        GenerationStepConfig: {
+            /**
+             * @description Enable generation from retrieved documents
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator to use for generation. If not specified, uses the default summarizer. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /** @description Custom system prompt for answer generation */
+            system_prompt?: string;
+            /**
+             * @description Custom guidance for generation tone, detail level, and style
+             * @example Be concise and technical. Include code examples where relevant.
+             */
+            generation_context?: string;
+        };
+        /**
+         * @description Configuration for generating follow-up questions. Uses a separate generator
+         *     call which can use a cheaper/faster model.
+         */
+        FollowupStepConfig: {
+            /**
+             * @description Enable follow-up question generation
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator for follow-up questions. If not specified, uses the answer step's generator. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Number of follow-up questions to generate
+             * @default 3
+             */
+            count?: number;
+            /**
+             * @description Custom guidance for follow-up question focus and style
+             * @example Focus on implementation details and edge cases
+             */
+            context?: string;
+        };
+        /**
+         * @description Configuration for confidence assessment. Evaluates answer quality and
+         *     resource relevance. Can use a model calibrated for scoring tasks.
+         */
+        ConfidenceStepConfig: {
+            /**
+             * @description Enable confidence scoring
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator for confidence assessment. If not specified, uses the answer step's generator. */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
+            chain?: components["schemas"]["ChainLink"][];
+            /**
+             * @description Custom guidance for confidence assessment approach
+             * @example Be conservative - only give high confidence if resources directly address the question
+             */
+            context?: string;
+        };
+        /**
+         * @description Configuration for inline evaluation of query results.
+         *     Add to RAGRequest, QueryRequest, or AnswerAgentRequest.
+         */
+        EvalConfig: {
+            /** @description List of evaluators to run */
+            evaluators?: components["schemas"]["EvaluatorName"][];
+            /**
+             * @description LLM configuration for judge-based evaluators.
+             *     Falls back to default if not specified.
+             */
+            judge?: components["schemas"]["GeneratorConfig"];
+            /** @description Ground truth data for retrieval metrics */
+            ground_truth?: components["schemas"]["GroundTruth"];
+            /** @description Evaluation options (k, thresholds, etc.) */
+            options?: components["schemas"]["EvalOptions"];
+        };
+        /**
+         * @description Classification of query type: question (specific factual query) or search (exploratory query)
+         * @enum {string}
+         */
+        RouteType: "question" | "search";
+        /** @description Query classification and transformation result combining all query enhancements including strategy selection and semantic optimization */
+        ClassificationTransformationResult: {
+            route_type: components["schemas"]["RouteType"];
+            strategy: components["schemas"]["QueryStrategy"];
+            semantic_mode: components["schemas"]["SemanticQueryMode"];
+            /** @description Clarified query with added context for answer generation (human-readable) */
+            improved_query: string;
+            /** @description Optimized query for vector/semantic search. Content style depends on semantic_mode: keywords for 'rewrite', hypothetical answer for 'hypothetical' */
+            semantic_query: string;
+            /** @description Broader background query for context (only present when strategy is 'step_back') */
+            step_back_query?: string;
+            /** @description Decomposed sub-questions (only present when strategy is 'decompose') */
+            sub_questions?: string[];
+            /** @description Alternative phrasings of the query for expanded retrieval coverage */
+            multi_phrases?: string[];
+            /** @description Pre-retrieval reasoning explaining query analysis and strategy selection (only present when with_classification_reasoning is enabled) */
+            reasoning?: string;
+            /**
+             * Format: float
+             * @description Classification confidence (0.0 to 1.0)
+             */
+            confidence: number;
+        };
         /**
          * @description Role of the message sender in the conversation
          * @enum {string}
@@ -4094,48 +4390,6 @@ export interface components {
             operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "contains" | "prefix" | "range" | "in";
             /** @description Filter value (string, number, boolean, or array for range/in operators) */
             value: unknown;
-        };
-        /** @description Retry configuration for generator calls */
-        RetryConfig: {
-            /**
-             * @description Maximum number of retry attempts
-             * @default 3
-             */
-            max_attempts?: number;
-            /**
-             * @description Initial backoff delay in milliseconds
-             * @default 1000
-             */
-            initial_backoff_ms?: number;
-            /**
-             * Format: float
-             * @description Multiplier for exponential backoff
-             * @default 2
-             */
-            backoff_multiplier?: number;
-            /**
-             * @description Maximum backoff delay in milliseconds
-             * @default 30000
-             */
-            max_backoff_ms?: number;
-        };
-        /**
-         * @description Condition for trying the next generator in chain:
-         *     - always: Always try next regardless of outcome
-         *     - on_error: Try next on any error (default)
-         *     - on_timeout: Try next only on timeout errors
-         *     - on_rate_limit: Try next only on rate limit errors
-         * @default on_error
-         * @enum {string}
-         */
-        ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
-        /** @description A single link in a generator chain with optional retry and condition */
-        ChainLink: {
-            generator: components["schemas"]["GeneratorConfig"];
-            /** @description Retry configuration for this generator */
-            retry?: components["schemas"]["RetryConfig"];
-            /** @description When to try the next generator in chain */
-            condition?: components["schemas"]["ChainCondition"];
         };
         /**
          * @description Available tool names for the chat and retrieval agents.
@@ -4522,163 +4776,6 @@ export interface components {
              * @default 5
              */
             max_tool_iterations?: number;
-        };
-        /**
-         * @description Strategy for query transformation and retrieval:
-         *     - simple: Direct query with multi-phrase expansion. Best for straightforward factual queries.
-         *     - decompose: Break complex queries into sub-questions, retrieve for each. Best for multi-part questions.
-         *     - step_back: Generate broader background query first, then specific query. Best for questions needing context.
-         *     - hyde: Generate hypothetical answer document, embed that for retrieval. Best for abstract/conceptual questions.
-         * @enum {string}
-         */
-        QueryStrategy: "simple" | "decompose" | "step_back" | "hyde";
-        /**
-         * @description Mode for semantic query generation:
-         *     - rewrite: Transform query into expanded keywords/concepts optimized for vector search (Level 2 optimization)
-         *     - hypothetical: Generate a hypothetical answer that would appear in relevant documents (HyDE - Level 3 optimization)
-         * @enum {string}
-         */
-        SemanticQueryMode: "rewrite" | "hypothetical";
-        /**
-         * @description Configuration for the classification step. This step analyzes the query,
-         *     selects the optimal retrieval strategy, and generates semantic transformations.
-         */
-        ClassificationStepConfig: {
-            /**
-             * @description Enable query classification and strategy selection
-             * @default false
-             */
-            enabled?: boolean;
-            /** @description Generator to use for classification. If not specified, uses the default summarizer. */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Include pre-retrieval reasoning explaining query analysis and strategy selection
-             * @default false
-             */
-            with_reasoning?: boolean;
-            /** @description Override LLM strategy selection. If not set, the LLM chooses optimal strategy. */
-            force_strategy?: components["schemas"]["QueryStrategy"];
-            /** @description Override semantic query mode selection. */
-            force_semantic_mode?: components["schemas"]["SemanticQueryMode"];
-            /**
-             * @description Number of alternative query phrasings to generate
-             * @default 3
-             */
-            multi_phrase_count?: number;
-        };
-        /**
-         * @description Configuration for the generation step. This step generates the final
-         *     response from retrieved documents using the reasoning as context.
-         */
-        GenerationStepConfig: {
-            /**
-             * @description Enable generation from retrieved documents
-             * @default false
-             */
-            enabled?: boolean;
-            /** @description Generator to use for generation. If not specified, uses the default summarizer. */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-            chain?: components["schemas"]["ChainLink"][];
-            /** @description Custom system prompt for answer generation */
-            system_prompt?: string;
-            /**
-             * @description Custom guidance for generation tone, detail level, and style
-             * @example Be concise and technical. Include code examples where relevant.
-             */
-            generation_context?: string;
-        };
-        /**
-         * @description Configuration for generating follow-up questions. Uses a separate generator
-         *     call which can use a cheaper/faster model.
-         */
-        FollowupStepConfig: {
-            /**
-             * @description Enable follow-up question generation
-             * @default false
-             */
-            enabled?: boolean;
-            /** @description Generator for follow-up questions. If not specified, uses the answer step's generator. */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Number of follow-up questions to generate
-             * @default 3
-             */
-            count?: number;
-            /**
-             * @description Custom guidance for follow-up question focus and style
-             * @example Focus on implementation details and edge cases
-             */
-            context?: string;
-        };
-        /**
-         * @description Configuration for confidence assessment. Evaluates answer quality and
-         *     resource relevance. Can use a model calibrated for scoring tasks.
-         */
-        ConfidenceStepConfig: {
-            /**
-             * @description Enable confidence scoring
-             * @default false
-             */
-            enabled?: boolean;
-            /** @description Generator for confidence assessment. If not specified, uses the answer step's generator. */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Custom guidance for confidence assessment approach
-             * @example Be conservative - only give high confidence if resources directly address the question
-             */
-            context?: string;
-        };
-        /**
-         * @description Configuration for inline evaluation of query results.
-         *     Add to RAGRequest, QueryRequest, or AnswerAgentRequest.
-         */
-        EvalConfig: {
-            /** @description List of evaluators to run */
-            evaluators?: components["schemas"]["EvaluatorName"][];
-            /**
-             * @description LLM configuration for judge-based evaluators.
-             *     Falls back to default if not specified.
-             */
-            judge?: components["schemas"]["GeneratorConfig"];
-            /** @description Ground truth data for retrieval metrics */
-            ground_truth?: components["schemas"]["GroundTruth"];
-            /** @description Evaluation options (k, thresholds, etc.) */
-            options?: components["schemas"]["EvalOptions"];
-        };
-        /**
-         * @description Classification of query type: question (specific factual query) or search (exploratory query)
-         * @enum {string}
-         */
-        RouteType: "question" | "search";
-        /** @description Query classification and transformation result combining all query enhancements including strategy selection and semantic optimization */
-        ClassificationTransformationResult: {
-            route_type: components["schemas"]["RouteType"];
-            strategy: components["schemas"]["QueryStrategy"];
-            semantic_mode: components["schemas"]["SemanticQueryMode"];
-            /** @description Clarified query with added context for answer generation (human-readable) */
-            improved_query: string;
-            /** @description Optimized query for vector/semantic search. Content style depends on semantic_mode: keywords for 'rewrite', hypothetical answer for 'hypothetical' */
-            semantic_query: string;
-            /** @description Broader background query for context (only present when strategy is 'step_back') */
-            step_back_query?: string;
-            /** @description Decomposed sub-questions (only present when strategy is 'decompose') */
-            sub_questions?: string[];
-            /** @description Alternative phrasings of the query for expanded retrieval coverage */
-            multi_phrases?: string[];
-            /** @description Pre-retrieval reasoning explaining query analysis and strategy selection (only present when with_classification_reasoning is enabled) */
-            reasoning?: string;
-            /**
-             * Format: float
-             * @description Classification confidence (0.0 to 1.0)
-             */
-            confidence: number;
         };
         BleveIndexV2Config: {
             /** @description Whether to use memory-only storage */
@@ -5792,6 +5889,49 @@ export interface operations {
                 };
             };
             /** @description Internal server error (e.g., LLM judge failed) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    answerAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Answer agent response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["AnswerAgentResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
             500: {
                 headers: {
                     [name: string]: unknown;

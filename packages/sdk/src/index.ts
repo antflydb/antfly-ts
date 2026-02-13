@@ -84,8 +84,6 @@ export type {
   ChatToolsConfig,
   // Chat types (used by retrieval agent)
   // Retrieval Agent result types
-  Citation,
-  CitationStyle,
   ClarificationRequest,
   ClassificationTransformationResult,
   CreateTableRequest,
