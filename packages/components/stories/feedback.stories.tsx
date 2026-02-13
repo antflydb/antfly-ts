@@ -1,11 +1,11 @@
-import type { RAGResult } from "@antfly/sdk";
+import type { RetrievalAgentResult } from "@antfly/sdk";
 import {
   AnswerFeedback,
+  AnswerResults,
   Antfly,
   type FeedbackResult,
   type GeneratorConfig,
   QueryBox,
-  RAGResults,
   renderNumeric,
   renderStars,
   renderThumbsUpDown,
@@ -24,7 +24,11 @@ const mockSummarizer: GeneratorConfig = {
 };
 
 export const ThumbsUpDown = () => {
-  const handleFeedback = (data: { feedback: FeedbackResult; result: RAGResult; query: string }) => {
+  const handleFeedback = (data: {
+    feedback: FeedbackResult;
+    result: RetrievalAgentResult;
+    query: string;
+  }) => {
     console.log("Feedback received:", data);
     alert(
       `Thank you for your feedback!\n\n` +
@@ -130,26 +134,30 @@ export const ThumbsUpDown = () => {
       <div className="feedback-demo">
         <pre
           style={{ background: "#f5f5f5", padding: "16px", borderRadius: "8px" }}
-        >{`<RAGResults id="answer" searchBoxId="question" summarizer={summarizer}>
+        >{`<AnswerResults id="answer" searchBoxId="question" generator={generator}>
   <AnswerFeedback
     scale={1}
     renderRating={renderThumbsUpDown}
     onFeedback={handleFeedback}
   />
-</RAGResults>`}</pre>
+</AnswerResults>`}</pre>
 
         <QueryBox id="question" placeholder="Ask a question..." />
 
-        <RAGResults id="answer" searchBoxId="question" summarizer={mockSummarizer}>
+        <AnswerResults id="answer" searchBoxId="question" generator={mockSummarizer}>
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={handleFeedback} />
-        </RAGResults>
+        </AnswerResults>
       </div>
     </Antfly>
   );
 };
 
 export const StarRating = () => {
-  const handleFeedback = (data: { feedback: FeedbackResult; result: RAGResult; query: string }) => {
+  const handleFeedback = (data: {
+    feedback: FeedbackResult;
+    result: RetrievalAgentResult;
+    query: string;
+  }) => {
     console.log("Feedback received:", data);
     alert(
       `Thank you for your ${data.feedback.rating + 1}-star rating!\n\n` +
@@ -247,26 +255,30 @@ export const StarRating = () => {
       <div className="feedback-demo">
         <pre
           style={{ background: "#f5f5f5", padding: "16px", borderRadius: "8px" }}
-        >{`<RAGResults id="answer" searchBoxId="question" summarizer={summarizer}>
+        >{`<AnswerResults id="answer" searchBoxId="question" generator={generator}>
   <AnswerFeedback
     scale={4}
     renderRating={renderStars}
     onFeedback={handleFeedback}
   />
-</RAGResults>`}</pre>
+</AnswerResults>`}</pre>
 
         <QueryBox id="question" placeholder="Ask a question..." />
 
-        <RAGResults id="answer" searchBoxId="question" summarizer={mockSummarizer}>
+        <AnswerResults id="answer" searchBoxId="question" generator={mockSummarizer}>
           <AnswerFeedback scale={4} renderRating={renderStars} onFeedback={handleFeedback} />
-        </RAGResults>
+        </AnswerResults>
       </div>
     </Antfly>
   );
 };
 
 export const NumericScale = () => {
-  const handleFeedback = (data: { feedback: FeedbackResult; result: RAGResult; query: string }) => {
+  const handleFeedback = (data: {
+    feedback: FeedbackResult;
+    result: RetrievalAgentResult;
+    query: string;
+  }) => {
     console.log("Feedback received:", data);
     alert(
       `Thank you for rating ${data.feedback.rating}/${data.feedback.scale}!\n\n` +
@@ -373,30 +385,34 @@ export const NumericScale = () => {
       <div className="feedback-demo">
         <pre
           style={{ background: "#f5f5f5", padding: "16px", borderRadius: "8px" }}
-        >{`<RAGResults id="answer" searchBoxId="question" summarizer={summarizer}>
+        >{`<AnswerResults id="answer" searchBoxId="question" generator={generator}>
   <AnswerFeedback
     scale={3}
     renderRating={(rating, onRate) => renderNumeric(rating, onRate, 3)}
     onFeedback={handleFeedback}
   />
-</RAGResults>`}</pre>
+</AnswerResults>`}</pre>
 
         <QueryBox id="question" placeholder="Ask a question..." />
 
-        <RAGResults id="answer" searchBoxId="question" summarizer={mockSummarizer}>
+        <AnswerResults id="answer" searchBoxId="question" generator={mockSummarizer}>
           <AnswerFeedback
             scale={3}
             renderRating={(rating, onRate) => renderNumeric(rating, onRate, 3)}
             onFeedback={handleFeedback}
           />
-        </RAGResults>
+        </AnswerResults>
       </div>
     </Antfly>
   );
 };
 
 export const WithoutComments = () => {
-  const handleFeedback = (data: { feedback: FeedbackResult; result: RAGResult; query: string }) => {
+  const handleFeedback = (data: {
+    feedback: FeedbackResult;
+    result: RetrievalAgentResult;
+    query: string;
+  }) => {
     console.log("Feedback received:", data);
     alert(`Rating: ${data.feedback.rating}/${data.feedback.scale}\n` + `Query: "${data.query}"`);
   };
@@ -487,16 +503,20 @@ export const WithoutComments = () => {
 
         <QueryBox id="question" placeholder="Ask a question..." />
 
-        <RAGResults id="answer" searchBoxId="question" summarizer={mockSummarizer}>
+        <AnswerResults id="answer" searchBoxId="question" generator={mockSummarizer}>
           <AnswerFeedback scale={4} renderRating={renderStars} onFeedback={handleFeedback} />
-        </RAGResults>
+        </AnswerResults>
       </div>
     </Antfly>
   );
 };
 
 export const CustomRenderer = () => {
-  const handleFeedback = (data: { feedback: FeedbackResult; result: RAGResult; query: string }) => {
+  const handleFeedback = (data: {
+    feedback: FeedbackResult;
+    result: RetrievalAgentResult;
+    query: string;
+  }) => {
     console.log("Feedback received:", data);
     const labels = ["Poor", "Fair", "Good", "Great", "Excellent"];
     alert(
@@ -653,7 +673,7 @@ export const CustomRenderer = () => {
 
         <QueryBox id="question" placeholder="Ask a question..." />
 
-        <RAGResults id="answer" searchBoxId="question" summarizer={mockSummarizer}>
+        <AnswerResults id="answer" searchBoxId="question" generator={mockSummarizer}>
           <AnswerFeedback
             scale={4}
             renderRating={customRender}
@@ -672,7 +692,7 @@ export const CustomRenderer = () => {
               </button>
             )}
           />
-        </RAGResults>
+        </AnswerResults>
       </div>
     </Antfly>
   );

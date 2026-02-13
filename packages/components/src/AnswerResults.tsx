@@ -1,13 +1,13 @@
 import type {
-  AnswerAgentRequest,
-  AnswerAgentResult,
-  AnswerConfidence,
+  GenerationConfidence,
   ClassificationTransformationResult,
   EvalConfig,
   EvalResult,
   EvaluatorScore,
   GeneratorConfig,
   QueryHit,
+  RetrievalAgentRequest,
+  RetrievalAgentResult,
 } from "@antfly/sdk";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnswerResultsContext, type AnswerResultsContextValue } from "./AnswerResultsContext";
@@ -41,7 +41,7 @@ export interface AnswerResultsProps {
   renderClassification?: (data: ClassificationTransformationResult) => ReactNode;
   renderReasoning?: (reasoning: string, isStreaming: boolean) => ReactNode;
   renderAnswer?: (answer: string, isStreaming: boolean, hits?: QueryHit[]) => ReactNode;
-  renderConfidence?: (confidence: AnswerConfidence) => ReactNode;
+  renderConfidence?: (confidence: GenerationConfidence) => ReactNode;
   renderFollowUpQuestions?: (questions: string[]) => ReactNode;
   renderHits?: (hits: QueryHit[]) => ReactNode;
   renderEvalResult?: (evalResult: EvalResult) => ReactNode;
@@ -93,7 +93,7 @@ export default function AnswerResults({
   const [hits, setHits] = useState<QueryHit[]>([]);
   const [reasoning, setReasoning] = useState("");
   const [answer, setAnswer] = useState("");
-  const [confidence, setConfidence] = useState<AnswerConfidence | null>(null);
+  const [confidence, setConfidence] = useState<GenerationConfidence | null>(null);
   const [followUpQuestions, setFollowUpQuestions] = useState<string[]>([]);
   const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -136,26 +136,30 @@ export default function AnswerResults({
     const widgetTable = table || searchBoxWidget?.table;
     const resolvedTable = resolveTable(widgetTable, defaultTable);
 
-    // Build the Answer Agent request with queries array (similar to RAG format)
+    // Build the Retrieval Agent request with generation steps
     // QueryBox only provides the text value, AnswerResults owns the query configuration
-    const answerRequest: AnswerAgentRequest = {
+    const retrievalRequest: RetrievalAgentRequest = {
       query: currentQuery,
+      generator: generator,
+      agent_knowledge: agentKnowledge,
+      stream: true,
       queries: [
         {
           table: resolvedTable,
-          // Use the query value directly as semantic search
           semantic_search: currentQuery,
-          fields: fields || [],
-          indexes: semanticIndexes || [],
-          filter_query: filterQuery,
-          exclusion_query: exclusionQuery,
+          ...(semanticIndexes?.length ? { indexes: semanticIndexes } : {}),
+          ...(fields?.length ? { fields: fields } : {}),
+          ...(filterQuery ? { filter_query: filterQuery } : {}),
+          ...(exclusionQuery ? { exclusion_query: exclusionQuery } : {}),
+          limit: 10,
         },
       ],
-      generator: generator,
-      agent_knowledge: agentKnowledge,
-      with_streaming: true,
       steps: {
+        generation: {
+          enabled: true,
+        },
         classification: {
+          enabled: true,
           with_reasoning: showReasoning,
         },
         followup: {
@@ -164,8 +168,8 @@ export default function AnswerResults({
         confidence: {
           enabled: showConfidence,
         },
+        eval: evalConfig,
       },
-      eval: evalConfig,
     };
 
     // Start streaming
@@ -186,7 +190,7 @@ export default function AnswerResults({
       }
 
       try {
-        const controller = await streamAnswer(url, answerRequest, headers || {}, {
+        const controller = await streamAnswer(url, retrievalRequest, headers || {}, {
           onClassification: (data) => {
             setClassification(data);
           },
@@ -222,15 +226,15 @@ export default function AnswerResults({
               onErrorCallback(message);
             }
           },
-          onAnswerAgentResult: (result) => {
+          onRetrievalAgentResult: (result) => {
             // Non-streaming response
-            setClassification(result.classification_transformation || null);
-            setAnswer(result.answer || "");
+            setClassification(result.classification || null);
+            setAnswer(result.generation || "");
             setFollowUpQuestions(result.followup_questions || []);
-            setHits(result.query_results?.[0]?.hits?.hits || []);
-            if (result.answer_confidence !== undefined && result.context_relevance !== undefined) {
+            setHits(result.hits || []);
+            if (result.generation_confidence !== undefined && result.context_relevance !== undefined) {
               setConfidence({
-                answer_confidence: result.answer_confidence,
+                generation_confidence: result.generation_confidence,
                 context_relevance: result.context_relevance,
               });
             }
@@ -363,11 +367,11 @@ export default function AnswerResults({
   );
 
   const defaultRenderConfidence = useCallback(
-    (confidenceData: AnswerConfidence) => (
+    (confidenceData: GenerationConfidence) => (
       <div className="react-af-answer-confidence">
         <strong>Confidence Assessment:</strong>
         <div>
-          <strong>Answer Confidence:</strong> {(confidenceData.answer_confidence * 100).toFixed(1)}%
+          <strong>Generation Confidence:</strong> {(confidenceData.generation_confidence * 100).toFixed(1)}%
         </div>
         <div>
           <strong>Context Relevance:</strong> {(confidenceData.context_relevance * 100).toFixed(1)}%
@@ -464,22 +468,13 @@ export default function AnswerResults({
 
   // Build context value for child components (e.g., AnswerFeedback)
   const contextValue = useMemo<AnswerResultsContextValue>(() => {
-    const result: AnswerAgentResult | null = answer
+    const result: RetrievalAgentResult | null = answer
       ? ({
-          answer,
-          reasoning,
+          generation: answer,
+          hits,
           followup_questions: followUpQuestions,
-          query_results: [
-            {
-              hits: {
-                hits,
-                total: { value: hits.length, relation: "eq" },
-              },
-              took: 0,
-              status: 200,
-            },
-          ],
-        } as unknown as AnswerAgentResult)
+          state: "complete",
+        } as RetrievalAgentResult)
       : null;
 
     return {

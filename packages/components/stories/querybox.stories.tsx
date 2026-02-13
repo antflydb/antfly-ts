@@ -5,7 +5,6 @@ import {
   Facet,
   type GeneratorConfig,
   QueryBox,
-  RAGResults,
   Results,
 } from "../src";
 import { tableName, url } from "./utils";
@@ -139,17 +138,17 @@ export const RAGMode = () => {
     <Antfly url={url} table={tableName}>
       <h1>QueryBox for RAG (Submit Mode)</h1>
       <pre>{`<QueryBox id="rag" mode="submit" buttonLabel="Ask" />
-<RAGResults
+<AnswerResults
   id="rag-results"
   searchBoxId="rag"
-  summarizer={{...}}
+  generator={{...}}
   fields={["TICO", "AUTR"]}
 />`}</pre>
       <QueryBox id="rag" mode="submit" buttonLabel="Ask" placeholder="Ask a question..." />
-      <RAGResults
+      <AnswerResults
         id="rag-results"
         searchBoxId="rag"
-        summarizer={mockGenerator}
+        generator={mockGenerator}
         fields={["TICO", "AUTR"]}
         showHits={true}
       />

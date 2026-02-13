@@ -188,90 +188,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/rag": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Perform RAG (Retrieval-Augmented Generation) query
-         * @description Executes a query and streams a summary of the results using the specified summarizer. The response is streamed as Server-Sent Events (SSE) for real-time updates.
-         */
-        post: operations["ragQuery"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/agents/answer": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Answer Agent - Intelligent query routing with automatic query generation
-         * @description Uses LLM to classify and improve the query, transform it for optimal semantic search, execute the provided queries with the transformed text, and generate an answer. Streams classification, query execution, results, and answer as SSE events.
-         */
-        post: operations["answerAgent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/agents/chat": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Chat Agent - Conversational RAG with tool calling and clarifications
-         * @description Conversational RAG agent that maintains message history and supports interactive
-         *     clarifications and filter refinement through tool calling.
-         *
-         *     **Key Features:**
-         *     - **Conversation History**: Maintains context across multiple turns
-         *     - **Tool Calling**: Models with native support (OpenAI, Anthropic, Gemini) use function calling
-         *     - **Clarifications**: Model can pause to ask clarifying questions before searching
-         *     - **Dynamic Filters**: Accumulates filters across conversation turns
-         *     - **Fallback Mode**: Models without tool support use prompt-based structured output
-         *
-         *     **SSE Event Types:**
-         *     - `clarification_required`: Model needs user input (contains question and options)
-         *     - `filter_applied`: Filter tool executed (contains filter spec)
-         *     - `search_executed`: Search tool executed (contains query)
-         *     - `hit`: Individual search result
-         *     - `answer`: Answer text chunk
-         *     - `done`: Conversation turn complete
-         *     - `error`: Error occurred
-         *
-         *     **Conversation Flow:**
-         *     1. Client sends messages array with conversation history
-         *     2. If model needs clarification, returns `pending_clarification` in response
-         *     3. Client displays clarification question, gets user answer
-         *     4. Client sends new request with answer appended to messages
-         *     5. Process repeats until answer is generated
-         */
-        post: operations["chatAgent"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/eval": {
         parameters: {
             query?: never;
@@ -299,6 +215,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/agents/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * [DEPRECATED] Answer Agent - use /agents/retrieval instead
+         * @deprecated
+         * @description DEPRECATED: Use /agents/retrieval instead.
+         *     This endpoint accepts the old AnswerAgentRequest format and internally
+         *     delegates to the retrieval agent for backward compatibility.
+         */
+        post: operations["answerAgent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agents/query-builder": {
         parameters: {
             query?: never;
@@ -319,6 +258,50 @@ export interface paths {
          *     - Agentic retrieval in RAG pipelines
          */
         post: operations["queryBuilderAgent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/agents/retrieval": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retrieval Agent - Agentic document retrieval with tool calling
+         * @description Uses a DFA-based approach to retrieve documents:
+         *     clarify → select_strategy → refine_query → execute
+         *
+         *     **Key Features:**
+         *     - **Multi-strategy**: Semantic, BM25, tree, graph, metadata, or hybrid
+         *     - **Query Pipeline**: Chain queries with references (e.g., tree search starting from semantic results)
+         *     - **Clarification**: Optional multi-turn for query disambiguation
+         *     - **Reasoning Chain**: Returns steps taken during retrieval
+         *
+         *     **Strategies:**
+         *     - `semantic`: Vector similarity search using embeddings
+         *     - `bm25`: Full-text search with BM25 scoring
+         *     - `metadata`: Structured field queries
+         *     - `tree`: Iterative tree navigation with summarization (PageIndex-style)
+         *     - `graph`: Relationship-based traversal
+         *     - `hybrid`: Combine strategies with RRF or rerank
+         *
+         *     **SSE Event Types:**
+         *     - `dfa_state`: DFA state transition
+         *     - `tree_level`: Tree search progress
+         *     - `sufficiency_check`: Whether collected documents are sufficient
+         *     - `hit`: Individual document result
+         *     - `clarification_required`: Need user input
+         *     - `done`: Retrieval complete
+         *     - `error`: Error occurred
+         */
+        post: operations["retrievalAgent"];
         delete?: never;
         options?: never;
         head?: never;
@@ -482,29 +465,6 @@ export interface paths {
         put?: never;
         /** Query a specific table */
         post: operations["queryTable"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/tables/{tableName}/rag": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Name of the table for RAG query */
-                tableName: string;
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Perform RAG query on a specific table
-         * @description Executes a RAG query on a specific table and streams a summary of the results using the specified summarizer. The response is streamed as Server-Sent Events (SSE) for real-time updates or returns JSON with citations.
-         */
-        post: operations["tableRagQuery"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1626,78 +1586,6 @@ export interface components {
             /** @description List of available backups */
             backups: components["schemas"]["BackupInfo"][];
         };
-        RAGRequest: {
-            /**
-             * @description Array of retrieval queries to execute. Each query must specify a table and can specify its own limit and document_renderer.
-             *     Results from all queries are concatenated together (respecting each query's limit).
-             *     For single table: [{"table": "papers", "semantic_search": "...", "limit": 10}]
-             *     For broadcast: [{"table": "images", "limit": 5, ...}, {"table": "products", "limit": 5, ...}]
-             *     For mixed: [{"table": "papers", "semantic_search": "...", "limit": 10}, {"table": "books", "full_text_search": {...}, "limit": 5}]
-             */
-            queries: components["schemas"]["QueryRequest"][];
-            /**
-             * @description Generator configuration for summarization. Mutually exclusive with 'chain'.
-             *     Either 'generator' or 'chain' must be provided.
-             */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /**
-             * @description Chain of generators with retry/fallback semantics. Mutually exclusive with 'generator'.
-             *     Each link can specify retry configuration and a condition for trying the next generator.
-             *     Either 'generator' or 'chain' must be provided.
-             */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Optional system prompt to guide the summarization
-             * @example You are a helpful AI assistant. Summarize the following search results concisely.
-             */
-            system_prompt?: string;
-            /**
-             * @description Optional custom user prompt template for the LLM. If not provided, a default prompt is used.
-             *     The prompt can reference the following variables:
-             *     - {{documents}}: Array of retrieved documents with id and fields
-             *     - {{semantic_search}}: The user's semantic search query (if provided)
-             *     You can use Handlebars template syntax to customize the prompt, including loops and conditionals.
-             *     To generate a comma-separated list of document IDs, use: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
-             * @example Based on these documents, provide a detailed analysis:
-             *
-             *     {{#each documents}}
-             *     Doc {{this.id}}: {{this.fields}}
-             *     {{/each}}
-             *
-             *     Valid IDs: {{#each documents}}{{this.id}}{{#unless @last}}, {{/unless}}{{/each}}
-             */
-            prompt?: string;
-            /** @description Enable SSE streaming of results instead of JSON response */
-            with_streaming?: boolean;
-            /**
-             * @description Optional evaluation configuration. When provided, runs evaluators on the query results
-             *     and includes scores in the response.
-             *
-             *     **Retrieval metrics** (require ground_truth.relevant_ids):
-             *     - recall, precision, ndcg, mrr, map
-             *
-             *     **LLM-as-judge metrics** (require judge config):
-             *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
-             *
-             *     Example:
-             *     ```json
-             *     {
-             *       "evaluators": ["recall", "faithfulness"],
-             *       "ground_truth": {"relevant_ids": ["doc1", "doc2"]},
-             *       "judge": {"provider": "ollama", "model": "gemma3:4b"}
-             *     }
-             *     ```
-             */
-            eval?: components["schemas"]["EvalConfig"];
-        };
-        /** @description RAG result with individual query results and generation/evaluation outcome */
-        RAGResult: {
-            /** @description Results from each query. Check each result's status and error fields for failures. */
-            query_results?: components["schemas"]["QueryResult"][];
-            generate_result?: components["schemas"]["GenerateResult"];
-            /** @description Evaluation results when eval config was provided in the request */
-            eval_result?: components["schemas"]["EvalResult"];
-        };
         QueryBuilderRequest: {
             /**
              * @description Name of the table to build query for. If provided, uses table schema for field context.
@@ -1760,93 +1648,210 @@ export interface components {
              */
             warnings?: string[];
         };
-        AnswerAgentRequest: {
+        /**
+         * @description Current state of the retrieval agent:
+         *     - tool_calling: Agent is actively calling tools to find documents
+         *     - complete: Retrieval finished
+         *     - awaiting_clarification: Paused waiting for user input
+         * @enum {string}
+         */
+        RetrievalAgentState: "tool_calling" | "complete" | "awaiting_clarification";
+        /**
+         * @description Strategy for document retrieval:
+         *     - semantic: Vector similarity search using embeddings
+         *     - bm25: Full-text search using BM25 scoring
+         *     - metadata: Structured query on document fields
+         *     - tree: Iterative tree navigation with summarization
+         *     - graph: Relationship-based traversal
+         *     - hybrid: Combine multiple strategies with RRF or rerank
+         * @enum {string}
+         */
+        RetrievalStrategy: "semantic" | "bm25" | "metadata" | "tree" | "graph" | "hybrid";
+        /**
+         * @description Configuration for tree search strategy. Tree search navigates hierarchical
+         *     document structures by evaluating summaries at each level.
+         */
+        TreeSearchConfig: {
             /**
-             * @description User's natural language query to be classified and improved
-             * @example What are the best gaming laptops under $2000?
+             * @description Name of the graph index to use for tree navigation
+             * @example doc_hierarchy
+             */
+            index: string;
+            /**
+             * @description Starting nodes for tree search:
+             *     - "$roots" - Query for root nodes (nodes with no parents)
+             *     - Comma-separated explicit node IDs
+             *     When omitted and combined with a QueryRequest in a RetrievalQueryRequest,
+             *     the query results are used as start nodes.
+             * @example $roots
+             */
+            start_nodes?: string;
+            /**
+             * @description Maximum depth to traverse in the tree
+             * @default 5
+             */
+            max_depth?: number;
+            /**
+             * @description Number of branches to explore at each level
+             * @default 3
+             */
+            beam_width?: number;
+        };
+        /**
+         * @description A query in the retrieval pipeline. Extends QueryRequest with an optional
+         *     tree search configuration. Each query specifies its own table.
+         *
+         *     When both search fields (semantic_search, full_text_search) and tree_search
+         *     are provided, the search results are used as start nodes for tree navigation.
+         */
+        RetrievalQueryRequest: components["schemas"]["QueryRequest"] & {
+            /** @description Optional tree search configuration */
+            tree_search?: components["schemas"]["TreeSearchConfig"];
+        };
+        /** @description Request for clarification from the user */
+        ClarificationRequest: {
+            /**
+             * @description The clarifying question to ask the user
+             * @example Did you mean OAuth 1.0 or OAuth 2.0?
+             */
+            question: string;
+            /**
+             * @description Optional list of choices for the user
+             * @example [
+             *       "OAuth 1.0",
+             *       "OAuth 2.0",
+             *       "Both"
+             *     ]
+             */
+            options?: string[];
+            /**
+             * @description Why clarification is needed
+             * @example The query mentions OAuth but doesn't specify which version
+             */
+            reason?: string;
+        };
+        /** @description A step in the retrieval reasoning chain */
+        RetrievalReasoningStep: {
+            /**
+             * @description Name of the tool call or action taken
+             * @example semantic_search
+             */
+            step: string;
+            /**
+             * @description What action was taken
+             * @example Searched for OAuth configuration in doc_embeddings index
+             */
+            action: string;
+            /** @description Additional details about the step (e.g., tool arguments, result count) */
+            details?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description Configuration for the retrieval agent's pipeline steps and tool-use behavior.
+         *     Each step can have its own generator (or chain of generators) and step-specific options.
+         *     If a step is not configured, it is skipped (retrieval always runs).
+         */
+        RetrievalAgentSteps: {
+            /**
+             * @description Tool configuration for the retrieval agent. Controls which tools
+             *     are available and their settings. If not specified, tools are
+             *     automatically determined from the table's available indexes.
+             */
+            tools?: components["schemas"]["ChatToolsConfig"];
+            /**
+             * @description Configuration for query classification and transformation.
+             *     When set, runs classification before retrieval to select the optimal
+             *     strategy (simple/decompose/step_back/hyde) and transform the query.
+             */
+            classification?: components["schemas"]["ClassificationStepConfig"];
+            /**
+             * @description Configuration for generation from retrieved documents.
+             *     When set, generates a response with citations after retrieval completes.
+             */
+            generation?: components["schemas"]["GenerationStepConfig"];
+            /**
+             * @description Configuration for generating follow-up questions.
+             *     Requires steps.generation to be set.
+             */
+            followup?: components["schemas"]["FollowupStepConfig"];
+            /**
+             * @description Configuration for confidence assessment of the generated response.
+             *     Requires steps.generation to be set.
+             */
+            confidence?: components["schemas"]["ConfidenceStepConfig"];
+            /**
+             * @description Configuration for inline evaluation. Runs evaluators on retrieved
+             *     documents and/or generated response. Requires steps.generation for
+             *     generation-quality evaluators (faithfulness, completeness, etc.).
+             */
+            eval?: components["schemas"]["EvalConfig"];
+        };
+        /**
+         * @description Request for the retrieval agent. Queries define which tables and indexes
+         *     to search, each as a QueryRequest with optional tree search configuration.
+         *
+         *     **Pipeline mode** (default, max_iterations=0): Queries are executed
+         *     directly without an LLM tool-calling loop.
+         *
+         *     **Agentic mode** (max_iterations > 0): The LLM decides which tools to
+         *     call, using the queries to determine available tables and indexes.
+         */
+        RetrievalAgentRequest: {
+            /**
+             * @description User's natural language query
+             * @example How do I configure OAuth?
              */
             query: string;
             /**
-             * @description Background knowledge that guides the agent's understanding of the domain.
-             *     Similar to CLAUDE.md, this provides context that applies to all steps
-             *     (classification, retrieval, and answer generation).
+             * @description Queries to execute. Each query carries its own table via the
+             *     QueryRequest table field.
              *
-             *     Examples:
-             *     - "This data contains medical records. Use clinical terminology and be precise about diagnoses."
-             *     - "This is a software engineering knowledge base. Assume a technical audience."
-             *     - "This table stores legal documents. Reference laws and regulations accurately."
-             */
-            agent_knowledge?: string;
-            /**
-             * @description Default generator configuration used for all pipeline steps unless overridden in `steps`.
-             *     This is the simple configuration - just set this and everything works with sensible defaults.
-             *     Mutually exclusive with 'chain'. Either 'generator' or 'chain' must be provided.
-             */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /**
-             * @description Default chain of generators for all pipeline steps unless overridden in `steps`.
-             *     Each link can specify retry configuration and a condition for trying the next generator.
-             *     Mutually exclusive with 'generator'. Either 'generator' or 'chain' must be provided.
-             */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Array of query requests to execute. The query text will be transformed for semantic search
-             *     and populated into the semantic_search field of each query.
+             *     In pipeline mode (max_iterations=0), these are executed directly.
+             *     In agentic mode, these declare which table and indexes are available.
              * @example [
              *       {
-             *         "table": "products",
+             *         "table": "docs",
+             *         "semantic_search": "How do I configure OAuth?",
              *         "indexes": [
-             *           "embedding_idx"
+             *           "doc_embeddings"
              *         ],
              *         "limit": 10
-             *       },
-             *       {
-             *         "table": "reviews",
-             *         "indexes": [
-             *           "embedding_idx"
-             *         ],
-             *         "limit": 5
              *       }
              *     ]
              */
-            queries: components["schemas"]["QueryRequest"][];
+            queries: components["schemas"]["RetrievalQueryRequest"][];
+            /** @description Conversation messages for multi-turn interaction */
+            messages?: components["schemas"]["ChatMessage"][];
             /**
-             * @description Advanced per-step configuration. Override the default generator for specific steps,
-             *     configure step-specific options, or set up generator chains with retry/fallback.
-             *
-             *     **Simple usage** - just set `generator` and all steps use it with defaults.
-             *
-             *     **Advanced usage** - configure each step independently:
-             *     ```json
-             *     {
-             *       "steps": {
-             *         "classification": {
-             *           "generator": {"provider": "openai", "model": "gpt-4o-mini"},
-             *           "with_reasoning": true
-             *         },
-             *         "answer": {
-             *           "generator": {"provider": "anthropic", "model": "claude-3-opus"}
-             *         },
-             *         "followup": {
-             *           "enabled": true,
-             *           "generator": {"provider": "openai", "model": "gpt-4o-mini"}
-             *         }
-             *       }
-             *     }
-             *     ```
+             * @deprecated
+             * @description Prior messages for multi-turn clarification.
+             *     Deprecated: use `messages` instead.
              */
-            steps?: components["schemas"]["AnswerAgentSteps"];
+            context?: components["schemas"]["ChatMessage"][];
             /**
-             * @description Enable SSE streaming of results (classification, queries, results, answer) instead of JSON response
-             * @default true
+             * @description Domain-specific knowledge to include in the agent's system prompt.
+             *     Useful for providing context about the document collection.
+             * @example This collection contains API documentation for the Acme product suite.
              */
-            with_streaming?: boolean;
+            agent_knowledge?: string;
             /**
-             * @description Maximum total tokens allowed for retrieved document context.
-             *     When set, documents are pruned (lowest-ranked first) to fit within this budget.
-             *     Useful for ensuring LLM context limits are not exceeded.
-             *     Uses BERT tokenizer for estimation.
-             * @example 100000
+             * @description Pre-applied filters from prior interactions. These are applied to
+             *     all search tool invocations.
+             */
+            accumulated_filters?: components["schemas"]["FilterSpec"][];
+            /**
+             * @description Maximum number of tool-calling rounds. Controls how many times the
+             *     LLM can invoke tools before being forced to return results.
+             *
+             *     - 0: Pipeline mode — execute provided queries directly, no LLM loop
+             *     - 1+: Agentic mode — LLM decides which tools to call
+             * @default 0
+             */
+            max_iterations?: number;
+            /**
+             * @description Maximum tokens for document context in tool responses. Documents
+             *     exceeding this limit are pruned to fit.
              */
             max_context_tokens?: number;
             /**
@@ -1858,169 +1863,169 @@ export interface components {
              */
             reserve_tokens?: number;
             /**
-             * @description Optional evaluation configuration. When provided, runs evaluators on the query results
-             *     and generated answer, including scores in the response.
-             *
-             *     **Retrieval metrics** (require ground_truth.relevant_ids):
-             *     - recall, precision, ndcg, mrr, map
-             *
-             *     **LLM-as-judge metrics** (require judge config):
-             *     - relevance, faithfulness, completeness, coherence, safety, helpfulness, correctness, citation_quality
+             * @description Enable SSE streaming vs JSON response
+             * @default true
+             */
+            stream?: boolean;
+            /** @description Generator for the retrieval agent's LLM calls */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators */
+            chain?: components["schemas"]["ChainLink"][];
+            /** @description Tool and step configuration */
+            steps?: components["schemas"]["RetrievalAgentSteps"];
+            /**
+             * @description Handlebars template for rendering documents in the generation prompt.
+             *     Default uses TOON format for token efficiency.
+             *     Requires steps.generation to be set.
+             * @example {{encodeToon this.fields}}
+             */
+            document_renderer?: string;
+        };
+        /** @description Result from the retrieval agent */
+        RetrievalAgentResult: {
+            /** @description Retrieved query hits */
+            hits: components["schemas"]["QueryHit"][];
+            /** @description Steps taken during retrieval (tool calls, actions) */
+            reasoning_chain?: components["schemas"]["RetrievalReasoningStep"][];
+            /** @description Primary strategy that was used (optional in agentic mode) */
+            strategy_used?: components["schemas"]["RetrievalStrategy"];
+            /** @description Final state of the agent */
+            state: components["schemas"]["RetrievalAgentState"];
+            /** @description Present if state is awaiting_clarification */
+            clarification_request?: components["schemas"]["ClarificationRequest"];
+            /** @description Filters that were applied during retrieval */
+            applied_filters?: components["schemas"]["FilterSpec"][];
+            /** @description Total number of tool calls made during retrieval */
+            tool_calls_made?: number;
+            /**
+             * @description Conversation messages including tool calls and responses.
+             *     Can be passed back in subsequent requests for multi-turn interaction.
+             */
+            messages?: components["schemas"]["ChatMessage"][];
+            /**
+             * @description Query classification and transformation result. Present when
+             *     steps.classification was configured. Includes strategy, semantic_query,
+             *     sub_questions (decompose), step_back_query, and reasoning.
+             */
+            classification?: components["schemas"]["ClassificationTransformationResult"];
+            /**
+             * @description Generated response in markdown format. Present when steps.generation
+             *     was configured.
+             */
+            generation?: string;
+            /**
+             * Format: float
+             * @description Confidence in the generated response (requires steps.confidence)
+             */
+            generation_confidence?: number;
+            /**
+             * Format: float
+             * @description Relevance of retrieved documents to the query (requires steps.confidence)
+             */
+            context_relevance?: number;
+            /** @description Suggested follow-up questions (requires steps.followup) */
+            followup_questions?: string[];
+            /** @description Evaluation results when steps.eval was configured */
+            eval_result?: components["schemas"]["EvalResult"];
+        };
+        /**
+         * @deprecated
+         * @description DEPRECATED: Use RetrievalAgentSteps instead.
+         *     Configuration for the answer agent's pipeline steps.
+         */
+        AnswerAgentSteps: {
+            /** @description Configuration for query classification and transformation. */
+            classification?: components["schemas"]["ClassificationStepConfig"];
+            /**
+             * @description DEPRECATED: Use steps.generation on RetrievalAgentRequest instead.
+             *     Configuration for answer generation from retrieved documents.
+             */
+            answer?: components["schemas"]["GenerationStepConfig"];
+            /** @description Configuration for generating follow-up questions. */
+            followup?: components["schemas"]["FollowupStepConfig"];
+            /** @description Configuration for confidence assessment. */
+            confidence?: components["schemas"]["ConfidenceStepConfig"];
+        };
+        /**
+         * @deprecated
+         * @description DEPRECATED: Use RetrievalAgentRequest instead.
+         *     Request for the answer agent. Accepts the old request format and
+         *     internally delegates to the retrieval agent.
+         */
+        AnswerAgentRequest: {
+            /** @description User's natural language query */
+            query: string;
+            /** @description Queries to execute. Each query specifies its own table. */
+            queries: components["schemas"]["QueryRequest"][];
+            /**
+             * @description DEPRECATED: Use stream on RetrievalAgentRequest instead.
+             *     Enable SSE streaming vs JSON response.
+             * @default true
+             */
+            with_streaming?: boolean;
+            /** @description Generator for LLM calls */
+            generator?: components["schemas"]["GeneratorConfig"];
+            /** @description Chain of generators */
+            chain?: components["schemas"]["ChainLink"][];
+            /** @description Domain-specific knowledge for the agent */
+            agent_knowledge?: string;
+            /** @description Maximum tokens for document context */
+            max_context_tokens?: number;
+            /**
+             * @description Tokens to reserve for overhead
+             * @default 4000
+             */
+            reserve_tokens?: number;
+            /** @description Step configuration */
+            steps?: components["schemas"]["AnswerAgentSteps"];
+            /**
+             * @description DEPRECATED: Use steps.eval on RetrievalAgentRequest instead.
+             *     Evaluation configuration (moved to steps.eval in new API).
              */
             eval?: components["schemas"]["EvalConfig"];
             /**
-             * @description When true, skip AI answer generation and return search results only.
-             *     Useful when you want search quality without LLM cost, such as for
-             *     quota management or rate limiting scenarios.
+             * @description DEPRECATED: Omit steps.generation on RetrievalAgentRequest instead.
+             *     If true, skip the generation step.
              * @default false
              */
             without_generation?: boolean;
         };
-        AnswerAgentResult: components["schemas"]["AnswerResult"] & {
+        /**
+         * @deprecated
+         * @description DEPRECATED: Use RetrievalAgentResult instead.
+         *     Result from the answer agent.
+         */
+        AnswerAgentResult: {
             /**
-             * @description Query classification and transformation result. Includes:
-             *     - route_type: "question" or "search"
-             *     - strategy: "simple", "decompose", "step_back", or "hyde"
-             *     - semantic_query: Optimized query for retrieval
-             *     - reasoning: Pre-retrieval analysis (if steps.classification.with_reasoning was enabled)
+             * @description DEPRECATED: Use generation on RetrievalAgentResult instead.
+             *     Generated answer in markdown format.
              */
-            classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
-            /** @description Results from each executed query */
-            query_results?: components["schemas"]["QueryResult"][];
-            /** @description Evaluation results when eval config was provided in the request */
-            eval_result?: components["schemas"]["EvalResult"];
-        };
-        ChatAgentRequest: {
-            /**
-             * @description Conversation history. Include all previous messages to maintain context.
-             *     The last message should typically be from the user.
-             * @example [
-             *       {
-             *         "role": "user",
-             *         "content": "Find me articles about machine learning"
-             *       },
-             *       {
-             *         "role": "assistant",
-             *         "content": "I found several articles about machine learning. Would you like me to filter by publication date?"
-             *       },
-             *       {
-             *         "role": "user",
-             *         "content": "Yes, only from the last year"
-             *       }
-             *     ]
-             */
-            messages: components["schemas"]["ChatMessage"][];
-            /**
-             * @description Default generator configuration for the chat agent.
-             *     Models with native tool calling support (OpenAI, Anthropic, Gemini, Vertex)
-             *     will use function calling. Other models (Ollama) use prompt-based fallback.
-             *     Mutually exclusive with 'chain'. Either 'generator' or 'chain' must be provided.
-             */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /**
-             * @description Chain of generators with retry/fallback semantics for the chat agent.
-             *     Each link can specify retry configuration and a condition for trying the next generator.
-             *     Mutually exclusive with 'generator'. Either 'generator' or 'chain' must be provided.
-             */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Base query configurations. The chat agent will modify these queries
-             *     based on conversation context, applying filters and transformations.
-             * @example [
-             *       {
-             *         "table": "articles",
-             *         "indexes": [
-             *           "content_embedding"
-             *         ],
-             *         "limit": 10
-             *       }
-             *     ]
-             */
-            queries: components["schemas"]["QueryRequest"][];
-            /**
-             * @description Per-step configuration including tool settings.
-             *
-             *     Example with custom tool configuration:
-             *     ```json
-             *     {
-             *       "steps": {
-             *         "tools": {
-             *           "enable_filter_tool": true,
-             *           "enable_clarification_tool": true,
-             *           "enable_search_tool": true,
-             *           "max_tool_iterations": 5
-             *         }
-             *       }
-             *     }
-             *     ```
-             */
-            steps?: components["schemas"]["ChatAgentSteps"];
-            /**
-             * @description Enable SSE streaming of results
-             * @default true
-             */
-            with_streaming?: boolean;
-            /**
-             * @description Background knowledge that guides the agent's understanding of the domain.
-             *     Similar to CLAUDE.md, this provides context that applies to all steps
-             *     (classification, retrieval, and answer generation).
-             *
-             *     Example: "This is a technical documentation search. Results should be
-             *     filtered to only include official documentation, not community posts."
-             */
-            agent_knowledge?: string;
-            /**
-             * @description Filters accumulated from previous conversation turns.
-             *     These are applied to all queries automatically.
-             *     New filters discovered in this turn will be added to this list in the response.
-             */
-            accumulated_filters?: components["schemas"]["FilterSpec"][];
-            /**
-             * @description Optional custom system prompt for the chat agent.
-             *     If not provided, uses a default conversational RAG prompt.
-             */
-            system_prompt?: string;
-            /**
-             * @description Maximum tokens for retrieved document context
-             * @example 100000
-             */
-            max_context_tokens?: number;
-        };
-        ChatAgentResult: components["schemas"]["schemas-ChatAgentResult"] & {
-            /** @description Query analysis result (if initial query was classified) */
-            classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
-            /** @description Search results from executed queries */
-            query_results?: components["schemas"]["QueryResult"][];
-        };
-        /** @description Confidence assessment for the generated answer */
-        AnswerConfidence: {
+            answer?: string;
             /**
              * Format: float
-             * @description Overall confidence in the answer (0.0 to 1.0). Considers both ability to answer from provided resources and general knowledge.
-             */
-            answer_confidence: number;
-            /**
-             * Format: float
-             * @description Relevance of the provided resources to the question (0.0 to 1.0)
-             */
-            context_relevance: number;
-        };
-        /** @description Result from answer generation with optional confidence and follow-up questions */
-        AnswerResult: {
-            /**
-             * Format: float
-             * @description Overall confidence in the answer (0.0 to 1.0)
+             * @description DEPRECATED: Use generation_confidence on RetrievalAgentResult instead.
+             *     Confidence in the generated answer.
              */
             answer_confidence?: number;
             /**
              * Format: float
-             * @description Relevance of the provided resources to the question (0.0 to 1.0)
+             * @description Relevance of retrieved documents to the query
              */
             context_relevance?: number;
-            /** @description Generated answer in markdown format */
-            answer: string;
+            /**
+             * @description DEPRECATED: Use classification on RetrievalAgentResult instead.
+             *     Query classification and transformation result.
+             */
+            classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
+            /**
+             * @description DEPRECATED: Use hits on RetrievalAgentResult instead.
+             *     Query results grouped by table.
+             */
+            query_results?: components["schemas"]["QueryResult"][];
             /** @description Suggested follow-up questions */
             followup_questions?: string[];
+            /** @description Evaluation results */
+            eval_result?: components["schemas"]["EvalResult"];
         };
         QueryRequest: {
             /**
@@ -2392,6 +2397,39 @@ export interface components {
              *     - Limit result fields to reduce data transfer
              */
             join?: components["schemas"]["JoinClause"];
+            /**
+             * @description Map of table name to foreign data source configuration for query-time federated access.
+             *     When a table name referenced in this query (or in a join's `right_table`) appears as a key
+             *     here, the query is routed to the external database instead of Antfly shards.
+             *
+             *     This enables joining Antfly search results with structured relational data (customer records,
+             *     product catalogs, etc.) without ingesting that data into Antfly.
+             *
+             *     **Supported operations on foreign tables:** filter_query, field selection, limit/offset.
+             *     **Not supported:** full_text_search, semantic_search, graph_searches, aggregations, reranker.
+             *
+             *     **Example - Join Antfly products with Postgres customers:**
+             *     ```json
+             *     {
+             *       "table": "products",
+             *       "full_text_search": {"query": "category:electronics"},
+             *       "join": {
+             *         "right_table": "pg_customers",
+             *         "on": {"left_field": "customer_id", "right_field": "id"}
+             *       },
+             *       "foreign_sources": {
+             *         "pg_customers": {
+             *           "type": "postgres",
+             *           "dsn": "${secret:pg_dsn}",
+             *           "postgres_table": "customers"
+             *         }
+             *       }
+             *     }
+             *     ```
+             */
+            foreign_sources?: {
+                [key: string]: components["schemas"]["ForeignSource"];
+            };
         };
         Analyses: {
             pca?: boolean;
@@ -2920,6 +2958,49 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        ForeignSource: {
+            /**
+             * @description Type of the foreign data source. Currently only "postgres" is supported.
+             * @example postgres
+             * @enum {string}
+             */
+            type: "postgres";
+            /**
+             * @description Data source name (connection string) for the foreign database.
+             *     Supports `${secret:key_name}` references that resolve from the Antfly keystore
+             *     or environment variables.
+             * @example ${secret:pg_dsn}
+             */
+            dsn: string;
+            /**
+             * @description Name of the table or view in the foreign PostgreSQL database to query.
+             * @example customers
+             */
+            postgres_table: string;
+            /**
+             * @description Optional column definitions for the foreign table. If omitted, columns are
+             *     auto-discovered from `information_schema.columns` on first query.
+             */
+            columns?: components["schemas"]["ForeignColumn"][];
+        };
+        ForeignColumn: {
+            /**
+             * @description Column name in the foreign table.
+             * @example email
+             */
+            name: string;
+            /**
+             * @description Column data type. Used for filter validation and type coercion.
+             *     Common types: text, integer, bigint, float, boolean, timestamp, uuid, jsonb.
+             * @example text
+             */
+            type: string;
+            /**
+             * @description Whether the column allows NULL values.
+             * @default false
+             */
+            nullable?: boolean;
+        };
         /**
          * Format: double
          * @description A floating-point number used to decrease or increase the relevance scores of a query.
@@ -3433,6 +3514,28 @@ export interface components {
              */
             took?: number;
         };
+        /**
+         * @description Available evaluator types:
+         *
+         *     **Retrieval metrics** (require ground_truth.relevant_ids):
+         *     - recall: Recall@k - fraction of relevant docs retrieved
+         *     - precision: Precision@k - fraction of retrieved docs that are relevant
+         *     - ndcg: Normalized Discounted Cumulative Gain
+         *     - mrr: Mean Reciprocal Rank
+         *     - map: Mean Average Precision
+         *
+         *     **LLM-as-judge metrics** (require judge config):
+         *     - relevance: Is output relevant to query? (works on retrieval-only too)
+         *     - faithfulness: Is output grounded in context?
+         *     - completeness: Does output fully address query?
+         *     - coherence: Is output well-structured?
+         *     - safety: Is output safe/appropriate?
+         *     - helpfulness: Is output useful?
+         *     - correctness: Is output factually correct? (uses expectations)
+         *     - citation_quality: Are citations accurate?
+         * @enum {string}
+         */
+        EvaluatorName: "recall" | "precision" | "ndcg" | "mrr" | "map" | "relevance" | "faithfulness" | "completeness" | "coherence" | "safety" | "helpfulness" | "correctness" | "citation_quality";
         /**
          * @description Configuration for the Google generative AI provider (Gemini).
          *
@@ -4007,70 +4110,6 @@ export interface components {
         GeneratorConfig: (components["schemas"]["GoogleGeneratorConfig"] | components["schemas"]["VertexGeneratorConfig"] | components["schemas"]["OllamaGeneratorConfig"] | components["schemas"]["TermiteGeneratorConfig"] | components["schemas"]["OpenAIGeneratorConfig"] | components["schemas"]["OpenRouterGeneratorConfig"] | components["schemas"]["BedrockGeneratorConfig"] | components["schemas"]["AnthropicGeneratorConfig"] | components["schemas"]["CohereGeneratorConfig"]) & {
             provider: components["schemas"]["GeneratorProvider"];
         };
-        /** @description Retry configuration for generator calls */
-        RetryConfig: {
-            /**
-             * @description Maximum number of retry attempts
-             * @default 3
-             */
-            max_attempts?: number;
-            /**
-             * @description Initial backoff delay in milliseconds
-             * @default 1000
-             */
-            initial_backoff_ms?: number;
-            /**
-             * Format: float
-             * @description Multiplier for exponential backoff
-             * @default 2
-             */
-            backoff_multiplier?: number;
-            /**
-             * @description Maximum backoff delay in milliseconds
-             * @default 30000
-             */
-            max_backoff_ms?: number;
-        };
-        /**
-         * @description Condition for trying the next generator in chain:
-         *     - always: Always try next regardless of outcome
-         *     - on_error: Try next on any error (default)
-         *     - on_timeout: Try next only on timeout errors
-         *     - on_rate_limit: Try next only on rate limit errors
-         * @default on_error
-         * @enum {string}
-         */
-        ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
-        /** @description A single link in a generator chain with optional retry and condition */
-        ChainLink: {
-            generator: components["schemas"]["GeneratorConfig"];
-            /** @description Retry configuration for this generator */
-            retry?: components["schemas"]["RetryConfig"];
-            /** @description When to try the next generator in chain */
-            condition?: components["schemas"]["ChainCondition"];
-        };
-        /**
-         * @description Available evaluator types:
-         *
-         *     **Retrieval metrics** (require ground_truth.relevant_ids):
-         *     - recall: Recall@k - fraction of relevant docs retrieved
-         *     - precision: Precision@k - fraction of retrieved docs that are relevant
-         *     - ndcg: Normalized Discounted Cumulative Gain
-         *     - mrr: Mean Reciprocal Rank
-         *     - map: Mean Average Precision
-         *
-         *     **LLM-as-judge metrics** (require judge config):
-         *     - relevance: Is output relevant to query? (works on retrieval-only too)
-         *     - faithfulness: Is output grounded in context?
-         *     - completeness: Does output fully address query?
-         *     - coherence: Is output well-structured?
-         *     - safety: Is output safe/appropriate?
-         *     - helpfulness: Is output useful?
-         *     - correctness: Is output factually correct? (uses expectations)
-         *     - citation_quality: Are citations accurate?
-         * @enum {string}
-         */
-        EvaluatorName: "recall" | "precision" | "ndcg" | "mrr" | "map" | "relevance" | "faithfulness" | "completeness" | "coherence" | "safety" | "helpfulness" | "correctness" | "citation_quality";
         /** @description Ground truth data for evaluation */
         GroundTruth: {
             /** @description Document IDs known to be relevant (for retrieval metrics) */
@@ -4101,26 +4140,26 @@ export interface components {
             timeout_seconds?: number;
         };
         /**
-         * @description Configuration for inline evaluation of query results.
-         *     Add to RAGRequest, QueryRequest, or AnswerAgentRequest.
+         * @description Standalone evaluation request for POST /eval endpoint.
+         *     Useful for testing evaluators without running a query.
          */
-        EvalConfig: {
+        EvalRequest: {
             /** @description List of evaluators to run */
-            evaluators?: components["schemas"]["EvaluatorName"][];
-            /**
-             * @description LLM configuration for judge-based evaluators.
-             *     Falls back to default if not specified.
-             */
+            evaluators: components["schemas"]["EvaluatorName"][];
+            /** @description LLM configuration for judge-based evaluators */
             judge?: components["schemas"]["GeneratorConfig"];
-            /** @description Ground truth data for retrieval metrics */
+            /** @description Ground truth data */
             ground_truth?: components["schemas"]["GroundTruth"];
-            /** @description Evaluation options (k, thresholds, etc.) */
+            /** @description Evaluation options */
             options?: components["schemas"]["EvalOptions"];
-        };
-        /** @description Result of a generate operation. Formatted as markdown by default with inline resource references using [resource_id <id>] or [resource_id <id1>, <id2>] format. */
-        GenerateResult: {
-            /** @description The generated text in markdown format with inline resource references like [resource_id res1] or [resource_id res1, res2] */
-            text: string;
+            /** @description Original query/input to evaluate */
+            query?: string;
+            /** @description Generated output to evaluate (optional for retrieval-only) */
+            output?: string;
+            /** @description Retrieved documents/context */
+            context?: Record<string, never>[];
+            /** @description IDs of retrieved documents (for retrieval metrics) */
+            retrieved_ids?: string[];
         };
         /** @description Result from a single evaluator */
         EvaluatorScore: {
@@ -4172,6 +4211,48 @@ export interface components {
             /** @description Total evaluation duration in milliseconds */
             duration_ms?: number;
         };
+        /** @description Retry configuration for generator calls */
+        RetryConfig: {
+            /**
+             * @description Maximum number of retry attempts
+             * @default 3
+             */
+            max_attempts?: number;
+            /**
+             * @description Initial backoff delay in milliseconds
+             * @default 1000
+             */
+            initial_backoff_ms?: number;
+            /**
+             * Format: float
+             * @description Multiplier for exponential backoff
+             * @default 2
+             */
+            backoff_multiplier?: number;
+            /**
+             * @description Maximum backoff delay in milliseconds
+             * @default 30000
+             */
+            max_backoff_ms?: number;
+        };
+        /**
+         * @description Condition for trying the next generator in chain:
+         *     - always: Always try next regardless of outcome
+         *     - on_error: Try next on any error (default)
+         *     - on_timeout: Try next only on timeout errors
+         *     - on_rate_limit: Try next only on rate limit errors
+         * @default on_error
+         * @enum {string}
+         */
+        ChainCondition: "always" | "on_error" | "on_timeout" | "on_rate_limit";
+        /** @description A single link in a generator chain with optional retry and condition */
+        ChainLink: {
+            generator: components["schemas"]["GeneratorConfig"];
+            /** @description Retry configuration for this generator */
+            retry?: components["schemas"]["RetryConfig"];
+            /** @description When to try the next generator in chain */
+            condition?: components["schemas"]["ChainCondition"];
+        };
         /**
          * @description Strategy for query transformation and retrieval:
          *     - simple: Direct query with multi-phrase expansion. Best for straightforward factual queries.
@@ -4193,6 +4274,11 @@ export interface components {
          *     selects the optimal retrieval strategy, and generates semantic transformations.
          */
         ClassificationStepConfig: {
+            /**
+             * @description Enable query classification and strategy selection
+             * @default false
+             */
+            enabled?: boolean;
             /** @description Generator to use for classification. If not specified, uses the default summarizer. */
             generator?: components["schemas"]["GeneratorConfig"];
             /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
@@ -4213,21 +4299,26 @@ export interface components {
             multi_phrase_count?: number;
         };
         /**
-         * @description Configuration for the answer generation step. This step generates the final
-         *     answer from retrieved documents using the reasoning as context.
+         * @description Configuration for the generation step. This step generates the final
+         *     response from retrieved documents using the reasoning as context.
          */
-        AnswerStepConfig: {
-            /** @description Generator to use for answer generation. If not specified, uses the default summarizer. */
+        GenerationStepConfig: {
+            /**
+             * @description Enable generation from retrieved documents
+             * @default false
+             */
+            enabled?: boolean;
+            /** @description Generator to use for generation. If not specified, uses the default summarizer. */
             generator?: components["schemas"]["GeneratorConfig"];
             /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
             chain?: components["schemas"]["ChainLink"][];
             /** @description Custom system prompt for answer generation */
             system_prompt?: string;
             /**
-             * @description Custom guidance for answer tone, detail level, and style
+             * @description Custom guidance for generation tone, detail level, and style
              * @example Be concise and technical. Include code examples where relevant.
              */
-            answer_context?: string;
+            generation_context?: string;
         };
         /**
          * @description Configuration for generating follow-up questions. Uses a separate generator
@@ -4275,19 +4366,21 @@ export interface components {
             context?: string;
         };
         /**
-         * @description Per-step configuration for the answer agent pipeline. Each step can have
-         *     its own generator (or chain of generators) and step-specific options.
-         *     If a step is not configured, it uses the top-level generator as default.
+         * @description Configuration for inline evaluation of query results.
+         *     Add to RAGRequest, QueryRequest, or AnswerAgentRequest.
          */
-        AnswerAgentSteps: {
-            /** @description Configuration for query classification and transformation */
-            classification?: components["schemas"]["ClassificationStepConfig"];
-            /** @description Configuration for answer generation */
-            answer?: components["schemas"]["AnswerStepConfig"];
-            /** @description Configuration for follow-up question generation */
-            followup?: components["schemas"]["FollowupStepConfig"];
-            /** @description Configuration for confidence assessment */
-            confidence?: components["schemas"]["ConfidenceStepConfig"];
+        EvalConfig: {
+            /** @description List of evaluators to run */
+            evaluators?: components["schemas"]["EvaluatorName"][];
+            /**
+             * @description LLM configuration for judge-based evaluators.
+             *     Falls back to default if not specified.
+             */
+            judge?: components["schemas"]["GeneratorConfig"];
+            /** @description Ground truth data for retrieval metrics */
+            ground_truth?: components["schemas"]["GroundTruth"];
+            /** @description Evaluation options (k, thresholds, etc.) */
+            options?: components["schemas"]["EvalOptions"];
         };
         /**
          * @description Classification of query type: question (specific factual query) or search (exploratory query)
@@ -4354,16 +4447,40 @@ export interface components {
             /** @description Results from tool executions (only for tool role) */
             tool_results?: components["schemas"]["ChatToolResult"][];
         };
+        /** @description A filter specification to apply to search queries */
+        FilterSpec: {
+            /** @description Field name to filter on */
+            field: string;
+            /**
+             * @description Filter operator:
+             *     - eq: Equals
+             *     - ne: Not equals
+             *     - gt/gte: Greater than (or equal)
+             *     - lt/lte: Less than (or equal)
+             *     - contains: Contains substring
+             *     - prefix: Starts with
+             *     - range: Between two values (value should be array [min, max])
+             *     - in: Value in list (value should be array)
+             * @enum {string}
+             */
+            operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "contains" | "prefix" | "range" | "in";
+            /** @description Filter value (string, number, boolean, or array for range/in operators) */
+            value: unknown;
+        };
         /**
-         * @description Available tool names for the chat agent.
+         * @description Available tool names for the chat and retrieval agents.
          *     - add_filter: Add search filters (field constraints)
          *     - ask_clarification: Ask user for clarification
-         *     - search: Execute semantic searches
+         *     - search: Execute semantic searches (legacy, use semantic_search for retrieval)
          *     - websearch: Search the web (requires websearch_config)
          *     - fetch: Fetch URL content (subject to security controls)
+         *     - semantic_search: Execute semantic/vector search against an index
+         *     - full_text_search: Execute full-text BM25 search against an index
+         *     - tree_search: Execute tree search with beam search navigation
+         *     - graph_search: Execute graph traversal search
          * @enum {string}
          */
-        ChatToolName: "add_filter" | "ask_clarification" | "search" | "websearch" | "fetch";
+        ChatToolName: "add_filter" | "ask_clarification" | "search" | "websearch" | "fetch" | "semantic_search" | "full_text_search" | "tree_search" | "graph_search";
         /**
          * @description A unified configuration for web search providers.
          *
@@ -4735,99 +4852,6 @@ export interface components {
              * @default 5
              */
             max_tool_iterations?: number;
-        };
-        /**
-         * @description Per-step configuration for the chat agent pipeline. Similar to AnswerAgentSteps
-         *     but includes tool-specific configuration.
-         */
-        ChatAgentSteps: {
-            /** @description Configuration for query classification (used for initial query analysis) */
-            classification?: components["schemas"]["ClassificationStepConfig"];
-            /** @description Configuration for answer generation */
-            answer?: components["schemas"]["AnswerStepConfig"];
-            /** @description Configuration for confidence scoring */
-            confidence?: components["schemas"]["ConfidenceStepConfig"];
-            /** @description Configuration for tool calling behavior */
-            tools?: components["schemas"]["ChatToolsConfig"];
-        };
-        /** @description A filter specification to apply to search queries */
-        FilterSpec: {
-            /** @description Field name to filter on */
-            field: string;
-            /**
-             * @description Filter operator:
-             *     - eq: Equals
-             *     - ne: Not equals
-             *     - gt/gte: Greater than (or equal)
-             *     - lt/lte: Less than (or equal)
-             *     - contains: Contains substring
-             *     - prefix: Starts with
-             *     - range: Between two values (value should be array [min, max])
-             *     - in: Value in list (value should be array)
-             * @enum {string}
-             */
-            operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "contains" | "prefix" | "range" | "in";
-            /** @description Filter value (string, number, boolean, or array for range/in operators) */
-            value: unknown;
-        };
-        /** @description A request for clarification from the user */
-        ClarificationRequest: {
-            /** @description The clarifying question to ask the user */
-            question: string;
-            /** @description Optional list of suggested answers for the user to choose from */
-            options?: string[];
-            /**
-             * @description Whether the clarification is required before proceeding
-             * @default false
-             */
-            required?: boolean;
-        };
-        /**
-         * @description Result from the chat agent. Contains the assistant's response,
-         *     any pending clarifications, applied filters, and conversation state.
-         */
-        "schemas-ChatAgentResult": {
-            /** @description Updated conversation history including the assistant's response */
-            messages: components["schemas"]["ChatMessage"][];
-            /** @description If present, the model is requesting clarification before proceeding */
-            pending_clarification?: components["schemas"]["ClarificationRequest"];
-            /** @description Filters that have been applied in this conversation */
-            applied_filters?: components["schemas"]["FilterSpec"][];
-            /** @description Search results from executed queries */
-            query_results?: {
-                [key: string]: unknown;
-            }[];
-            /** @description Final answer text (if available) */
-            answer?: string;
-            /**
-             * Format: float
-             * @description Confidence in the answer
-             */
-            answer_confidence?: number;
-            /** @description Number of tool calls made in this turn */
-            tool_calls_made?: number;
-        };
-        /**
-         * @description Standalone evaluation request for POST /eval endpoint.
-         *     Useful for testing evaluators without running a query.
-         */
-        EvalRequest: {
-            /** @description List of evaluators to run */
-            evaluators: components["schemas"]["EvaluatorName"][];
-            /** @description LLM configuration for judge-based evaluators */
-            judge?: components["schemas"]["GeneratorConfig"];
-            /** @description Ground truth data */
-            ground_truth?: components["schemas"]["GroundTruth"];
-            /** @description Evaluation options */
-            options?: components["schemas"]["EvalOptions"];
-            /** @description Original query/input to evaluate */
-            query?: string;
-            /** @description Generated output to evaluate (optional for retrieval-only) */
-            output?: string;
-            /** @description Retrieved documents/context */
-            context?: Record<string, never>[];
-            /** @description IDs of retrieved documents (for retrieval metrics) */
-            retrieved_ids?: string[];
         };
         BleveIndexV2Config: {
             /** @description Whether to use memory-only storage */
@@ -5302,6 +5326,10 @@ export interface components {
             threshold?: number;
             /** @description Target number of tokens per chunk. */
             target_tokens?: number;
+            /** @description Window duration in milliseconds for audio chunking (default: 30000). */
+            window_duration_ms?: number;
+            /** @description Overlap duration in milliseconds between audio chunks (default: 0). */
+            overlap_duration_ms?: number;
         };
         /**
          * @description Configuration for the Termite chunking provider.
@@ -5905,135 +5933,6 @@ export interface operations {
             };
         };
     };
-    ragQuery: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RAGRequest"];
-            };
-        };
-        responses: {
-            /** @description RAG query successful, streaming summary or JSON response with citations and query results */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/event-stream": string;
-                    "application/json": components["schemas"]["RAGResult"];
-                };
-            };
-            /** @description Invalid RAG request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    answerAgent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AnswerAgentRequest"];
-            };
-        };
-        responses: {
-            /** @description Answer agent successful, streaming events or JSON response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/event-stream": string;
-                    "application/json": components["schemas"]["AnswerAgentResult"];
-                };
-            };
-            /** @description Invalid answer agent request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
-    chatAgent: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChatAgentRequest"];
-            };
-        };
-        responses: {
-            /** @description Chat agent response with conversation state */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/event-stream": string;
-                    "application/json": components["schemas"]["ChatAgentResult"];
-                };
-            };
-            /** @description Invalid chat agent request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-        };
-    };
     evaluate: {
         parameters: {
             query?: never;
@@ -6066,6 +5965,49 @@ export interface operations {
                 };
             };
             /** @description Internal server error (e.g., LLM judge failed) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    answerAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Answer agent response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["AnswerAgentResult"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -6117,6 +6059,49 @@ export interface operations {
                 };
             };
             /** @description Internal server error (e.g., LLM call failed) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    retrievalAgent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RetrievalAgentRequest"];
+            };
+        };
+        responses: {
+            /** @description Retrieval agent response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": string;
+                    "application/json": components["schemas"]["RetrievalAgentResult"];
+                };
+            };
+            /** @description Invalid retrieval agent request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -6264,53 +6249,6 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             404: components["responses"]["NotFound"];
             500: components["responses"]["InternalServerError"];
-        };
-    };
-    tableRagQuery: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description Name of the table for RAG query */
-                tableName: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RAGRequest"];
-            };
-        };
-        responses: {
-            /** @description RAG query successful, streaming summary or JSON response with citations and query results */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/event-stream": string;
-                    "application/json": components["schemas"]["RAGResult"];
-                };
-            };
-            /** @description Invalid RAG request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            404: components["responses"]["NotFound"];
-            /** @description Internal server error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
         };
     };
     batchWrite: {

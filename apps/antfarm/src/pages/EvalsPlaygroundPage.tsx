@@ -363,32 +363,29 @@ const EvalsPlaygroundPage: React.FC = () => {
         const itemStartTime = performance.now();
 
         try {
-          // Call answerAgent with inline eval config
-          const answerResult = await apiClient.answerAgent(
+          // Call retrievalAgent with generation + inline eval config
+          const answerResult = await apiClient.retrievalAgent(
             {
               query: item.question,
-              queries: [
-                {
-                  table: selectedTable,
-                  semantic_search: item.question,
-                  indexes: selectedIndex ? [selectedIndex] : undefined,
-                },
-              ],
+              queries: [{ table: selectedTable }],
+              stream: false,
               generator: {
                 provider: judge.provider,
                 model: judge.model,
                 temperature: judge.temperature,
               },
-              // Inline eval - runs correctness evaluator and returns result with answer
-              eval: {
-                evaluators: ["correctness"],
-                judge: {
-                  provider: judge.provider,
-                  model: judge.model,
-                  temperature: judge.temperature,
-                },
-                ground_truth: {
-                  expectations: item.referenceAnswer,
+              steps: {
+                generation: {},
+                eval: {
+                  evaluators: ["correctness"],
+                  judge: {
+                    provider: judge.provider,
+                    model: judge.model,
+                    temperature: judge.temperature,
+                  },
+                  ground_truth: {
+                    expectations: item.referenceAnswer,
+                  },
                 },
               },
             }
@@ -399,7 +396,7 @@ const EvalsPlaygroundPage: React.FC = () => {
             throw new Error("Unexpected streaming response");
           }
 
-          const ragAnswer = answerResult.answer || "";
+          const ragAnswer = answerResult.generation || "";
           const correctnessScore = answerResult.eval_result?.scores?.generation?.correctness;
           const reason = correctnessScore?.reason ?? "";
 

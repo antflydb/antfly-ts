@@ -66,11 +66,7 @@ export type {
   AggregationResult,
   // Search and aggregation types
   AggregationType,
-  // Answer Agent types
-  AnswerAgentRequest,
-  AnswerAgentResult,
-  AnswerAgentStreamCallbacks,
-  AnswerConfidence,
+  GenerationConfidence,
   // Configuration
   AntflyConfig,
   // Error type
@@ -80,17 +76,14 @@ export type {
   BackupRequest,
   BatchRequest, // Now using our custom type
   CalendarInterval,
-  // Chat Agent types
-  ChatAgentRequest,
-  ChatAgentResult,
-  ChatAgentSteps,
-  ChatAgentStreamCallbacks,
   ChatMessage,
   ChatMessageRole,
   ChatToolCall,
   ChatToolName,
   ChatToolResult,
   ChatToolsConfig,
+  // Chat types (used by retrieval agent)
+  // Retrieval Agent result types
   ClarificationRequest,
   ClassificationTransformationResult,
   CreateTableRequest,
@@ -102,18 +95,9 @@ export type {
   // Graph index types
   Edge,
   EdgeDirection,
+  EdgesResponse,
   EdgeTopology,
   EdgeTypeConfig,
-  EdgesResponse,
-  GraphIndexV0Config,
-  GraphNodeSelector,
-  GraphQuery,
-  GraphQueryParams,
-  GraphQueryResult,
-  GraphQueryType,
-  GraphResultNode,
-  TraversalResult,
-  TraversalRules,
   // Model and reranker types
   EmbedderConfig,
   EmbedderProvider,
@@ -126,9 +110,15 @@ export type {
   EvaluatorScore,
   FetchConfig,
   FilterSpec,
-  GenerateResult,
   GeneratorConfig,
   GeneratorProvider,
+  GraphIndexV0Config,
+  GraphNodeSelector,
+  GraphQuery,
+  GraphQueryParams,
+  GraphQueryResult,
+  GraphQueryType,
+  GraphResultNode,
   // Index types
   IndexConfig,
   IndexStatus,
@@ -153,15 +143,16 @@ export type {
   QueryResponses,
   QueryResult,
   QueryStrategy,
-  // RAG types
-  RAGRequest,
-  RAGResult,
-  RAGStreamCallbacks,
   RerankerConfig,
   ResourceType,
   // Utility type for response data
   ResponseData,
   RestoreRequest,
+  // Retrieval Agent types
+  RetrievalAgentRequest,
+  RetrievalAgentResult,
+  RetrievalAgentSteps,
+  RetrievalAgentStreamCallbacks,
   RouteType,
   SemanticQueryMode,
   SignificanceAlgorithm,
@@ -169,6 +160,8 @@ export type {
   Table,
   TableSchema,
   TableStatus,
+  TraversalResult,
+  TraversalRules,
   UpdatePasswordRequest,
   // User and permission types
   User,

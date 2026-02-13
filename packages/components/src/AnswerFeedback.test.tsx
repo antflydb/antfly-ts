@@ -1,75 +1,51 @@
-import type { RAGResult } from "@antfly/sdk";
+import type { RetrievalAgentResult } from "@antfly/sdk";
 import { render, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type React from "react";
-import { createContext, useContext } from "react";
 import { describe, expect, it, vi } from "vitest";
 import AnswerFeedback from "./AnswerFeedback";
+import { AnswerResultsContext, type AnswerResultsContextValue } from "./AnswerResultsContext";
 import { renderNumeric, renderStars, renderThumbsUpDown } from "./feedback-renderers";
 
-// Mock RAGResults module with proper context export
-vi.mock("./RAGResults", () => {
-  const mockContext = createContext<{
-    query: string;
-    result: RAGResult | null;
-    isStreaming: boolean;
-  } | null>(null);
-
-  return {
-    RAGResultsContext: mockContext,
-    useRAGResultsContext: () => {
-      const context = useContext(mockContext);
-      if (!context) {
-        throw new Error("useRAGResultsContext must be used within a RAGResults component");
-      }
-      return context;
-    },
-  };
-});
-
-// Mock AnswerResultsContext module (returns null since we're testing RAG context)
-vi.mock("./AnswerResultsContext", () => ({
-  AnswerResultsContext: createContext(null),
-  useAnswerResultsContext: () => {
-    throw new Error("useAnswerResultsContext must be used within an AnswerResults component");
-  },
-}));
-
-// Import the mocked context after mocking
-const { RAGResultsContext } = await import("./RAGResults");
-
 // Mock context provider for testing
-const MockRAGResultsProvider = ({
+const MockAnswerResultsProvider = ({
   children,
   query = "test query",
+  answer = "Test answer",
   result = {
-    generate_result: { text: "Test summary" },
-    query_results: [
+    generation: "Test answer",
+    hits: [
       {
-        hits: {
-          hits: [
-            {
-              _id: "1",
-              _score: 0.9,
-              _source: { content: "test content" },
-            },
-          ],
-          total: 1,
-        },
+        _id: "1",
+        _score: 0.9,
+        _source: { content: "test content" },
       },
     ],
-  } as unknown as RAGResult,
+    state: "complete",
+  } as unknown as RetrievalAgentResult,
   isStreaming = false,
 }: {
   children: React.ReactNode;
   query?: string;
-  result?: RAGResult | null;
+  answer?: string;
+  result?: RetrievalAgentResult | null;
   isStreaming?: boolean;
 }) => {
+  const contextValue: AnswerResultsContextValue = {
+    query,
+    answer,
+    classification: null,
+    hits: result?.hits || [],
+    reasoning: "",
+    followUpQuestions: [],
+    isStreaming,
+    result,
+    confidence: null,
+    evalResult: null,
+  };
+
   return (
-    <RAGResultsContext.Provider value={{ query, result, isStreaming }}>
-      {children}
-    </RAGResultsContext.Provider>
+    <AnswerResultsContext.Provider value={contextValue}>{children}</AnswerResultsContext.Provider>
   );
 };
 
@@ -78,9 +54,9 @@ describe("AnswerFeedback", () => {
     it("should render with context", () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       expect(container.querySelector(".react-af-answer-feedback")).toBeTruthy();
@@ -89,9 +65,9 @@ describe("AnswerFeedback", () => {
     it("should not render without result", () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider result={null}>
+        <MockAnswerResultsProvider result={null} answer="">
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       expect(container.querySelector(".react-af-answer-feedback")).toBeNull();
@@ -100,9 +76,9 @@ describe("AnswerFeedback", () => {
     it("should not render while streaming", () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider isStreaming={true}>
+        <MockAnswerResultsProvider isStreaming={true}>
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       expect(container.querySelector(".react-af-answer-feedback")).toBeNull();
@@ -113,9 +89,9 @@ describe("AnswerFeedback", () => {
     it("should render thumbs up/down", () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       expect(container.querySelector(".react-af-feedback-thumbs")).toBeTruthy();
@@ -125,9 +101,9 @@ describe("AnswerFeedback", () => {
     it("should render stars", () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback scale={4} renderRating={renderStars} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       expect(container.querySelector(".react-af-feedback-stars")).toBeTruthy();
@@ -137,13 +113,13 @@ describe("AnswerFeedback", () => {
     it("should render numeric scale", () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback
             scale={3}
             renderRating={(rating, onRate) => renderNumeric(rating, onRate, 3)}
             onFeedback={onFeedback}
           />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       expect(container.querySelector(".react-af-feedback-numeric")).toBeTruthy();
@@ -155,9 +131,9 @@ describe("AnswerFeedback", () => {
     it("should show submit button after rating", async () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       // Initially no submit button
@@ -176,9 +152,9 @@ describe("AnswerFeedback", () => {
     it("should call onFeedback when submitted", async () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider query="What is AI?">
+        <MockAnswerResultsProvider query="What is AI?">
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       // Click thumbs up
@@ -210,9 +186,9 @@ describe("AnswerFeedback", () => {
     it("should hide after submission", async () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       // Click and submit
@@ -237,7 +213,7 @@ describe("AnswerFeedback", () => {
     it("should show comment field when renderComment is provided", async () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback
             scale={1}
             renderRating={renderThumbsUpDown}
@@ -250,7 +226,7 @@ describe("AnswerFeedback", () => {
             )}
             onFeedback={onFeedback}
           />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       // Click rating
@@ -266,9 +242,9 @@ describe("AnswerFeedback", () => {
     it("should not show comment field when renderComment is not provided", async () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback scale={1} renderRating={renderThumbsUpDown} onFeedback={onFeedback} />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       // Click rating
@@ -285,7 +261,7 @@ describe("AnswerFeedback", () => {
     it("should include comment in feedback data", async () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback
             scale={1}
             renderRating={renderThumbsUpDown}
@@ -298,7 +274,7 @@ describe("AnswerFeedback", () => {
             )}
             onFeedback={onFeedback}
           />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       // Click rating
@@ -340,7 +316,7 @@ describe("AnswerFeedback", () => {
     it("should use custom renderComment with placeholder", async () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback
             scale={1}
             renderRating={renderThumbsUpDown}
@@ -354,7 +330,7 @@ describe("AnswerFeedback", () => {
             )}
             onFeedback={onFeedback}
           />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       const thumbsUp = container.querySelector(".react-af-feedback-thumb-up") as HTMLElement;
@@ -374,7 +350,7 @@ describe("AnswerFeedback", () => {
     it("should use custom renderSubmit", async () => {
       const onFeedback = vi.fn();
       const { container } = render(
-        <MockRAGResultsProvider>
+        <MockAnswerResultsProvider>
           <AnswerFeedback
             scale={1}
             renderRating={renderThumbsUpDown}
@@ -385,7 +361,7 @@ describe("AnswerFeedback", () => {
             )}
             onFeedback={onFeedback}
           />
-        </MockRAGResultsProvider>
+        </MockAnswerResultsProvider>
       );
 
       const thumbsUp = container.querySelector(".react-af-feedback-thumb-up") as HTMLElement;

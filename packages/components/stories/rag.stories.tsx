@@ -1,5 +1,6 @@
 import { Streamdown } from "streamdown";
 import {
+  AnswerResults,
   Antfly,
   Autosuggest,
   AutosuggestFacets,
@@ -7,7 +8,6 @@ import {
   type GeneratorConfig,
   getCitedDocumentIds,
   QueryBox,
-  RAGResults,
   Results,
   renderAsMarkdownLinks,
   replaceCitations,
@@ -16,7 +16,7 @@ import { tableName, url } from "./utils";
 
 export default {
   title: "RAG (Retrieval-Augmented Generation)",
-  component: RAGResults,
+  component: AnswerResults,
 };
 
 // Mock summarizer configuration - replace with your actual config
@@ -34,16 +34,16 @@ export const BasicRAG = () => {
       <h1>Basic RAG Example</h1>
       <p>Ask a question and get an AI-generated summary based on search results.</p>
       <pre>{`<QueryBox id="question" />
-<RAGResults
+<AnswerResults
   id="rag-answer"
   searchBoxId="question"
-  summarizer={mockSummarizer}
+  generator={mockSummarizer}
 />`}</pre>
 
       <QueryBox id="question" placeholder="Ask a question..." />
 
       <div style={{ marginTop: "20px" }}>
-        <RAGResults id="rag-answer" searchBoxId="question" summarizer={mockSummarizer} />
+        <AnswerResults id="rag-answer" searchBoxId="question" generator={mockSummarizer} />
       </div>
     </Antfly>
   );
@@ -55,21 +55,21 @@ export const WithSystemPrompt = () => {
       <h1>RAG with Custom System Prompt</h1>
       <p>Guide the AI's behavior with a custom system prompt.</p>
       <pre>{`<QueryBox id="question" />
-<RAGResults
+<AnswerResults
   id="rag-answer"
   searchBoxId="question"
-  summarizer={mockSummarizer}
-  systemPrompt="You are a literary expert. Provide concise, scholarly answers."
+  generator={mockSummarizer}
+  agentKnowledge="You are a literary expert. Provide concise, scholarly answers."
 />`}</pre>
 
       <QueryBox id="question" placeholder="Ask about literature..." />
 
       <div style={{ marginTop: "20px" }}>
-        <RAGResults
+        <AnswerResults
           id="rag-answer"
           searchBoxId="question"
-          summarizer={mockSummarizer}
-          systemPrompt="You are a literary expert. Provide concise, scholarly answers about books and authors."
+          generator={mockSummarizer}
+          agentKnowledge="You are a literary expert. Provide concise, scholarly answers about books and authors."
         />
       </div>
     </Antfly>
@@ -81,11 +81,11 @@ export const WithCustomRendering = () => {
     <Antfly url={url} table={tableName}>
       <h1>RAG with Custom Rendering</h1>
       <p>Customize how the AI summary is displayed. Parse inline citations yourself!</p>
-      <pre>{`<RAGResults
+      <pre>{`<AnswerResults
   id="rag-answer"
   searchBoxId="question"
-  summarizer={mockSummarizer}
-  renderSummary={(summary, isStreaming) => (
+  generator={mockSummarizer}
+  renderAnswer={(summary, isStreaming) => (
     <div style={{
       padding: "20px",
       background: "#f5f5f5",
@@ -101,11 +101,11 @@ export const WithCustomRendering = () => {
       <QueryBox id="question" placeholder="Ask a question..." />
 
       <div style={{ marginTop: "20px" }}>
-        <RAGResults
+        <AnswerResults
           id="rag-answer"
           searchBoxId="question"
-          summarizer={mockSummarizer}
-          renderSummary={(summary, isStreaming) => (
+          generator={mockSummarizer}
+          renderAnswer={(summary, isStreaming) => (
             <div
               style={{
                 padding: "20px",
@@ -139,10 +139,10 @@ export const RAGWithSearchResults = () => {
       <pre>{`<QueryBox id="question" />
 
 {/* AI Summary with inline citations */}
-<RAGResults
+<AnswerResults
   id="rag-answer"
   searchBoxId="question"
-  summarizer={mockSummarizer}
+  generator={mockSummarizer}
 />
 
 {/* Traditional Results */}
@@ -155,7 +155,7 @@ export const RAGWithSearchResults = () => {
 
       <div style={{ marginTop: "20px" }}>
         <h2>AI Summary</h2>
-        <RAGResults id="rag-answer" searchBoxId="question" summarizer={mockSummarizer} />
+        <AnswerResults id="rag-answer" searchBoxId="question" generator={mockSummarizer} />
       </div>
 
       <div style={{ marginTop: "40px" }}>
@@ -529,13 +529,13 @@ export const StyledRAGExample = () => {
           </Autosuggest>
         </QueryBox>
 
-        <RAGResults
+        <AnswerResults
           id="rag-answer"
           searchBoxId="question"
-          summarizer={mockSummarizer}
+          generator={mockSummarizer}
           showHits={true}
-          systemPrompt="You are a knowledgeable librarian. Provide helpful, detailed answers about books."
-          renderSummary={(summary, isStreaming, hits) => {
+          agentKnowledge="You are a knowledgeable librarian. Provide helpful, detailed answers about books."
+          renderAnswer={(summary, isStreaming, hits) => {
             // Convert [doc_id X] or [doc_id X, Y, Z] citations to markdown links before passing to Streamdown
             const summaryWithLinks = summary
               ? replaceCitations(summary, {
@@ -930,11 +930,11 @@ export const MultipleLanguageModels = () => {
       >
         <div>
           <h3>GPT-4 Response</h3>
-          <RAGResults id="rag-gpt4" searchBoxId="question" summarizer={gpt4Summarizer} />
+          <AnswerResults id="rag-gpt4" searchBoxId="question" generator={gpt4Summarizer} />
         </div>
         <div>
           <h3>Claude Response</h3>
-          <RAGResults id="rag-claude" searchBoxId="question" summarizer={claudeSummarizer} />
+          <AnswerResults id="rag-claude" searchBoxId="question" generator={claudeSummarizer} />
         </div>
       </div>
     </Antfly>

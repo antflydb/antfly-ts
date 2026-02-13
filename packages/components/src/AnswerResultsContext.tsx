@@ -1,4 +1,4 @@
-import type { AnswerAgentResult, AnswerConfidence, EvalResult, QueryHit } from "@antfly/sdk";
+import type { GenerationConfidence, EvalResult, QueryHit, RetrievalAgentResult } from "@antfly/sdk";
 import { createContext, useContext } from "react";
 
 // Context for sharing Answer Agent data with child components (e.g., AnswerFeedback)
@@ -16,8 +16,8 @@ export interface AnswerResultsContextValue {
   answer: string;
   followUpQuestions: string[];
   isStreaming: boolean;
-  result: AnswerAgentResult | null;
-  confidence: AnswerConfidence | null;
+  result: RetrievalAgentResult | null;
+  confidence: GenerationConfidence | null;
   evalResult: EvalResult | null;
 }
 
