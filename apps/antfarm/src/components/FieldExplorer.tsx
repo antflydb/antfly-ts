@@ -122,7 +122,7 @@ export default function FieldExplorer({ tableName, onSchemaGenerated }: FieldExp
       const fieldMap = new Map<string, FieldInfo>();
 
       for (const hit of results) {
-        const source = hit._source || hit.fields;
+        const source = hit._source;
         if (!source) continue;
 
         for (const [key, value] of Object.entries(source)) {
