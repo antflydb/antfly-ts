@@ -5,6 +5,8 @@ const API_URL = process.env.ANTFLY_API_URL || "http://localhost:8080";
 export interface TestTableConfig {
   name: string;
   documents: Record<string, unknown>[];
+  /** If true, create an embedding index for RAG testing */
+  withEmbeddingIndex?: boolean;
 }
 
 /**
@@ -28,6 +30,30 @@ export async function createTestTable(config: TestTableConfig): Promise<void> {
   // Wait for shards to initialize
   await new Promise((resolve) => setTimeout(resolve, 2000));
 
+  // Create embedding index if requested
+  if (config.withEmbeddingIndex) {
+    const indexName = "embeddings";
+    const indexRes = await context.post(`/api/v1/tables/${config.name}/indexes/${indexName}`, {
+      data: {
+        name: indexName,
+        type: "aknn_v0",
+        template: "{{title}} {{content}}",
+        embedder: {
+          provider: "termite",
+          model: "BAAI/bge-small-en-v1.5",
+        },
+      },
+    });
+    if (!indexRes.ok()) {
+      const body = await indexRes.text();
+      if (!body.includes("already exists")) {
+        throw new Error(`Failed to create embedding index: ${body}`);
+      }
+    }
+    // Wait for index to initialize
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
   // Insert documents via batch endpoint
   // Format: { inserts: { "doc_id": { ...doc }, ... } }
   if (config.documents.length > 0) {
@@ -42,6 +68,12 @@ export async function createTestTable(config: TestTableConfig): Promise<void> {
     });
     if (!batchRes.ok()) {
       throw new Error(`Failed to insert documents: ${await batchRes.text()}`);
+    }
+
+    // Wait for embeddings to be generated if we have an embedding index
+    // Embedding generation is async - need to wait for it to complete
+    if (config.withEmbeddingIndex) {
+      await new Promise((resolve) => setTimeout(resolve, 8000));
     }
   }
 
