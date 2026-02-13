@@ -10,6 +10,7 @@ import {
   HelpCircle,
   LayoutList,
   Library,
+  MessageSquare,
   Network,
   PanelLeft,
   PanelLeftOpen,
@@ -576,6 +577,23 @@ export function AppSidebar({
                             >
                               <ClipboardCheck className="size-4" />
                               <span>Evals</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === "/playground/rag"}
+                          >
+                            <a
+                              href="/playground/rag"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/rag");
+                              }}
+                            >
+                              <MessageSquare className="size-4" />
+                              <span>RAG</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
