@@ -2397,6 +2397,39 @@ export interface components {
              *     - Limit result fields to reduce data transfer
              */
             join?: components["schemas"]["JoinClause"];
+            /**
+             * @description Map of table name to foreign data source configuration for query-time federated access.
+             *     When a table name referenced in this query (or in a join's `right_table`) appears as a key
+             *     here, the query is routed to the external database instead of Antfly shards.
+             *
+             *     This enables joining Antfly search results with structured relational data (customer records,
+             *     product catalogs, etc.) without ingesting that data into Antfly.
+             *
+             *     **Supported operations on foreign tables:** filter_query, field selection, limit/offset.
+             *     **Not supported:** full_text_search, semantic_search, graph_searches, aggregations, reranker.
+             *
+             *     **Example - Join Antfly products with Postgres customers:**
+             *     ```json
+             *     {
+             *       "table": "products",
+             *       "full_text_search": {"query": "category:electronics"},
+             *       "join": {
+             *         "right_table": "pg_customers",
+             *         "on": {"left_field": "customer_id", "right_field": "id"}
+             *       },
+             *       "foreign_sources": {
+             *         "pg_customers": {
+             *           "type": "postgres",
+             *           "dsn": "${secret:pg_dsn}",
+             *           "postgres_table": "customers"
+             *         }
+             *       }
+             *     }
+             *     ```
+             */
+            foreign_sources?: {
+                [key: string]: components["schemas"]["ForeignSource"];
+            };
         };
         Analyses: {
             pca?: boolean;
@@ -2924,6 +2957,49 @@ export interface components {
             metadata?: {
                 [key: string]: unknown;
             };
+        };
+        ForeignSource: {
+            /**
+             * @description Type of the foreign data source. Currently only "postgres" is supported.
+             * @example postgres
+             * @enum {string}
+             */
+            type: "postgres";
+            /**
+             * @description Data source name (connection string) for the foreign database.
+             *     Supports `${secret:key_name}` references that resolve from the Antfly keystore
+             *     or environment variables.
+             * @example ${secret:pg_dsn}
+             */
+            dsn: string;
+            /**
+             * @description Name of the table or view in the foreign PostgreSQL database to query.
+             * @example customers
+             */
+            postgres_table: string;
+            /**
+             * @description Optional column definitions for the foreign table. If omitted, columns are
+             *     auto-discovered from `information_schema.columns` on first query.
+             */
+            columns?: components["schemas"]["ForeignColumn"][];
+        };
+        ForeignColumn: {
+            /**
+             * @description Column name in the foreign table.
+             * @example email
+             */
+            name: string;
+            /**
+             * @description Column data type. Used for filter validation and type coercion.
+             *     Common types: text, integer, bigint, float, boolean, timestamp, uuid, jsonb.
+             * @example text
+             */
+            type: string;
+            /**
+             * @description Whether the column allows NULL values.
+             * @default false
+             */
+            nullable?: boolean;
         };
         /**
          * Format: double
