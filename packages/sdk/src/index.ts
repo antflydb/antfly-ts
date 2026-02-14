@@ -66,7 +66,6 @@ export type {
   AggregationResult,
   // Search and aggregation types
   AggregationType,
-  GenerationConfidence,
   // Configuration
   AntflyConfig,
   // Error type
@@ -110,6 +109,7 @@ export type {
   EvaluatorScore,
   FetchConfig,
   FilterSpec,
+  GenerationConfidence,
   GeneratorConfig,
   GeneratorProvider,
   GraphIndexV0Config,
