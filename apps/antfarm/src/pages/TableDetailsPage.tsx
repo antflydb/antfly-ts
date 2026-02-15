@@ -184,6 +184,28 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
 
   const [queryMode, setQueryMode] = useState<"builder" | "json">("builder");
 
+  // Auto-select first vector index and set default limit when semantic search is enabled
+  useEffect(() => {
+    if (isSemanticSearchEnabled) {
+      // Auto-select first vector index if none selected
+      if (queryIndexes.length === 0) {
+        const vectorIndexes = indexes.filter((idx) => idx.config.type === "aknn_v0");
+        if (vectorIndexes.length > 0) {
+          setQueryIndexes([vectorIndexes[0].config.name]);
+        }
+      }
+      // Set default limit if not already set
+      try {
+        const parsed = JSON.parse(semanticQuery);
+        if (parsed.limit === undefined) {
+          setSemanticQuery(JSON.stringify({ ...parsed, limit: 5 }, null, 2));
+        }
+      } catch {
+        setSemanticQuery(JSON.stringify({ limit: 5 }, null, 2));
+      }
+    }
+  }, [isSemanticSearchEnabled, indexes, queryIndexes.length, semanticQuery]);
+
   // Chunking builder form
   const chunkerFormSchema = z.object({
     provider: z.enum(["termite", "mock"]),
@@ -734,16 +756,33 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                         {isSemanticSearchEnabled && (
                           <div className="space-y-2.5">
                             <div>
-                              <Label className="text-xs mb-1 block">Index</Label>
-                              <MultiSelect
-                                options={indexes.map((index) => ({
-                                  label: index.config.name,
-                                  value: index.config.name,
-                                }))}
-                                value={queryIndexes}
-                                onChange={handleQueryIndexChange}
-                                placeholder="Select index(es)"
-                              />
+                              <Label className="text-xs mb-1 block">Vector Index</Label>
+                              {indexes.filter((idx) => idx.config.type === "aknn_v0").length ===
+                              0 ? (
+                                <Alert variant="destructive" className="py-1.5 px-3">
+                                  <AlertDescription className="text-xs">
+                                    No vector indexes available. Create a vector index to enable
+                                    semantic search.
+                                  </AlertDescription>
+                                </Alert>
+                              ) : (
+                                <>
+                                  <MultiSelect
+                                    options={indexes
+                                      .filter((idx) => idx.config.type === "aknn_v0")
+                                      .map((index) => ({
+                                        label: index.config.name,
+                                        value: index.config.name,
+                                      }))}
+                                    value={queryIndexes}
+                                    onChange={handleQueryIndexChange}
+                                    placeholder="Select index(es)"
+                                  />
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    First index auto-selected. Default limit: 5 results.
+                                  </p>
+                                </>
+                              )}
                             </div>
                             {queryIndexes.length > 1 && (
                               <Alert className="py-1.5 px-3">

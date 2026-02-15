@@ -10,7 +10,6 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  FileText,
   HelpCircle,
   MessageSquare,
   Play,
@@ -87,9 +86,6 @@ const DEFAULT_STEPS: StepsConfig = {
   confidence: { enabled: false },
 };
 
-const SAMPLE_QUERY = "How does semantic search work in Antfly?";
-const SAMPLE_SYSTEM_PROMPT =
-  "Answer based on the provided context. Be concise and technical. Include code examples where relevant.";
 
 // Simple markdown-ish formatter for RAG answers
 function formatAnswer(text: string): React.ReactNode {
@@ -227,14 +223,6 @@ const RagPlaygroundPage: React.FC = () => {
     fetchIndexes();
   }, [selectedTable, apiClient]);
 
-  const loadSample = () => {
-    setQuery(SAMPLE_QUERY);
-    setSteps((prev) => ({
-      ...prev,
-      generation: { ...prev.generation, system_prompt: SAMPLE_SYSTEM_PROMPT },
-    }));
-  };
-
   const handleReset = () => {
     setQuery("");
     setStreamingAnswer("");
@@ -367,16 +355,10 @@ const RagPlaygroundPage: React.FC = () => {
             Query your documents with AI-powered retrieval and generation
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={loadSample}>
-            <FileText className="h-4 w-4 mr-2" />
-            Load Sample
-          </Button>
-          <Button variant="outline" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Reset
-          </Button>
-        </div>
+        <Button variant="outline" onClick={handleReset}>
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Reset
+        </Button>
       </div>
 
       {/* Main Grid */}

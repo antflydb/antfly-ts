@@ -1,7 +1,7 @@
 import { Antfly, Autosuggest, Facet, QueryBox, Results } from "@antfly/components";
 import type { IndexStatus, QueryHit } from "@antfly/sdk";
 import { CopyIcon, PlusIcon, TrashIcon } from "@radix-ui/react-icons";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark, oneLight } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { useTheme } from "@/components/theme-provider";
@@ -46,7 +46,7 @@ export default function SearchBoxBuilder({
   const [newSearchField, setNewSearchField] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [useSemanticSearch, setUseSemanticSearch] = useState(false);
-  const [semanticLimit, setSemanticLimit] = useState<number>(10);
+  const [semanticLimit, setSemanticLimit] = useState<number>(5);
   const [useAutosuggest, setUseAutosuggest] = useState(false);
   const [useSemanticAutosuggest, setUseSemanticAutosuggest] = useState(false);
   const [autosuggestFields, setAutosuggestFields] = useState<string[]>([]);
@@ -160,6 +160,17 @@ export default function SearchBoxBuilder({
 
     return grouped;
   }, [indexes]);
+
+  // Auto-select first vector index when semantic search is enabled but none selected
+  useEffect(() => {
+    if (
+      useSemanticSearch &&
+      semanticIndexes.length === 0 &&
+      availableSemanticIndexes.aknn_v0?.length > 0
+    ) {
+      setSemanticIndexes([availableSemanticIndexes.aknn_v0[0]]);
+    }
+  }, [useSemanticSearch, semanticIndexes.length, availableSemanticIndexes.aknn_v0]);
 
   const handleAddSearchField = (searchField: string) => {
     if (searchField?.trim() && !searchFields.includes(searchField)) {
@@ -774,7 +785,7 @@ ${facetsCode}${resultsCode}
                       <Label>Vector Indexes</Label>
                       {!availableSemanticIndexes.aknn_v0 ||
                       availableSemanticIndexes.aknn_v0.length === 0 ? (
-                        <p className="text-sm text-muted-foreground mt-2">
+                        <p className="text-sm text-destructive mt-2">
                           No vector indexes available. Create a vector index to enable semantic
                           search.
                         </p>
@@ -799,6 +810,9 @@ ${facetsCode}${resultsCode}
                               );
                             })}
                           </div>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            First index is auto-selected by default. Click to add/remove indexes.
+                          </p>
                         </div>
                       )}
                     </div>
@@ -811,12 +825,12 @@ ${facetsCode}${resultsCode}
                         min="1"
                         max="100"
                         value={semanticLimit}
-                        onChange={(e) => setSemanticLimit(parseInt(e.target.value, 10) || 10)}
+                        onChange={(e) => setSemanticLimit(parseInt(e.target.value, 10) || 5)}
                         placeholder="Number of results"
                         className="mt-2 w-32"
                       />
                       <p className="text-sm text-muted-foreground mt-1">
-                        Maximum number of results to return from semantic search (1-100)
+                        Maximum number of results to return from semantic search (1-100). Default: 5
                       </p>
                     </div>
                   </div>
