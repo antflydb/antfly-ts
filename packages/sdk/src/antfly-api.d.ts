@@ -3364,7 +3364,24 @@ export interface components {
          * @description The reranking provider to use.
          * @enum {string}
          */
-        RerankerProvider: "ollama" | "termite" | "cohere" | "vertex";
+        RerankerProvider: "antfly" | "ollama" | "termite" | "cohere" | "vertex";
+        /**
+         * @description Configuration for the built-in Antfly reranking provider.
+         *
+         *     Uses an embedded INT8-quantized cross-encoder/ms-marco-MiniLM-L-6-v2 ONNX model
+         *     bundled directly in the binary. No external service, API key, or model download required.
+         *
+         *     **Model:** cross-encoder/ms-marco-MiniLM-L-6-v2 (6-layer MiniLM cross-encoder)
+         *
+         *     **Features:**
+         *     - Zero configuration — works out of the box
+         *     - No network access required
+         *     - Pure Go inference via GoMLX
+         * @example {
+         *       "provider": "antfly"
+         *     }
+         */
+        AntflyRerankerConfig: Record<string, never>;
         /** @description Configuration for the Ollama reranking provider. */
         OllamaRerankerConfig: {
             /** @description The name of the Ollama model to use for reranking. */
@@ -3460,7 +3477,7 @@ export interface components {
             field?: string;
             /** @description Handlebars template to render document text for reranking. */
             template?: string;
-        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"] | components["schemas"]["VertexRerankerConfig"]);
+        } & (components["schemas"]["AntflyRerankerConfig"] | components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"] | components["schemas"]["VertexRerankerConfig"]);
         /**
          * @description Type of graph query to execute
          * @enum {string}
