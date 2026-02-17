@@ -241,13 +241,15 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     try {
       const semanticQueryObject = JSON.parse(semanticQuery);
       queryRequest.aggregations = semanticQueryObject.aggregations;
-      queryRequest.limit = semanticQueryObject.limit;
+      // Use explicit limit if set, otherwise default to 10
+      queryRequest.limit = semanticQueryObject.limit ?? 10;
       // Only include offset if semantic search is disabled
       if (!hasSemanticQuery && semanticQueryObject.offset !== undefined) {
         queryRequest.offset = semanticQueryObject.offset;
       }
     } catch (e) {
-      // ignore invalid json
+      // ignore invalid json - still use default limit
+      queryRequest.limit = 10;
       console.error("Invalid semantic query JSON:", e);
     }
     if (hasFilterQuery) {
@@ -402,7 +404,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     setQueryIndexes(value);
   };
 
-  const handleRunQuery = async () => {
+  const handleRunQuery = useCallback(async () => {
     if (!tableName) return;
     try {
       const queryRequest =
@@ -413,7 +415,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
       setError(`Failed to run query on table ${tableName}.`);
       console.error(e);
     }
-  };
+  }, [tableName, queryMode, queryJsonString, semanticQueryRequest]);
 
   // Global Ctrl+Enter handler for search section
   useEffect(() => {
@@ -426,7 +428,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentSection]);
+  }, [currentSection, handleRunQuery]);
 
   const groupedIndexes = indexes.reduce(
     (acc, index) => {
@@ -866,7 +868,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                 size="lg"
               >
                 Run Query
-                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded opacity-60">⌘↵</kbd>
+                <span className="ml-2 text-xs opacity-60">Ctrl+Enter</span>
               </Button>
               <span className="text-xs text-muted-foreground">
                 {hasSemanticQuery && hasFilterQuery
