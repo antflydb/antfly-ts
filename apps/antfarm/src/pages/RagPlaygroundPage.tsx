@@ -1,9 +1,8 @@
 import type {
-  Citation,
   ClassificationTransformationResult,
   QueryHit,
+  TableStatus,
 } from "@antfly/sdk";
-import type { TableStatus } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   BookOpen,
@@ -25,11 +24,7 @@ import { api } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -86,7 +81,6 @@ const DEFAULT_STEPS: StepsConfig = {
   confidence: { enabled: false },
 };
 
-
 // Simple markdown-ish formatter for RAG answers
 function formatAnswer(text: string): React.ReactNode {
   if (!text) return null;
@@ -114,11 +108,7 @@ function formatAnswer(text: string): React.ReactNode {
       const [, indent] = bulletMatch;
       const indentLevel = Math.floor((indent?.length || 0) / 2);
       elements.push(
-        <div
-          key={lineIndex}
-          className="flex gap-2"
-          style={{ marginLeft: `${indentLevel * 1}rem` }}
-        >
+        <div key={lineIndex} className="flex gap-2" style={{ marginLeft: `${indentLevel * 1}rem` }}>
           <span className="text-muted-foreground">•</span>
           <span>{formattedLine}</span>
         </div>
@@ -155,10 +145,10 @@ const RagPlaygroundPage: React.FC = () => {
 
   // Streaming result state
   const [streamingAnswer, setStreamingAnswer] = useState("");
-  const [classification, setClassification] =
-    useState<ClassificationTransformationResult | null>(null);
+  const [classification, setClassification] = useState<ClassificationTransformationResult | null>(
+    null
+  );
   const [hits, setHits] = useState<QueryHit[]>([]);
-  const [citations, setCitations] = useState<Citation[]>([]);
   const [followupQuestions, setFollowupQuestions] = useState<string[]>([]);
   const [confidenceScores, setConfidenceScores] = useState<{
     generation: number;
@@ -203,8 +193,7 @@ const RagPlaygroundPage: React.FC = () => {
         const embeddingIdxs = (response || [])
           .filter(
             (idx: { config?: { type?: string } }) =>
-              idx.config?.type?.includes("aknn") ||
-              idx.config?.type?.includes("embedding")
+              idx.config?.type?.includes("aknn") || idx.config?.type?.includes("embedding")
           )
           .map((idx: { config?: { name?: string } }) => idx.config?.name || "")
           .filter(Boolean);
@@ -228,7 +217,6 @@ const RagPlaygroundPage: React.FC = () => {
     setStreamingAnswer("");
     setClassification(null);
     setHits([]);
-    setCitations([]);
     setFollowupQuestions([]);
     setConfidenceScores(null);
     setError(null);
@@ -264,7 +252,6 @@ const RagPlaygroundPage: React.FC = () => {
     setStreamingAnswer("");
     setClassification(null);
     setHits([]);
-    setCitations([]);
     setFollowupQuestions([]);
     setConfidenceScores(null);
     setIsLoading(true);
@@ -315,7 +302,6 @@ const RagPlaygroundPage: React.FC = () => {
           onClassification: (c) => setClassification(c),
           onHit: (hit) => setHits((prev) => [...prev, hit]),
           onAnswer: (chunk) => setStreamingAnswer((prev) => prev + chunk),
-          onCitation: (c) => setCitations((prev) => [...prev, c]),
           onFollowUpQuestion: (q) => setFollowupQuestions((prev) => [...prev, q]),
           onConfidence: (c) =>
             setConfidenceScores({
@@ -494,9 +480,7 @@ const RagPlaygroundPage: React.FC = () => {
                         <Label className="text-xs text-muted-foreground">Model</Label>
                         <Input
                           value={generator.model}
-                          onChange={(e) =>
-                            setGenerator((g) => ({ ...g, model: e.target.value }))
-                          }
+                          onChange={(e) => setGenerator((g) => ({ ...g, model: e.target.value }))}
                           placeholder="gpt-5-mini"
                         />
                       </div>
@@ -544,9 +528,7 @@ const RagPlaygroundPage: React.FC = () => {
                         <Sparkles className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="text-sm font-medium">Classification</p>
-                          <p className="text-xs text-muted-foreground">
-                            Analyze query strategy
-                          </p>
+                          <p className="text-xs text-muted-foreground">Analyze query strategy</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -627,9 +609,7 @@ const RagPlaygroundPage: React.FC = () => {
                         <Target className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="text-sm font-medium">Confidence Scores</p>
-                          <p className="text-xs text-muted-foreground">
-                            Rate answer confidence
-                          </p>
+                          <p className="text-xs text-muted-foreground">Rate answer confidence</p>
                         </div>
                       </div>
                       <Switch
@@ -787,31 +767,6 @@ const RagPlaygroundPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Citations */}
-                {citations.length > 0 && (
-                  <div className="space-y-2">
-                    <Separator />
-                    <div className="text-sm font-medium">Citations</div>
-                    <div className="space-y-2">
-                      {citations.map((citation, i) => (
-                        <div
-                          key={i}
-                          className="p-2 rounded border text-xs bg-muted/30"
-                        >
-                          <div className="font-medium text-muted-foreground">
-                            [{i + 1}] {citation.document_id}
-                          </div>
-                          {citation.text && (
-                            <div className="mt-1 text-foreground line-clamp-2">
-                              {citation.text}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {/* Follow-up Questions */}
                 {followupQuestions.length > 0 && (
                   <div className="space-y-2">
@@ -841,11 +796,7 @@ const RagPlaygroundPage: React.FC = () => {
                   <Collapsible open={contextOpen} onOpenChange={setContextOpen}>
                     <Separator />
                     <CollapsibleTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-between mt-2"
-                      >
+                      <Button variant="ghost" size="sm" className="w-full justify-between mt-2">
                         <span className="flex items-center gap-2">
                           <BookOpen className="h-4 w-4" />
                           Retrieved Context ({hits.length} documents)
@@ -859,10 +810,7 @@ const RagPlaygroundPage: React.FC = () => {
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-2 mt-2">
                       {hits.map((hit, i) => (
-                        <div
-                          key={hit._id || i}
-                          className="p-3 rounded-lg border text-xs space-y-1"
-                        >
+                        <div key={hit._id || i} className="p-3 rounded-lg border text-xs space-y-1">
                           <div className="flex items-center justify-between">
                             <span className="font-medium">{hit._id}</span>
                             <Badge variant="secondary" className="text-xs">
@@ -889,9 +837,9 @@ const RagPlaygroundPage: React.FC = () => {
       {/* Help text */}
       <div className="mt-6 text-xs text-muted-foreground">
         <p>
-          <strong>RAG Playground:</strong> Enter a natural language question to search
-          your documents and generate an AI-powered answer with citations. Configure
-          classification, follow-up questions, and confidence scoring in Settings.
+          <strong>RAG Playground:</strong> Enter a natural language question to search your
+          documents and generate an AI-powered answer with citations. Configure classification,
+          follow-up questions, and confidence scoring in Settings.
         </p>
       </div>
     </div>

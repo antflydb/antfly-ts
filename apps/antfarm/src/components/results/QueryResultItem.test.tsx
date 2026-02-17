@@ -22,7 +22,7 @@ describe("QueryResultItem", () => {
 
   it("should display score value without stars", () => {
     render(
-      <QueryResultItem hit={mockHit} index={0} isExpanded={false} onToggle={() => {}} />
+      <QueryResultItem hit={mockHit} index={0} isExpanded={false} onToggle={() => undefined} />
     );
 
     // Score should be displayed
@@ -37,7 +37,7 @@ describe("QueryResultItem", () => {
 
   it("should display score label instead of star icon", () => {
     render(
-      <QueryResultItem hit={mockHit} index={0} isExpanded={false} onToggle={() => {}} />
+      <QueryResultItem hit={mockHit} index={0} isExpanded={false} onToggle={() => undefined} />
     );
 
     // Should have "Score:" labels (in badge and expanded view)
@@ -47,7 +47,7 @@ describe("QueryResultItem", () => {
 
   it("should have tooltip container with cursor-help for score", () => {
     render(
-      <QueryResultItem hit={mockHit} index={0} isExpanded={false} onToggle={() => {}} />
+      <QueryResultItem hit={mockHit} index={0} isExpanded={false} onToggle={() => undefined} />
     );
 
     // The badge should have cursor-help class indicating tooltip presence
@@ -55,18 +55,24 @@ describe("QueryResultItem", () => {
     expect(tooltipElements.length).toBeGreaterThan(0);
   });
 
-  it("should not display score section when score is undefined", () => {
-    const hitWithoutScore = {
+  it("should display score section even when score is zero", () => {
+    const hitWithZeroScore = {
       _id: "test-doc-2",
-      _source: { title: "No Score" },
+      _score: 0,
+      _source: { title: "Zero Score" },
     };
 
-    const { container } = render(
-      <QueryResultItem hit={hitWithoutScore} index={0} isExpanded={false} onToggle={() => {}} />
+    render(
+      <QueryResultItem
+        hit={hitWithZeroScore}
+        index={0}
+        isExpanded={false}
+        onToggle={() => undefined}
+      />
     );
 
-    // Should not have score label in this specific component render
-    const scoreLabels = container.querySelectorAll('[class*="cursor-help"]');
-    expect(scoreLabels.length).toBe(0);
+    // Score 0 should still be displayed
+    const scoreElement = screen.getByText("0.0000");
+    expect(scoreElement).toBeTruthy();
   });
 });

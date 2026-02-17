@@ -150,9 +150,7 @@ export default function FieldExplorer({ tableName, onSchemaGenerated }: FieldExp
       }
 
       // Sort by frequency (most common first)
-      const sortedFields = Array.from(fieldMap.values()).sort(
-        (a, b) => b.seenCount - a.seenCount
-      );
+      const sortedFields = Array.from(fieldMap.values()).sort((a, b) => b.seenCount - a.seenCount);
 
       setFields(sortedFields);
     } catch (err) {
@@ -164,11 +162,7 @@ export default function FieldExplorer({ tableName, onSchemaGenerated }: FieldExp
 
   const handleTypeChange = (fieldName: string, newType: AntflyType) => {
     setFields((prev) =>
-      prev.map((f) =>
-        f.name === fieldName
-          ? { ...f, selectedTypes: [newType] }
-          : f
-      )
+      prev.map((f) => (f.name === fieldName ? { ...f, selectedTypes: [newType] } : f))
     );
   };
 

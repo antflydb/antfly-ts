@@ -1,10 +1,15 @@
-import { expect, test as base } from "@playwright/test";
-import { createTestTable, deleteTestTable, TEST_TABLE, TestTableConfig } from "./fixtures/test-data";
+import { test as base, expect } from "@playwright/test";
+import {
+  createTestTable,
+  deleteTestTable,
+  TEST_TABLE,
+  TestTableConfig,
+} from "./fixtures/test-data";
 
 // Extend test to include automatic test table setup/teardown per test
 // Each test gets a unique table name to allow parallel execution
 const test = base.extend<{ testTable: TestTableConfig }>({
-  testTable: async ({}, use, testInfo) => {
+  testTable: async (_deps, use, testInfo) => {
     // Generate unique table name for this test run
     const uniqueName = `e2e_test_${testInfo.workerIndex}_${Date.now()}`;
     const config: TestTableConfig = {
@@ -20,7 +25,7 @@ const test = base.extend<{ testTable: TestTableConfig }>({
     await use(config);
 
     // Teardown: delete test table
-    await deleteTestTable(uniqueName).catch(() => {});
+    await deleteTestTable(uniqueName).catch(() => undefined);
     console.log(`[fixture] Deleted test table: ${uniqueName}`);
   },
 });
@@ -63,13 +68,15 @@ test.describe("Table Details Page", () => {
     await page.getByRole("button", { name: "Schema" }).click();
 
     // Should see the Table Schema section header
-    await expect(page.getByRole("heading", { name: "Table Schema" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Table Schema" })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Should see schema content or field explorer
     // Since this is a fresh table, we should see the Field Explorer button
-    await expect(
-      page.getByRole("button", { name: "Explore Records" })
-    ).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: "Explore Records" })).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("can use Field Explorer to discover fields", async ({ page, testTable }) => {
@@ -82,7 +89,9 @@ test.describe("Table Details Page", () => {
     await page.getByRole("button", { name: "Schema" }).click();
 
     // Wait for the Table Schema section
-    await expect(page.getByRole("heading", { name: "Table Schema" })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: "Table Schema" })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Look for Explore Records button (shows when no schema)
     const exploreButton = page.getByRole("button", { name: "Explore Records" });

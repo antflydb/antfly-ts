@@ -13,6 +13,7 @@ export function formatQueryTime(nanoseconds: number): string {
   if (ms < 1000) return `${Math.round(ms)}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
 }
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,

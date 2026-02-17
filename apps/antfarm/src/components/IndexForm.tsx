@@ -33,7 +33,6 @@ interface ModelsResponse {
 }
 
 const staticModelSuggestions: Record<EmbedderProvider, string[]> = {
-  antfly: ["all-MiniLM-L6-v2"],
   termite: [], // Populated dynamically from Termite service
   ollama: ["all-minilm", "nomic-embed-text", "embeddinggemma"],
   gemini: ["embeddinggemma", "gemini-embedding-001"],

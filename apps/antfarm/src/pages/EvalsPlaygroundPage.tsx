@@ -369,12 +369,14 @@ const EvalsPlaygroundPage: React.FC = () => {
           const answerResult = await apiClient.retrievalAgent(
             {
               query: item.question,
-              queries: [{
-                table: selectedTable,
-                semantic_search: item.question,
-                indexes: selectedIndex ? [selectedIndex] : undefined,
-                limit: 10,
-              }],
+              queries: [
+                {
+                  table: selectedTable,
+                  semantic_search: item.question,
+                  indexes: selectedIndex ? [selectedIndex] : undefined,
+                  limit: 10,
+                },
+              ],
               stream: false,
               generator: {
                 provider: judge.provider,

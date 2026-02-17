@@ -1,4 +1,4 @@
-import { expect, test as base } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
 import { createTestTable, deleteTestTable, TestTableConfig } from "./fixtures/test-data";
 
 // Test table with documents that can be used for RAG evaluation
@@ -9,24 +9,27 @@ const EVAL_TEST_TABLE: TestTableConfig = {
     {
       id: "doc1",
       title: "France Geography",
-      content: "Paris is the capital and largest city of France. It is located in the north-central part of the country along the Seine River.",
+      content:
+        "Paris is the capital and largest city of France. It is located in the north-central part of the country along the Seine River.",
     },
     {
       id: "doc2",
       title: "Eiffel Tower History",
-      content: "The Eiffel Tower was built between 1887 and 1889 as the entrance arch for the 1889 World's Fair. It was designed by Gustave Eiffel's engineering company.",
+      content:
+        "The Eiffel Tower was built between 1887 and 1889 as the entrance arch for the 1889 World's Fair. It was designed by Gustave Eiffel's engineering company.",
     },
     {
       id: "doc3",
       title: "French Culture",
-      content: "France is known for its rich culture, including art, cuisine, and fashion. The Louvre Museum in Paris is one of the world's largest art museums.",
+      content:
+        "France is known for its rich culture, including art, cuisine, and fashion. The Louvre Museum in Paris is one of the world's largest art museums.",
     },
   ],
 };
 
 // Extend test to include automatic test table setup/teardown
 const test = base.extend<{ evalTestTable: TestTableConfig }>({
-  evalTestTable: async ({}, use, testInfo) => {
+  evalTestTable: async (_deps, use, testInfo) => {
     // Generate unique table name for this test run
     const uniqueName = `e2e_eval_${testInfo.workerIndex}_${Date.now()}`;
     const config: TestTableConfig = {
@@ -54,14 +57,18 @@ test.describe("Evals Playground", () => {
     await page.goto("/playground/evals");
 
     // Should see the Evals Playground heading
-    await expect(page.getByRole("heading", { name: /Evals|Evaluation/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /Evals|Evaluation/i })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("can create an eval set", async ({ page }) => {
     await page.goto("/playground/evals");
 
     // Wait for page to load
-    await expect(page.getByRole("heading", { name: /Evals|Evaluation/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /Evals|Evaluation/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Click "New Set" button
     const newSetButton = page.getByRole("button", { name: /New Set|Create/i });
@@ -85,7 +92,9 @@ test.describe("Evals Playground", () => {
     await page.goto("/playground/evals");
 
     // Wait for page to load
-    await expect(page.getByRole("heading", { name: /Evals|Evaluation/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /Evals|Evaluation/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // First create an eval set
     const newSetButton = page.getByRole("button", { name: /New Set/i });
@@ -126,7 +135,9 @@ test.describe("Evals Playground", () => {
     await page.goto("/playground/evals");
 
     // Wait for page to load
-    await expect(page.getByRole("heading", { name: /Evals|Evaluation/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole("heading", { name: /Evals|Evaluation/i })).toBeVisible({
+      timeout: 10000,
+    });
 
     // Step 1: Create an eval set
     const newSetButton = page.getByRole("button", { name: /New Set/i });
@@ -169,7 +180,9 @@ test.describe("Evals Playground", () => {
       await page.waitForTimeout(500);
 
       // Try to find our test table in the dropdown
-      const tableOption = page.locator("[data-slot='select-item']").filter({ hasText: evalTestTable.name });
+      const tableOption = page
+        .locator("[data-slot='select-item']")
+        .filter({ hasText: evalTestTable.name });
       if (await tableOption.isVisible({ timeout: 2000 }).catch(() => false)) {
         await tableOption.click();
         await page.waitForTimeout(500);
@@ -255,12 +268,15 @@ test.describe("Evals Playground", () => {
         const hasAnyError = pageText?.includes("Error") || pageText?.includes("404");
 
         if (hasAnyError) {
-          expect(false,
+          expect(
+            false,
             "Eval failed with error - check /tmp/evals-after-run.png for details. " +
-            "Console errors: " + (errors[0] || "none captured")
+              "Console errors: " +
+              (errors[0] || "none captured")
           ).toBe(true);
         } else {
-          expect(false,
+          expect(
+            false,
             "Eval did not complete - no results shown. Check /tmp/evals-after-run.png"
           ).toBe(true);
         }
@@ -268,7 +284,10 @@ test.describe("Evals Playground", () => {
     } else {
       // Run button not visible - take screenshot and skip
       await page.screenshot({ path: "/tmp/evals-no-run-button.png", fullPage: true });
-      expect(false, "Run button not visible - check screenshot at /tmp/evals-no-run-button.png").toBe(true);
+      expect(
+        false,
+        "Run button not visible - check screenshot at /tmp/evals-no-run-button.png"
+      ).toBe(true);
     }
   });
 });

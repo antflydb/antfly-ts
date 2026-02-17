@@ -192,27 +192,15 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
 
   const [queryMode, setQueryMode] = useState<"builder" | "json">("builder");
 
-  // Auto-select first vector index and set default limit when semantic search is enabled
+  // Auto-select first vector index when indexes load
   useEffect(() => {
-    if (isSemanticSearchEnabled) {
-      // Auto-select first vector index if none selected
-      if (queryIndexes.length === 0) {
-        const vectorIndexes = indexes.filter((idx) => idx.config.type === "aknn_v0");
-        if (vectorIndexes.length > 0) {
-          setQueryIndexes([vectorIndexes[0].config.name]);
-        }
-      }
-      // Set default limit if not already set
-      try {
-        const parsed = JSON.parse(semanticQuery);
-        if (parsed.limit === undefined) {
-          setSemanticQuery(JSON.stringify({ ...parsed, limit: 5 }, null, 2));
-        }
-      } catch {
-        setSemanticQuery(JSON.stringify({ limit: 5 }, null, 2));
+    if (queryIndexes.length === 0) {
+      const vectorIndexes = indexes.filter((idx) => idx.config.type === "aknn_v0");
+      if (vectorIndexes.length > 0) {
+        setQueryIndexes([vectorIndexes[0].config.name]);
       }
     }
-  }, [isSemanticSearchEnabled, indexes, queryIndexes.length, semanticQuery]);
+  }, [indexes, queryIndexes.length]);
 
   // Chunking builder form
   const chunkerFormSchema = z.object({
@@ -696,7 +684,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                           schemaFields={availableSearchableFields.map((f) => f.originalField)}
                           onQueryGenerated={(query) => {
                             setFilterQuery(JSON.stringify(query, null, 2));
-                            setIsFilterEnabled(true);
                           }}
                         />
                       </AccordionContent>
@@ -879,9 +866,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                 size="lg"
               >
                 Run Query
-                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded opacity-60">
-                  ⌘↵
-                </kbd>
+                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded opacity-60">⌘↵</kbd>
               </Button>
               <span className="text-xs text-muted-foreground">
                 {hasSemanticQuery && hasFilterQuery
@@ -945,7 +930,8 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                   initialSchema={tableSchema}
                 />
               </div>
-            ) : tableSchema?.document_schemas && Object.keys(tableSchema.document_schemas).length > 0 ? (
+            ) : tableSchema?.document_schemas &&
+              Object.keys(tableSchema.document_schemas).length > 0 ? (
               <JsonViewer json={tableSchema} />
             ) : (
               <FieldExplorer

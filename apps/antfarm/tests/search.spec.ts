@@ -1,4 +1,4 @@
-import { expect, test as base } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
 import {
   createTestTable,
   deleteTestTable,
@@ -8,7 +8,7 @@ import {
 
 // Test with embedding index for semantic search
 const test = base.extend<{ testTable: TestTableConfig }>({
-  testTable: async ({}, use, testInfo) => {
+  testTable: async (_deps, use, testInfo) => {
     const uniqueName = `e2e_search_${testInfo.workerIndex}_${Date.now()}`;
     const config: TestTableConfig = {
       ...TEST_TABLE,
@@ -18,7 +18,7 @@ const test = base.extend<{ testTable: TestTableConfig }>({
 
     await createTestTable(config);
     await use(config);
-    await deleteTestTable(uniqueName).catch(() => {});
+    await deleteTestTable(uniqueName).catch(() => undefined);
   },
 });
 
