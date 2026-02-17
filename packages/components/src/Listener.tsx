@@ -355,7 +355,7 @@ export default function Listener({ children, onChange }: ListenerProps) {
                         }
                         // Only use filterValue for legacy mode (non-custom queries)
                         if (filterValue && !useCustomQuery) {
-                          return result.aggregations[f].buckets!.filter((i: AggregationBucket) =>
+                          return result.aggregations[f].buckets?.filter((i: AggregationBucket) =>
                             i.key.toLowerCase().includes(filterValue.toLowerCase())
                           );
                         }

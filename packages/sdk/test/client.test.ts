@@ -512,7 +512,7 @@ describe("AntflyClient", () => {
       it("should JSON-parse answer events to preserve newlines", async () => {
         const answerWithNewlines = "Here is the answer:\n\n1. First point\n2. Second point";
         const events = [
-          { event: "answer", data: JSON.stringify(answerWithNewlines) },
+          { event: "generation", data: JSON.stringify(answerWithNewlines) },
           { event: "done", data: JSON.stringify({ success: true }) },
         ];
 
@@ -580,7 +580,7 @@ describe("AntflyClient", () => {
       it("should JSON-parse answer events to preserve newlines", async () => {
         const answerWithNewlines = "The response is:\n\nParagraph one.\n\nParagraph two.";
         const events = [
-          { event: "answer", data: JSON.stringify(answerWithNewlines) },
+          { event: "generation", data: JSON.stringify(answerWithNewlines) },
           { event: "done", data: JSON.stringify({ success: true }) },
         ];
 

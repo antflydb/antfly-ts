@@ -1,9 +1,9 @@
 import type {
-  GenerationConfidence,
   ClassificationTransformationResult,
   EvalConfig,
   EvalResult,
   EvaluatorScore,
+  GenerationConfidence,
   GeneratorConfig,
   QueryHit,
   RetrievalAgentRequest,
@@ -232,7 +232,10 @@ export default function AnswerResults({
             setAnswer(result.generation || "");
             setFollowUpQuestions(result.followup_questions || []);
             setHits(result.hits || []);
-            if (result.generation_confidence !== undefined && result.context_relevance !== undefined) {
+            if (
+              result.generation_confidence !== undefined &&
+              result.context_relevance !== undefined
+            ) {
               setConfidence({
                 generation_confidence: result.generation_confidence,
                 context_relevance: result.context_relevance,
@@ -371,7 +374,8 @@ export default function AnswerResults({
       <div className="react-af-answer-confidence">
         <strong>Confidence Assessment:</strong>
         <div>
-          <strong>Generation Confidence:</strong> {(confidenceData.generation_confidence * 100).toFixed(1)}%
+          <strong>Generation Confidence:</strong>{" "}
+          {(confidenceData.generation_confidence * 100).toFixed(1)}%
         </div>
         <div>
           <strong>Context Relevance:</strong> {(confidenceData.context_relevance * 100).toFixed(1)}%

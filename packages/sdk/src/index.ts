@@ -66,7 +66,6 @@ export type {
   AggregationResult,
   // Search and aggregation types
   AggregationType,
-  GenerationConfidence,
   // Configuration
   AntflyConfig,
   // Error type
@@ -84,8 +83,6 @@ export type {
   ChatToolsConfig,
   // Chat types (used by retrieval agent)
   // Retrieval Agent result types
-  Citation,
-  CitationStyle,
   ClarificationRequest,
   ClassificationTransformationResult,
   CreateTableRequest,
@@ -112,6 +109,7 @@ export type {
   EvaluatorScore,
   FetchConfig,
   FilterSpec,
+  GenerationConfidence,
   GeneratorConfig,
   GeneratorProvider,
   GraphIndexV0Config,

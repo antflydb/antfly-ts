@@ -1,4 +1,4 @@
-import type { GenerationConfidence, EvalResult, QueryHit, RetrievalAgentResult } from "@antfly/sdk";
+import type { EvalResult, GenerationConfidence, QueryHit, RetrievalAgentResult } from "@antfly/sdk";
 import { createContext, useContext } from "react";
 
 // Context for sharing Answer Agent data with child components (e.g., AnswerFeedback)

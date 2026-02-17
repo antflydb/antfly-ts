@@ -222,8 +222,6 @@ export interface AntflyConfig {
 export type RetrievalAgentRequest = components["schemas"]["RetrievalAgentRequest"];
 export type RetrievalAgentResult = components["schemas"]["RetrievalAgentResult"];
 export type RetrievalAgentSteps = components["schemas"]["RetrievalAgentSteps"];
-export type Citation = components["schemas"]["Citation"];
-export type CitationStyle = components["schemas"]["CitationStyle"];
 
 // Retrieval Agent streaming callbacks for structured SSE events
 export interface RetrievalAgentStreamCallbacks {
@@ -231,7 +229,6 @@ export interface RetrievalAgentStreamCallbacks {
   onReasoning?: (chunk: string) => void;
   onHit?: (hit: QueryHit) => void;
   onAnswer?: (chunk: string) => void;
-  onCitation?: (citation: Citation) => void;
   onConfidence?: (data: { generation_confidence: number; context_relevance: number }) => void;
   onFollowUpQuestion?: (question: string) => void;
   onEvalResult?: (data: EvalResult) => void;
