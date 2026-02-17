@@ -27,7 +27,6 @@ import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -176,9 +175,18 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
   const [queryIndexes, setQueryIndexes] = useState<string[]>([]);
   const [filterQuery, setFilterQuery] = useState(JSON.stringify({}, null, 2));
   const [semanticQuery, setSemanticQuery] = useState(JSON.stringify({}, null, 2));
-  const [isSemanticSearchEnabled, setIsSemanticSearchEnabled] = useState(false);
-  const [isFilterEnabled, setIsFilterEnabled] = useState(false);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
+
+  // Derive search modes from input content instead of toggles
+  const hasSemanticQuery = query.trim().length > 0 && queryIndexes.length > 0;
+  const hasFilterQuery = useMemo(() => {
+    try {
+      const parsed = JSON.parse(filterQuery);
+      return Object.keys(parsed).length > 0;
+    } catch {
+      return false;
+    }
+  }, [filterQuery]);
   const [fieldInput, setFieldInput] = useState("");
   const [isEditingSchema, setIsEditingSchema] = useState(false);
 
@@ -235,7 +243,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
 
   const semanticQueryRequestString = useMemo(() => {
     const queryRequest: QueryRequest = {};
-    if (isSemanticSearchEnabled) {
+    if (hasSemanticQuery) {
       queryRequest.indexes = queryIndexes;
       queryRequest.semantic_search = query || "";
     }
@@ -247,14 +255,14 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
       queryRequest.aggregations = semanticQueryObject.aggregations;
       queryRequest.limit = semanticQueryObject.limit;
       // Only include offset if semantic search is disabled
-      if (!isSemanticSearchEnabled && semanticQueryObject.offset !== undefined) {
+      if (!hasSemanticQuery && semanticQueryObject.offset !== undefined) {
         queryRequest.offset = semanticQueryObject.offset;
       }
     } catch (e) {
       // ignore invalid json
       console.error("Invalid semantic query JSON:", e);
     }
-    if (isFilterEnabled) {
+    if (hasFilterQuery) {
       try {
         queryRequest.filter_query = JSON.parse(filterQuery);
       } catch (e) {
@@ -268,8 +276,8 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     queryIndexes,
     filterQuery,
     semanticQuery,
-    isSemanticSearchEnabled,
-    isFilterEnabled,
+    hasSemanticQuery,
+    hasFilterQuery,
     selectedFields,
   ]);
 
@@ -294,21 +302,11 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
         setSelectedFields(queryRequest.fields || []);
         setFieldInput(""); // Clear field input when switching from JSON mode
 
-        // Set semantic search toggle state based on presence of semantic_search property
-        const hasSemanticSearch = "semantic_search" in queryRequest;
-        setIsSemanticSearchEnabled(hasSemanticSearch);
+        // Set query content (search mode is auto-detected from content)
+        setQuery(queryRequest.semantic_search || "");
 
-        if (hasSemanticSearch) {
-          setQuery(queryRequest.semantic_search || "");
-        } else {
-          setQuery("");
-        }
-
-        // Set filter toggle state based on presence of filter_query
-        const hasFilterQuery = queryRequest.filter_query;
-        setIsFilterEnabled(!!hasFilterQuery);
-
-        if (hasFilterQuery) {
+        // Set filter query content
+        if (queryRequest.filter_query) {
           setFilterQuery(JSON.stringify(queryRequest.filter_query, null, 2));
         } else {
           setFilterQuery(JSON.stringify({}, null, 2));
@@ -352,9 +350,12 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
       };
       if (response.schema && Object.keys(response.schema).length > 0) {
         setTableSchema(response.schema);
+      } else {
+        setTableSchema(null);
       }
     } catch {
       // This is a 404, so we can ignore it.
+      setTableSchema(null);
     }
   }, [tableName]);
 
@@ -362,6 +363,11 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     fetchIndexes();
     fetchTableSchema();
   }, [fetchIndexes, fetchTableSchema]);
+
+  // Reset editing state when switching tables
+  useEffect(() => {
+    setIsEditingSchema(false);
+  }, [tableName]);
 
   const handleOpenCreateDialog = () => {
     setOpenCreateDialog(true);
@@ -420,6 +426,19 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
       console.error(e);
     }
   };
+
+  // Global Ctrl+Enter handler for search section
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (currentSection !== "semantic") return;
+      if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        handleRunQuery();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentSection]);
 
   const groupedIndexes = indexes.reduce(
     (acc, index) => {
@@ -734,114 +753,77 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                     {/* Semantic Search */}
                     <AccordionItem value="semantic" className="border rounded-lg bg-card/50 px-3">
                       <AccordionTrigger className="py-2.5 hover:no-underline">
-                        <div className="flex items-center justify-between w-full pr-3">
-                          <span className="font-medium text-sm">Semantic Search</span>
-                          <Switch
-                            checked={isSemanticSearchEnabled}
-                            onCheckedChange={(checked) => {
-                              setIsSemanticSearchEnabled(checked);
-                              if (checked) {
-                                const queryObj = JSON.parse(semanticQuery);
-                                delete queryObj.offset;
-                                setSemanticQuery(JSON.stringify(queryObj, null, 2));
-                              } else {
-                                setQuery("");
-                              }
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
+                        <span className="font-medium text-sm">Semantic Search</span>
                       </AccordionTrigger>
                       <AccordionContent className="pb-3 pt-1">
-                        {isSemanticSearchEnabled && (
-                          <div className="space-y-2.5">
-                            <div>
-                              <Label className="text-xs mb-1 block">Vector Index</Label>
-                              {indexes.filter((idx) => idx.config.type === "aknn_v0").length ===
-                              0 ? (
-                                <Alert variant="destructive" className="py-1.5 px-3">
-                                  <AlertDescription className="text-xs">
-                                    No vector indexes available. Create a vector index to enable
-                                    semantic search.
-                                  </AlertDescription>
-                                </Alert>
-                              ) : (
-                                <>
-                                  <MultiSelect
-                                    options={indexes
-                                      .filter((idx) => idx.config.type === "aknn_v0")
-                                      .map((index) => ({
-                                        label: index.config.name,
-                                        value: index.config.name,
-                                      }))}
-                                    value={queryIndexes}
-                                    onChange={handleQueryIndexChange}
-                                    placeholder="Select index(es)"
-                                  />
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    First index auto-selected. Default limit: 5 results.
-                                  </p>
-                                </>
-                              )}
-                            </div>
-                            {queryIndexes.length > 1 && (
-                              <Alert className="py-1.5 px-3">
-                                <AlertDescription className="text-xs">
-                                  RRF search with multiple indexes.{" "}
-                                  <a
-                                    href="https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="underline"
-                                  >
-                                    Learn more
-                                  </a>
-                                </AlertDescription>
-                              </Alert>
-                            )}
-                            <div>
-                              <Label className="text-xs mb-1 block">Query</Label>
-                              <Input
-                                placeholder="Enter search query..."
-                                value={query}
-                                onChange={handleQueryChange}
-                                className="h-9"
+                        <div className="space-y-2.5">
+                          <div>
+                            <Label className="text-xs mb-1 block">Vector Index</Label>
+                            {indexes.filter((idx) => idx.config.type === "aknn_v0").length === 0 ? (
+                              <p className="text-xs text-muted-foreground">
+                                No vector indexes available. Create one to enable semantic search.
+                              </p>
+                            ) : (
+                              <MultiSelect
+                                options={indexes
+                                  .filter((idx) => idx.config.type === "aknn_v0")
+                                  .map((index) => ({
+                                    label: index.config.name,
+                                    value: index.config.name,
+                                  }))}
+                                value={queryIndexes}
+                                onChange={handleQueryIndexChange}
+                                placeholder="Select vector index(es)"
                               />
-                            </div>
+                            )}
                           </div>
-                        )}
+                          {queryIndexes.length > 1 && (
+                            <Alert className="py-1.5 px-3">
+                              <AlertDescription className="text-xs">
+                                RRF search with multiple indexes.{" "}
+                                <a
+                                  href="https://learn.microsoft.com/en-us/azure/search/hybrid-search-ranking"
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="underline"
+                                >
+                                  Learn more
+                                </a>
+                              </AlertDescription>
+                            </Alert>
+                          )}
+                          <div>
+                            <Label className="text-xs mb-1 block">Query</Label>
+                            <Input
+                              placeholder="Enter search query..."
+                              value={query}
+                              onChange={handleQueryChange}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+                                  e.preventDefault();
+                                  handleRunQuery();
+                                }
+                              }}
+                              className="h-9"
+                            />
+                          </div>
+                        </div>
                       </AccordionContent>
                     </AccordionItem>
 
-                    {/* Filter Query */}
+                    {/* Full-Text Search */}
                     <AccordionItem value="filter" className="border rounded-lg bg-card/50 px-3">
                       <AccordionTrigger className="py-2.5 hover:no-underline">
-                        <div className="flex items-center justify-between w-full pr-3">
-                          <span className="font-medium text-sm">Filter Query</span>
-                          <Switch
-                            checked={isFilterEnabled}
-                            onCheckedChange={(checked) => {
-                              setIsFilterEnabled(checked);
-                              if (!checked) {
-                                setFilterQuery(JSON.stringify({}, null, 2));
-                              } else {
-                                setFilterQuery(JSON.stringify({ match_all: {} }, null, 2));
-                              }
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        </div>
+                        <span className="font-medium text-sm">Full-Text Search</span>
                       </AccordionTrigger>
                       <AccordionContent className="pb-3 pt-1">
-                        {isFilterEnabled && (
-                          <QueryBuilder
-                            value={filterQuery}
-                            onChange={setFilterQuery}
-                            showOrderByAndFacets={false}
-                            availableFields={availableSearchableFields}
-                            availableBasicFields={availableBasicFields}
-                          />
-                        )}
+                        <QueryBuilder
+                          value={filterQuery}
+                          onChange={setFilterQuery}
+                          showOrderByAndFacets={false}
+                          availableFields={availableSearchableFields}
+                          availableBasicFields={availableBasicFields}
+                        />
                       </AccordionContent>
                     </AccordionItem>
                   </Accordion>
@@ -851,7 +833,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                     onChange={setSemanticQuery}
                     showQueryNode={false}
                     showLimitAndOffset={true}
-                    disableOffset={isSemanticSearchEnabled}
+                    disableOffset={hasSemanticQuery}
                     availableFields={availableSearchableFields}
                     availableBasicFields={availableBasicFields}
                   />
@@ -893,16 +875,23 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
             <div className="flex gap-3 items-center mt-6">
               <Button
                 onClick={handleRunQuery}
-                disabled={!isSemanticSearchEnabled && !isFilterEnabled}
+                disabled={!hasSemanticQuery && !hasFilterQuery}
                 size="lg"
               >
                 Run Query
+                <kbd className="ml-2 px-1.5 py-0.5 text-xs bg-muted rounded opacity-60">
+                  ⌘↵
+                </kbd>
               </Button>
-              {queryResult && (
-                <span className="text-sm text-muted-foreground">
-                  Last query returned {queryResult.hits?.total || 0} results
-                </span>
-              )}
+              <span className="text-xs text-muted-foreground">
+                {hasSemanticQuery && hasFilterQuery
+                  ? "Running semantic + full-text search"
+                  : hasSemanticQuery
+                    ? "Running semantic search"
+                    : hasFilterQuery
+                      ? "Running full-text search"
+                      : "Enter a query to search"}
+              </span>
             </div>
 
             {queryResult && (
