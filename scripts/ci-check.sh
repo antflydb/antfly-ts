@@ -1,6 +1,10 @@
 #!/bin/bash
 # Run all CI checks locally, continuing even if some fail
 # Usage: ./scripts/ci-check.sh
+#
+# Mirrors checks from:
+#   .github/workflows/ci.yml (lint, typecheck, build, test)
+#   .github/workflows/playwright.yml (playwright)
 
 set -o pipefail
 
@@ -37,8 +41,10 @@ run_check "build" pnpm build
 run_check "test" pnpm test
 
 # Playwright tests (from playwright.yml) - must run from apps/antfarm directory
+# Skip webkit locally as it requires system deps that may not be installed
+# CI installs all deps via `playwright install --with-deps`
 if [[ -d "apps/antfarm" ]]; then
-    run_check "playwright" bash -c "cd apps/antfarm && pnpm exec playwright test --reporter=list"
+    run_check "playwright" bash -c "cd apps/antfarm && pnpm exec playwright test --project=chromium --project=firefox --reporter=list"
 fi
 
 # Summary
