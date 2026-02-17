@@ -868,7 +868,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                 size="lg"
               >
                 Run Query
-                <span className="ml-2 text-xs opacity-60">Ctrl+Enter</span>
               </Button>
               <span className="text-xs text-muted-foreground">
                 {hasSemanticQuery && hasFilterQuery
