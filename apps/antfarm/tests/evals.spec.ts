@@ -29,7 +29,8 @@ const EVAL_TEST_TABLE: TestTableConfig = {
 
 // Extend test to include automatic test table setup/teardown
 const test = base.extend<{ evalTestTable: TestTableConfig }>({
-  evalTestTable: async (_deps, use, testInfo) => {
+  // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture requires destructuring
+  evalTestTable: async ({}, use, testInfo) => {
     // Generate unique table name for this test run
     const uniqueName = `e2e_eval_${testInfo.workerIndex}_${Date.now()}`;
     const config: TestTableConfig = {

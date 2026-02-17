@@ -8,7 +8,8 @@ import {
 
 // Test with embedding index for semantic search
 const test = base.extend<{ testTable: TestTableConfig }>({
-  testTable: async (_deps, use, testInfo) => {
+  // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture requires destructuring
+  testTable: async ({}, use, testInfo) => {
     const uniqueName = `e2e_search_${testInfo.workerIndex}_${Date.now()}`;
     const config: TestTableConfig = {
       ...TEST_TABLE,
@@ -22,18 +23,8 @@ const test = base.extend<{ testTable: TestTableConfig }>({
   },
 });
 
-/**
- * Helper to enable semantic search toggle.
- * The switch is inside the "Semantic Search" accordion trigger.
- */
-async function enableSemanticSearch(page: import("@playwright/test").Page) {
-  // Find the Semantic Search button (accordion trigger) and its switch
-  const semanticSwitch = page.getByRole("button", { name: "Semantic Search" }).getByRole("switch");
-  await semanticSwitch.click();
-}
-
 test.describe("Search Page - Semantic Search Defaults", () => {
-  test("auto-selects first vector index when semantic search enabled", async ({
+  test("auto-selects first vector index when table has embedding index", async ({
     page,
     testTable,
   }) => {
@@ -43,17 +34,16 @@ test.describe("Search Page - Semantic Search Defaults", () => {
     // Go to Search section
     await page.getByRole("button", { name: "Search" }).click();
 
-    // Wait for Search section to load
-    await expect(page.getByText("Semantic Search")).toBeVisible({ timeout: 5000 });
+    // Wait for Search section to load - look for the Semantic Search accordion
+    await expect(page.getByRole("button", { name: "Semantic Search" })).toBeVisible({
+      timeout: 5000,
+    });
 
-    // Enable semantic search
-    await enableSemanticSearch(page);
-
-    // Should auto-select the "embeddings" index
+    // The vector index should be auto-selected (no toggle needed in new UI)
     await expect(page.getByText("embeddings")).toBeVisible({ timeout: 5000 });
 
     // Should show helper text about defaults
-    await expect(page.getByText(/First index auto-selected/)).toBeVisible();
+    await expect(page.getByText(/First index is auto-selected/)).toBeVisible();
   });
 
   test("can run semantic search with auto-selected defaults", async ({ page, testTable }) => {
@@ -61,15 +51,16 @@ test.describe("Search Page - Semantic Search Defaults", () => {
     await expect(page.getByText(testTable.name)).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Search" }).click();
-    await expect(page.getByText("Semantic Search")).toBeVisible({ timeout: 5000 });
 
-    // Enable semantic search
-    await enableSemanticSearch(page);
+    // Wait for the Semantic Search section
+    await expect(page.getByRole("button", { name: "Semantic Search" })).toBeVisible({
+      timeout: 5000,
+    });
 
-    // Wait for auto-selection
+    // Wait for auto-selection of vector index
     await expect(page.getByText("embeddings")).toBeVisible({ timeout: 5000 });
 
-    // Enter query and run - use the input inside semantic search section
+    // Enter query and run
     await page.getByPlaceholder("Enter search query...").fill("test document");
     await page.getByRole("button", { name: "Run Query" }).click();
 
@@ -84,12 +75,14 @@ test.describe("Search Results Display", () => {
     await expect(page.getByText(testTable.name)).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Search" }).click();
-    await expect(page.getByText("Semantic Search")).toBeVisible({ timeout: 5000 });
 
-    // Run a semantic search
-    await enableSemanticSearch(page);
+    // Wait for the Semantic Search section and auto-selected index
+    await expect(page.getByRole("button", { name: "Semantic Search" })).toBeVisible({
+      timeout: 5000,
+    });
     await expect(page.getByText("embeddings")).toBeVisible({ timeout: 5000 });
 
+    // Run a semantic search
     await page.getByPlaceholder("Enter search query...").fill("test");
     await page.getByRole("button", { name: "Run Query" }).click();
 
@@ -109,12 +102,14 @@ test.describe("Search Results Display", () => {
     await expect(page.getByText(testTable.name)).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "Search" }).click();
-    await expect(page.getByText("Semantic Search")).toBeVisible({ timeout: 5000 });
 
-    // Run a semantic search
-    await enableSemanticSearch(page);
+    // Wait for the Semantic Search section and auto-selected index
+    await expect(page.getByRole("button", { name: "Semantic Search" })).toBeVisible({
+      timeout: 5000,
+    });
     await expect(page.getByText("embeddings")).toBeVisible({ timeout: 5000 });
 
+    // Run a semantic search
     await page.getByPlaceholder("Enter search query...").fill("test");
     await page.getByRole("button", { name: "Run Query" }).click();
 

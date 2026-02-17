@@ -9,7 +9,8 @@ import {
 // Extend test to include automatic test table setup/teardown per test
 // Each test gets a unique table name to allow parallel execution
 const test = base.extend<{ testTable: TestTableConfig }>({
-  testTable: async (_deps, use, testInfo) => {
+  // biome-ignore lint/correctness/noEmptyPattern: Playwright fixture requires destructuring
+  testTable: async ({}, use, testInfo) => {
     // Generate unique table name for this test run
     const uniqueName = `e2e_test_${testInfo.workerIndex}_${Date.now()}`;
     const config: TestTableConfig = {

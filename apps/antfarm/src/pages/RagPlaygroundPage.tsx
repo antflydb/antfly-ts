@@ -1,8 +1,4 @@
-import type {
-  ClassificationTransformationResult,
-  QueryHit,
-  TableStatus,
-} from "@antfly/sdk";
+import type { ClassificationTransformationResult, QueryHit, TableStatus } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   BookOpen,
