@@ -19,10 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useApiConfig } from "@/hooks/use-api-config";
 import ChunkingForm from "./ChunkingForm";
 import { Combobox } from "./Combobox";
-
-const TERMITE_API_URL = "http://localhost:11433";
 
 interface ModelsResponse {
   chunkers: string[];
@@ -56,6 +55,7 @@ interface IndexFormProps {
 
 const IndexForm: React.FC<IndexFormProps> = ({ fieldPrefix = "", schemaFields = [] }) => {
   const { control, watch } = useFormContext();
+  const { termiteApiUrl } = useApiConfig();
   const prefix = fieldPrefix ? `${fieldPrefix}.` : "";
 
   // Termite model detection
@@ -66,7 +66,7 @@ const IndexForm: React.FC<IndexFormProps> = ({ fieldPrefix = "", schemaFields = 
     const fetchTermiteModels = async () => {
       setTermiteModelsLoading(true);
       try {
-        const response = await fetch(`${TERMITE_API_URL}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
           setTermiteEmbedders(data.embedders || []);
@@ -79,7 +79,7 @@ const IndexForm: React.FC<IndexFormProps> = ({ fieldPrefix = "", schemaFields = 
       }
     };
     fetchTermiteModels();
-  }, []);
+  }, [termiteApiUrl]);
 
   const modelSuggestions = useMemo(
     () => ({

@@ -1,4 +1,9 @@
-import type { ClassificationTransformationResult, QueryHit, TableStatus } from "@antfly/sdk";
+import {
+  type ClassificationTransformationResult,
+  generatorProviders,
+  type QueryHit,
+  type TableStatus,
+} from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   BookOpen,
@@ -35,9 +40,8 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api-config";
 
-// Generator providers
-const GENERATOR_PROVIDERS = ["openai", "anthropic", "gemini", "ollama"] as const;
-type GeneratorProvider = (typeof GENERATOR_PROVIDERS)[number];
+// Generator provider type from SDK
+type GeneratorProvider = (typeof generatorProviders)[number];
 
 interface GeneratorConfig {
   provider: GeneratorProvider;
@@ -464,7 +468,7 @@ const RagPlaygroundPage: React.FC = () => {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {GENERATOR_PROVIDERS.map((p) => (
+                            {generatorProviders.map((p) => (
                               <SelectItem key={p} value={p}>
                                 {p}
                               </SelectItem>

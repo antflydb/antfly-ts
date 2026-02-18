@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { useApiConfig } from "@/hooks/use-api-config";
 
 // NER response types matching Termite API
 interface NEREntity {
@@ -127,9 +128,8 @@ const DYNAMIC_COLORS = [
 
 const SAMPLE_TEXT = `Apple Inc. announced that Tim Cook will be visiting the new headquarters in Cupertino, California next Monday. The company plans to unveil several new products, including the iPhone 16 and MacBook Pro. Meanwhile, Google's CEO Sundar Pichai confirmed that the search giant is expanding its AI research team in London. Microsoft and Amazon are also investing heavily in artificial intelligence, with Jeff Bezos recently stating that AWS will double its machine learning capabilities by 2025.`;
 
-const TERMITE_API_URL = "http://localhost:11433";
-
 const NERPlaygroundPage: React.FC = () => {
+  const { termiteApiUrl } = useApiConfig();
   const [inputText, setInputText] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [labels, setLabels] = useState<string[]>(DEFAULT_LABELS);
@@ -148,7 +148,7 @@ const NERPlaygroundPage: React.FC = () => {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await fetch(`${TERMITE_API_URL}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
           setAvailableModels(data.recognizers || []);
@@ -163,7 +163,7 @@ const NERPlaygroundPage: React.FC = () => {
       }
     };
     fetchModels();
-  }, []);
+  }, [termiteApiUrl]);
 
   const getColorForLabel = (label: string) => {
     const normalizedLabel = label.toLowerCase();
@@ -212,7 +212,7 @@ const NERPlaygroundPage: React.FC = () => {
     const startTime = performance.now();
 
     try {
-      const response = await fetch(`${TERMITE_API_URL}/api/recognize`, {
+      const response = await fetch(`${termiteApiUrl}/api/recognize`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -238,9 +238,7 @@ const NERPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to connect to Termite. Make sure Termite is running on localhost:11433"
+        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
       );
     } finally {
       setIsLoading(false);

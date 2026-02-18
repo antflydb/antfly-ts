@@ -7,13 +7,23 @@ const getDefaultApiUrl = () => {
   return "/api/v1";
 };
 
+const getDefaultTermiteApiUrl = () => {
+  return "http://localhost:11433";
+};
+
 const STORAGE_KEY = "antfarm-api-url";
+const TERMITE_STORAGE_KEY = "antfarm-termite-api-url";
 
 export function ApiConfigProvider({ children }: { children: ReactNode }) {
   // Try to load from localStorage, fallback to default
   const [apiUrl, setApiUrlState] = useState<string>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored || getDefaultApiUrl();
+  });
+
+  const [termiteApiUrl, setTermiteApiUrlState] = useState<string>(() => {
+    const stored = localStorage.getItem(TERMITE_STORAGE_KEY);
+    return stored || getDefaultTermiteApiUrl();
   });
 
   const [client, setClient] = useState<AntflyClient>(() => new AntflyClient({ baseUrl: apiUrl }));
@@ -34,8 +44,30 @@ export function ApiConfigProvider({ children }: { children: ReactNode }) {
     setClient(new AntflyClient({ baseUrl: defaultUrl }));
   };
 
+  const setTermiteApiUrl = (url: string) => {
+    const trimmedUrl = url.trim();
+    setTermiteApiUrlState(trimmedUrl);
+    localStorage.setItem(TERMITE_STORAGE_KEY, trimmedUrl);
+  };
+
+  const resetTermiteApiUrl = () => {
+    const defaultUrl = getDefaultTermiteApiUrl();
+    setTermiteApiUrlState(defaultUrl);
+    localStorage.removeItem(TERMITE_STORAGE_KEY);
+  };
+
   return (
-    <ApiConfigContext.Provider value={{ apiUrl, setApiUrl, client, resetToDefault }}>
+    <ApiConfigContext.Provider
+      value={{
+        apiUrl,
+        setApiUrl,
+        client,
+        resetToDefault,
+        termiteApiUrl,
+        setTermiteApiUrl,
+        resetTermiteApiUrl,
+      }}
+    >
       {children}
     </ApiConfigContext.Provider>
   );

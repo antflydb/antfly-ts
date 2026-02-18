@@ -1,4 +1,4 @@
-import type { TableStatus } from "@antfly/sdk";
+import { generatorProviders, type TableStatus } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   Check,
@@ -48,9 +48,8 @@ import { useApi } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
 import type { EvalItem, EvalItemResult, EvalRunResult } from "@/types/evals";
 
-// Generator providers
-const GENERATOR_PROVIDERS = ["openai", "anthropic", "gemini", "ollama"] as const;
-type GeneratorProvider = (typeof GENERATOR_PROVIDERS)[number];
+// Generator provider type from SDK
+type GeneratorProvider = (typeof generatorProviders)[number];
 
 interface JudgeConfig {
   provider: GeneratorProvider;
@@ -979,7 +978,7 @@ const EvalsPlaygroundPage: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {GENERATOR_PROVIDERS.map((p) => (
+                  {generatorProviders.map((p) => (
                     <SelectItem key={p} value={p}>
                       {p}
                     </SelectItem>

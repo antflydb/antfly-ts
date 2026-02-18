@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isProductEnabled } from "@/config/products";
+import { useApiConfig } from "@/hooks/use-api-config";
 
 export type ServerStatus = "connected" | "disconnected" | "checking";
 
@@ -13,6 +14,7 @@ const CHECK_INTERVAL_DISCONNECTED = 30000; // 30 seconds when disconnected
 const CONNECTION_CHECK_TIMEOUT = 5000; // 5 seconds timeout for health checks
 
 export function useConnectionStatus(): ConnectionStatus {
+  const { termiteApiUrl } = useApiConfig();
   const [antflyStatus, setAntflyStatus] = useState<ServerStatus>("checking");
   const [termiteStatus, setTermiteStatus] = useState<ServerStatus>("checking");
   const isMountedRef = useRef(true);
@@ -38,26 +40,29 @@ export function useConnectionStatus(): ConnectionStatus {
     }
   }, []);
 
-  const checkTermite = useCallback(async (signal?: AbortSignal) => {
-    if (!isProductEnabled("termite")) {
-      setTermiteStatus("connected"); // Skip check if product disabled
-      return;
-    }
+  const checkTermite = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!isProductEnabled("termite")) {
+        setTermiteStatus("connected"); // Skip check if product disabled
+        return;
+      }
 
-    try {
-      const response = await fetch("http://localhost:11433/", {
-        method: "GET",
-        signal: signal ?? AbortSignal.timeout(CONNECTION_CHECK_TIMEOUT),
-      });
-      if (isMountedRef.current) {
-        setTermiteStatus(response.ok ? "connected" : "disconnected");
+      try {
+        const response = await fetch(`${termiteApiUrl}/`, {
+          method: "GET",
+          signal: signal ?? AbortSignal.timeout(CONNECTION_CHECK_TIMEOUT),
+        });
+        if (isMountedRef.current) {
+          setTermiteStatus(response.ok ? "connected" : "disconnected");
+        }
+      } catch {
+        if (isMountedRef.current) {
+          setTermiteStatus("disconnected");
+        }
       }
-    } catch {
-      if (isMountedRef.current) {
-        setTermiteStatus("disconnected");
-      }
-    }
-  }, []);
+    },
+    [termiteApiUrl]
+  );
 
   const retry = useCallback(() => {
     if (isProductEnabled("antfly")) {

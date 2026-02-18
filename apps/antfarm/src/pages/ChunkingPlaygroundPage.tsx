@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { useApiConfig } from "@/hooks/use-api-config";
 
 // Configuration state (extends SDK config with UI-specific fields)
 interface ChunkConfig {
@@ -60,9 +61,8 @@ const CHUNK_TEXT_COLORS = [
   "text-indigo-700 dark:text-indigo-300",
 ];
 
-const TERMITE_API_URL = "http://localhost:11433/api";
-
 const ChunkingPlaygroundPage: React.FC = () => {
+  const { termiteApiUrl } = useApiConfig();
   const [inputText, setInputText] = useState("");
   const [config, setConfig] = useState<ChunkConfig>(DEFAULT_CONFIG);
   const [result, setResult] = useState<ChunkResponse | null>(null);
@@ -71,7 +71,10 @@ const ChunkingPlaygroundPage: React.FC = () => {
   const [processingTime, setProcessingTime] = useState<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const termiteClient = useMemo(() => new TermiteClient({ baseUrl: TERMITE_API_URL }), []);
+  const termiteClient = useMemo(
+    () => new TermiteClient({ baseUrl: `${termiteApiUrl}/api` }),
+    [termiteApiUrl]
+  );
 
   const handleChunk = async () => {
     if (!inputText.trim()) {
@@ -115,9 +118,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to connect to Termite. Make sure Termite is running on localhost:11433"
+        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
       );
     } finally {
       setIsLoading(false);
