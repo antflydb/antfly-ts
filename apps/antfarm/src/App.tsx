@@ -26,6 +26,7 @@ import { LoginPage } from "./pages/LoginPage";
 import ModelsPage from "./pages/ModelsPage";
 import NERPlaygroundPage from "./pages/NERPlaygroundPage";
 import QuestionPlaygroundPage from "./pages/QuestionPlaygroundPage";
+import RagPlaygroundPage from "./pages/RagPlaygroundPage";
 import TableDetailsPage from "./pages/TableDetailsPage";
 import TablesListPage from "./pages/TablesListPage";
 import { UsersPage } from "./pages/UsersPage";
@@ -86,6 +87,7 @@ function AppContent() {
                         <Route path="/playground/question" element={<QuestionPlaygroundPage />} />
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
                         <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
+                        <Route path="/playground/rag" element={<RagPlaygroundPage />} />
                       </>
                     )}
 

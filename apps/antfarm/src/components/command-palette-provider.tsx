@@ -1,6 +1,20 @@
 "use client";
 
-import { Maximize2, Minimize2, Moon, Sun, Table } from "lucide-react";
+import {
+  ClipboardCheck,
+  HelpCircle,
+  Library,
+  Maximize2,
+  Minimize2,
+  Moon,
+  Network,
+  Plus,
+  Scissors,
+  Sun,
+  Table,
+  Tag,
+  Users,
+} from "lucide-react";
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useContentWidth } from "@/components/content-width-provider";
@@ -67,7 +81,20 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     [navigate, theme, setTheme, toggleContentWidth]
   );
 
-  const navigationCommands = [{ icon: Table, label: "Tables", href: "/" }];
+  const navigationCommands = [
+    { icon: Table, label: "Tables", href: "/" },
+    { icon: Plus, label: "Create Table", href: "/create" },
+    { icon: Library, label: "Models", href: "/models" },
+    { icon: Users, label: "Users", href: "/users" },
+  ];
+
+  const playgroundCommands = [
+    { icon: Scissors, label: "Chunking Playground", href: "/playground/chunking" },
+    { icon: Tag, label: "NER Playground", href: "/playground/recognize" },
+    { icon: HelpCircle, label: "Question Gen", href: "/playground/question" },
+    { icon: Network, label: "Knowledge Graph", href: "/playground/kg" },
+    { icon: ClipboardCheck, label: "Evals", href: "/playground/evals" },
+  ];
 
   const quickActionCommands = [
     { icon: Moon, label: "Toggle Theme", action: "toggle-theme" },
@@ -128,6 +155,22 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
           {/* Navigation */}
           <CommandGroup heading="Navigation">
             {navigationCommands.map((command) => (
+              <CommandItem
+                key={command.href}
+                onSelect={() => handleSelect(command.href)}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <command.icon className="h-4 w-4" />
+                <span>{command.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+
+          <CommandSeparator />
+
+          {/* Playgrounds */}
+          <CommandGroup heading="Playgrounds">
+            {playgroundCommands.map((command) => (
               <CommandItem
                 key={command.href}
                 onSelect={() => handleSelect(command.href)}

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useApiConfig } from "@/hooks/use-api-config";
 
 // Knowledge Graph types matching Termite API
 interface KGNode {
@@ -105,9 +106,8 @@ const SAMPLE_TEXTS = [
   "Tesla acquired SolarCity in 2016 and is based in Austin, Texas.",
 ];
 
-const TERMITE_API_URL = "http://localhost:11433";
-
 const KnowledgeGraphPlaygroundPage: React.FC = () => {
+  const { termiteApiUrl } = useApiConfig();
   const [inputText, setInputText] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
   const [entityLabels, setEntityLabels] = useState<string[]>(DEFAULT_ENTITY_LABELS);
@@ -136,7 +136,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await fetch(`${TERMITE_API_URL}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
           const recognizers = data.recognizers || [];
@@ -169,7 +169,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
       }
     };
     fetchModels();
-  }, []);
+  }, [termiteApiUrl]);
 
   const getNodeColor = (type: string): string => {
     return ENTITY_TYPE_COLORS[type.toLowerCase()] || ENTITY_TYPE_COLORS.default;
@@ -239,7 +239,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         }
       }
 
-      const response = await fetch(`${TERMITE_API_URL}/api/knowledgegraph`, {
+      const response = await fetch(`${termiteApiUrl}/api/knowledgegraph`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -261,9 +261,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to connect to Termite. Make sure Termite is running on localhost:11433"
+        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
       );
     } finally {
       setIsLoading(false);

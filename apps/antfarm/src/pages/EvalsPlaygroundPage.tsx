@@ -1,4 +1,4 @@
-import type { TableStatus } from "@antfly/sdk";
+import { generatorProviders, type TableStatus } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   Check,
@@ -48,9 +48,8 @@ import { useApi } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
 import type { EvalItem, EvalItemResult, EvalRunResult } from "@/types/evals";
 
-// Generator providers
-const GENERATOR_PROVIDERS = ["openai", "anthropic", "gemini", "ollama"] as const;
-type GeneratorProvider = (typeof GENERATOR_PROVIDERS)[number];
+// Generator provider type from SDK
+type GeneratorProvider = (typeof generatorProviders)[number];
 
 interface JudgeConfig {
   provider: GeneratorProvider;
@@ -364,10 +363,19 @@ const EvalsPlaygroundPage: React.FC = () => {
 
         try {
           // Call retrievalAgent with generation + inline eval config
+          // Note: queries must include semantic_search (not auto-populated from query)
+          // Note: steps.generation must have enabled: true (defaults to false)
           const answerResult = await apiClient.retrievalAgent(
             {
               query: item.question,
-              queries: [{ table: selectedTable }],
+              queries: [
+                {
+                  table: selectedTable,
+                  semantic_search: item.question,
+                  indexes: selectedIndex ? [selectedIndex] : undefined,
+                  limit: 10,
+                },
+              ],
               stream: false,
               generator: {
                 provider: judge.provider,
@@ -375,7 +383,7 @@ const EvalsPlaygroundPage: React.FC = () => {
                 temperature: judge.temperature,
               },
               steps: {
-                generation: {},
+                generation: { enabled: true },
                 eval: {
                   evaluators: ["correctness"],
                   judge: {
@@ -970,7 +978,7 @@ const EvalsPlaygroundPage: React.FC = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {GENERATOR_PROVIDERS.map((p) => (
+                  {generatorProviders.map((p) => (
                     <SelectItem key={p} value={p}>
                       {p}
                     </SelectItem>

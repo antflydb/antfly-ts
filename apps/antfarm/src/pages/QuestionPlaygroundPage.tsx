@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useApiConfig } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
 
 // Generate response types matching Termite API
@@ -52,9 +53,8 @@ const SAMPLE_CONTEXT = `The Eiffel Tower is a wrought-iron lattice tower on the 
 
 const SAMPLE_ANSWER = "Gustave Eiffel";
 
-const TERMITE_API_URL = "http://localhost:11433";
-
 const QuestionPlaygroundPage: React.FC = () => {
+  const { termiteApiUrl } = useApiConfig();
   const [context, setContext] = useState("");
   const [answer, setAnswer] = useState("");
   const [selectedModel, setSelectedModel] = useState("");
@@ -74,11 +74,11 @@ const QuestionPlaygroundPage: React.FC = () => {
   const [selectedQuestion, setSelectedQuestion] = useState("");
   const [evalSetSuccess, setEvalSetSuccess] = useState(false);
 
-  // Fetch available models on mount
+  // Fetch available models on mount and when URL changes
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await fetch(`${TERMITE_API_URL}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
           setAvailableModels(data.generators || []);
@@ -93,7 +93,7 @@ const QuestionPlaygroundPage: React.FC = () => {
       }
     };
     fetchModels();
-  }, []);
+  }, [termiteApiUrl]);
 
   // Format input for LMQG question generation models
   const formatInput = (ctx: string, ans: string): string => {
@@ -142,7 +142,7 @@ const QuestionPlaygroundPage: React.FC = () => {
     try {
       const formattedInput = formatInput(context, answer);
 
-      const response = await fetch(`${TERMITE_API_URL}/api/question`, {
+      const response = await fetch(`${termiteApiUrl}/api/question`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -167,9 +167,7 @@ const QuestionPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to connect to Termite. Make sure Termite is running on localhost:11433"
+        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
       );
     } finally {
       setIsLoading(false);

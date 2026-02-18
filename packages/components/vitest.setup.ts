@@ -4,6 +4,28 @@ import { afterEach, beforeEach, vi } from "vitest";
 // Configure React to recognize the test environment
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
+// Mock localStorage for tests (jsdom 28+ requires explicit origin for localStorage)
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+    get length() {
+      return Object.keys(store).length;
+    },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+  };
+})();
+Object.defineProperty(globalThis, "localStorage", { value: localStorageMock });
+
 // Suppress act() warnings during tests
 // These warnings occur with async state updates in streaming components (like RAGResults)
 // and don't affect test correctness

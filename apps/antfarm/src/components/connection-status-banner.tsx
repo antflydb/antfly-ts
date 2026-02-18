@@ -19,7 +19,7 @@ const SERVER_INFO: Record<string, ServerInfo> = {
   termite: {
     name: "Termite",
     port: 11433,
-    hint: "Make sure the Termite server is running on localhost:11433",
+    hint: "Make sure the Termite server is running (check Settings for URL)",
   },
 };
 
