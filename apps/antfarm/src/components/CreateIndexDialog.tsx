@@ -28,6 +28,7 @@ const indexFormSchema = z.object({
   sourceType: z.enum(["field", "template"]),
   embedder: z.object({
     provider: z.enum([
+      "antfly",
       "termite",
       "ollama",
       "gemini",
@@ -151,6 +152,9 @@ const CreateIndexDialog: React.FC<CreateIndexDialogProps> = ({
             break;
           case "mock":
             embedderConfig = { provider: "mock", model };
+            break;
+          case "antfly":
+            embedderConfig = { provider: "antfly", model };
             break;
           default:
             throw new Error("Invalid provider");

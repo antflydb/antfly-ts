@@ -24,6 +24,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cross-table batch operations
+         * @description Perform batch inserts, deletes, and transforms across multiple tables
+         *     in a single atomic transaction.
+         *
+         *     All operations across all tables are committed atomically using distributed
+         *     2-phase commit (2PC). Either all operations succeed, or none do.
+         *
+         *     **Use cases**:
+         *     - Transfer records between tables (insert in one, delete from another)
+         *     - Maintain referential integrity across tables
+         *     - Atomic multi-table updates
+         */
+        post: operations["multiBatchWrite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transactions/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Commit an OCC transaction
+         * @description Commit a stateless OCC (Optimistic Concurrency Control) transaction.
+         *
+         *     **Workflow**:
+         *     1. Read documents using regular lookup endpoints, capturing the
+         *        `X-Antfly-Version` response header for each read
+         *     2. Compute writes locally based on the read values
+         *     3. Submit this commit request with the read set (keys + versions)
+         *        and the write set (batch operations per table)
+         *
+         *     The server validates that all read versions still match current state.
+         *     If any version has changed, the transaction is aborted with a 409 Conflict
+         *     response containing details about which key conflicted.
+         *
+         *     If all versions match, writes are executed atomically via 2PC.
+         *
+         *     **No server-side state**: There is no "begin transaction" endpoint.
+         *     The client manages its own read set.
+         */
+        post: operations["commitTransaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/backup": {
         parameters: {
             query?: never;
@@ -1423,6 +1488,110 @@ export interface components {
             /** @description Number of documents successfully transformed */
             transformed?: number;
         };
+        /**
+         * @description Cross-table batch operations in a single atomic transaction.
+         *
+         *     Groups batch operations by table name. All operations across all tables
+         *     are committed atomically using distributed 2-phase commit (2PC).
+         *
+         *     **Atomicity**: Either all operations across all tables succeed, or none do.
+         *     This enables use cases like transferring a record from one table to another,
+         *     or maintaining referential integrity across tables.
+         */
+        MultiBatchRequest: {
+            /**
+             * @description Map of table names to batch operations for that table.
+             *     Each entry follows the same format as a single-table BatchRequest.
+             * @example {
+             *       "users": {
+             *         "inserts": {
+             *           "user:123": {
+             *             "name": "John Doe",
+             *             "email": "john@example.com"
+             *           }
+             *         }
+             *       },
+             *       "orders": {
+             *         "inserts": {
+             *           "order:456": {
+             *             "user_id": "user:123",
+             *             "total": 99.99
+             *           }
+             *         }
+             *       }
+             *     }
+             */
+            tables: {
+                [key: string]: components["schemas"]["BatchRequest"];
+            };
+            sync_level?: components["schemas"]["SyncLevel"];
+        };
+        /** @description Response for a cross-table batch operation. Contains per-table results. */
+        MultiBatchResponse: {
+            /** @description Per-table batch results */
+            tables?: {
+                [key: string]: components["schemas"]["BatchResponse"];
+            };
+        };
+        /**
+         * @description A key that was read as part of an OCC transaction, along with the version
+         *     observed at read time. Used to detect conflicts at commit time.
+         */
+        TransactionReadItem: {
+            /** @description Table name the key belongs to */
+            table: string;
+            /** @description Document key that was read */
+            key: string;
+            /**
+             * @description Version token observed at read time (from X-Antfly-Version header).
+             *     Use "0" to assert the key did not exist at read time.
+             */
+            version: string;
+        };
+        /**
+         * @description Stateless OCC (Optimistic Concurrency Control) transaction commit request.
+         *
+         *     The client reads documents (capturing version tokens from the X-Antfly-Version
+         *     response header on lookups), computes writes locally, then submits everything
+         *     in this single commit request. The server validates that all read versions
+         *     still match before executing writes atomically via 2PC.
+         *
+         *     **No server-side state**: There is no "begin" endpoint. The client manages
+         *     its own read set and submits the full transaction in one request.
+         */
+        TransactionCommitRequest: {
+            /**
+             * @description Set of keys that were read during the transaction, with their observed versions.
+             *     The server verifies these versions still match before committing writes.
+             */
+            read_set: components["schemas"]["TransactionReadItem"][];
+            /** @description Write set: map of table names to batch operations, same format as MultiBatchRequest.tables. */
+            tables: {
+                [key: string]: components["schemas"]["BatchRequest"];
+            };
+            sync_level?: components["schemas"]["SyncLevel"];
+        };
+        /** @description Result of an OCC transaction commit attempt. */
+        TransactionCommitResponse: {
+            /**
+             * @description Whether the transaction was committed or aborted due to a conflict
+             * @enum {string}
+             */
+            status: "committed" | "aborted";
+            /** @description Details about the conflict that caused an abort (only present when status is "aborted") */
+            conflict?: {
+                /** @description Table where the conflict was detected */
+                table?: string;
+                /** @description Key that had a version mismatch */
+                key?: string;
+                /** @description Human-readable conflict description */
+                message?: string;
+            };
+            /** @description Per-table batch results (only present when status is "committed") */
+            tables?: {
+                [key: string]: components["schemas"]["BatchResponse"];
+            };
+        };
         BackupRequest: {
             /**
              * @description Unique identifier for this backup. Used to reference the backup for restore operations.
@@ -1951,89 +2120,6 @@ export interface components {
          * @description DEPRECATED: Use RetrievalAgentRequest instead.
          *     Request for the answer agent. Accepts the old request format and
          *     internally delegates to the retrieval agent.
-         */
-        AnswerAgentRequest: {
-            /** @description User's natural language query */
-            query: string;
-            /** @description Queries to execute. Each query specifies its own table. */
-            queries: components["schemas"]["QueryRequest"][];
-            /**
-             * @description DEPRECATED: Use stream on RetrievalAgentRequest instead.
-             *     Enable SSE streaming vs JSON response.
-             * @default true
-             */
-            with_streaming?: boolean;
-            /** @description Generator for LLM calls */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators */
-            chain?: components["schemas"]["ChainLink"][];
-            /** @description Domain-specific knowledge for the agent */
-            agent_knowledge?: string;
-            /** @description Maximum tokens for document context */
-            max_context_tokens?: number;
-            /**
-             * @description Tokens to reserve for overhead
-             * @default 4000
-             */
-            reserve_tokens?: number;
-            /** @description Step configuration */
-            steps?: components["schemas"]["AnswerAgentSteps"];
-            /**
-             * @description DEPRECATED: Use steps.eval on RetrievalAgentRequest instead.
-             *     Evaluation configuration (moved to steps.eval in new API).
-             */
-            eval?: components["schemas"]["EvalConfig"];
-            /**
-             * @description DEPRECATED: Omit steps.generation on RetrievalAgentRequest instead.
-             *     If true, skip the generation step.
-             * @default false
-             */
-            without_generation?: boolean;
-        };
-        /**
-         * @deprecated
-         * @description DEPRECATED: Use RetrievalAgentResult instead.
-         *     Result from the answer agent.
-         */
-        AnswerAgentResult: {
-            /**
-             * @description DEPRECATED: Use generation on RetrievalAgentResult instead.
-             *     Generated answer in markdown format.
-             */
-            answer?: string;
-            /**
-             * Format: float
-             * @description DEPRECATED: Use generation_confidence on RetrievalAgentResult instead.
-             *     Confidence in the generated answer.
-             */
-            answer_confidence?: number;
-            /**
-             * Format: float
-             * @description Relevance of retrieved documents to the query
-             */
-            context_relevance?: number;
-            /**
-             * @description DEPRECATED: Use classification on RetrievalAgentResult instead.
-             *     Query classification and transformation result.
-             */
-            classification_transformation?: components["schemas"]["ClassificationTransformationResult"];
-            /**
-             * @description DEPRECATED: Use hits on RetrievalAgentResult instead.
-             *     Query results grouped by table.
-             */
-            query_results?: components["schemas"]["QueryResult"][];
-            /** @description Suggested follow-up questions */
-            followup_questions?: string[];
-            /** @description Evaluation results */
-            eval_result?: components["schemas"]["EvalResult"];
-        };
-        /**
-         * @description Style for citations in the generated response:
-         *     - inline: [resource_id doc_abc123] inline with text
-         *     - footnote: Numbered references with footnotes
-         *     - none: No citations
-         * @default inline
-         * @enum {string}
          */
         AnswerAgentRequest: {
             /** @description User's natural language query */
@@ -3278,7 +3364,24 @@ export interface components {
          * @description The reranking provider to use.
          * @enum {string}
          */
-        RerankerProvider: "ollama" | "termite" | "cohere" | "vertex";
+        RerankerProvider: "antfly" | "ollama" | "termite" | "cohere" | "vertex";
+        /**
+         * @description Configuration for the built-in Antfly reranking provider.
+         *
+         *     Uses an embedded INT8-quantized cross-encoder/ms-marco-MiniLM-L-6-v2 ONNX model
+         *     bundled directly in the binary. No external service, API key, or model download required.
+         *
+         *     **Model:** cross-encoder/ms-marco-MiniLM-L-6-v2 (6-layer MiniLM cross-encoder)
+         *
+         *     **Features:**
+         *     - Zero configuration — works out of the box
+         *     - No network access required
+         *     - Pure Go inference via GoMLX
+         * @example {
+         *       "provider": "antfly"
+         *     }
+         */
+        AntflyRerankerConfig: Record<string, never>;
         /** @description Configuration for the Ollama reranking provider. */
         OllamaRerankerConfig: {
             /** @description The name of the Ollama model to use for reranking. */
@@ -3374,7 +3477,7 @@ export interface components {
             field?: string;
             /** @description Handlebars template to render document text for reranking. */
             template?: string;
-        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"] | components["schemas"]["VertexRerankerConfig"]);
+        } & (components["schemas"]["AntflyRerankerConfig"] | components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"] | components["schemas"]["VertexRerankerConfig"]);
         /**
          * @description Type of graph query to execute
          * @enum {string}
@@ -4551,220 +4654,6 @@ export interface components {
             value: unknown;
         };
         /**
-         * @description Strategy for query transformation and retrieval:
-         *     - simple: Direct query with multi-phrase expansion. Best for straightforward factual queries.
-         *     - decompose: Break complex queries into sub-questions, retrieve for each. Best for multi-part questions.
-         *     - step_back: Generate broader background query first, then specific query. Best for questions needing context.
-         *     - hyde: Generate hypothetical answer document, embed that for retrieval. Best for abstract/conceptual questions.
-         * @enum {string}
-         */
-        QueryStrategy: "simple" | "decompose" | "step_back" | "hyde";
-        /**
-         * @description Mode for semantic query generation:
-         *     - rewrite: Transform query into expanded keywords/concepts optimized for vector search (Level 2 optimization)
-         *     - hypothetical: Generate a hypothetical answer that would appear in relevant documents (HyDE - Level 3 optimization)
-         * @enum {string}
-         */
-        SemanticQueryMode: "rewrite" | "hypothetical";
-        /**
-         * @description Configuration for the classification step. This step analyzes the query,
-         *     selects the optimal retrieval strategy, and generates semantic transformations.
-         */
-        ClassificationStepConfig: {
-            /**
-             * @description Enable query classification and strategy selection
-             * @default false
-             */
-            enabled?: boolean;
-            /** @description Generator to use for classification. If not specified, uses the default summarizer. */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Include pre-retrieval reasoning explaining query analysis and strategy selection
-             * @default false
-             */
-            with_reasoning?: boolean;
-            /** @description Override LLM strategy selection. If not set, the LLM chooses optimal strategy. */
-            force_strategy?: components["schemas"]["QueryStrategy"];
-            /** @description Override semantic query mode selection. */
-            force_semantic_mode?: components["schemas"]["SemanticQueryMode"];
-            /**
-             * @description Number of alternative query phrasings to generate
-             * @default 3
-             */
-            multi_phrase_count?: number;
-        };
-        /**
-         * @description Configuration for the generation step. This step generates the final
-         *     response from retrieved documents using the reasoning as context.
-         */
-        GenerationStepConfig: {
-            /**
-             * @description Enable generation from retrieved documents
-             * @default false
-             */
-            enabled?: boolean;
-            /** @description Generator to use for generation. If not specified, uses the default summarizer. */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-            chain?: components["schemas"]["ChainLink"][];
-            /** @description Custom system prompt for answer generation */
-            system_prompt?: string;
-            /**
-             * @description Custom guidance for generation tone, detail level, and style
-             * @example Be concise and technical. Include code examples where relevant.
-             */
-            generation_context?: string;
-        };
-        /**
-         * @description Configuration for generating follow-up questions. Uses a separate generator
-         *     call which can use a cheaper/faster model.
-         */
-        FollowupStepConfig: {
-            /**
-             * @description Enable follow-up question generation
-             * @default false
-             */
-            enabled?: boolean;
-            /** @description Generator for follow-up questions. If not specified, uses the answer step's generator. */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Number of follow-up questions to generate
-             * @default 3
-             */
-            count?: number;
-            /**
-             * @description Custom guidance for follow-up question focus and style
-             * @example Focus on implementation details and edge cases
-             */
-            context?: string;
-        };
-        /**
-         * @description Configuration for confidence assessment. Evaluates answer quality and
-         *     resource relevance. Can use a model calibrated for scoring tasks.
-         */
-        ConfidenceStepConfig: {
-            /**
-             * @description Enable confidence scoring
-             * @default false
-             */
-            enabled?: boolean;
-            /** @description Generator for confidence assessment. If not specified, uses the answer step's generator. */
-            generator?: components["schemas"]["GeneratorConfig"];
-            /** @description Chain of generators to try in order. Mutually exclusive with 'generator'. */
-            chain?: components["schemas"]["ChainLink"][];
-            /**
-             * @description Custom guidance for confidence assessment approach
-             * @example Be conservative - only give high confidence if resources directly address the question
-             */
-            context?: string;
-        };
-        /**
-         * @description Configuration for inline evaluation of query results.
-         *     Add to RAGRequest, QueryRequest, or AnswerAgentRequest.
-         */
-        EvalConfig: {
-            /** @description List of evaluators to run */
-            evaluators?: components["schemas"]["EvaluatorName"][];
-            /**
-             * @description LLM configuration for judge-based evaluators.
-             *     Falls back to default if not specified.
-             */
-            judge?: components["schemas"]["GeneratorConfig"];
-            /** @description Ground truth data for retrieval metrics */
-            ground_truth?: components["schemas"]["GroundTruth"];
-            /** @description Evaluation options (k, thresholds, etc.) */
-            options?: components["schemas"]["EvalOptions"];
-        };
-        /**
-         * @description Classification of query type: question (specific factual query) or search (exploratory query)
-         * @enum {string}
-         */
-        RouteType: "question" | "search";
-        /** @description Query classification and transformation result combining all query enhancements including strategy selection and semantic optimization */
-        ClassificationTransformationResult: {
-            route_type: components["schemas"]["RouteType"];
-            strategy: components["schemas"]["QueryStrategy"];
-            semantic_mode: components["schemas"]["SemanticQueryMode"];
-            /** @description Clarified query with added context for answer generation (human-readable) */
-            improved_query: string;
-            /** @description Optimized query for vector/semantic search. Content style depends on semantic_mode: keywords for 'rewrite', hypothetical answer for 'hypothetical' */
-            semantic_query: string;
-            /** @description Broader background query for context (only present when strategy is 'step_back') */
-            step_back_query?: string;
-            /** @description Decomposed sub-questions (only present when strategy is 'decompose') */
-            sub_questions?: string[];
-            /** @description Alternative phrasings of the query for expanded retrieval coverage */
-            multi_phrases?: string[];
-            /** @description Pre-retrieval reasoning explaining query analysis and strategy selection (only present when with_classification_reasoning is enabled) */
-            reasoning?: string;
-            /**
-             * Format: float
-             * @description Classification confidence (0.0 to 1.0)
-             */
-            confidence: number;
-        };
-        /**
-         * @description Role of the message sender in the conversation
-         * @enum {string}
-         */
-        ChatMessageRole: "user" | "assistant" | "system" | "tool";
-        /** @description A tool call made by the assistant */
-        ChatToolCall: {
-            /** @description Unique identifier for this tool call */
-            id: string;
-            /** @description Name of the tool being called */
-            name: string;
-            /** @description Arguments passed to the tool as key-value pairs */
-            arguments: {
-                [key: string]: unknown;
-            };
-        };
-        /** @description Result from executing a tool call */
-        ChatToolResult: {
-            /** @description ID of the tool call this result corresponds to */
-            tool_call_id: string;
-            /** @description Result data from the tool execution */
-            result: {
-                [key: string]: unknown;
-            };
-            /** @description Error message if tool execution failed */
-            error?: string;
-        };
-        /** @description A message in the conversation history */
-        ChatMessage: {
-            role: components["schemas"]["ChatMessageRole"];
-            /** @description Text content of the message */
-            content: string;
-            /** @description Tool calls made by the assistant (only for assistant role) */
-            tool_calls?: components["schemas"]["ChatToolCall"][];
-            /** @description Results from tool executions (only for tool role) */
-            tool_results?: components["schemas"]["ChatToolResult"][];
-        };
-        /** @description A filter specification to apply to search queries */
-        FilterSpec: {
-            /** @description Field name to filter on */
-            field: string;
-            /**
-             * @description Filter operator:
-             *     - eq: Equals
-             *     - ne: Not equals
-             *     - gt/gte: Greater than (or equal)
-             *     - lt/lte: Less than (or equal)
-             *     - contains: Contains substring
-             *     - prefix: Starts with
-             *     - range: Between two values (value should be array [min, max])
-             *     - in: Value in list (value should be array)
-             * @enum {string}
-             */
-            operator: "eq" | "ne" | "gt" | "gte" | "lt" | "lte" | "contains" | "prefix" | "range" | "in";
-            /** @description Filter value (string, number, boolean, or array for range/in operators) */
-            value: unknown;
-        };
-        /**
          * @description Available tool names for the chat and retrieval agents.
          *     - add_filter: Add search filters (field constraints)
          *     - ask_clarification: Ask user for clarification
@@ -5428,10 +5317,27 @@ export interface components {
             api_url?: string;
         };
         /**
+         * @description Configuration for the built-in Antfly embedding provider.
+         *
+         *     Uses an embedded INT8-quantized all-MiniLM-L6-v2 ONNX model bundled directly
+         *     in the binary. No external service, API key, or model download required.
+         *
+         *     **Model:** all-MiniLM-L6-v2 (384 dimensions, text-only)
+         *
+         *     **Features:**
+         *     - Zero configuration — works out of the box
+         *     - No network access required
+         *     - Pure Go inference via GoMLX
+         * @example {
+         *       "provider": "antfly"
+         *     }
+         */
+        AntflyEmbedderConfig: Record<string, never>;
+        /**
          * @description The embedding provider to use.
          * @enum {string}
          */
-        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "cohere" | "mock" | "termite";
+        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "cohere" | "mock" | "termite" | "antfly";
         /**
          * @description A unified configuration for an embedding provider.
          *
@@ -5605,7 +5511,7 @@ export interface components {
          *       "model": "text-embedding-3-small"
          *     }
          */
-        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["OpenRouterEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"] | components["schemas"]["TermiteEmbedderConfig"]) & {
+        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["OpenRouterEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"] | components["schemas"]["TermiteEmbedderConfig"] | components["schemas"]["AntflyEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
         };
         /** @description Per-request configuration for chunking. All fields are optional - zero/omitted values use chunker defaults. */
@@ -6100,6 +6006,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    multiBatchWrite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MultiBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Cross-table batch operation successful */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MultiBatchResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    commitTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransactionCommitRequest"];
+            };
+        };
+        responses: {
+            /** @description Transaction committed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionCommitResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            /** @description Transaction aborted due to version conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionCommitResponse"];
                 };
             };
             500: components["responses"]["InternalServerError"];
@@ -6762,6 +6731,12 @@ export interface operations {
             /** @description Record found */
             200: {
                 headers: {
+                    /**
+                     * @description Version token for this document. Use this value in OCC transaction
+                     *     read sets to detect concurrent modifications.
+                     *     "0" indicates the key does not exist.
+                     */
+                    "X-Antfly-Version"?: string;
                     [name: string]: unknown;
                 };
                 content: {
