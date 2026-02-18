@@ -2,6 +2,18 @@ import { ChevronDown, ChevronUp, Code2, Download, LayoutGrid, Table2 } from "luc
 import type React from "react";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
+
+/**
+ * Formats query time from nanoseconds to a human-readable string.
+ * Go's time.Duration serializes to JSON as nanoseconds.
+ */
+export function formatQueryTime(nanoseconds: number): string {
+  const ms = nanoseconds / 1_000_000;
+  if (ms < 1) return "< 1ms";
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -88,7 +100,7 @@ const ResultsToolbar: React.FC<ResultsToolbarProps> = ({
           )}
           {queryTime !== undefined && (
             <Badge variant="outline" className="font-mono text-xs">
-              {queryTime}ms
+              {formatQueryTime(queryTime)}
             </Badge>
           )}
         </div>

@@ -15,7 +15,8 @@
     "generate": "turbo run generate",
     "storybook": "turbo run storybook --filter=@antfly/components",
     "build-storybook": "turbo run build-storybook --filter=@antfly/components",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "ci-check": "bash scripts/ci-check.sh"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.15",

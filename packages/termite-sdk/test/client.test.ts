@@ -270,6 +270,7 @@ describe("TermiteClient with mock fetch", () => {
         ok: true,
         status: 200,
         json: () => Promise.resolve(jsonResponse),
+        text: () => Promise.resolve(JSON.stringify(jsonResponse)),
         headers: new Headers({ "Content-Type": "application/json" }),
       } as Response);
 

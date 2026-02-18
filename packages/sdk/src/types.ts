@@ -144,8 +144,11 @@ export const generatorProviders: components["schemas"]["GeneratorProvider"][] = 
   "ollama",
   "gemini",
   "openai",
-  "bedrock",
   "anthropic",
+  "vertex",
+  "cohere",
+  "termite",
+  "openrouter",
 ];
 
 // AI response types

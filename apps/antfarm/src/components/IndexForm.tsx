@@ -1,6 +1,7 @@
 import type { EmbedderProvider } from "@antfly/sdk";
 import { embedderProviders } from "@antfly/sdk";
 import type React from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import {
   Accordion,
@@ -18,11 +19,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useApiConfig } from "@/hooks/use-api-config";
 import ChunkingForm from "./ChunkingForm";
 import { Combobox } from "./Combobox";
 
-const modelSuggestions: Record<EmbedderProvider, string[]> = {
-  termite: [], // Auto-discovered from local Termite service
+interface ModelsResponse {
+  chunkers: string[];
+  rerankers: string[];
+  ner: string[];
+  embedders: string[];
+  generators: string[];
+}
+
+const staticModelSuggestions: Record<EmbedderProvider, string[]> = {
+  termite: [], // Populated dynamically from Termite service
   ollama: ["all-minilm", "nomic-embed-text", "embeddinggemma"],
   gemini: ["embeddinggemma", "gemini-embedding-001"],
   vertex: ["text-embedding-004", "text-multilingual-embedding-002"],
@@ -45,7 +55,39 @@ interface IndexFormProps {
 
 const IndexForm: React.FC<IndexFormProps> = ({ fieldPrefix = "", schemaFields = [] }) => {
   const { control, watch } = useFormContext();
+  const { termiteApiUrl } = useApiConfig();
   const prefix = fieldPrefix ? `${fieldPrefix}.` : "";
+
+  // Termite model detection
+  const [termiteEmbedders, setTermiteEmbedders] = useState<string[]>([]);
+  const [termiteModelsLoading, setTermiteModelsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchTermiteModels = async () => {
+      setTermiteModelsLoading(true);
+      try {
+        const response = await fetch(`${termiteApiUrl}/api/models`);
+        if (response.ok) {
+          const data: ModelsResponse = await response.json();
+          setTermiteEmbedders(data.embedders || []);
+        }
+      } catch {
+        // Termite might not be running - this is fine
+        console.debug("Termite not available for model detection");
+      } finally {
+        setTermiteModelsLoading(false);
+      }
+    };
+    fetchTermiteModels();
+  }, [termiteApiUrl]);
+
+  const modelSuggestions = useMemo(
+    () => ({
+      ...staticModelSuggestions,
+      termite: termiteEmbedders,
+    }),
+    [termiteEmbedders]
+  );
 
   const sourceType = watch(`${prefix}sourceType`, "field");
   const provider = watch(`${prefix}embedder.provider`, "ollama");
@@ -189,6 +231,16 @@ const IndexForm: React.FC<IndexFormProps> = ({ fieldPrefix = "", schemaFields = 
                 allowCustomValue={true}
               />
             </FormControl>
+            {provider === "termite" && termiteModelsLoading && (
+              <p className="text-xs text-muted-foreground">Loading models from Termite...</p>
+            )}
+            {provider === "termite" && !termiteModelsLoading && (
+              <p className="text-xs text-muted-foreground">
+                {termiteEmbedders.length > 0
+                  ? "Select a model or enter a custom name for Termite to pull."
+                  : "Enter a model name (e.g., sentence-transformers/all-MiniLM-L6-v2) for Termite to pull."}
+              </p>
+            )}
             <FormMessage />
           </FormItem>
         )}
