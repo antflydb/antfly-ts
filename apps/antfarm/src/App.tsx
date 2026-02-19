@@ -29,6 +29,7 @@ import QuestionPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import RagPlaygroundPage from "./pages/RagPlaygroundPage";
 import TableDetailsPage from "./pages/TableDetailsPage";
 import TablesListPage from "./pages/TablesListPage";
+import { SecretsPage } from "./pages/SecretsPage";
 import { UsersPage } from "./pages/UsersPage";
 
 function AppContent() {
@@ -75,6 +76,7 @@ function AppContent() {
                           }
                         />
                         <Route path="/users" element={<UsersPage />} />
+                        <Route path="/secrets" element={<SecretsPage />} />
                       </>
                     )}
 

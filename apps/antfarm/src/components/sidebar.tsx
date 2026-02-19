@@ -8,6 +8,7 @@ import {
   FileInput,
   FileText,
   HelpCircle,
+  KeyRound,
   LayoutList,
   Library,
   MessageSquare,
@@ -320,6 +321,28 @@ export function AppSidebar({
                       >
                         <Shield className="size-4" />
                         <span>Users</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {/* Secrets Link - only show if user has admin permission */}
+                {hasPermission("*", "*", "admin") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === "/secrets"}
+                      tooltip="Secret Management"
+                    >
+                      <a
+                        href="/secrets"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/secrets");
+                        }}
+                      >
+                        <KeyRound className="size-4" />
+                        <span>Secrets</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

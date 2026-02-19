@@ -24,6 +24,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List secrets status
+         * @description List all configured secret names and their status (keystore, env var, or both).
+         *     Never returns secret values — only names and configuration status.
+         */
+        get: operations["listSecrets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/secrets/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Store a secret
+         * @description Store a secret in the keystore. Only available in swarm (single-node) mode.
+         *     Returns 503 in multi-node mode.
+         */
+        put: operations["putSecret"];
+        post?: never;
+        /**
+         * Delete a secret
+         * @description Remove a secret from the keystore. Only available in swarm (single-node) mode.
+         *     Returns 503 in multi-node mode.
+         */
+        delete: operations["deleteSecret"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/batch": {
         parameters: {
             query?: never;
@@ -891,8 +941,33 @@ export interface components {
             message?: string;
             /** @description Indicates whether authentication is enabled for the cluster */
             auth_enabled?: boolean;
+            /** @description Indicates whether the cluster is running in single-node swarm mode */
+            swarm_mode?: boolean;
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * @description Source of the secret configuration
+         * @enum {string}
+         */
+        SecretStatus: "configured_keystore" | "configured_env" | "configured_both";
+        SecretEntry: {
+            /** @description Secret name (e.g., openai.api_key) */
+            key: string;
+            status: components["schemas"]["SecretStatus"];
+            /** @description Corresponding environment variable name (e.g., OPENAI_API_KEY) */
+            env_var?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        SecretList: {
+            secrets: components["schemas"]["SecretEntry"][];
+        };
+        SecretWriteRequest: {
+            /** @description Secret value (stored encrypted, never returned) */
+            value: string;
         };
         ByteRange: string[];
         /**
@@ -6009,6 +6084,122 @@ export interface operations {
                 };
             };
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    listSecrets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Secret status list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretList"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    putSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecretWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description Secret stored successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretEntry"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Service unavailable - secret management not available in multi-node mode */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Secret deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            /** @description Service unavailable - secret management not available in multi-node mode */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     multiBatchWrite: {
