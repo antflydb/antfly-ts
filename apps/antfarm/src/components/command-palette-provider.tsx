@@ -4,7 +4,9 @@ import {
   ClipboardCheck,
   HelpCircle,
   Library,
+  Loader2,
   Maximize2,
+  MessageSquare,
   Minimize2,
   Moon,
   Network,
@@ -27,7 +29,27 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import { useApi } from "@/hooks/use-api-config";
 import { useTheme } from "@/hooks/use-theme";
+import { type SemanticResult, semanticSearch } from "@/lib/semantic-search";
+
+// Map icon names to components
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Table,
+  Plus,
+  Library,
+  Users,
+  Scissors,
+  Tag,
+  HelpCircle,
+  Network,
+  ClipboardCheck,
+  MessageSquare,
+  Moon,
+  Sun,
+  Maximize2,
+  Minimize2,
+};
 
 interface CommandPaletteContextType {
   isOpen: boolean;
@@ -40,10 +62,14 @@ const CommandPaletteContext = React.createContext<CommandPaletteContextType | un
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState("");
+  const [semanticResults, setSemanticResults] = React.useState<SemanticResult[]>([]);
+  const [isSearching, setIsSearching] = React.useState(false);
   const navigate = useNavigate();
 
   const { theme, setTheme } = useTheme();
   const { contentWidth, toggleContentWidth } = useContentWidth();
+  const client = useApi();
 
   React.useEffect(() => {
     setMounted(true);
@@ -66,21 +92,6 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     return () => document.removeEventListener("keydown", down);
   }, [toggle]);
 
-  const handleSelect = React.useCallback(
-    (href?: string, action?: string) => {
-      setIsOpen(false);
-
-      if (action === "toggle-theme") {
-        setTheme(theme === "dark" ? "light" : "dark");
-      } else if (action === "toggle-width") {
-        toggleContentWidth();
-      } else if (href) {
-        navigate(href);
-      }
-    },
-    [navigate, theme, setTheme, toggleContentWidth]
-  );
-
   const navigationCommands = [
     { icon: Table, label: "Tables", href: "/" },
     { icon: Plus, label: "Create Table", href: "/create" },
@@ -101,6 +112,69 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     { icon: Maximize2, label: "Toggle Content Width", action: "toggle-width" },
   ];
 
+  // All command items for string matching check
+  const allItems = React.useMemo(
+    () => [
+      ...navigationCommands.map((c) => c.label),
+      ...playgroundCommands.map((c) => c.label),
+      ...quickActionCommands.map((c) => c.label),
+    ],
+    []
+  );
+
+  // Check if cmdk's string filter would find any matches
+  const hasStringMatches = React.useMemo(() => {
+    if (!searchValue) return true;
+    const query = searchValue.toLowerCase();
+    return allItems.some((label) => label.toLowerCase().includes(query));
+  }, [searchValue, allItems]);
+
+  // Debounced semantic search when no string matches
+  React.useEffect(() => {
+    if (hasStringMatches || searchValue.length < 2) {
+      setSemanticResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    const timer = setTimeout(async () => {
+      try {
+        const results = await semanticSearch(searchValue, client);
+        setSemanticResults(results);
+      } catch (e) {
+        console.error("Semantic search failed:", e);
+        setSemanticResults([]);
+      }
+      setIsSearching(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchValue, hasStringMatches, client]);
+
+  // Reset search state when dialog closes
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSearchValue("");
+      setSemanticResults([]);
+      setIsSearching(false);
+    }
+  }, [isOpen]);
+
+  const handleSelect = React.useCallback(
+    (href?: string, action?: string) => {
+      setIsOpen(false);
+
+      if (action === "toggle-theme") {
+        setTheme(theme === "dark" ? "light" : "dark");
+      } else if (action === "toggle-width") {
+        toggleContentWidth();
+      } else if (href) {
+        navigate(href);
+      }
+    },
+    [navigate, theme, setTheme, toggleContentWidth]
+  );
+
   return (
     <CommandPaletteContext.Provider
       value={{
@@ -112,9 +186,41 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
       {children}
 
       <CommandDialog open={isOpen} onOpenChange={setIsOpen}>
-        <CommandInput placeholder="Type a command or search..." />
+        <CommandInput
+          placeholder="Type a command or search..."
+          value={searchValue}
+          onValueChange={setSearchValue}
+        />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>
+            {isSearching ? (
+              <div className="flex items-center justify-center gap-2 py-6">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Searching...</span>
+              </div>
+            ) : (
+              "No results found."
+            )}
+          </CommandEmpty>
+
+          {/* Semantic Search Results - shown when no string matches */}
+          {!hasStringMatches && semanticResults.length > 0 && (
+            <CommandGroup heading="Closest Matches">
+              {semanticResults.map((result) => {
+                const Icon = iconMap[result.item.icon] || HelpCircle;
+                return (
+                  <CommandItem
+                    key={result.item.id}
+                    value={`${searchValue} ${result.item.label}`}
+                    onSelect={() => handleSelect(result.item.href, result.item.action)}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{result.item.label}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          )}
 
           {/* Quick Actions */}
           <CommandGroup heading="Quick Actions">
