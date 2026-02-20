@@ -1,4 +1,5 @@
 import { Settings } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,46 +13,69 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { isProductEnabled } from "@/config/products";
 import { useApiConfig } from "@/hooks/use-api-config";
+import { useTermiteConfig } from "@/hooks/use-termite-config";
 
-export function SettingsDialog() {
+interface SettingsDialogProps {
+  trigger?: ReactNode;
+}
+
+export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
   const { apiUrl, setApiUrl, resetToDefault } = useApiConfig();
+  const {
+    termiteUrl,
+    setTermiteUrl,
+    resetToDefault: resetTermiteToDefault,
+  } = useTermiteConfig();
   const [tempUrl, setTempUrl] = useState(apiUrl);
+  const [tempTermiteUrl, setTempTermiteUrl] = useState(termiteUrl);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSave = () => {
     setApiUrl(tempUrl);
+    if (isProductEnabled("termite")) {
+      setTermiteUrl(tempTermiteUrl);
+    }
     setIsOpen(false);
   };
 
   const handleReset = () => {
     resetToDefault();
     setTempUrl(apiUrl);
+    if (isProductEnabled("termite")) {
+      resetTermiteToDefault();
+      setTempTermiteUrl(termiteUrl);
+    }
   };
 
   const handleCancel = () => {
     setTempUrl(apiUrl);
+    setTempTermiteUrl(termiteUrl);
     setIsOpen(false);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Settings">
-          <Settings className="h-4 w-4" />
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="icon" title="Settings">
+            <Settings className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-131.25">
         <DialogHeader>
           <DialogTitle>API Settings</DialogTitle>
           <DialogDescription>
-            Configure the Antfly server to connect to. This is useful when accessing the dashboard
-            remotely or connecting to a different server.
+            Configure the servers to connect to. This is useful when accessing the dashboard
+            remotely or connecting to different servers.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="api-url">API Base URL</Label>
+            <Label htmlFor="api-url">Antfly API Base URL</Label>
             <Input
               id="api-url"
               value={tempUrl}
@@ -62,6 +86,26 @@ export function SettingsDialog() {
               Current: <code className="text-xs bg-muted px-1 py-0.5 rounded">{apiUrl}</code>
             </p>
           </div>
+
+          {isProductEnabled("termite") && (
+            <>
+              <Separator />
+              <div className="grid gap-2">
+                <Label htmlFor="termite-url">Termite API URL</Label>
+                <Input
+                  id="termite-url"
+                  value={tempTermiteUrl}
+                  onChange={(e) => setTempTermiteUrl(e.target.value)}
+                  placeholder="http://localhost:11433"
+                />
+                <p className="text-sm text-muted-foreground">
+                  Current:{" "}
+                  <code className="text-xs bg-muted px-1 py-0.5 rounded">{termiteUrl}</code>
+                </p>
+              </div>
+            </>
+          )}
+
           <div className="grid gap-2">
             <Label>Examples</Label>
             <div className="text-sm text-muted-foreground space-y-1">

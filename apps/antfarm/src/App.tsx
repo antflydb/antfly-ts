@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ApiConfigProvider } from "@/components/api-config-provider";
 import { AuthProvider } from "@/components/auth-provider";
+import { TermiteConfigProvider } from "@/components/termite-config-provider";
 import { CommandPaletteProvider } from "@/components/command-palette-provider";
 import { ConnectionStatusBanner } from "@/components/connection-status-banner";
 import { ContentWidthProvider, useContentWidth } from "@/components/content-width-provider";
@@ -107,13 +108,15 @@ function App() {
     <ThemeProvider>
       <ErrorBoundary>
         <ApiConfigProvider>
-          <AuthProvider>
-            <ContentWidthProvider>
-              <CommandPaletteProvider>
-                <AppContent />
-              </CommandPaletteProvider>
-            </ContentWidthProvider>
-          </AuthProvider>
+          <TermiteConfigProvider>
+            <AuthProvider>
+              <ContentWidthProvider>
+                <CommandPaletteProvider>
+                  <AppContent />
+                </CommandPaletteProvider>
+              </ContentWidthProvider>
+            </AuthProvider>
+          </TermiteConfigProvider>
         </ApiConfigProvider>
       </ErrorBoundary>
     </ThemeProvider>
