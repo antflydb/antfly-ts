@@ -1,9 +1,10 @@
 /**
  * Semantic search for the command palette.
- * Uses an Antfly table with an aknn_v0 index for vector search.
+ * Uses pre-computed embeddings and Termite's /api/embed for query embedding.
  */
 
-import type { AntflyClient, EmbedderConfig } from "@antfly/sdk";
+import { TermiteClient } from "@antfly/termite-sdk";
+import commandIndex from "@/data/command-index.json";
 
 export interface CommandItem {
   id: string;
@@ -20,235 +21,91 @@ export interface SemanticResult {
   score: number;
 }
 
-const TABLE_NAME = "_antfarm_commands";
-const INDEX_NAME = "semantic";
-
-// Command palette items - keep in sync with command-palette-provider.tsx
-const COMMANDS: CommandItem[] = [
-  // Navigation
-  {
-    id: "nav-tables",
-    type: "navigation",
-    label: "Tables",
-    description: "View and manage database tables",
-    href: "/",
-    icon: "Table",
-  },
-  {
-    id: "nav-create",
-    type: "navigation",
-    label: "Create Table",
-    description: "Create a new database table with indexes",
-    href: "/create",
-    icon: "Plus",
-  },
-  {
-    id: "nav-models",
-    type: "navigation",
-    label: "Models",
-    description: "View available ML models for embedding and inference",
-    href: "/models",
-    icon: "Library",
-  },
-  {
-    id: "nav-users",
-    type: "navigation",
-    label: "Users",
-    description: "Manage users and permissions",
-    href: "/users",
-    icon: "Users",
-  },
-
-  // Playgrounds
-  {
-    id: "play-chunking",
-    type: "navigation",
-    label: "Chunking Playground",
-    description: "Test document chunking strategies for RAG",
-    href: "/playground/chunking",
-    icon: "Scissors",
-  },
-  {
-    id: "play-ner",
-    type: "navigation",
-    label: "NER Playground",
-    description: "Named entity recognition and extraction",
-    href: "/playground/recognize",
-    icon: "Tag",
-  },
-  {
-    id: "play-question",
-    type: "navigation",
-    label: "Question Gen",
-    description: "Generate questions from documents for evaluation",
-    href: "/playground/question",
-    icon: "HelpCircle",
-  },
-  {
-    id: "play-kg",
-    type: "navigation",
-    label: "Knowledge Graph",
-    description: "Build and visualize knowledge graphs",
-    href: "/playground/kg",
-    icon: "Network",
-  },
-  {
-    id: "play-evals",
-    type: "navigation",
-    label: "Evals",
-    description: "Run RAG evaluations and benchmarks",
-    href: "/playground/evals",
-    icon: "ClipboardCheck",
-  },
-  {
-    id: "play-rag",
-    type: "navigation",
-    label: "RAG Playground",
-    description: "Test retrieval-augmented generation pipelines",
-    href: "/playground/rag",
-    icon: "MessageSquare",
-  },
-
-  // Quick actions
-  {
-    id: "action-theme",
-    type: "action",
-    label: "Toggle Theme",
-    description: "Switch between light and dark mode",
-    action: "toggle-theme",
-    icon: "Moon",
-  },
-  {
-    id: "action-width",
-    type: "action",
-    label: "Toggle Content Width",
-    description: "Expand or restrict content width",
-    action: "toggle-width",
-    icon: "Maximize2",
-  },
-];
-
-let initPromise: Promise<void> | null = null;
-
-/**
- * Ensures the _antfarm_commands table exists with the semantic index.
- * Creates and seeds the table if it doesn't exist.
- */
-async function ensureInitialized(client: AntflyClient): Promise<void> {
-  if (initPromise) return initPromise;
-
-  initPromise = (async () => {
-    try {
-      // Check if table exists AND has indexed data
-      const indexStatus = await client.indexes.get(TABLE_NAME, INDEX_NAME);
-      const status = indexStatus?.status as { total_indexed?: number } | undefined;
-      if (status?.total_indexed && status.total_indexed >= COMMANDS.length) {
-        return; // Table is ready
-      }
-      // Table/index exists but not fully populated - drop and recreate
-      await client.tables.drop(TABLE_NAME);
-    } catch {
-      // Table or index doesn't exist, create it
-    }
-
-    // Create the table with schema
-    await client.tables.create(TABLE_NAME, {
-      num_shards: 1,
-      schema: {
-        version: 0,
-        default_type: "command",
-        document_schemas: {
-          command: {
-            schema: {
-              type: "object",
-              "x-antfly-include-in-all": ["label", "description"],
-              properties: {
-                id: { type: "string", "x-antfly-types": ["keyword"] },
-                type: { type: "string", "x-antfly-types": ["keyword"] },
-                label: { type: "string", "x-antfly-types": ["text", "keyword"] },
-                description: { type: "string", "x-antfly-types": ["text"] },
-                href: { type: "string", "x-antfly-types": ["keyword"] },
-                action: { type: "string", "x-antfly-types": ["keyword"] },
-                icon: { type: "string", "x-antfly-types": ["keyword"] },
-              },
-            },
-          },
-        },
-      },
-    });
-
-    // Create the semantic search index
-    // Note: Type assertion needed because AntflyEmbedderConfig is Record<string, never>
-    // in the SDK types, but we need to pass { provider: "antfly" }
-    const embedder = { provider: "antfly" } as unknown as EmbedderConfig;
-    await client.indexes.create(TABLE_NAME, {
-      name: INDEX_NAME,
-      type: "aknn_v0",
-      template: "{{label}}. {{description}}",
-      embedder,
-      dimension: 384,
-    });
-
-    // Seed the data
-    const inserts: Record<string, CommandItem> = {};
-    for (const cmd of COMMANDS) {
-      inserts[cmd.id] = cmd;
-    }
-    await client.tables.batch(TABLE_NAME, { inserts });
-
-    // Give the index enricher time to compute embeddings
-    // 12 items with built-in MiniLM should be quick, but async processing needs a moment
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  })();
-
-  initPromise.catch(() => {
-    initPromise = null;
-  });
-
-  return initPromise;
+// Type for the command index JSON structure
+interface CommandIndexEntry {
+  id: string;
+  type: string;
+  label: string;
+  description: string;
+  href?: string;
+  action?: string;
+  icon: string;
+  embedding: number[];
 }
 
+interface CommandIndexData {
+  model: string;
+  dimension: number;
+  commands: CommandIndexEntry[];
+}
+
+// Cast the imported JSON to our type
+const index = commandIndex as CommandIndexData;
+
 /**
- * Triggers initialization of the command palette table.
- * Call this early (e.g., on page load) to give embeddings time to compute.
+ * Compute cosine similarity between two vectors.
+ * Returns a value between -1 and 1, where 1 means identical direction.
  */
-export function initCommandPaletteSearch(client: AntflyClient): void {
-  ensureInitialized(client).catch(() => {
-    // Ignore errors - will retry on actual search
-  });
+function cosineSimilarity(a: number[], b: number[]): number {
+  if (a.length !== b.length) {
+    throw new Error(`Vector length mismatch: ${a.length} vs ${b.length}`);
+  }
+
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < a.length; i++) {
+    dot += a[i] * b[i];
+    normA += a[i] * a[i];
+    normB += b[i] * b[i];
+  }
+
+  const denominator = Math.sqrt(normA) * Math.sqrt(normB);
+  if (denominator === 0) return 0;
+
+  return dot / denominator;
 }
 
 /**
  * Performs semantic search against the command palette items.
- * Uses Antfly's vector search to find semantically similar commands.
+ * Uses Termite's /api/embed endpoint to embed the query, then
+ * computes cosine similarity against pre-embedded command vectors.
  *
  * @param query - The user's search query
- * @param client - AntflyClient instance
+ * @param termiteClient - TermiteClient instance for embedding
  * @param limit - Maximum number of results to return (default: 3)
  * @returns Promise resolving to semantic search results sorted by score
  */
 export async function semanticSearch(
   query: string,
-  client: AntflyClient,
+  termiteClient: TermiteClient,
   limit = 3
 ): Promise<SemanticResult[]> {
   try {
-    await ensureInitialized(client);
+    // Get query embedding from Termite
+    // Use the same model as the pre-computed embeddings
+    const response = await termiteClient.embed(index.model, query);
+    const queryVec = response.embeddings[0];
 
-    const result = await client.tables.query(TABLE_NAME, {
-      semantic_search: query,
-      indexes: [INDEX_NAME],
-      limit,
-    });
-
-    // Extract hits from the response
-    const hits = result?.responses?.[0]?.hits?.hits ?? [];
-
-    return hits.map((hit) => ({
-      item: hit._source as unknown as CommandItem,
-      score: hit._score ?? 0,
+    // Score all commands using cosine similarity
+    const scored = index.commands.map((cmd) => ({
+      item: {
+        id: cmd.id,
+        type: cmd.type as "navigation" | "action",
+        label: cmd.label,
+        description: cmd.description,
+        href: cmd.href,
+        action: cmd.action,
+        icon: cmd.icon,
+      },
+      score: cosineSimilarity(queryVec, cmd.embedding),
     }));
+
+    // Return top-k results sorted by score (highest first)
+    return scored.sort((a, b) => b.score - a.score).slice(0, limit);
   } catch (e) {
+    // Graceful degradation - Termite unavailable or model not loaded
     console.error("Semantic search failed:", e);
     return [];
   }
@@ -258,5 +115,13 @@ export async function semanticSearch(
  * Gets all command items (for reference/debugging).
  */
 export function getAllCommandItems(): CommandItem[] {
-  return COMMANDS;
+  return index.commands.map((cmd) => ({
+    id: cmd.id,
+    type: cmd.type as "navigation" | "action",
+    label: cmd.label,
+    description: cmd.description,
+    href: cmd.href,
+    action: cmd.action,
+    icon: cmd.icon,
+  }));
 }

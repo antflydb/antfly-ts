@@ -1,5 +1,6 @@
 "use client";
 
+import { TermiteClient } from "@antfly/termite-sdk";
 import {
   ClipboardCheck,
   HelpCircle,
@@ -29,7 +30,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { useApi } from "@/hooks/use-api-config";
+import { useApiConfig } from "@/hooks/use-api-config";
 import { useTheme } from "@/hooks/use-theme";
 import { type SemanticResult, semanticSearch } from "@/lib/semantic-search";
 
@@ -69,7 +70,13 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
 
   const { theme, setTheme } = useTheme();
   const { contentWidth, toggleContentWidth } = useContentWidth();
-  const client = useApi();
+  const { termiteApiUrl } = useApiConfig();
+
+  // Create TermiteClient for semantic search
+  const termiteClient = React.useMemo(
+    () => new TermiteClient({ baseUrl: termiteApiUrl }),
+    [termiteApiUrl]
+  );
 
   React.useEffect(() => {
     setMounted(true);
@@ -139,7 +146,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     setIsSearching(true);
     const timer = setTimeout(async () => {
       try {
-        const results = await semanticSearch(searchValue, client);
+        const results = await semanticSearch(searchValue, termiteClient);
         setSemanticResults(results);
       } catch (e) {
         console.error("Semantic search failed:", e);
@@ -149,7 +156,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchValue, hasStringMatches, client]);
+  }, [searchValue, hasStringMatches, termiteClient]);
 
   // Reset search state when dialog closes
   React.useEffect(() => {

@@ -1,8 +1,7 @@
 import { AntflyClient } from "@antfly/sdk";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ApiConfigContext } from "@/contexts/api-config-context";
-import { initCommandPaletteSearch } from "@/lib/semantic-search";
 
 const getDefaultApiUrl = () => {
   return "/api/v1";
@@ -56,15 +55,6 @@ export function ApiConfigProvider({ children }: { children: ReactNode }) {
     setTermiteApiUrlState(defaultUrl);
     localStorage.removeItem(TERMITE_STORAGE_KEY);
   };
-
-  // Initialize command palette search in background on page load
-  // Small delay lets the page render first, then init runs quietly
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      initCommandPaletteSearch(client);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [client]);
 
   return (
     <ApiConfigContext.Provider
