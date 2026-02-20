@@ -13,12 +13,7 @@
     },
     "./styles": "./dist/components.css"
   },
-  "files": [
-    "dist",
-    "types",
-    "README.md",
-    "LICENSE"
-  ],
+  "files": ["dist", "types", "README.md", "LICENSE"],
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch",
@@ -32,14 +27,7 @@
     "clean": "rm -rf dist types",
     "prepare": "pnpm run build"
   },
-  "keywords": [
-    "antfly",
-    "react",
-    "search",
-    "components",
-    "facets",
-    "rag"
-  ],
+  "keywords": ["antfly", "react", "search", "components", "facets", "rag"],
   "author": "Antfly Contributors",
   "license": "Apache-2.0",
   "repository": {
@@ -51,9 +39,7 @@
     "url": "https://github.com/antflydb/antfly-ts/issues"
   },
   "homepage": "https://github.com/antflydb/antfly-ts/tree/main/packages/components#readme",
-  "browserslist": [
-    ">0.03%"
-  ],
+  "browserslist": [">0.03%"],
   "peerDependencies": {
     "@antfly/sdk": "workspace:*",
     "react": "^16.0.0 || ^17.0 || ^18.0 || ^19.0",

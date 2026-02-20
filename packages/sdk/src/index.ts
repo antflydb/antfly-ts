@@ -66,6 +66,8 @@ export type {
   AggregationResult,
   // Search and aggregation types
   AggregationType,
+  // Authentication
+  AntflyAuth,
   // Configuration
   AntflyConfig,
   // Error type

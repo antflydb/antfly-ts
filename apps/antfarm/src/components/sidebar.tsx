@@ -8,6 +8,7 @@ import {
   FileInput,
   FileText,
   HelpCircle,
+  KeyRound,
   LayoutList,
   Library,
   MessageSquare,
@@ -205,7 +206,7 @@ export function AppSidebar({
 
       <SidebarContent className="border-r border-t-0 group-data-[collapsible=icon]:border-r-0">
         {/* Table Selector - show when tables are available (Antfly only) */}
-        {isProductEnabled("antfly") && tables.length > 0 && (
+        {currentProduct === "antfly" && tables.length > 0 && (
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>Table</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -255,7 +256,7 @@ export function AppSidebar({
         )}
 
         {/* Antfly Navigation */}
-        {isProductEnabled("antfly") && (
+        {currentProduct === "antfly" && (
           <SidebarGroup>
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -320,6 +321,28 @@ export function AppSidebar({
                       >
                         <Shield className="size-4" />
                         <span>Users</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+
+                {/* Secrets Link - only show if user has admin permission */}
+                {hasPermission("*", "*", "admin") && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={location.pathname === "/secrets"}
+                      tooltip="Secret Management"
+                    >
+                      <a
+                        href="/secrets"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate("/secrets");
+                        }}
+                      >
+                        <KeyRound className="size-4" />
+                        <span>Secrets</span>
                       </a>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -455,8 +478,55 @@ export function AppSidebar({
           </SidebarGroup>
         )}
 
+        {/* Antfly Playgrounds - search quality tools */}
+        {currentProduct === "antfly" && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Playgrounds</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/playground/rag"}
+                    tooltip="RAG"
+                  >
+                    <a
+                      href="/playground/rag"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/playground/rag");
+                      }}
+                    >
+                      <MessageSquare className="size-4" />
+                      <span>RAG</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/playground/evals"}
+                    tooltip="Evals"
+                  >
+                    <a
+                      href="/playground/evals"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/playground/evals");
+                      }}
+                    >
+                      <ClipboardCheck className="size-4" />
+                      <span>Evals</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Termite Tools Section */}
-        {isProductEnabled("termite") && (
+        {currentProduct === "termite" && (
           <SidebarGroup>
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -485,7 +555,12 @@ export function AppSidebar({
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
-                        isActive={location.pathname.startsWith("/playground")}
+                        isActive={
+                          location.pathname === "/playground/chunking" ||
+                          location.pathname === "/playground/recognize" ||
+                          location.pathname === "/playground/question" ||
+                          location.pathname === "/playground/kg"
+                        }
                         tooltip="Playgrounds"
                       >
                         <Wrench className="size-4" />
@@ -560,40 +635,6 @@ export function AppSidebar({
                             >
                               <Network className="size-4" />
                               <span>Knowledge Graph</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={location.pathname === "/playground/evals"}
-                          >
-                            <a
-                              href="/playground/evals"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                navigate("/playground/evals");
-                              }}
-                            >
-                              <ClipboardCheck className="size-4" />
-                              <span>Evals</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={location.pathname === "/playground/rag"}
-                          >
-                            <a
-                              href="/playground/rag"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                navigate("/playground/rag");
-                              }}
-                            >
-                              <MessageSquare className="size-4" />
-                              <span>RAG</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

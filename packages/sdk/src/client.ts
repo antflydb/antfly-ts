@@ -6,6 +6,7 @@
 import createClient, { type Client } from "openapi-fetch";
 import type { paths } from "./antfly-api.js";
 import type {
+  AntflyAuth,
   AntflyConfig,
   BackupRequest,
   BatchRequest,
@@ -33,54 +34,72 @@ export class AntflyClient {
 
   constructor(config: AntflyConfig) {
     this.config = config;
+    this.client = this.buildClient();
+  }
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-      ...config.headers,
-    };
+  /**
+   * Build the Authorization header value from the auth config.
+   * Returns undefined if no auth is configured.
+   */
+  private getAuthHeader(): string | undefined {
+    const auth = this.config.auth;
+    if (!auth) return undefined;
 
-    // Add basic auth if provided
-    if (config.auth) {
-      const auth = btoa(`${config.auth.username}:${config.auth.password}`);
-      headers["Authorization"] = `Basic ${auth}`;
+    if ("type" in auth) {
+      switch (auth.type) {
+        case "basic":
+          return `Basic ${btoa(`${auth.username}:${auth.password}`)}`;
+        case "apiKey":
+          return `ApiKey ${btoa(`${auth.keyId}:${auth.keySecret}`)}`;
+        case "bearer":
+          return `Bearer ${auth.token}`;
+      }
     }
 
-    this.client = createClient<paths>({
-      baseUrl: config.baseUrl,
+    // Backwards compat: { username, password } without 'type' field
+    return `Basic ${btoa(`${auth.username}:${auth.password}`)}`;
+  }
+
+  /**
+   * Build the openapi-fetch client with current config.
+   */
+  private buildClient(): Client<paths> {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...this.config.headers,
+    };
+
+    const authHeader = this.getAuthHeader();
+    if (authHeader) {
+      headers["Authorization"] = authHeader;
+    }
+
+    return createClient<paths>({
+      baseUrl: this.config.baseUrl,
       headers,
       bodySerializer: (body) => {
-        // Check if this is already a string (NDJSON case)
         if (typeof body === "string") {
           return body;
         }
-        // Otherwise use default JSON serialization
         return JSON.stringify(body);
       },
     });
   }
 
   /**
-   * Update authentication credentials
+   * Update authentication credentials.
+   * Accepts any auth type: basic (username/password), apiKey, or bearer.
+   * For backwards compat, calling setAuth(username, password) still works.
    */
-  setAuth(username: string, password: string) {
-    this.config.auth = { username, password };
-    const auth = btoa(`${username}:${password}`);
-
-    this.client = createClient<paths>({
-      baseUrl: this.config.baseUrl,
-      headers: {
-        ...this.config.headers,
-        Authorization: `Basic ${auth}`,
-      },
-      bodySerializer: (body) => {
-        // Check if this is already a string (NDJSON case)
-        if (typeof body === "string") {
-          return body;
-        }
-        // Otherwise use default JSON serialization
-        return JSON.stringify(body);
-      },
-    });
+  setAuth(auth: AntflyAuth): void;
+  setAuth(username: string, password: string): void;
+  setAuth(authOrUsername: AntflyAuth | string, password?: string) {
+    if (typeof authOrUsername === "string" && password !== undefined) {
+      this.config.auth = { username: authOrUsername, password };
+    } else {
+      this.config.auth = authOrUsername as AntflyAuth;
+    }
+    this.client = this.buildClient();
   }
 
   /**
@@ -177,9 +196,9 @@ export class AntflyClient {
     };
 
     // Add auth header if configured
-    if (this.config.auth) {
-      const auth = btoa(`${this.config.auth.username}:${this.config.auth.password}`);
-      headers["Authorization"] = `Basic ${auth}`;
+    const authHeader = this.getAuthHeader();
+    if (authHeader) {
+      headers["Authorization"] = authHeader;
     }
 
     // Merge with any additional headers
@@ -492,6 +511,7 @@ export class AntflyClient {
       request?: ScanKeysRequest
     ): AsyncGenerator<{ _key: string; [key: string]: unknown }> => {
       const config = this.config;
+      const authHeader = this.getAuthHeader();
 
       async function* scanGenerator(): AsyncGenerator<{ _key: string; [key: string]: unknown }> {
         const headers: Record<string, string> = {
@@ -500,9 +520,8 @@ export class AntflyClient {
         };
 
         // Add auth header if configured
-        if (config.auth) {
-          const auth = btoa(`${config.auth.username}:${config.auth.password}`);
-          headers["Authorization"] = `Basic ${auth}`;
+        if (authHeader) {
+          headers["Authorization"] = authHeader;
         }
 
         // Merge with any additional headers

@@ -211,14 +211,18 @@ export type ResponseData<T extends keyof operations> = operations[T]["responses"
     : never
   : never;
 
+// Authentication configuration for the client
+export type AntflyAuth =
+  | { type: "basic"; username: string; password: string }
+  | { type: "apiKey"; keyId: string; keySecret: string }
+  | { type: "bearer"; token: string }
+  | { username: string; password: string }; // backwards compat (no 'type' field)
+
 // Configuration types for the client
 export interface AntflyConfig {
   baseUrl: string;
   headers?: Record<string, string>;
-  auth?: {
-    username: string;
-    password: string;
-  };
+  auth?: AntflyAuth;
 }
 
 // Retrieval Agent types

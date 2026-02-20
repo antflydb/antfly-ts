@@ -7,7 +7,8 @@ export type ModelType =
   | "chunker"
   | "recognizer"
   | "rewriter"
-  | "generator";
+  | "generator"
+  | "reader";
 
 export type RecognizerCapability = "labels" | "zeroshot" | "relations" | "answers";
 

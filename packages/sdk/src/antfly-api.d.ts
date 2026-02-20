@@ -24,6 +24,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List secrets status
+         * @description List all configured secret names and their status (keystore, env var, or both).
+         *     Never returns secret values — only names and configuration status.
+         */
+        get: operations["listSecrets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/secrets/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Store a secret
+         * @description Store a secret in the keystore. Only available in swarm (single-node) mode.
+         *     Returns 503 in multi-node mode.
+         */
+        put: operations["putSecret"];
+        post?: never;
+        /**
+         * Delete a secret
+         * @description Remove a secret from the keystore. Only available in swarm (single-node) mode.
+         *     Returns 503 in multi-node mode.
+         */
+        delete: operations["deleteSecret"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/batch": {
         parameters: {
             query?: never;
@@ -872,6 +922,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/{userName}/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List API keys for a user
+         * @description Returns all API keys owned by the specified user. Secrets are never included.
+         */
+        get: operations["listApiKeys"];
+        put?: never;
+        /**
+         * Create a new API key
+         * @description Creates a new API key for the specified user. The cleartext secret is returned only in this response.
+         */
+        post: operations["createApiKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{userName}/api-keys/{keyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+                /** @description The API key ID. */
+                keyId: components["parameters"]["KeyIdPathParameter"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete an API key
+         * @description Permanently deletes the specified API key. Subsequent requests using this key will be rejected.
+         */
+        delete: operations["deleteApiKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -891,8 +993,33 @@ export interface components {
             message?: string;
             /** @description Indicates whether authentication is enabled for the cluster */
             auth_enabled?: boolean;
+            /** @description Indicates whether the cluster is running in single-node swarm mode */
+            swarm_mode?: boolean;
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * @description Source of the secret configuration
+         * @enum {string}
+         */
+        SecretStatus: "configured_keystore" | "configured_env" | "configured_both";
+        SecretEntry: {
+            /** @description Secret name (e.g., openai.api_key) */
+            key: string;
+            status: components["schemas"]["SecretStatus"];
+            /** @description Corresponding environment variable name (e.g., OPENAI_API_KEY) */
+            env_var?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        SecretList: {
+            secrets: components["schemas"]["SecretEntry"][];
+        };
+        SecretWriteRequest: {
+            /** @description Secret value (stored encrypted, never returned) */
+            value: string;
         };
         ByteRange: string[];
         /**
@@ -5941,6 +6068,64 @@ export interface components {
             /** @example Operation completed successfully */
             message?: string;
         };
+        /** @description Public metadata for an API key (secrets are never returned after creation). */
+        ApiKey: {
+            /**
+             * @description Unique identifier for the API key.
+             * @example aBcDeFgHiJkLmNoPqRsT
+             */
+            key_id: string;
+            /**
+             * @description Human-readable name for the API key.
+             * @example CI pipeline key
+             */
+            name: string;
+            /**
+             * @description Owner of the API key.
+             * @example johndoe
+             */
+            username: string;
+            /** @description Optional permission scoping. If empty, inherits owner's full permissions. */
+            permissions?: components["schemas"]["Permission"][] | null;
+            /**
+             * Format: date-time
+             * @description When the API key was created.
+             */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description When the API key expires. Null means never.
+             */
+            expires_at?: string | null;
+        };
+        /** @description API key creation response including the cleartext secret (shown once). */
+        ApiKeyWithSecret: components["schemas"]["ApiKey"] & {
+            /**
+             * @description Cleartext secret for the API key. Store securely — it cannot be retrieved again.
+             * @example dGhpcyBpcyBhIHNlY3JldA
+             */
+            key_secret: string;
+            /**
+             * @description Pre-encoded credential ready for the Authorization header: base64(key_id:key_secret).
+             * @example YUJjRGVGZ0hpSmtMbU5vUHFSc1Q6ZEdocGN5QnBjeUJoSUhObFkzSmxkQQ==
+             */
+            encoded: string;
+        };
+        /** @description Request to create a new API key. */
+        CreateApiKeyRequest: {
+            /**
+             * @description Human-readable name for the API key.
+             * @example CI pipeline key
+             */
+            name: string;
+            /**
+             * @description Duration until expiration (e.g., '720h' for 30 days). Empty means never.
+             * @example 720h
+             */
+            expires_in?: string;
+            /** @description Optional permission scoping. Each permission must be a subset of the creator's permissions. */
+            permissions?: components["schemas"]["Permission"][] | null;
+        };
     };
     responses: {
         /** @description Bad request */
@@ -5974,6 +6159,8 @@ export interface components {
     parameters: {
         /** @description The username. */
         UserNamePathParameter: string;
+        /** @description The API key ID. */
+        KeyIdPathParameter: string;
     };
     requestBodies: never;
     headers: never;
@@ -6009,6 +6196,122 @@ export interface operations {
                 };
             };
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    listSecrets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Secret status list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretList"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    putSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecretWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description Secret stored successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretEntry"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Service unavailable - secret management not available in multi-node mode */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Secret deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            /** @description Service unavailable - secret management not available in multi-node mode */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     multiBatchWrite: {
@@ -7295,6 +7598,161 @@ export interface operations {
                 };
             };
             /** @description User not found or Role not found for the given resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listApiKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKey"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createApiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /** @description API key creation details */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateApiKeyRequest"];
+            };
+        };
+        responses: {
+            /** @description API key created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyWithSecret"];
+                };
+            };
+            /** @description Bad Request (e.g., invalid input) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Forbidden (e.g., requested permissions exceed creator's permissions) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteApiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+                /** @description The API key ID. */
+                keyId: components["parameters"]["KeyIdPathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API key deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description API key not found */
             404: {
                 headers: {
                     [name: string]: unknown;
