@@ -9,11 +9,8 @@ import type {
   TermiteModel,
 } from "@/data/termite-models";
 
-// In development, use the Vite proxy to avoid CORS issues
-// In production, fetch directly from the registry
-const REGISTRY_URL = import.meta.env.DEV
-  ? "/registry/index.json"
-  : "https://registry.antfly.io/v1/index.json";
+// Always use the relative path — Vite proxy (dev) or Go reverse proxy (production)
+const REGISTRY_URL = "/registry/index.json";
 const FETCH_TIMEOUT = 10000; // 10 seconds
 
 // Remote registry response types
@@ -73,6 +70,12 @@ const MODEL_TYPES: ModelTypeInfo[] = [
     name: "Generator",
     description: "Generative language models for text generation and function calling",
     icon: "Sparkles",
+  },
+  {
+    type: "reader",
+    name: "Reader",
+    description: "Document and image reading models for OCR and text extraction",
+    icon: "BookOpen",
   },
 ];
 

@@ -6099,12 +6099,7 @@ export interface components {
             expires_at?: string | null;
         };
         /** @description API key creation response including the cleartext secret (shown once). */
-        ApiKeyWithSecret: {
-            /**
-             * @description Unique identifier for the API key.
-             * @example aBcDeFgHiJkLmNoPqRsT
-             */
-            key_id: string;
+        ApiKeyWithSecret: components["schemas"]["ApiKey"] & {
             /**
              * @description Cleartext secret for the API key. Store securely — it cannot be retrieved again.
              * @example dGhpcyBpcyBhIHNlY3JldA
@@ -6115,28 +6110,6 @@ export interface components {
              * @example YUJjRGVGZ0hpSmtMbU5vUHFSc1Q6ZEdocGN5QnBjeUJoSUhObFkzSmxkQQ==
              */
             encoded: string;
-            /**
-             * @description Human-readable name for the API key.
-             * @example CI pipeline key
-             */
-            name: string;
-            /**
-             * @description Owner of the API key.
-             * @example johndoe
-             */
-            username: string;
-            /** @description Optional permission scoping. */
-            permissions?: components["schemas"]["Permission"][] | null;
-            /**
-             * Format: date-time
-             * @description When the API key was created.
-             */
-            created_at: string;
-            /**
-             * Format: date-time
-             * @description When the API key expires. Null means never.
-             */
-            expires_at?: string | null;
         };
         /** @description Request to create a new API key. */
         CreateApiKeyRequest: {

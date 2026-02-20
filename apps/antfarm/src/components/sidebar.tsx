@@ -206,7 +206,7 @@ export function AppSidebar({
 
       <SidebarContent className="border-r border-t-0 group-data-[collapsible=icon]:border-r-0">
         {/* Table Selector - show when tables are available (Antfly only) */}
-        {isProductEnabled("antfly") && tables.length > 0 && (
+        {currentProduct === "antfly" && tables.length > 0 && (
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>Table</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -256,7 +256,7 @@ export function AppSidebar({
         )}
 
         {/* Antfly Navigation */}
-        {isProductEnabled("antfly") && (
+        {currentProduct === "antfly" && (
           <SidebarGroup>
             <SidebarGroupLabel>Navigation</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -479,7 +479,7 @@ export function AppSidebar({
         )}
 
         {/* Antfly Playgrounds - search quality tools */}
-        {isProductEnabled("antfly") && (
+        {currentProduct === "antfly" && (
           <SidebarGroup>
             <SidebarGroupLabel>Playgrounds</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -526,7 +526,7 @@ export function AppSidebar({
         )}
 
         {/* Termite Tools Section */}
-        {isProductEnabled("termite") && (
+        {currentProduct === "termite" && (
           <SidebarGroup>
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>

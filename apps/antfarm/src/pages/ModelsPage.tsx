@@ -3,6 +3,7 @@ import {
   Apple,
   ArrowRight,
   ArrowUpDown,
+  BookOpen,
   Check,
   ChevronDown,
   Cloud,
@@ -37,6 +38,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { isProductEnabled } from "@/config/products";
 import {
   getDownloadCommand,
   getHardwareCapabilities,
@@ -50,6 +52,7 @@ import {
   VARIANT_PRESETS,
   type VariantPreset,
 } from "@/data/termite-models";
+import { useApiConfig } from "@/hooks/use-api-config";
 import { useTermiteRegistry } from "@/hooks/use-termite-registry";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +64,7 @@ const MODEL_TYPE_ICONS: Record<ModelType, React.FC<{ className?: string }>> = {
   recognizer: Tag,
   rewriter: RefreshCw,
   generator: Sparkles,
+  reader: BookOpen,
 };
 
 // Refined color system - bold accent colors with monochrome base
@@ -103,6 +107,12 @@ const MODEL_TYPE_ACCENT: Record<
     text: "text-cyan-500 dark:text-cyan-400",
     border: "border-cyan-500/20 dark:border-cyan-400/20",
     glow: "shadow-cyan-500/20",
+  },
+  reader: {
+    bg: "bg-orange-500",
+    text: "text-orange-500 dark:text-orange-400",
+    border: "border-orange-500/20 dark:border-orange-400/20",
+    glow: "shadow-orange-500/20",
   },
 };
 
@@ -533,7 +543,8 @@ const ModelDetailSheet: React.FC<{
   onOpenChange: (open: boolean) => void;
   types: { type: ModelType; name: string }[];
   quantizationOptions: QuantizationOption[];
-}> = ({ model, open, onOpenChange, types, quantizationOptions }) => {
+  allowDownloads: boolean;
+}> = ({ model, open, onOpenChange, types, quantizationOptions, allowDownloads }) => {
   const [selectedVariant, setSelectedVariant] = useState<QuantizationType | undefined>(undefined);
   const [selectedPreset, setSelectedPreset] = useState<VariantPreset | null>("recommended");
   const [showAllVariants, setShowAllVariants] = useState(false);
@@ -670,157 +681,170 @@ const ModelDetailSheet: React.FC<{
           )}
 
           {/* Download Configuration */}
-          <div className="rounded-lg border border-border bg-muted/30 overflow-hidden">
-            {/* Preset selector */}
-            <div className="px-4 py-3 border-b border-border/50">
-              <h4 className="text-xs font-medium text-foreground mb-3">Download variant</h4>
+          {!allowDownloads ? (
+            <div className="rounded-lg border border-border bg-muted/30 px-4 py-3">
+              <p className="text-xs text-muted-foreground">
+                Use <code className="font-mono bg-muted px-1 py-0.5 rounded">termite pull</code> CLI
+                or the Termite operator to manage models in production deployments.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-border bg-muted/30 overflow-hidden">
+              {/* Preset selector */}
+              <div className="px-4 py-3 border-b border-border/50">
+                <h4 className="text-xs font-medium text-foreground mb-3">Download variant</h4>
 
-              {/* Preset buttons */}
-              <div className="flex flex-wrap gap-2 mb-3">
-                {VARIANT_PRESETS.map((preset) => {
-                  const presetVariant = preset.selectVariant(model.variants);
-                  const isAvailable = presetVariant !== undefined;
-                  const isSelected = selectedPreset === preset.type;
+                {/* Preset buttons */}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {VARIANT_PRESETS.map((preset) => {
+                    const presetVariant = preset.selectVariant(model.variants);
+                    const isAvailable = presetVariant !== undefined;
+                    const isSelected = selectedPreset === preset.type;
 
-                  return (
-                    <button
-                      key={preset.type}
-                      type="button"
-                      disabled={!isAvailable}
-                      onClick={() => {
-                        if (isAvailable) {
-                          setSelectedPreset(preset.type);
-                          setSelectedVariant(presetVariant);
-                        }
-                      }}
-                      className={cn(
-                        "flex-1 min-w-[100px] px-3 py-2 rounded-lg text-left transition-all",
-                        isSelected
-                          ? "bg-foreground text-background shadow-sm"
-                          : isAvailable
-                            ? "bg-background text-foreground border border-border hover:border-foreground/30"
-                            : "bg-muted/50 text-muted-foreground/50 border border-border/50 cursor-not-allowed"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        {preset.type === "recommended" && <Zap className="w-3.5 h-3.5" />}
-                        {preset.type === "smallest" && <Gauge className="w-3.5 h-3.5" />}
-                        {preset.type === "highest-quality" && <Sparkles className="w-3.5 h-3.5" />}
-                        <span className="text-xs font-medium">{preset.label}</span>
-                      </div>
-                      <p
-                        className={cn(
-                          "text-[10px] mt-0.5 leading-tight",
-                          isSelected ? "text-background/70" : "text-muted-foreground"
-                        )}
-                      >
-                        {preset.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Selected variant info */}
-              {selectedVariantInfo && (
-                <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-                  <span>
-                    Selected:{" "}
-                    <span className="font-medium text-foreground">{selectedVariantInfo.name}</span>
-                  </span>
-                </div>
-              )}
-
-              {/* Collapsible all variants */}
-              <Collapsible open={showAllVariants} onOpenChange={setShowAllVariants}>
-                <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mt-3 transition-colors">
-                  <ChevronDown
-                    className={cn(
-                      "w-3.5 h-3.5 transition-transform",
-                      showAllVariants && "rotate-180"
-                    )}
-                  />
-                  <span>All variants ({availableVariants.length})</span>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="mt-3">
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {availableVariants.map((variant) => (
+                    return (
                       <button
-                        key={variant.type}
+                        key={preset.type}
                         type="button"
+                        disabled={!isAvailable}
                         onClick={() => {
-                          setSelectedVariant(variant.type);
-                          setSelectedPreset(null);
+                          if (isAvailable) {
+                            setSelectedPreset(preset.type);
+                            setSelectedVariant(presetVariant);
+                          }
                         }}
                         className={cn(
-                          "px-2.5 py-1.5 rounded text-xs text-left transition-all",
-                          selectedVariant === variant.type && selectedPreset === null
-                            ? "bg-foreground text-background"
-                            : selectedVariant === variant.type
-                              ? "bg-foreground/10 text-foreground border border-foreground/20"
-                              : "bg-background text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20"
+                          "flex-1 min-w-[100px] px-3 py-2 rounded-lg text-left transition-all",
+                          isSelected
+                            ? "bg-foreground text-background shadow-sm"
+                            : isAvailable
+                              ? "bg-background text-foreground border border-border hover:border-foreground/30"
+                              : "bg-muted/50 text-muted-foreground/50 border border-border/50 cursor-not-allowed"
                         )}
                       >
-                        <span className="font-medium">{variant.name}</span>
-                        {variant.recommended && (
-                          <span className="ml-1 text-[10px] opacity-70">(rec)</span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {preset.type === "recommended" && <Zap className="w-3.5 h-3.5" />}
+                          {preset.type === "smallest" && <Gauge className="w-3.5 h-3.5" />}
+                          {preset.type === "highest-quality" && (
+                            <Sparkles className="w-3.5 h-3.5" />
+                          )}
+                          <span className="text-xs font-medium">{preset.label}</span>
+                        </div>
+                        <p
+                          className={cn(
+                            "text-[10px] mt-0.5 leading-tight",
+                            isSelected ? "text-background/70" : "text-muted-foreground"
+                          )}
+                        >
+                          {preset.description}
+                        </p>
                       </button>
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </div>
+                    );
+                  })}
+                </div>
 
-            {/* Command block */}
-            <div className="relative">
-              <div className="px-4 py-3 bg-searchaf-11 dark:bg-searchaf-2">
-                <div className="flex items-start justify-between gap-2">
-                  <code className="text-xs font-mono text-searchaf-1 dark:text-searchaf-11 break-all leading-relaxed">
-                    {command}
-                  </code>
-                  <button
-                    type="button"
-                    onClick={handleCopyCommand}
-                    aria-label={copiedCommand ? "Copied!" : "Copy command"}
-                    className={cn(
-                      "shrink-0 p-1.5 rounded transition-colors",
-                      "text-searchaf-6 hover:text-searchaf-1 dark:text-searchaf-6 dark:hover:text-searchaf-11",
-                      "hover:bg-searchaf-9/20 dark:hover:bg-searchaf-4/30"
-                    )}
-                  >
-                    {copiedCommand ? (
-                      <Check className="w-3.5 h-3.5 text-success-400" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
+                {/* Selected variant info */}
+                {selectedVariantInfo && (
+                  <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                    <span>
+                      Selected:{" "}
+                      <span className="font-medium text-foreground">
+                        {selectedVariantInfo.name}
+                      </span>
+                    </span>
+                  </div>
+                )}
+
+                {/* Collapsible all variants */}
+                <Collapsible open={showAllVariants} onOpenChange={setShowAllVariants}>
+                  <CollapsibleTrigger className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground mt-3 transition-colors">
+                    <ChevronDown
+                      className={cn(
+                        "w-3.5 h-3.5 transition-transform",
+                        showAllVariants && "rotate-180"
+                      )}
+                    />
+                    <span>All variants ({availableVariants.length})</span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-3">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {availableVariants.map((variant) => (
+                        <button
+                          key={variant.type}
+                          type="button"
+                          onClick={() => {
+                            setSelectedVariant(variant.type);
+                            setSelectedPreset(null);
+                          }}
+                          className={cn(
+                            "px-2.5 py-1.5 rounded text-xs text-left transition-all",
+                            selectedVariant === variant.type && selectedPreset === null
+                              ? "bg-foreground text-background"
+                              : selectedVariant === variant.type
+                                ? "bg-foreground/10 text-foreground border border-foreground/20"
+                                : "bg-background text-muted-foreground hover:text-foreground border border-border hover:border-foreground/20"
+                          )}
+                        >
+                          <span className="font-medium">{variant.name}</span>
+                          {variant.recommended && (
+                            <span className="ml-1 text-[10px] opacity-70">(rec)</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+
+              {/* Command block */}
+              <div className="relative">
+                <div className="px-4 py-3 bg-searchaf-11 dark:bg-searchaf-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <code className="text-xs font-mono text-searchaf-1 dark:text-searchaf-11 break-all leading-relaxed">
+                      {command}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={handleCopyCommand}
+                      aria-label={copiedCommand ? "Copied!" : "Copy command"}
+                      className={cn(
+                        "shrink-0 p-1.5 rounded transition-colors",
+                        "text-searchaf-6 hover:text-searchaf-1 dark:text-searchaf-6 dark:hover:text-searchaf-11",
+                        "hover:bg-searchaf-9/20 dark:hover:bg-searchaf-4/30"
+                      )}
+                    >
+                      {copiedCommand ? (
+                        <Check className="w-3.5 h-3.5 text-success-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Copy feedback toast */}
+                <div
+                  className={cn(
+                    "absolute inset-x-4 bottom-full mb-2 py-1.5 px-2 rounded bg-foreground text-background text-xs text-center",
+                    "transition-all duration-200",
+                    copiedCommand
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-1 pointer-events-none"
+                  )}
+                >
+                  Copied to clipboard
                 </div>
               </div>
 
-              {/* Copy feedback toast */}
-              <div
-                className={cn(
-                  "absolute inset-x-4 bottom-full mb-2 py-1.5 px-2 rounded bg-foreground text-background text-xs text-center",
-                  "transition-all duration-200",
-                  copiedCommand
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-1 pointer-events-none"
-                )}
-              >
-                Copied to clipboard
-              </div>
+              {/* Help text for export models */}
+              {!model.inRegistry && (
+                <div className="px-4 py-2.5 bg-muted/50 border-t border-border/50">
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Downloads from HuggingFace and converts to ONNX format.
+                  </p>
+                </div>
+              )}
             </div>
-
-            {/* Help text for export models */}
-            {!model.inRegistry && (
-              <div className="px-4 py-2.5 bg-muted/50 border-t border-border/50">
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Downloads from HuggingFace and converts to ONNX format.
-                </p>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Metadata row */}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -864,10 +888,38 @@ const ModelDetailSheet: React.FC<{
 // Main page component
 const ModelsPage: React.FC = () => {
   const { models, types, quantizationOptions, loading, error, retry } = useTermiteRegistry();
+  const { apiUrl, termiteApiUrl } = useApiConfig();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<ModelType | "all">("all");
   const [selectedModel, setSelectedModel] = useState<TermiteModel | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [allowDownloads, setAllowDownloads] = useState(false);
+
+  // Determine download availability
+  useEffect(() => {
+    const checkDownloads = async () => {
+      try {
+        if (isProductEnabled("antfly")) {
+          // Full antfarm build: check swarm_mode from antfly status
+          const response = await fetch(`${apiUrl}/status`);
+          if (response.ok) {
+            const data = await response.json();
+            setAllowDownloads(data.swarm_mode === true);
+          }
+        } else {
+          // Termite-only build: check allow_downloads from Termite version
+          const response = await fetch(`${termiteApiUrl}/api/version`);
+          if (response.ok) {
+            const data = await response.json();
+            setAllowDownloads(data.allow_downloads === true);
+          }
+        }
+      } catch {
+        // Default to not showing downloads on error
+      }
+    };
+    checkDownloads();
+  }, [apiUrl, termiteApiUrl]);
 
   const filteredModels = useMemo(() => {
     return models.filter((model) => {
@@ -894,10 +946,11 @@ const ModelsPage: React.FC = () => {
       recognizer: [],
       rewriter: [],
       generator: [],
+      reader: [],
     };
 
     for (const model of filteredModels) {
-      grouped[model.type].push(model);
+      grouped[model.type]?.push(model);
     }
 
     return grouped;
@@ -911,10 +964,13 @@ const ModelsPage: React.FC = () => {
       recognizer: 0,
       rewriter: 0,
       generator: 0,
+      reader: 0,
     };
 
     for (const model of models) {
-      counts[model.type]++;
+      if (model.type in counts) {
+        counts[model.type]++;
+      }
     }
 
     return counts;
@@ -969,7 +1025,7 @@ const ModelsPage: React.FC = () => {
           </div>
           <h2 className="text-xl font-semibold mb-2">Unable to load models</h2>
           <p className="text-muted-foreground mb-6">
-            Could not connect to Termite registry. Make sure Termite is running on port 11433.
+            Could not load the model registry. Check your network connection and try again.
           </p>
           <Button onClick={retry} variant="outline">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -1174,6 +1230,7 @@ const ModelsPage: React.FC = () => {
         onOpenChange={setSheetOpen}
         types={types}
         quantizationOptions={quantizationOptions}
+        allowDownloads={allowDownloads}
       />
     </div>
   );
