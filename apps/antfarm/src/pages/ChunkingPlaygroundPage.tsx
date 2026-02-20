@@ -21,7 +21,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useTermiteConfig } from "@/hooks/use-termite-config";
+import { useApiConfig } from "@/hooks/use-api-config";
 
 // Configuration state (extends SDK config with UI-specific fields)
 interface ChunkConfig {
@@ -108,7 +108,7 @@ The era of modern computing began with a flurry of development before and during
 };
 
 const ChunkingPlaygroundPage: React.FC = () => {
-  const { termiteUrl } = useTermiteConfig();
+  const { termiteApiUrl } = useApiConfig();
 
   // Restore state from localStorage
   const [inputText, setInputText] = useState(() => {
@@ -134,8 +134,8 @@ const ChunkingPlaygroundPage: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const termiteClient = useMemo(
-    () => new TermiteClient({ baseUrl: `${termiteUrl}/api` }),
-    [termiteUrl]
+    () => new TermiteClient({ baseUrl: `${termiteApiUrl}/api` }),
+    [termiteApiUrl]
   );
 
   // Persist state to localStorage
@@ -148,7 +148,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
     const controller = new AbortController();
     (async () => {
       try {
-        const response = await fetch(`${termiteUrl}/api/models`, {
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
           signal: controller.signal,
         });
         if (response.ok) {
@@ -162,7 +162,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
       }
     })();
     return () => controller.abort();
-  }, [termiteUrl]);
+  }, [termiteApiUrl]);
 
   const handleChunk = useCallback(async () => {
     if (!inputText.trim()) {

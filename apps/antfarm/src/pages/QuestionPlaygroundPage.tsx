@@ -35,8 +35,8 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { useApiConfig } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
-import { useTermiteConfig } from "@/hooks/use-termite-config";
 
 // Rewrite response types matching Termite API
 interface RewriteResponse {
@@ -70,7 +70,7 @@ const SAMPLE_DATA = {
 };
 
 const QuestionPlaygroundPage: React.FC = () => {
-  const { termiteUrl } = useTermiteConfig();
+  const { termiteApiUrl } = useApiConfig();
 
   // Restore state from localStorage
   const [context, setContext] = useState(() => {
@@ -123,7 +123,7 @@ const QuestionPlaygroundPage: React.FC = () => {
     const controller = new AbortController();
     (async () => {
       try {
-        const response = await fetch(`${termiteUrl}/api/models`, {
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
           signal: controller.signal,
         });
         if (response.ok) {
@@ -141,7 +141,7 @@ const QuestionPlaygroundPage: React.FC = () => {
       }
     })();
     return () => controller.abort();
-  }, [termiteUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [termiteApiUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Format input for LMQG question generation models
   const formatInput = (ctx: string, ans: string): string => {
@@ -191,7 +191,7 @@ const QuestionPlaygroundPage: React.FC = () => {
       const formattedInput = formatInput(context, answer);
 
       // FIX: Use correct endpoint /api/rewrite instead of /api/question
-      const response = await fetch(`${termiteUrl}/api/rewrite`, {
+      const response = await fetch(`${termiteApiUrl}/api/rewrite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -223,7 +223,7 @@ const QuestionPlaygroundPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [context, answer, selectedModel, termiteUrl]);
+  }, [context, answer, selectedModel, termiteApiUrl]);
 
   // Cmd+Enter shortcut
   useEffect(() => {

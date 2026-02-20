@@ -146,6 +146,12 @@ const QueryBuilderAgent: React.FC<QueryBuilderAgentProps> = ({
             placeholder="e.g., Find all published articles about machine learning from the last year"
             value={intent}
             onChange={(e) => setIntent(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                e.preventDefault();
+                handleGenerateQuery();
+              }
+            }}
             rows={3}
             className="resize-none"
           />

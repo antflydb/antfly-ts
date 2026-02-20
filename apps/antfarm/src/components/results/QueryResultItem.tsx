@@ -1,10 +1,11 @@
 import type { QueryHit } from "@antfly/sdk";
-import { ChevronDown, ChevronRight, Star } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type React from "react";
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import FieldValueDisplay from "./FieldValueDisplay";
 
 interface QueryResultItemProps {
@@ -31,11 +32,9 @@ const QueryResultItem: React.FC<QueryResultItemProps> = ({
     if (typeof _score !== "number") return null;
 
     const percentage = Math.min(100, Math.max(0, _score * 100));
-    const stars = Math.round(_score * 5);
 
     return {
       percentage,
-      stars,
       value: _score.toFixed(4),
     };
   }, [_score]);
@@ -119,26 +118,20 @@ const QueryResultItem: React.FC<QueryResultItemProps> = ({
                 </code>
 
                 {scoreDisplay && (
-                  <>
-                    <Badge variant="outline" className="gap-1">
-                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                      {scoreDisplay.value}
-                    </Badge>
-
-                    {/* Visual score bar */}
-                    <div className="hidden sm:flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`h-3 w-3 ${
-                            star <= scoreDisplay.stars
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-muted-foreground"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge variant="outline" className="gap-1 cursor-help">
+                        <span className="text-muted-foreground">Score:</span>
+                        {scoreDisplay.value}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>
+                        Search ranking score. For vector search: L2 squared distance (lower = more
+                        similar). For hybrid search: RRF fusion score.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
 
@@ -156,20 +149,20 @@ const QueryResultItem: React.FC<QueryResultItemProps> = ({
           {/* Score Details */}
           {scoreDisplay && (
             <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-muted-foreground min-w-24">Relevance:</span>
-              <div className="flex-1 max-w-md">
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 transition-all"
-                      style={{ width: `${scoreDisplay.percentage}%` }}
-                    />
-                  </div>
-                  <span className="text-xs font-mono text-muted-foreground min-w-12">
-                    {scoreDisplay.percentage.toFixed(1)}%
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-xs font-medium text-muted-foreground min-w-24 cursor-help underline decoration-dotted">
+                    Score:
                   </span>
-                </div>
-              </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>
+                    For vector search: L2 squared distance (lower = more similar). For hybrid
+                    search: RRF fusion score.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+              <span className="text-sm font-mono">{scoreDisplay.value}</span>
             </div>
           )}
 

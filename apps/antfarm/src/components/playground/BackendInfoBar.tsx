@@ -4,7 +4,7 @@ import { SettingsDialog } from "@/components/SettingsDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTermiteConfig } from "@/hooks/use-termite-config";
+import { useApiConfig } from "@/hooks/use-api-config";
 
 interface RuntimeInfo {
   backend: string;
@@ -24,7 +24,7 @@ interface VersionInfo {
 type ConnectionState = "connected" | "disconnected" | "checking";
 
 export function BackendInfoBar() {
-  const { termiteUrl } = useTermiteConfig();
+  const { termiteApiUrl } = useApiConfig();
   const [runtime, setRuntime] = useState<RuntimeInfo | null>(null);
   const [version, setVersion] = useState<VersionInfo | null>(null);
   const [status, setStatus] = useState<ConnectionState>("checking");
@@ -34,10 +34,10 @@ export function BackendInfoBar() {
     async (signal?: AbortSignal) => {
       try {
         const [modelsRes, versionRes] = await Promise.all([
-          fetch(`${termiteUrl}/api/models`, {
+          fetch(`${termiteApiUrl}/api/models`, {
             signal: signal ?? AbortSignal.timeout(5000),
           }),
-          fetch(`${termiteUrl}/api/version`, {
+          fetch(`${termiteApiUrl}/api/version`, {
             signal: signal ?? AbortSignal.timeout(5000),
           }),
         ]);
@@ -63,7 +63,7 @@ export function BackendInfoBar() {
         }
       }
     },
-    [termiteUrl]
+    [termiteApiUrl]
   );
 
   useEffect(() => {
@@ -101,7 +101,7 @@ export function BackendInfoBar() {
         <div className="flex items-center gap-2 text-sm text-destructive">
           <WifiOff className="h-4 w-4" />
           <span>Termite disconnected</span>
-          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{termiteUrl}</code>
+          <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{termiteApiUrl}</code>
         </div>
         <div className="flex items-center gap-2">
           <SettingsDialog

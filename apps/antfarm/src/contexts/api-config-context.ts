@@ -6,6 +6,9 @@ export interface ApiConfigContextType {
   setApiUrl: (url: string) => void;
   client: AntflyClient;
   resetToDefault: () => void;
+  termiteApiUrl: string;
+  setTermiteApiUrl: (url: string) => void;
+  resetTermiteApiUrl: () => void;
 }
 
 export const ApiConfigContext = createContext<ApiConfigContextType | undefined>(undefined);

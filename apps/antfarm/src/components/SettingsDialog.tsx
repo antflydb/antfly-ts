@@ -13,46 +13,35 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { isProductEnabled } from "@/config/products";
 import { useApiConfig } from "@/hooks/use-api-config";
-import { useTermiteConfig } from "@/hooks/use-termite-config";
 
 interface SettingsDialogProps {
   trigger?: ReactNode;
 }
 
 export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
-  const { apiUrl, setApiUrl, resetToDefault } = useApiConfig();
-  const {
-    termiteUrl,
-    setTermiteUrl,
-    resetToDefault: resetTermiteToDefault,
-  } = useTermiteConfig();
+  const { apiUrl, setApiUrl, resetToDefault, termiteApiUrl, setTermiteApiUrl, resetTermiteApiUrl } =
+    useApiConfig();
   const [tempUrl, setTempUrl] = useState(apiUrl);
-  const [tempTermiteUrl, setTempTermiteUrl] = useState(termiteUrl);
+  const [tempTermiteUrl, setTempTermiteUrl] = useState(termiteApiUrl);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleSave = () => {
     setApiUrl(tempUrl);
-    if (isProductEnabled("termite")) {
-      setTermiteUrl(tempTermiteUrl);
-    }
+    setTermiteApiUrl(tempTermiteUrl);
     setIsOpen(false);
   };
 
   const handleReset = () => {
     resetToDefault();
+    resetTermiteApiUrl();
     setTempUrl(apiUrl);
-    if (isProductEnabled("termite")) {
-      resetTermiteToDefault();
-      setTempTermiteUrl(termiteUrl);
-    }
+    setTempTermiteUrl(termiteApiUrl);
   };
 
   const handleCancel = () => {
     setTempUrl(apiUrl);
-    setTempTermiteUrl(termiteUrl);
+    setTempTermiteUrl(termiteApiUrl);
     setIsOpen(false);
   };
 
@@ -69,13 +58,14 @@ export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
         <DialogHeader>
           <DialogTitle>API Settings</DialogTitle>
           <DialogDescription>
-            Configure the servers to connect to. This is useful when accessing the dashboard
-            remotely or connecting to different servers.
+            Configure the Antfly and Termite servers to connect to. This is useful when accessing
+            the dashboard remotely or connecting to different servers.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-6 py-4">
+          {/* Antfly API URL */}
           <div className="grid gap-2">
-            <Label htmlFor="api-url">Antfly API Base URL</Label>
+            <Label htmlFor="api-url">Antfly API URL</Label>
             <Input
               id="api-url"
               value={tempUrl}
@@ -85,46 +75,28 @@ export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
             <p className="text-sm text-muted-foreground">
               Current: <code className="text-xs bg-muted px-1 py-0.5 rounded">{apiUrl}</code>
             </p>
+            <div className="text-xs text-muted-foreground">
+              Examples: <code className="bg-muted px-1 py-0.5 rounded">/api/v1</code> (default),{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">http://server:8082/api/v1</code>
+            </div>
           </div>
 
-          {isProductEnabled("termite") && (
-            <>
-              <Separator />
-              <div className="grid gap-2">
-                <Label htmlFor="termite-url">Termite API URL</Label>
-                <Input
-                  id="termite-url"
-                  value={tempTermiteUrl}
-                  onChange={(e) => setTempTermiteUrl(e.target.value)}
-                  placeholder="http://localhost:11433"
-                />
-                <p className="text-sm text-muted-foreground">
-                  Current:{" "}
-                  <code className="text-xs bg-muted px-1 py-0.5 rounded">{termiteUrl}</code>
-                </p>
-              </div>
-            </>
-          )}
-
+          {/* Termite API URL */}
           <div className="grid gap-2">
-            <Label>Examples</Label>
-            <div className="text-sm text-muted-foreground space-y-1">
-              <div>
-                • Local:{" "}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                  http://localhost:8082/api/v1
-                </code>
-              </div>
-              <div>
-                • Remote:{" "}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">
-                  http://server.example.com:8082/api/v1
-                </code>
-              </div>
-              <div>
-                • Same server (default):{" "}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">/api/v1</code>
-              </div>
+            <Label htmlFor="termite-url">Termite API URL</Label>
+            <Input
+              id="termite-url"
+              value={tempTermiteUrl}
+              onChange={(e) => setTempTermiteUrl(e.target.value)}
+              placeholder="http://localhost:11433"
+            />
+            <p className="text-sm text-muted-foreground">
+              Current: <code className="text-xs bg-muted px-1 py-0.5 rounded">{termiteApiUrl}</code>
+            </p>
+            <div className="text-xs text-muted-foreground">
+              Examples: <code className="bg-muted px-1 py-0.5 rounded">http://localhost:11433</code>{" "}
+              (default),{" "}
+              <code className="bg-muted px-1 py-0.5 rounded">https://termite.company.com</code>
             </div>
           </div>
         </div>

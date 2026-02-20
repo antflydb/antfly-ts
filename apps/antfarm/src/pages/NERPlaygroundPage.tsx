@@ -20,7 +20,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { useTermiteConfig } from "@/hooks/use-termite-config";
+import { useApiConfig } from "@/hooks/use-api-config";
 
 // NER response types matching Termite API
 interface NEREntity {
@@ -146,7 +146,7 @@ const SAMPLE_TEXTS = {
 };
 
 const NERPlaygroundPage: React.FC = () => {
-  const { termiteUrl } = useTermiteConfig();
+  const { termiteApiUrl } = useApiConfig();
 
   // Restore state from localStorage
   const [inputText, setInputText] = useState(() => {
@@ -206,7 +206,7 @@ const NERPlaygroundPage: React.FC = () => {
     const controller = new AbortController();
     (async () => {
       try {
-        const response = await fetch(`${termiteUrl}/api/models`, {
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
           signal: controller.signal,
         });
         if (response.ok) {
@@ -224,7 +224,7 @@ const NERPlaygroundPage: React.FC = () => {
       }
     })();
     return () => controller.abort();
-  }, [termiteUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [termiteApiUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getColorForLabel = (label: string) => {
     const normalizedLabel = label.toLowerCase();
@@ -273,7 +273,7 @@ const NERPlaygroundPage: React.FC = () => {
     const startTime = performance.now();
 
     try {
-      const response = await fetch(`${termiteUrl}/api/recognize`, {
+      const response = await fetch(`${termiteApiUrl}/api/recognize`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -306,7 +306,7 @@ const NERPlaygroundPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, selectedModel, labels, termiteUrl]);
+  }, [inputText, selectedModel, labels, termiteApiUrl]);
 
   // Cmd+Enter shortcut
   useEffect(() => {

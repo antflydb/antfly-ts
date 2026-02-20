@@ -24,6 +24,71 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cross-table batch operations
+         * @description Perform batch inserts, deletes, and transforms across multiple tables
+         *     in a single atomic transaction.
+         *
+         *     All operations across all tables are committed atomically using distributed
+         *     2-phase commit (2PC). Either all operations succeed, or none do.
+         *
+         *     **Use cases**:
+         *     - Transfer records between tables (insert in one, delete from another)
+         *     - Maintain referential integrity across tables
+         *     - Atomic multi-table updates
+         */
+        post: operations["multiBatchWrite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/transactions/commit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Commit an OCC transaction
+         * @description Commit a stateless OCC (Optimistic Concurrency Control) transaction.
+         *
+         *     **Workflow**:
+         *     1. Read documents using regular lookup endpoints, capturing the
+         *        `X-Antfly-Version` response header for each read
+         *     2. Compute writes locally based on the read values
+         *     3. Submit this commit request with the read set (keys + versions)
+         *        and the write set (batch operations per table)
+         *
+         *     The server validates that all read versions still match current state.
+         *     If any version has changed, the transaction is aborted with a 409 Conflict
+         *     response containing details about which key conflicted.
+         *
+         *     If all versions match, writes are executed atomically via 2PC.
+         *
+         *     **No server-side state**: There is no "begin transaction" endpoint.
+         *     The client manages its own read set.
+         */
+        post: operations["commitTransaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/backup": {
         parameters: {
             query?: never;
@@ -1422,6 +1487,110 @@ export interface components {
             deleted?: number;
             /** @description Number of documents successfully transformed */
             transformed?: number;
+        };
+        /**
+         * @description Cross-table batch operations in a single atomic transaction.
+         *
+         *     Groups batch operations by table name. All operations across all tables
+         *     are committed atomically using distributed 2-phase commit (2PC).
+         *
+         *     **Atomicity**: Either all operations across all tables succeed, or none do.
+         *     This enables use cases like transferring a record from one table to another,
+         *     or maintaining referential integrity across tables.
+         */
+        MultiBatchRequest: {
+            /**
+             * @description Map of table names to batch operations for that table.
+             *     Each entry follows the same format as a single-table BatchRequest.
+             * @example {
+             *       "users": {
+             *         "inserts": {
+             *           "user:123": {
+             *             "name": "John Doe",
+             *             "email": "john@example.com"
+             *           }
+             *         }
+             *       },
+             *       "orders": {
+             *         "inserts": {
+             *           "order:456": {
+             *             "user_id": "user:123",
+             *             "total": 99.99
+             *           }
+             *         }
+             *       }
+             *     }
+             */
+            tables: {
+                [key: string]: components["schemas"]["BatchRequest"];
+            };
+            sync_level?: components["schemas"]["SyncLevel"];
+        };
+        /** @description Response for a cross-table batch operation. Contains per-table results. */
+        MultiBatchResponse: {
+            /** @description Per-table batch results */
+            tables?: {
+                [key: string]: components["schemas"]["BatchResponse"];
+            };
+        };
+        /**
+         * @description A key that was read as part of an OCC transaction, along with the version
+         *     observed at read time. Used to detect conflicts at commit time.
+         */
+        TransactionReadItem: {
+            /** @description Table name the key belongs to */
+            table: string;
+            /** @description Document key that was read */
+            key: string;
+            /**
+             * @description Version token observed at read time (from X-Antfly-Version header).
+             *     Use "0" to assert the key did not exist at read time.
+             */
+            version: string;
+        };
+        /**
+         * @description Stateless OCC (Optimistic Concurrency Control) transaction commit request.
+         *
+         *     The client reads documents (capturing version tokens from the X-Antfly-Version
+         *     response header on lookups), computes writes locally, then submits everything
+         *     in this single commit request. The server validates that all read versions
+         *     still match before executing writes atomically via 2PC.
+         *
+         *     **No server-side state**: There is no "begin" endpoint. The client manages
+         *     its own read set and submits the full transaction in one request.
+         */
+        TransactionCommitRequest: {
+            /**
+             * @description Set of keys that were read during the transaction, with their observed versions.
+             *     The server verifies these versions still match before committing writes.
+             */
+            read_set: components["schemas"]["TransactionReadItem"][];
+            /** @description Write set: map of table names to batch operations, same format as MultiBatchRequest.tables. */
+            tables: {
+                [key: string]: components["schemas"]["BatchRequest"];
+            };
+            sync_level?: components["schemas"]["SyncLevel"];
+        };
+        /** @description Result of an OCC transaction commit attempt. */
+        TransactionCommitResponse: {
+            /**
+             * @description Whether the transaction was committed or aborted due to a conflict
+             * @enum {string}
+             */
+            status: "committed" | "aborted";
+            /** @description Details about the conflict that caused an abort (only present when status is "aborted") */
+            conflict?: {
+                /** @description Table where the conflict was detected */
+                table?: string;
+                /** @description Key that had a version mismatch */
+                key?: string;
+                /** @description Human-readable conflict description */
+                message?: string;
+            };
+            /** @description Per-table batch results (only present when status is "committed") */
+            tables?: {
+                [key: string]: components["schemas"]["BatchResponse"];
+            };
         };
         BackupRequest: {
             /**
@@ -3195,7 +3364,24 @@ export interface components {
          * @description The reranking provider to use.
          * @enum {string}
          */
-        RerankerProvider: "ollama" | "termite" | "cohere" | "vertex";
+        RerankerProvider: "antfly" | "ollama" | "termite" | "cohere" | "vertex";
+        /**
+         * @description Configuration for the built-in Antfly reranking provider.
+         *
+         *     Uses an embedded INT8-quantized cross-encoder/ms-marco-MiniLM-L-6-v2 ONNX model
+         *     bundled directly in the binary. No external service, API key, or model download required.
+         *
+         *     **Model:** cross-encoder/ms-marco-MiniLM-L-6-v2 (6-layer MiniLM cross-encoder)
+         *
+         *     **Features:**
+         *     - Zero configuration — works out of the box
+         *     - No network access required
+         *     - Pure Go inference via GoMLX
+         * @example {
+         *       "provider": "antfly"
+         *     }
+         */
+        AntflyRerankerConfig: Record<string, never>;
         /** @description Configuration for the Ollama reranking provider. */
         OllamaRerankerConfig: {
             /** @description The name of the Ollama model to use for reranking. */
@@ -3291,7 +3477,7 @@ export interface components {
             field?: string;
             /** @description Handlebars template to render document text for reranking. */
             template?: string;
-        } & (components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"] | components["schemas"]["VertexRerankerConfig"]);
+        } & (components["schemas"]["AntflyRerankerConfig"] | components["schemas"]["OllamaRerankerConfig"] | components["schemas"]["TermiteRerankerConfig"] | components["schemas"]["CohereRerankerConfig"] | components["schemas"]["VertexRerankerConfig"]);
         /**
          * @description Type of graph query to execute
          * @enum {string}
@@ -5131,10 +5317,27 @@ export interface components {
             api_url?: string;
         };
         /**
+         * @description Configuration for the built-in Antfly embedding provider.
+         *
+         *     Uses an embedded INT8-quantized all-MiniLM-L6-v2 ONNX model bundled directly
+         *     in the binary. No external service, API key, or model download required.
+         *
+         *     **Model:** all-MiniLM-L6-v2 (384 dimensions, text-only)
+         *
+         *     **Features:**
+         *     - Zero configuration — works out of the box
+         *     - No network access required
+         *     - Pure Go inference via GoMLX
+         * @example {
+         *       "provider": "antfly"
+         *     }
+         */
+        AntflyEmbedderConfig: Record<string, never>;
+        /**
          * @description The embedding provider to use.
          * @enum {string}
          */
-        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "cohere" | "mock" | "termite";
+        EmbedderProvider: "gemini" | "vertex" | "ollama" | "openai" | "openrouter" | "bedrock" | "cohere" | "mock" | "termite" | "antfly";
         /**
          * @description A unified configuration for an embedding provider.
          *
@@ -5308,7 +5511,7 @@ export interface components {
          *       "model": "text-embedding-3-small"
          *     }
          */
-        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["OpenRouterEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"] | components["schemas"]["TermiteEmbedderConfig"]) & {
+        EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["OpenRouterEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"] | components["schemas"]["TermiteEmbedderConfig"] | components["schemas"]["AntflyEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
         };
         /** @description Per-request configuration for chunking. All fields are optional - zero/omitted values use chunker defaults. */
@@ -5803,6 +6006,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    multiBatchWrite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MultiBatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Cross-table batch operation successful */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MultiBatchResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    commitTransaction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransactionCommitRequest"];
+            };
+        };
+        responses: {
+            /** @description Transaction committed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionCommitResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
+            /** @description Transaction aborted due to version conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransactionCommitResponse"];
                 };
             };
             500: components["responses"]["InternalServerError"];
@@ -6465,6 +6731,12 @@ export interface operations {
             /** @description Record found */
             200: {
                 headers: {
+                    /**
+                     * @description Version token for this document. Use this value in OCC transaction
+                     *     read sets to detect concurrent modifications.
+                     *     "0" indicates the key does not exist.
+                     */
+                    "X-Antfly-Version"?: string;
                     [name: string]: unknown;
                 };
                 content: {
