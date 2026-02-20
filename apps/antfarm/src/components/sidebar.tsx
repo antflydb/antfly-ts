@@ -478,6 +478,53 @@ export function AppSidebar({
           </SidebarGroup>
         )}
 
+        {/* Antfly Playgrounds - search quality tools */}
+        {isProductEnabled("antfly") && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Playgrounds</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/playground/rag"}
+                    tooltip="RAG"
+                  >
+                    <a
+                      href="/playground/rag"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/playground/rag");
+                      }}
+                    >
+                      <MessageSquare className="size-4" />
+                      <span>RAG</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/playground/evals"}
+                    tooltip="Evals"
+                  >
+                    <a
+                      href="/playground/evals"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/playground/evals");
+                      }}
+                    >
+                      <ClipboardCheck className="size-4" />
+                      <span>Evals</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {/* Termite Tools Section */}
         {isProductEnabled("termite") && (
           <SidebarGroup>
@@ -508,7 +555,12 @@ export function AppSidebar({
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
-                        isActive={location.pathname.startsWith("/playground")}
+                        isActive={
+                          location.pathname === "/playground/chunking" ||
+                          location.pathname === "/playground/recognize" ||
+                          location.pathname === "/playground/question" ||
+                          location.pathname === "/playground/kg"
+                        }
                         tooltip="Playgrounds"
                       >
                         <Wrench className="size-4" />
@@ -583,40 +635,6 @@ export function AppSidebar({
                             >
                               <Network className="size-4" />
                               <span>Knowledge Graph</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={location.pathname === "/playground/evals"}
-                          >
-                            <a
-                              href="/playground/evals"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                navigate("/playground/evals");
-                              }}
-                            >
-                              <ClipboardCheck className="size-4" />
-                              <span>Evals</span>
-                            </a>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={location.pathname === "/playground/rag"}
-                          >
-                            <a
-                              href="/playground/rag"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                navigate("/playground/rag");
-                              }}
-                            >
-                              <MessageSquare className="size-4" />
-                              <span>RAG</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

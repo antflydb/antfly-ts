@@ -55,11 +55,23 @@ const COMMON_SECRETS = [
 function statusBadge(status: SecretEntry["status"]) {
   switch (status) {
     case "configured_keystore":
-      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Keystore</Badge>;
+      return (
+        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          Keystore
+        </Badge>
+      );
     case "configured_env":
-      return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Env Var</Badge>;
+      return (
+        <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+          Env Var
+        </Badge>
+      );
     case "configured_both":
-      return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Both</Badge>;
+      return (
+        <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+          Both
+        </Badge>
+      );
   }
 }
 
@@ -342,8 +354,8 @@ export function SecretsPage() {
             <p className="text-muted-foreground">Loading secrets...</p>
           ) : secrets.length === 0 ? (
             <p className="text-muted-foreground">
-              No secrets configured. Add API keys for AI providers to enable embedding generation and
-              RAG features.
+              No secrets configured. Add API keys for AI providers to enable embedding generation
+              and RAG features.
             </p>
           ) : (
             <Table>
@@ -365,9 +377,7 @@ export function SecretsPage() {
                       {secret.env_var || "-"}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {secret.updated_at
-                        ? new Date(secret.updated_at).toLocaleDateString()
-                        : "-"}
+                      {secret.updated_at ? new Date(secret.updated_at).toLocaleDateString() : "-"}
                     </TableCell>
                     {swarmMode && (
                       <TableCell className="text-right">
@@ -395,9 +405,7 @@ export function SecretsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-medium">Quick Add</CardTitle>
-            <CardDescription>
-              Common AI provider API keys
-            </CardDescription>
+            <CardDescription>Common AI provider API keys</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -419,9 +427,7 @@ export function SecretsPage() {
                   {s.label}
                 </Button>
               ))}
-              {COMMON_SECRETS.every((s) =>
-                secrets.some((existing) => existing.key === s.key)
-              ) && (
+              {COMMON_SECRETS.every((s) => secrets.some((existing) => existing.key === s.key)) && (
                 <p className="text-sm text-muted-foreground">
                   All common provider keys are configured.
                 </p>

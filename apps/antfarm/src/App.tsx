@@ -27,9 +27,9 @@ import ModelsPage from "./pages/ModelsPage";
 import NERPlaygroundPage from "./pages/NERPlaygroundPage";
 import QuestionPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import RagPlaygroundPage from "./pages/RagPlaygroundPage";
+import { SecretsPage } from "./pages/SecretsPage";
 import TableDetailsPage from "./pages/TableDetailsPage";
 import TablesListPage from "./pages/TablesListPage";
-import { SecretsPage } from "./pages/SecretsPage";
 import { UsersPage } from "./pages/UsersPage";
 
 function AppContent() {
@@ -77,6 +77,8 @@ function AppContent() {
                         />
                         <Route path="/users" element={<UsersPage />} />
                         <Route path="/secrets" element={<SecretsPage />} />
+                        <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
+                        <Route path="/playground/rag" element={<RagPlaygroundPage />} />
                       </>
                     )}
 
@@ -88,8 +90,6 @@ function AppContent() {
                         <Route path="/playground/recognize" element={<NERPlaygroundPage />} />
                         <Route path="/playground/question" element={<QuestionPlaygroundPage />} />
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
-                        <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
-                        <Route path="/playground/rag" element={<RagPlaygroundPage />} />
                       </>
                     )}
 
