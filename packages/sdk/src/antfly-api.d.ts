@@ -3973,6 +3973,8 @@ export interface components {
             top_p?: number;
             /** @description Top-k sampling parameter. */
             top_k?: number;
+            /** @description HTTP response timeout in seconds for Ollama API calls. Defaults to 540 (9 minutes). Increase for large models on slow hardware. */
+            timeout?: number;
         };
         /**
          * @description Configuration for the Termite generative AI provider.
@@ -4014,6 +4016,8 @@ export interface components {
             top_p?: number;
             /** @description Top-k sampling parameter. */
             top_k?: number;
+            /** @description HTTP response timeout in seconds for Termite API calls. Defaults to 540 (9 minutes). Increase for large models on slow hardware. */
+            timeout?: number;
         };
         /**
          * @description Configuration for the OpenAI generative AI provider.
