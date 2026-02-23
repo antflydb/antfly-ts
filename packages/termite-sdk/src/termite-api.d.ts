@@ -809,6 +809,47 @@ export interface components {
              *     ]
              */
             relation_labels?: string[];
+            resolver?: components["schemas"]["ResolverConfig"];
+        };
+        /**
+         * @description Configuration for entity resolution. When present in a RecognizeRequest,
+         *     the response entities and relations are deduplicated via entity resolution
+         *     (e.g., "Elon Musk" and "Musk" are merged into a single entity).
+         */
+        ResolverConfig: {
+            /**
+             * Format: float
+             * @description Jaro-Winkler similarity threshold for merging entities (0.0-1.0)
+             * @default 0.85
+             */
+            similarity_threshold?: number;
+            /**
+             * @description Whether entity types must match for merging
+             * @default true
+             */
+            type_must_match?: boolean;
+            /**
+             * Format: float
+             * @description Minimum confidence score for entities to be included
+             * @default 0
+             */
+            min_entity_confidence?: number;
+            /**
+             * Format: float
+             * @description Minimum confidence score for relations to be included
+             * @default 0
+             */
+            min_relation_confidence?: number;
+            /**
+             * @description Whether to deduplicate relations after entity resolution
+             * @default true
+             */
+            deduplicate_relations?: boolean;
+            /**
+             * @description Whether to track mention provenance for resolved entities
+             * @default true
+             */
+            track_provenance?: boolean;
         };
         Relation: {
             /** @description The subject/head entity in the relationship */
@@ -1132,6 +1173,10 @@ export interface components {
             };
             /** @description Available embedding models from models_dir/embedders/ */
             embedders: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available extractor models (NER models with 'extraction' capability) */
+            extractors: {
                 [key: string]: components["schemas"]["ModelInfo"];
             };
             /** @description Available generator/LLM models from models_dir/generators/ */
