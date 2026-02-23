@@ -1,5 +1,6 @@
 import type { TableStatus } from "@antfly/sdk";
 import {
+  ArrowUpDown,
   Check,
   ChevronRight,
   ChevronsUpDown,
@@ -7,7 +8,6 @@ import {
   Database,
   FileInput,
   FileText,
-  HelpCircle,
   KeyRound,
   LayoutList,
   Library,
@@ -16,6 +16,7 @@ import {
   PanelLeft,
   PanelLeftOpen,
   Plus,
+  Repeat2,
   Scissors,
   Search,
   Shield,
@@ -558,7 +559,8 @@ export function AppSidebar({
                         isActive={
                           location.pathname === "/playground/chunking" ||
                           location.pathname === "/playground/recognize" ||
-                          location.pathname === "/playground/question" ||
+                          location.pathname === "/playground/rewrite" ||
+                          location.pathname === "/playground/rerank" ||
                           location.pathname === "/playground/kg"
                         }
                         tooltip="Playgrounds"
@@ -600,24 +602,41 @@ export function AppSidebar({
                               }}
                             >
                               <Tag className="size-4" />
-                              <span>NER</span>
+                              <span>Recognize</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton
                             asChild
-                            isActive={location.pathname === "/playground/question"}
+                            isActive={location.pathname === "/playground/rewrite"}
                           >
                             <a
-                              href="/playground/question"
+                              href="/playground/rewrite"
                               onClick={(e) => {
                                 e.preventDefault();
-                                navigate("/playground/question");
+                                navigate("/playground/rewrite");
                               }}
                             >
-                              <HelpCircle className="size-4" />
-                              <span>Question Gen</span>
+                              <Repeat2 className="size-4" />
+                              <span>Rewriting</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === "/playground/rerank"}
+                          >
+                            <a
+                              href="/playground/rerank"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/rerank");
+                              }}
+                            >
+                              <ArrowUpDown className="size-4" />
+                              <span>Reranking</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

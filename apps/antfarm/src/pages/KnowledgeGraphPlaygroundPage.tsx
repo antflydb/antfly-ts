@@ -63,17 +63,13 @@ interface KnowledgeGraphResponse {
   edges: KGEdge[];
 }
 
-interface RecognizerModelInfo {
-  capabilities: string[];
+interface ModelInfo {
+  capabilities?: string[];
 }
 
 interface ModelsResponse {
-  chunkers: string[];
-  rerankers: string[];
-  recognizers: string[];
-  embedders: string[];
-  generators: string[];
-  recognizer_info?: Record<string, RecognizerModelInfo>;
+  recognizers: Record<string, ModelInfo>;
+  [key: string]: Record<string, ModelInfo>;
 }
 
 interface KGBuilderConfig {
@@ -139,14 +135,12 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         const response = await fetch(`${termiteApiUrl}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
-          const recognizers = data.recognizers || [];
-          const recognizerInfo = data.recognizer_info || {};
+          const recognizersMap = data.recognizers || {};
 
           // Filter for models with "relations" capability (REBEL, GLiNER multitask)
-          const relationModels = recognizers.filter((model) => {
-            const info = recognizerInfo[model];
-            return info?.capabilities?.includes("relations");
-          });
+          const relationModels = Object.entries(recognizersMap)
+            .filter(([, info]) => info.capabilities?.includes("relations"))
+            .map(([name]) => name);
 
           // Mark REBEL models with prefix for special handling
           const models = relationModels.map((m) => {

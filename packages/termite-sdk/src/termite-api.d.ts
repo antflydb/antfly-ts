@@ -1112,173 +1112,48 @@ export interface components {
              */
             language?: string;
         };
+        /** @description Information about a model including its capabilities */
+        ModelInfo: {
+            /** @description List of capabilities this model supports (omitted when empty) */
+            capabilities?: string[];
+        };
         ModelsResponse: {
-            /**
-             * @description Available chunking models (always includes "fixed")
-             * @example [
-             *       "fixed",
-             *       "mirth/chonky-mmbert-small-multilingual-1"
-             *     ]
-             */
-            chunkers: string[];
-            /**
-             * @description Available reranking models
-             * @example [
-             *       "BAAI/bge-reranker-v2-m3"
-             *     ]
-             */
-            rerankers: string[];
-            /**
-             * @description Available zero-shot classification models
-             * @example [
-             *       "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
-             *     ]
-             */
-            classifiers: string[];
-            /**
-             * @description Available embedding models from models_dir/embedders/
-             * @example [
-             *       "BAAI/bge-small-en-v1.5",
-             *       "BAAI/bge-small-en-v1.5:i8"
-             *     ]
-             */
-            embedders: string[];
-            /**
-             * @description Available generator/LLM models from models_dir/generators/
-             * @example [
-             *       "google/gemma-3-1b-it",
-             *       "onnxruntime/Gemma-3-ONNX"
-             *     ]
-             */
-            generators: string[];
-            /**
-             * @description Available recognizer models from models_dir/recognizers/
-             * @example [
-             *       "dslim/bert-base-NER",
-             *       "dslim/bert-large-NER",
-             *       "onnx-community/gliner_small-v2.1"
-             *     ]
-             */
-            recognizers: string[];
-            /**
-             * @description Available GLiNER extractor models (zero-shot recognition with custom labels)
-             * @example [
-             *       "onnx-community/gliner_small-v2.1",
-             *       "onnx-community/gliner-multitask"
-             *     ]
-             */
-            extractors?: string[];
-            /**
-             * @description Available Seq2Seq rewriter models from models_dir/rewriters/
-             * @example [
-             *       "lmqg/flan-t5-small-squad-qg",
-             *       "lmqg/flan-t5-base-squad-qg"
-             *     ]
-             */
-            rewriters: string[];
-            /**
-             * @description Available reader/OCR models from models_dir/readers/
-             * @example [
-             *       "microsoft/trocr-base-printed",
-             *       "monkt/paddleocr-onnx"
-             *     ]
-             */
-            readers: string[];
-            /**
-             * @description Detailed information about reader models including capabilities.
-             *     Map of model name to model info. Use this to determine what capabilities
-             *     each reader supports (document_qa, regions).
-             * @example {
-             *       "monkt/paddleocr-onnx": {
-             *         "capabilities": [
-             *           "regions"
-             *         ]
-             *       },
-             *       "naver-clova-ix/donut-base-finetuned-docvqa": {
-             *         "capabilities": [
-             *           "document_qa"
-             *         ]
-             *       }
-             *     }
-             */
-            reader_info?: {
-                [key: string]: components["schemas"]["ReaderModelInfo"];
+            /** @description Available chunking models (always includes "fixed") */
+            chunkers: {
+                [key: string]: components["schemas"]["ModelInfo"];
             };
-            /**
-             * @description Available transcriber/speech-to-text models from models_dir/transcribers/
-             * @example [
-             *       "openai/whisper-tiny",
-             *       "openai/whisper-base"
-             *     ]
-             */
-            transcribers: string[];
-            /**
-             * @description Detailed information about recognizer models including capabilities.
-             *     Map of model name to model info. Use this to determine what capabilities
-             *     each recognizer supports (labels, zeroshot, relations, answers).
-             * @example {
-             *       "dslim/bert-base-NER": {
-             *         "capabilities": [
-             *           "labels"
-             *         ]
-             *       },
-             *       "onnx-community/gliner_small-v2.1": {
-             *         "capabilities": [
-             *           "labels",
-             *           "zeroshot"
-             *         ]
-             *       },
-             *       "onnx-community/gliner-multitask": {
-             *         "capabilities": [
-             *           "labels",
-             *           "zeroshot",
-             *           "relations",
-             *           "answers"
-             *         ]
-             *       }
-             *     }
-             */
-            recognizer_info?: {
-                [key: string]: components["schemas"]["RecognizerModelInfo"];
+            /** @description Available reranking models */
+            rerankers: {
+                [key: string]: components["schemas"]["ModelInfo"];
             };
-        };
-        /**
-         * @description Capability that a recognizer model supports:
-         *     - labels: Entity extraction (NER) - extracts labeled spans like PER, ORG, LOC
-         *     - zeroshot: Supports arbitrary labels at inference time (GLiNER models)
-         *     - relations: Relation extraction between entities (GLiNER multitask, REBEL)
-         *     - answers: Extractive question answering (GLiNER multitask)
-         *     - extraction: Structured schema-based extraction from text (GLiNER2)
-         * @enum {string}
-         */
-        RecognizerCapability: "labels" | "zeroshot" | "relations" | "answers" | "extraction";
-        /** @description Detailed information about a recognizer model */
-        RecognizerModelInfo: {
-            /**
-             * @description List of capabilities this recognizer model supports
-             * @example [
-             *       "labels",
-             *       "zeroshot"
-             *     ]
-             */
-            capabilities?: components["schemas"]["RecognizerCapability"][];
-        };
-        /**
-         * @description Capability that a reader model supports (all readers perform OCR as a baseline):
-         *     - document_qa: Visual document question answering (Donut, Pix2Struct)
-         *     - regions: Returns spatial text regions with bounding boxes (PaddleOCR)
-         * @enum {string}
-         */
-        ReaderCapability: "document_qa" | "regions";
-        /** @description Detailed information about a reader model */
-        ReaderModelInfo: {
-            /**
-             * @description List of capabilities this reader model supports
-             * @example [
-             *       "regions"
-             *     ]
-             */
-            capabilities?: components["schemas"]["ReaderCapability"][];
+            /** @description Available zero-shot classification models */
+            classifiers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available embedding models from models_dir/embedders/ */
+            embedders: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available generator/LLM models from models_dir/generators/ */
+            generators: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available recognizer models from models_dir/recognizers/ */
+            recognizers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available Seq2Seq rewriter models from models_dir/rewriters/ */
+            rewriters: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available reader/OCR models from models_dir/readers/ */
+            readers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available transcriber/speech-to-text models from models_dir/transcribers/ */
+            transcribers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
         };
         /** @description A tool (function) that the model can call */
         Tool: {

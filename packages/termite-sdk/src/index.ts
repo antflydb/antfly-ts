@@ -61,16 +61,27 @@ export type {
   EmbedInput,
   EmbedRequest,
   EmbedResponse,
+  // Extraction types
+  ExtractFieldValue,
+  ExtractRequest,
+  ExtractResponse,
   ImageURL,
   ImageURLContentPart,
   Level,
   ModelsResponse,
+  // Recognize types
+  RecognizeEntity,
+  RecognizeRequest,
+  RecognizeResponse,
   // Request options
   RequestOptions,
   RerankRequest,
   RerankResponse,
   // Utility types
   ResponseData,
+  // Rewrite types
+  RewriteRequest,
+  RewriteResponse,
   Style,
   // Client configuration
   TermiteConfig,

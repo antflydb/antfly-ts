@@ -24,9 +24,10 @@ import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
 import KnowledgeGraphPlaygroundPage from "./pages/KnowledgeGraphPlaygroundPage";
 import { LoginPage } from "./pages/LoginPage";
 import ModelsPage from "./pages/ModelsPage";
-import NERPlaygroundPage from "./pages/NERPlaygroundPage";
-import QuestionPlaygroundPage from "./pages/QuestionPlaygroundPage";
+import RecognizePlaygroundPage from "./pages/NERPlaygroundPage";
+import RewritingPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import RagPlaygroundPage from "./pages/RagPlaygroundPage";
+import RerankingPlaygroundPage from "./pages/RerankingPlaygroundPage";
 import { SecretsPage } from "./pages/SecretsPage";
 import TableDetailsPage from "./pages/TableDetailsPage";
 import TablesListPage from "./pages/TablesListPage";
@@ -87,8 +88,9 @@ function AppContent() {
                       <>
                         <Route path="/models" element={<ModelsPage />} />
                         <Route path="/playground/chunking" element={<ChunkingPlaygroundPage />} />
-                        <Route path="/playground/recognize" element={<NERPlaygroundPage />} />
-                        <Route path="/playground/question" element={<QuestionPlaygroundPage />} />
+                        <Route path="/playground/recognize" element={<RecognizePlaygroundPage />} />
+                        <Route path="/playground/rewrite" element={<RewritingPlaygroundPage />} />
+                        <Route path="/playground/rerank" element={<RerankingPlaygroundPage />} />
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
                       </>
                     )}

@@ -41,20 +41,20 @@ interface GenerateResponse {
   texts: string[][];
 }
 
+interface ModelInfo {
+  capabilities?: string[];
+}
+
 interface ModelsResponse {
-  chunkers: string[];
-  rerankers: string[];
-  ner: string[];
-  embedders: string[];
-  generators: string[];
-  rewriters: string[];
+  rewriters: Record<string, ModelInfo>;
+  [key: string]: Record<string, ModelInfo>;
 }
 
 const SAMPLE_CONTEXT = `The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower from 1887 to 1889 as the entrance arch for the 1889 World's Fair. The tower is 330 metres tall and was the tallest man-made structure in the world until the Chrysler Building in New York City was built in 1930.`;
 
 const SAMPLE_ANSWER = "Gustave Eiffel";
 
-const QuestionPlaygroundPage: React.FC = () => {
+const RewritingPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
   const [context, setContext] = useState("");
   const [answer, setAnswer] = useState("");
@@ -82,9 +82,10 @@ const QuestionPlaygroundPage: React.FC = () => {
         const response = await fetch(`${termiteApiUrl}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
-          setAvailableModels(data.rewriters || []);
-          if (data.rewriters && data.rewriters.length > 0) {
-            setSelectedModel(data.rewriters[0]);
+          const rewriters = Object.keys(data.rewriters || {});
+          setAvailableModels(rewriters);
+          if (rewriters.length > 0) {
+            setSelectedModel(rewriters[0]);
           }
         }
       } catch {
@@ -258,9 +259,9 @@ const QuestionPlaygroundPage: React.FC = () => {
     <div className="h-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Question Generation Playground</h1>
+          <h1 className="text-2xl font-bold">Rewriting Playground</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Generate questions from context and answer pairs using Seq2Seq models
+            Transform text using Seq2Seq models (question generation, paraphrasing, etc.)
           </p>
         </div>
         <div className="flex gap-2">
@@ -561,4 +562,4 @@ const QuestionPlaygroundPage: React.FC = () => {
   );
 };
 
-export default QuestionPlaygroundPage;
+export default RewritingPlaygroundPage;

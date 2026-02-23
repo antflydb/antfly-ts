@@ -11,9 +11,12 @@ import type {
   ChunkResponse,
   EmbedInput,
   EmbedResponse,
+  ExtractResponse,
   ModelsResponse,
+  RecognizeResponse,
   RequestOptions,
   RerankResponse,
+  RewriteResponse,
   TermiteConfig,
   TranscribeResponse,
   VersionResponse,
@@ -217,6 +220,113 @@ export class TermiteClient {
       },
     });
     if (error) throw new Error(`Rerank failed: ${error.error}`);
+    return data!;
+  }
+
+  /**
+   * Recognize named entities in text
+   *
+   * @param model - Name of the recognizer model (e.g., "gliner-multi-v2.1")
+   * @param texts - Array of texts to extract entities from
+   * @param options - Optional parameters
+   * @param options.labels - Custom entity labels (GLiNER models only)
+   * @param options.relationLabels - Relation types to extract (for models with relations capability)
+   * @returns RecognizeResponse with entities per input text
+   *
+   * @example
+   * ```typescript
+   * const result = await client.recognize(
+   *   "gliner-multi-v2.1",
+   *   ["John Smith works at Google in London."],
+   *   { labels: ["person", "organization", "location"] }
+   * );
+   * // result.entities[0] contains entities for the first text
+   * ```
+   */
+  async recognize(
+    model: string,
+    texts: string[],
+    options?: { labels?: string[]; relationLabels?: string[] }
+  ): Promise<RecognizeResponse> {
+    const { data, error } = await this.client.POST("/recognize", {
+      body: {
+        model,
+        texts,
+        labels: options?.labels,
+        relation_labels: options?.relationLabels,
+      },
+    });
+    if (error) throw new Error(`Recognize failed: ${error.error}`);
+    return data!;
+  }
+
+  /**
+   * Extract structured data from text using GLiNER2 models
+   *
+   * @param model - Name of the extractor model (e.g., "fastino/gliner2-base-v1")
+   * @param texts - Array of texts to extract from
+   * @param schema - Extraction schema mapping structure names to field definitions
+   * @param options - Optional parameters
+   * @returns ExtractResponse with structured results per input text
+   *
+   * @example
+   * ```typescript
+   * const result = await client.extract(
+   *   "fastino/gliner2-base-v1",
+   *   ["John Smith is 30 years old and works at Google."],
+   *   { person: ["name::str", "age::str", "company::str"] }
+   * );
+   * ```
+   */
+  async extract(
+    model: string,
+    texts: string[],
+    schema: Record<string, string[]>,
+    options?: {
+      threshold?: number;
+      flatNer?: boolean;
+      includeConfidence?: boolean;
+      includeSpans?: boolean;
+    }
+  ): Promise<ExtractResponse> {
+    const { data, error } = await this.client.POST("/extract", {
+      body: {
+        model,
+        texts,
+        schema,
+        threshold: options?.threshold,
+        flat_ner: options?.flatNer,
+        include_confidence: options?.includeConfidence,
+        include_spans: options?.includeSpans,
+      },
+    });
+    if (error) throw new Error(`Extract failed: ${error.error}`);
+    return data!;
+  }
+
+  /**
+   * Rewrite/transform text using Seq2Seq models
+   *
+   * @param model - Name of the rewriter model (e.g., "lmqg/flan-t5-small-squad-qg")
+   * @param inputs - Array of input texts to rewrite
+   * @returns RewriteResponse with transformed texts
+   *
+   * @example
+   * ```typescript
+   * const result = await client.rewrite(
+   *   "lmqg/flan-t5-small-squad-qg",
+   *   ["generate question: The Eiffel Tower is in <hl> Paris <hl>."]
+   * );
+   * ```
+   */
+  async rewrite(model: string, inputs: string[]): Promise<RewriteResponse> {
+    const { data, error } = await this.client.POST("/rewrite", {
+      body: {
+        model,
+        inputs,
+      },
+    });
+    if (error) throw new Error(`Rewrite failed: ${error.error}`);
     return data!;
   }
 
