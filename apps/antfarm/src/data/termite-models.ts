@@ -205,10 +205,17 @@ export function getQuantizationInfo(
 
 // Generate download command for a model
 export function getDownloadCommand(model: TermiteModel, quantization?: QuantizationType): string {
-  // Base command: termite pull hf:SOURCE --type TYPE
-  let cmd = `termite pull hf:${model.source} --type ${model.type}`;
+  if (model.inRegistry) {
+    // Registry pull: termite pull SOURCE (variant appended with colon)
+    let cmd = `termite pull ${model.source}`;
+    if (quantization) {
+      cmd += `:${quantization}`;
+    }
+    return cmd;
+  }
 
-  // Add variant flag if specified
+  // HuggingFace pull: termite pull hf:SOURCE --type TYPE
+  let cmd = `termite pull hf:${model.source} --type ${model.type}`;
   if (quantization) {
     const variantName = VARIANT_CLI_NAMES[quantization];
     if (!variantName) {

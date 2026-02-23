@@ -112,12 +112,12 @@ function App() {
       <ErrorBoundary>
         <ApiConfigProvider>
           <AuthProvider>
-            <ContentWidthProvider>
-              <CommandPaletteProvider>
-                <AppContent />
-              </CommandPaletteProvider>
-            </ContentWidthProvider>
-          </AuthProvider>
+              <ContentWidthProvider>
+                <CommandPaletteProvider>
+                  <AppContent />
+                </CommandPaletteProvider>
+              </ContentWidthProvider>
+            </AuthProvider>
         </ApiConfigProvider>
       </ErrorBoundary>
     </ThemeProvider>

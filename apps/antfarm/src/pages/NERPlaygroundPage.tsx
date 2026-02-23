@@ -1,7 +1,11 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { Clock, FileText, Hash, Percent, Plus, RotateCcw, Tag, X, Zap } from "lucide-react";
+import { Clock, Hash, Percent, Plus, RotateCcw, Tag, X, Zap } from "lucide-react";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
+import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
+import type { SamplePreset } from "@/components/playground/SamplePresets";
+import { SamplePresets } from "@/components/playground/SamplePresets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
 
@@ -32,16 +37,10 @@ interface NERResponse {
   entities: NEREntity[][];
 }
 
-interface ModelsResponse {
-  chunkers: string[];
-  rerankers: string[];
-  recognizers: string[];
-  embedders: string[];
-  generators: string[];
-}
-
 // Default entity labels for GLiNER
 const DEFAULT_LABELS = ["person", "organization", "location"];
+
+const STORAGE_KEY = "antfarm-playground-ner";
 
 // Standard entity type colors (for common NER labels)
 const STANDARD_LABEL_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -126,15 +125,66 @@ const DYNAMIC_COLORS = [
   },
 ];
 
-const SAMPLE_TEXT = `Apple Inc. announced that Tim Cook will be visiting the new headquarters in Cupertino, California next Monday. The company plans to unveil several new products, including the iPhone 16 and MacBook Pro. Meanwhile, Google's CEO Sundar Pichai confirmed that the search giant is expanding its AI research team in London. Microsoft and Amazon are also investing heavily in artificial intelligence, with Jeff Bezos recently stating that AWS will double its machine learning capabilities by 2025.`;
+const SAMPLE_TEXTS = {
+  tech: {
+    name: "Tech News",
+    description: "Companies, people, and products",
+    text: `Apple Inc. announced that Tim Cook will be visiting the new headquarters in Cupertino, California next Monday. The company plans to unveil several new products, including the iPhone 16 and MacBook Pro. Meanwhile, Google's CEO Sundar Pichai confirmed that the search giant is expanding its AI research team in London. Microsoft and Amazon are also investing heavily in artificial intelligence, with Jeff Bezos recently stating that AWS will double its machine learning capabilities by 2025.`,
+    labels: ["person", "organization", "location", "product", "date"],
+  },
+  scientific: {
+    name: "Scientific Text",
+    description: "Research entities and methods",
+    text: `The CRISPR-Cas9 gene editing system, developed by Jennifer Doudna and Emmanuelle Charpentier at UC Berkeley and the Max Planck Institute, has revolutionized molecular biology. Their 2020 Nobel Prize in Chemistry recognized the potential of this technology for treating genetic diseases like sickle cell anemia and cystic fibrosis. Recent clinical trials at Massachusetts General Hospital have shown promising results using CRISPR to target the BCL11A gene in patients with beta-thalassemia.`,
+    labels: ["person", "organization", "technology", "disease", "gene"],
+  },
+  product: {
+    name: "Product Review",
+    description: "Brands, features, and specifications",
+    text: `The Sony WH-1000XM5 wireless headphones deliver exceptional noise cancellation powered by the V1 processor. Priced at $399, they compete directly with the Bose QuietComfort Ultra and Apple AirPods Max. The 30-hour battery life and multipoint Bluetooth 5.2 connectivity make them ideal for commuters. Sony's LDAC codec support enables high-resolution audio streaming up to 990 kbps, surpassing the standard SBC and AAC codecs used by most competitors.`,
+    labels: ["product", "brand", "feature", "specification", "price"],
+  },
+};
 
 const NERPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
-  const [inputText, setInputText] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [labels, setLabels] = useState<string[]>(DEFAULT_LABELS);
+
+  // Restore state from localStorage
+  const [inputText, setInputText] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).inputText || "";
+    } catch {}
+    return "";
+  });
+  const [selectedModel, setSelectedModel] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).selectedModel || "";
+    } catch {}
+    return "";
+  });
+  const [labels, setLabels] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).labels;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_LABELS;
+  });
+  const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const val = JSON.parse(saved).confidenceThreshold;
+        if (typeof val === "number") return val;
+      }
+    } catch {}
+    return 0.5;
+  });
   const [newLabel, setNewLabel] = useState("");
-  const [confidenceThreshold, setConfidenceThreshold] = useState(0.5);
   const [result, setResult] = useState<NERResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,26 +194,38 @@ const NERPlaygroundPage: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const labelColorMapRef = useRef<Map<string, number>>(new Map());
 
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ inputText, selectedModel, labels, confidenceThreshold })
+    );
+  }, [inputText, selectedModel, labels, confidenceThreshold]);
+
   // Fetch available models on mount
   useEffect(() => {
-    const fetchModels = async () => {
+    const controller = new AbortController();
+    (async () => {
       try {
-        const response = await fetch(`${termiteApiUrl}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
+          signal: controller.signal,
+        });
         if (response.ok) {
-          const data: ModelsResponse = await response.json();
-          setAvailableModels(data.recognizers || []);
-          if (data.recognizers && data.recognizers.length > 0) {
-            setSelectedModel(data.recognizers[0]);
+          const data = await response.json();
+          const modelList = data.recognizers || [];
+          setAvailableModels(modelList);
+          if (!selectedModel && modelList.length > 0) {
+            setSelectedModel(modelList[0]);
           }
         }
       } catch {
-        console.error("Failed to fetch models");
+        // Ignore fetch errors
       } finally {
         setModelsLoaded(true);
       }
-    };
-    fetchModels();
-  }, [termiteApiUrl]);
+    })();
+    return () => controller.abort();
+  }, [termiteApiUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getColorForLabel = (label: string) => {
     const normalizedLabel = label.toLowerCase();
@@ -182,7 +244,7 @@ const NERPlaygroundPage: React.FC = () => {
     return DYNAMIC_COLORS[labelColorMapRef.current.get(normalizedLabel)!];
   };
 
-  const handleRecognize = async () => {
+  const handleRecognize = useCallback(async () => {
     if (!inputText.trim()) {
       setError("Please enter some text to analyze");
       return;
@@ -238,12 +300,26 @@ const NERPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
+        err instanceof Error
+          ? err.message
+          : "Failed to connect to Termite. Make sure Termite is running."
       );
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inputText, selectedModel, labels, termiteApiUrl]);
+
+  // Cmd+Enter shortcut
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleRecognize();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [handleRecognize]);
 
   const handleReset = () => {
     setInputText("");
@@ -254,6 +330,7 @@ const NERPlaygroundPage: React.FC = () => {
     setError(null);
     setProcessingTime(null);
     labelColorMapRef.current.clear();
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   const handleAddLabel = () => {
@@ -275,17 +352,22 @@ const NERPlaygroundPage: React.FC = () => {
     }
   };
 
-  const loadSampleText = () => {
-    setInputText(SAMPLE_TEXT);
-    setLabels(["person", "organization", "location", "product", "date"]);
-  };
-
   // Get filtered entities based on confidence threshold
   const getFilteredEntities = (): NEREntity[] => {
     if (!result || !result.entities || result.entities.length === 0) {
       return [];
     }
     return result.entities[0].filter((entity) => entity.score >= confidenceThreshold);
+  };
+
+  // Get entity count per label
+  const getEntityCountByLabel = (): Record<string, number> => {
+    const entities = getFilteredEntities();
+    const counts: Record<string, number> = {};
+    for (const entity of entities) {
+      counts[entity.label] = (counts[entity.label] || 0) + 1;
+    }
+    return counts;
   };
 
   // Render text with entity highlighting
@@ -351,6 +433,15 @@ const NERPlaygroundPage: React.FC = () => {
     return [...new Set(entities.map((e) => e.label))];
   };
 
+  const samplePresets: SamplePreset[] = Object.values(SAMPLE_TEXTS).map((sample) => ({
+    name: sample.name,
+    description: sample.description,
+    onLoad: () => {
+      setInputText(sample.text);
+      setLabels(sample.labels);
+    },
+  }));
+
   return (
     <div className="h-full">
       <div className="flex items-center justify-between mb-6">
@@ -361,16 +452,19 @@ const NERPlaygroundPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadSampleText}>
-            <FileText className="h-4 w-4 mr-2" />
-            Load Sample
-          </Button>
+          <SamplePresets presets={samplePresets} />
           <Button variant="outline" onClick={handleReset}>
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset
           </Button>
         </div>
       </div>
+
+      <BackendInfoBar />
+
+      {modelsLoaded && availableModels.length === 0 && (
+        <NoModelsGuide modelType="recognizer" typeName="NER recognizer" />
+      )}
 
       {/* Configuration Panel */}
       <Card className="mb-6">
@@ -561,20 +655,33 @@ const NERPlaygroundPage: React.FC = () => {
             <CardTitle className="text-lg">{result ? "Extracted Entities" : "Preview"}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
-            {result ? (
+            {isLoading ? (
+              <div className="h-100 space-y-3">
+                <div className="flex gap-2">
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-6 w-14" />
+                </div>
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-3/4" />
+              </div>
+            ) : result ? (
               <div className="h-100 overflow-y-auto space-y-4">
-                {/* Legend */}
+                {/* Legend with entity counts */}
                 {getUniqueLabels().length > 0 && (
                   <div className="flex flex-wrap gap-2 pb-2">
                     {getUniqueLabels().map((label) => {
                       const colors = getColorForLabel(label);
+                      const counts = getEntityCountByLabel();
                       return (
                         <Badge
                           key={label}
                           variant="outline"
                           className={`${colors.bg} ${colors.text} ${colors.border} text-xs`}
                         >
-                          {label}
+                          {label} ({counts[label]})
                         </Badge>
                       );
                     })}
@@ -638,7 +745,21 @@ const NERPlaygroundPage: React.FC = () => {
               <div className="h-100 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Tag className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p>Enter text and click "Extract Entities" to see results</p>
+                  <p className="mb-3">
+                    Enter text and press{" "}
+                    <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
+                    to extract entities
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setInputText(SAMPLE_TEXTS.tech.text);
+                      setLabels(SAMPLE_TEXTS.tech.labels);
+                    }}
+                  >
+                    Try a sample
+                  </Button>
                 </div>
               </div>
             )}
