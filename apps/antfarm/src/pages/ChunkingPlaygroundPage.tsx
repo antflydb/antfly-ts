@@ -1,4 +1,4 @@
-import { type ChunkResponse, TermiteClient } from "@antfly/termite-sdk";
+import { type Chunk, type ChunkResponse, TermiteClient } from "@antfly/termite-sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { Clock, Database, Hash, RotateCcw, Scissors, Zap } from "lucide-react";
 import type React from "react";
@@ -27,6 +27,12 @@ interface ChunkConfig {
   separator: string;
   max_chunks: number;
   threshold: number;
+}
+
+function isTextChunk(
+  chunk: Chunk
+): chunk is Chunk & { text: string; start_char: number; end_char: number } {
+  return "text" in chunk;
 }
 
 const DEFAULT_CONFIG: ChunkConfig = {
@@ -152,6 +158,8 @@ const ChunkingPlaygroundPage: React.FC = () => {
     let lastEnd = 0;
 
     result.chunks.forEach((chunk, index) => {
+      if (!isTextChunk(chunk)) return;
+
       // Add any text before this chunk (gaps)
       if (chunk.start_char > lastEnd) {
         elements.push(
@@ -448,7 +456,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
 
                 {/* Chunk list */}
                 <div className="space-y-3">
-                  {result.chunks.map((chunk, index) => {
+                  {result.chunks.filter(isTextChunk).map((chunk, index) => {
                     const colorIndex = index % CHUNK_COLORS.length;
                     return (
                       <div

@@ -47,6 +47,7 @@ interface ModelsResponse {
   ner: string[];
   embedders: string[];
   generators: string[];
+  rewriters: string[];
 }
 
 const SAMPLE_CONTEXT = `The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower from 1887 to 1889 as the entrance arch for the 1889 World's Fair. The tower is 330 metres tall and was the tallest man-made structure in the world until the Chrysler Building in New York City was built in 1930.`;
@@ -81,9 +82,9 @@ const QuestionPlaygroundPage: React.FC = () => {
         const response = await fetch(`${termiteApiUrl}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
-          setAvailableModels(data.generators || []);
-          if (data.generators && data.generators.length > 0) {
-            setSelectedModel(data.generators[0]);
+          setAvailableModels(data.rewriters || []);
+          if (data.rewriters && data.rewriters.length > 0) {
+            setSelectedModel(data.rewriters[0]);
           }
         }
       } catch {
@@ -142,7 +143,7 @@ const QuestionPlaygroundPage: React.FC = () => {
     try {
       const formattedInput = formatInput(context, answer);
 
-      const response = await fetch(`${termiteApiUrl}/api/question`, {
+      const response = await fetch(`${termiteApiUrl}/api/rewrite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
