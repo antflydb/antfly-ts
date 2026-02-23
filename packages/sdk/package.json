@@ -51,7 +51,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
-    "openapi-fetch": "^0.15.2"
+    "openapi-fetch": "^0.17.0"
   },
   "engines": {
     "node": ">=18"
