@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ApiConfigProvider } from "@/components/api-config-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { CommandPaletteProvider } from "@/components/command-palette-provider";
@@ -15,6 +15,7 @@ import {
   getDefaultRoute,
   isProductEnabled,
   type ProductId,
+  productForPath,
 } from "@/config/products";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,16 @@ function AppContent() {
   const [currentSection, setCurrentSection] = useState("indexes");
   const [currentProduct, setCurrentProduct] = useState<ProductId>(defaultProduct);
   const { contentWidth } = useContentWidth();
+  const location = useLocation();
+
+  // Sync currentProduct with the current route so direct navigation
+  // (bookmarks, refresh, shared links) shows the correct sidebar.
+  useEffect(() => {
+    const product = productForPath(location.pathname);
+    if (product && isProductEnabled(product)) {
+      setCurrentProduct(product);
+    }
+  }, [location.pathname]);
 
   return (
     <Routes>
