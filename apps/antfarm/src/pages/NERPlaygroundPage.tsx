@@ -29,6 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
+import { fetchWithRetry } from "@/lib/utils";
 
 // NER response types matching Termite API
 interface NEREntity {
@@ -303,7 +304,7 @@ const RecognizePlaygroundPage: React.FC = () => {
 
     try {
       if (mode === "recognize") {
-        const response = await fetch(`${termiteApiUrl}/api/recognize`, {
+        const response = await fetchWithRetry(`${termiteApiUrl}/api/recognize`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -328,7 +329,7 @@ const RecognizePlaygroundPage: React.FC = () => {
           apiSchema[structure.name] = structure.fields.map((f) => `${f.name}::${f.type}`);
         }
 
-        const response = await fetch(`${termiteApiUrl}/api/extract`, {
+        const response = await fetchWithRetry(`${termiteApiUrl}/api/extract`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
+import { fetchWithRetry } from "@/lib/utils";
 
 interface RerankResponse {
   model: string;
@@ -116,7 +117,7 @@ const RerankingPlaygroundPage: React.FC = () => {
     const startTime = performance.now();
 
     try {
-      const response = await fetch(`${termiteApiUrl}/api/rerank`, {
+      const response = await fetchWithRetry(`${termiteApiUrl}/api/rerank`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

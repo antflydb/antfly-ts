@@ -34,6 +34,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
+import { fetchWithRetry } from "@/lib/utils";
 
 // Generate response types matching Termite API
 interface GenerateResponse {
@@ -144,7 +145,7 @@ const RewritingPlaygroundPage: React.FC = () => {
     try {
       const formattedInput = formatInput(context, answer);
 
-      const response = await fetch(`${termiteApiUrl}/api/rewrite`, {
+      const response = await fetchWithRetry(`${termiteApiUrl}/api/rewrite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

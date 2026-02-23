@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
+import { fetchWithRetry } from "@/lib/utils";
 
 // RecognizeResponse types matching Termite /api/recognize
 interface RecognizeEntity {
@@ -292,7 +293,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         }
       }
 
-      const response = await fetch(`${termiteApiUrl}/api/recognize`, {
+      const response = await fetchWithRetry(`${termiteApiUrl}/api/recognize`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
