@@ -12,6 +12,10 @@ export interface Product {
   name: string;
   description: string;
   defaultRoute: string;
+  // Route path prefixes owned by this product.
+  // Used to determine which product the sidebar should show for a given URL.
+  // Keep in sync with the <Route> definitions in App.tsx.
+  routes: string[];
 }
 
 export const PRODUCTS: Record<ProductId, Product> = {
@@ -20,12 +24,29 @@ export const PRODUCTS: Record<ProductId, Product> = {
     name: "Antfly",
     description: "Vector database management",
     defaultRoute: "/",
+    routes: [
+      "/",
+      "/create",
+      "/tables/",
+      "/users",
+      "/secrets",
+      "/playground/evals",
+      "/playground/rag",
+    ],
   },
   termite: {
     id: "termite",
     name: "Termite",
     description: "ML inference playgrounds",
     defaultRoute: "/playground/chunking",
+    routes: [
+      "/models",
+      "/playground/chunking",
+      "/playground/recognize",
+      "/playground/rewrite",
+      "/playground/rerank",
+      "/playground/kg",
+    ],
   },
 };
 
@@ -60,3 +81,20 @@ export const defaultProduct: ProductId = enabledProducts[0];
 export const getDefaultRoute = (): string => {
   return PRODUCTS[defaultProduct].defaultRoute;
 };
+
+// Determine which product owns a given pathname by checking each product's
+// routes list. Longer prefixes are checked first so "/playground/chunking"
+// matches termite before a hypothetical "/" catch-all matches antfly.
+export function productForPath(pathname: string): ProductId | undefined {
+  let best: { product: ProductId; len: number } | undefined;
+  for (const product of enabledProducts) {
+    for (const route of PRODUCTS[product].routes) {
+      if (route === pathname || (route.length > 1 && pathname.startsWith(route))) {
+        if (!best || route.length > best.len) {
+          best = { product, len: route.length };
+        }
+      }
+    }
+  }
+  return best?.product;
+}

@@ -17,6 +17,17 @@ export type Chunk = components["schemas"]["Chunk"];
 export type RerankRequest = components["schemas"]["RerankRequest"];
 export type RerankResponse = components["schemas"]["RerankResponse"];
 
+export type RecognizeRequest = components["schemas"]["RecognizeRequest"];
+export type RecognizeResponse = components["schemas"]["RecognizeResponse"];
+export type RecognizeEntity = components["schemas"]["RecognizeEntity"];
+
+export type ExtractRequest = components["schemas"]["ExtractRequest"];
+export type ExtractResponse = components["schemas"]["ExtractResponse"];
+export type ExtractFieldValue = components["schemas"]["ExtractFieldValue"];
+
+export type RewriteRequest = components["schemas"]["RewriteRequest"];
+export type RewriteResponse = components["schemas"]["RewriteResponse"];
+
 export type ModelsResponse = components["schemas"]["ModelsResponse"];
 export type VersionResponse = components["schemas"]["VersionResponse"];
 

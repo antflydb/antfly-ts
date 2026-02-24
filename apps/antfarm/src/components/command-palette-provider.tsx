@@ -1,14 +1,15 @@
 "use client";
 
 import {
+  ArrowUpDown,
   ClipboardCheck,
-  HelpCircle,
   Library,
   Maximize2,
   Minimize2,
   Moon,
   Network,
   Plus,
+  Repeat2,
   Scissors,
   Sun,
   Table,
@@ -90,8 +91,9 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
 
   const playgroundCommands = [
     { icon: Scissors, label: "Chunking Playground", href: "/playground/chunking" },
-    { icon: Tag, label: "NER Playground", href: "/playground/recognize" },
-    { icon: HelpCircle, label: "Question Gen", href: "/playground/question" },
+    { icon: Tag, label: "Recognize Playground", href: "/playground/recognize" },
+    { icon: Repeat2, label: "Rewriting Playground", href: "/playground/rewrite" },
+    { icon: ArrowUpDown, label: "Reranking Playground", href: "/playground/rerank" },
     { icon: Network, label: "Knowledge Graph", href: "/playground/kg" },
     { icon: ClipboardCheck, label: "Evals", href: "/playground/evals" },
   ];

@@ -1,5 +1,5 @@
 import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
-import { Command, LogOut, Maximize2, Minimize2, User } from "lucide-react";
+import { Command, LogOut, Maximize2, Minimize2, Monitor, User } from "lucide-react";
 import type * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useCommandPalette } from "@/components/command-palette-provider";
@@ -30,7 +30,8 @@ export function WorkspaceHeader({ title, className, ...props }: WorkspaceHeaderP
   const navigate = useNavigate();
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
+    setTheme(next);
   };
 
   const handleLogout = () => {
@@ -60,9 +61,21 @@ export function WorkspaceHeader({ title, className, ...props }: WorkspaceHeaderP
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
-          title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
+          title={
+            theme === "system"
+              ? "Switch to Light Mode"
+              : theme === "light"
+                ? "Switch to Dark Mode"
+                : "Switch to System Theme"
+          }
         >
-          {theme === "light" ? <MoonIcon className="size-4" /> : <SunIcon className="size-4" />}
+          {theme === "system" ? (
+            <Monitor className="size-4" />
+          ) : theme === "light" ? (
+            <MoonIcon className="size-4" />
+          ) : (
+            <SunIcon className="size-4" />
+          )}
         </Button>
 
         {/* Content Width Toggle */}

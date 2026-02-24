@@ -37,6 +37,9 @@ const getQueryType = (query: Query): string => {
   if ("match_none" in query) return "Match None";
   if ("conjuncts" in query) return "Conjunction";
   if ("disjuncts" in query) return "Disjunction";
+  // Safety-net for simplified DSL returned by AI query builder
+  if ("and" in query) return "Conjunction";
+  if ("or" in query) return "Disjunction";
   return "Match All"; // Fallback
 };
 

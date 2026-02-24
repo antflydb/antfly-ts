@@ -45,7 +45,8 @@ import FieldExplorer from "../components/FieldExplorer";
 import BulkInsert from "../components/Insert";
 import JsonViewer from "../components/JsonViewer";
 import MultiSelect from "../components/MultiSelect";
-import QueryBuilderAgent from "../components/QueryBuilderAgent";
+import AggregationResults from "../components/AggregationResults";
+import AIQueryAssistant from "../components/AIQueryAssistant";
 import FieldSelector from "../components/querybuilder/FieldSelector";
 import QueryBuilder from "../components/querybuilder/QueryBuilder";
 import { QueryResultsList } from "../components/results";
@@ -669,27 +670,27 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
               </TabsList>
               <div className="pt-3">
                 <TabsContent value="builder" className="space-y-3">
+                  <AIQueryAssistant
+                    tableName={tableName}
+                    schemaFields={availableSearchableFields.map((f) => f.originalField)}
+                    currentQuery={(() => {
+                      try {
+                        return JSON.parse(filterQuery);
+                      } catch {
+                        return {};
+                      }
+                    })()}
+                    onQueryApplied={(query) => {
+                      setFilterQuery(JSON.stringify(query, null, 2));
+                    }}
+                    onQueryAppliedAndRun={(query) => {
+                      setFilterQuery(JSON.stringify(query, null, 2));
+                      // Defer run to next tick so state is updated
+                      setTimeout(() => handleRunQuery(), 0);
+                    }}
+                  />
+
                   <Accordion type="multiple" defaultValue={["semantic"]} className="space-y-2">
-                    {/* AI Query Builder */}
-                    <AccordionItem value="ai-builder" className="border rounded-lg bg-card/50 px-3">
-                      <AccordionTrigger className="py-2.5 hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">AI Query Builder</span>
-                          <Badge variant="outline" className="h-5 text-xs">
-                            Beta
-                          </Badge>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pb-3 pt-1">
-                        <QueryBuilderAgent
-                          tableName={tableName}
-                          schemaFields={availableSearchableFields.map((f) => f.originalField)}
-                          onQueryGenerated={(query) => {
-                            setFilterQuery(JSON.stringify(query, null, 2));
-                          }}
-                        />
-                      </AccordionContent>
-                    </AccordionItem>
                     {/* Field Selection - Collapsible */}
                     <AccordionItem value="fields" className="border rounded-lg bg-card/50 px-3">
                       <AccordionTrigger className="py-2.5 hover:no-underline">
@@ -879,6 +880,10 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                       : "Enter a query to search"}
               </span>
             </div>
+
+            {queryResult && queryResult.aggregations && Object.keys(queryResult.aggregations).length > 0 && (
+              <AggregationResults aggregations={queryResult.aggregations} className="mt-6" />
+            )}
 
             {queryResult && (
               <Card className="mt-6 shadow-sm">

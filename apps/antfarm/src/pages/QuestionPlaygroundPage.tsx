@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
 import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
 import type { SamplePreset } from "@/components/playground/SamplePresets";
@@ -38,6 +39,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
+import { fetchWithRetry } from "@/lib/utils";
 
 // Rewrite response types matching Termite API
 interface RewriteResponse {
@@ -45,7 +47,14 @@ interface RewriteResponse {
   texts: string[][];
 }
 
-// Default entity labels for GLiNER
+interface ModelInfo {
+  capabilities?: string[];
+}
+
+interface ModelsResponse {
+  rewriters: Record<string, ModelInfo>;
+  [key: string]: Record<string, ModelInfo>;
+}
 
 const STORAGE_KEY = "antfarm-playground-question";
 
@@ -70,8 +79,9 @@ const SAMPLE_DATA = {
   },
 };
 
-const QuestionPlaygroundPage: React.FC = () => {
+const RewritingPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Restore state from localStorage
   const [context, setContext] = useState(() => {
@@ -128,11 +138,11 @@ const QuestionPlaygroundPage: React.FC = () => {
           signal: controller.signal,
         });
         if (response.ok) {
-          const data = await response.json();
-          const modelList = data.rewriters || [];
-          setAvailableModels(modelList);
-          if (!selectedModel && modelList.length > 0) {
-            setSelectedModel(modelList[0]);
+          const data: ModelsResponse = await response.json();
+          const rewriters = Object.keys(data.rewriters || {});
+          setAvailableModels(rewriters);
+          if (rewriters.length > 0) {
+            setSelectedModel(rewriters[0]);
           }
         }
       } catch {
@@ -143,6 +153,15 @@ const QuestionPlaygroundPage: React.FC = () => {
     })();
     return () => controller.abort();
   }, [termiteApiUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle ?model= URL param from Model Registry "Open in Playground"
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
+      setSelectedModel(modelParam);
+      setSearchParams((prev) => { prev.delete("model"); return prev; }, { replace: true });
+    }
+  }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
 
   // Format input for LMQG question generation models
   const formatInput = (ctx: string, ans: string): string => {
@@ -191,8 +210,7 @@ const QuestionPlaygroundPage: React.FC = () => {
     try {
       const formattedInput = formatInput(context, answer);
 
-      // FIX: Use correct endpoint /api/rewrite instead of /api/question
-      const response = await fetch(`${termiteApiUrl}/api/rewrite`, {
+      const response = await fetchWithRetry(`${termiteApiUrl}/api/rewrite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -297,7 +315,7 @@ const QuestionPlaygroundPage: React.FC = () => {
 
     return (
       <>
-        {parts.map((part, index) =>
+        {parts.map((part: string, index: number) =>
           part.toLowerCase() === answer.toLowerCase() ? (
             <span
               key={index}
@@ -326,9 +344,9 @@ const QuestionPlaygroundPage: React.FC = () => {
     <div className="h-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Question Generation Playground</h1>
+          <h1 className="text-2xl font-bold">Rewriting Playground</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Generate questions from context and answer pairs using Seq2Seq models
+            Transform text using Seq2Seq models (question generation, paraphrasing, etc.)
           </p>
         </div>
         <div className="flex gap-2">
@@ -652,4 +670,4 @@ const QuestionPlaygroundPage: React.FC = () => {
   );
 };
 
-export default QuestionPlaygroundPage;
+export default RewritingPlaygroundPage;

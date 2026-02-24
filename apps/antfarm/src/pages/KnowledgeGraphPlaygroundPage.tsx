@@ -20,16 +20,36 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
+import { fetchWithRetry } from "@/lib/utils";
 
-// Knowledge Graph types matching Termite API
+// RecognizeResponse types matching Termite /api/recognize
+interface RecognizeEntity {
+  text: string;
+  label: string;
+  start?: number;
+  end?: number;
+  score: number;
+}
+
+interface RecognizeRelation {
+  head: RecognizeEntity;
+  tail: RecognizeEntity;
+  label: string;
+  score: number;
+}
+
+interface RecognizeResponse {
+  model: string;
+  entities: RecognizeEntity[][];
+  relations?: RecognizeRelation[][];
+}
+
+// Graph visualization types (derived from RecognizeResponse)
 interface KGNode {
   id: string;
   canonical_name: string;
   type: string;
-  mentions?: string[];
-  properties?: Record<string, unknown>;
   confidence: number;
-  provenance?: KGProvenance[];
 }
 
 interface KGEdge {
@@ -37,48 +57,25 @@ interface KGEdge {
   source_id: string;
   target_id: string;
   type: string;
-  properties?: Record<string, unknown>;
   confidence: number;
-  provenance?: KGProvenance[];
 }
 
-interface KGProvenance {
-  source_text?: string;
-  char_offset_start?: number;
-  char_offset_end?: number;
-  extractor_model?: string;
-  extractor_confidence?: number;
-}
-
-interface KGMetadata {
-  name?: string;
-  description?: string;
-  node_count?: number;
-  edge_count?: number;
-  document_count?: number;
-}
-
-interface KnowledgeGraphResponse {
+interface KGResult {
   model: string;
-  metadata: KGMetadata;
   nodes: KGNode[];
   edges: KGEdge[];
 }
 
-interface RecognizerModelInfo {
-  capabilities: string[];
+interface ModelInfo {
+  capabilities?: string[];
 }
 
 interface ModelsResponse {
-  chunkers: string[];
-  rerankers: string[];
-  recognizers: string[];
-  embedders: string[];
-  generators: string[];
-  recognizer_info?: Record<string, RecognizerModelInfo>;
+  recognizers: Record<string, ModelInfo>;
+  [key: string]: Record<string, ModelInfo>;
 }
 
-interface KGBuilderConfig {
+interface ResolverConfig {
   similarity_threshold: number;
   type_must_match: boolean;
   min_entity_confidence: number;
@@ -108,6 +105,65 @@ const SAMPLE_TEXTS = [
   "Tesla acquired SolarCity in 2016 and is based in Austin, Texas.",
 ];
 
+// Convert RecognizeResponse to graph nodes and edges for visualization.
+// When resolver is used, entities[0] contains deduplicated entities and
+// relations[0] contains resolved relations.
+function buildGraphFromResponse(data: RecognizeResponse): KGResult {
+  // Flatten all entities across text arrays.
+  const allEntities: RecognizeEntity[] = [];
+  for (const textEntities of data.entities) {
+    allEntities.push(...textEntities);
+  }
+
+  // Deduplicate entities by (text, label) to build nodes.
+  const nodeKey = (e: RecognizeEntity) => `${e.text.toLowerCase()}::${e.label.toLowerCase()}`;
+  const nodeMap = new Map<string, KGNode>();
+  let nodeIdx = 0;
+  for (const e of allEntities) {
+    const key = nodeKey(e);
+    const existing = nodeMap.get(key);
+    if (existing) {
+      // Keep highest confidence.
+      if (e.score > existing.confidence) {
+        existing.confidence = e.score;
+        existing.canonical_name = e.text;
+      }
+    } else {
+      nodeMap.set(key, {
+        id: `node-${nodeIdx++}`,
+        canonical_name: e.text,
+        type: e.label,
+        confidence: e.score,
+      });
+    }
+  }
+
+  const nodes = Array.from(nodeMap.values());
+
+  // Build edges from relations.
+  const edges: KGEdge[] = [];
+  if (data.relations) {
+    let edgeIdx = 0;
+    for (const textRelations of data.relations) {
+      for (const rel of textRelations) {
+        const sourceNode = nodeMap.get(nodeKey(rel.head));
+        const targetNode = nodeMap.get(nodeKey(rel.tail));
+        if (sourceNode && targetNode) {
+          edges.push({
+            id: `edge-${edgeIdx++}`,
+            source_id: sourceNode.id,
+            target_id: targetNode.id,
+            type: rel.label,
+            confidence: rel.score,
+          });
+        }
+      }
+    }
+  }
+
+  return { model: data.model, nodes, edges };
+}
+
 const KnowledgeGraphPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
   const [inputText, setInputText] = useState("");
@@ -116,7 +172,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
   const [relationLabels, setRelationLabels] = useState<string[]>(DEFAULT_RELATION_LABELS);
   const [newEntityLabel, setNewEntityLabel] = useState("");
   const [newRelationLabel, setNewRelationLabel] = useState("");
-  const [config, setConfig] = useState<KGBuilderConfig>({
+  const [config, setConfig] = useState<ResolverConfig>({
     similarity_threshold: 0.85,
     type_must_match: true,
     min_entity_confidence: 0.0,
@@ -124,7 +180,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
     deduplicate_relations: true,
     track_provenance: true,
   });
-  const [result, setResult] = useState<KnowledgeGraphResponse | null>(null);
+  const [result, setResult] = useState<KGResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingTime, setProcessingTime] = useState<number | null>(null);
@@ -141,14 +197,12 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         const response = await fetch(`${termiteApiUrl}/api/models`);
         if (response.ok) {
           const data: ModelsResponse = await response.json();
-          const recognizers = data.recognizers || [];
-          const recognizerInfo = data.recognizer_info || {};
+          const recognizersMap = data.recognizers || {};
 
           // Filter for models with "relations" capability (REBEL, GLiNER multitask)
-          const relationModels = recognizers.filter((model) => {
-            const info = recognizerInfo[model];
-            return info?.capabilities?.includes("relations");
-          });
+          const relationModels = Object.entries(recognizersMap)
+            .filter(([, info]) => info.capabilities?.includes("relations"))
+            .map(([name]) => name);
 
           // Mark REBEL models with prefix for special handling
           const models = relationModels.map((m) => {
@@ -226,22 +280,22 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
-      // Build request body - REBEL models don't need labels
+      // Build request body for /api/recognize with resolver config
       const requestBody: Record<string, unknown> = {
         model: getModelName(selectedModel),
         texts: texts,
-        config: config,
+        resolver: config,
       };
 
       // Only include labels for GLiNER models
       if (!isRebelModel) {
-        requestBody.entity_labels = entityLabels;
+        requestBody.labels = entityLabels;
         if (relationLabels.length > 0) {
           requestBody.relation_labels = relationLabels;
         }
       }
 
-      const response = await fetch(`${termiteApiUrl}/api/knowledgegraph`, {
+      const response = await fetchWithRetry(`${termiteApiUrl}/api/recognize`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -255,8 +309,8 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         throw new Error(errorText || `HTTP ${response.status}`);
       }
 
-      const data: KnowledgeGraphResponse = await response.json();
-      setResult(data);
+      const data: RecognizeResponse = await response.json();
+      setResult(buildGraphFromResponse(data));
       setProcessingTime(performance.now() - startTime);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
@@ -769,11 +823,6 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                           <div className="text-muted-foreground">
                             Confidence: {(selectedNode.confidence * 100).toFixed(1)}%
                           </div>
-                          {selectedNode.mentions && selectedNode.mentions.length > 1 && (
-                            <div className="text-muted-foreground">
-                              Mentions: {selectedNode.mentions.join(", ")}
-                            </div>
-                          )}
                         </div>
                       )}
                       {selectedEdge && (
@@ -810,14 +859,6 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                           <tr key={node.id} className="border-t hover:bg-muted/30">
                             <td className="px-3 py-2">
                               <div>{node.canonical_name}</div>
-                              {node.mentions && node.mentions.length > 1 && (
-                                <div className="text-xs text-muted-foreground">
-                                  Also:{" "}
-                                  {node.mentions
-                                    .filter((m) => m !== node.canonical_name)
-                                    .join(", ")}
-                                </div>
-                              )}
                             </td>
                             <td className="px-3 py-2">
                               <Badge

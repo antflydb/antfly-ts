@@ -1,27 +1,32 @@
 import {
-  type ClassificationTransformationResult,
   generatorProviders,
   type QueryHit,
-  type TableStatus,
 } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
-  BookOpen,
   ChevronDown,
   ChevronRight,
   Clock,
   HelpCircle,
-  MessageSquare,
   Play,
   RotateCcw,
   Settings,
   Sparkles,
   Target,
-  Zap,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "@/api";
+import { useCallback, useReducer, useRef, useState } from "react";
+import { PipelineTrace } from "@/components/rag/PipelineTrace";
+import {
+  type ConfidenceStepData,
+  type FollowupStepData,
+  type GenerationStepData,
+  type PipelineStepId,
+  type SearchStepData,
+  initialPipelineState,
+  pipelineReducer,
+} from "@/components/rag/pipeline-types";
+import { TableIndexSelector } from "@/components/TableIndexSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +44,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api-config";
+import { useTableIndexSelector } from "@/hooks/use-table-index-selector";
 
 // Generator provider type from SDK
 type GeneratorProvider = (typeof generatorProviders)[number];
@@ -132,98 +138,41 @@ function formatAnswer(text: string): React.ReactNode {
 const RagPlaygroundPage: React.FC = () => {
   const apiClient = useApi();
 
+  // Table & Index selection (shared hook with URL sync)
+  const {
+    tables,
+    selectedTable,
+    setSelectedTable,
+    embeddingIndexes,
+    selectedIndex,
+    setSelectedIndex,
+  } = useTableIndexSelector({ syncToUrl: true });
+
   // Config state
   const [query, setQuery] = useState("");
-  const [selectedTable, setSelectedTable] = useState("");
-  const [tables, setTables] = useState<TableStatus[]>([]);
-  const [embeddingIndexes, setEmbeddingIndexes] = useState<string[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState("");
   const [generator, setGenerator] = useState<GeneratorConfig>(DEFAULT_GENERATOR);
   const [limit, setLimit] = useState(10);
   const [steps, setSteps] = useState<StepsConfig>(DEFAULT_STEPS);
   const [settingsOpen, setSettingsOpen] = useState(true);
 
-  // Streaming result state
-  const [streamingAnswer, setStreamingAnswer] = useState("");
-  const [classification, setClassification] = useState<ClassificationTransformationResult | null>(
-    null
-  );
-  const [hits, setHits] = useState<QueryHit[]>([]);
-  const [followupQuestions, setFollowupQuestions] = useState<string[]>([]);
-  const [confidenceScores, setConfidenceScores] = useState<{
-    generation: number;
-    context: number;
-  } | null>(null);
+  // Pipeline state
+  const [pipeline, dispatchPipeline] = useReducer(pipelineReducer, initialPipelineState);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingTime, setProcessingTime] = useState<number | null>(null);
 
-  // Collapsible state for results
-  const [contextOpen, setContextOpen] = useState(false);
-
   const abortControllerRef = useRef<AbortController | null>(null);
   const startTimeRef = useRef<number>(0);
 
-  // Fetch tables on mount
-  useEffect(() => {
-    const fetchTables = async () => {
-      try {
-        const response = await api.tables.list();
-        setTables(response as TableStatus[]);
-        if (response.length > 0 && !selectedTable) {
-          setSelectedTable(response[0].name);
-        }
-      } catch (e) {
-        console.error("Failed to fetch tables:", e);
-      }
-    };
-    fetchTables();
-  }, [selectedTable]);
-
-  // Fetch embedding indexes when table changes
-  useEffect(() => {
-    const fetchIndexes = async () => {
-      if (!selectedTable) {
-        setEmbeddingIndexes([]);
-        setSelectedIndex("");
-        return;
-      }
-      try {
-        const response = await apiClient.indexes.list(selectedTable);
-        const embeddingIdxs = (response || [])
-          .filter(
-            (idx: { config?: { type?: string } }) =>
-              idx.config?.type?.includes("aknn") || idx.config?.type?.includes("embedding")
-          )
-          .map((idx: { config?: { name?: string } }) => idx.config?.name || "")
-          .filter(Boolean);
-        setEmbeddingIndexes(embeddingIdxs);
-        if (embeddingIdxs.length > 0) {
-          setSelectedIndex(embeddingIdxs[0]);
-        } else {
-          setSelectedIndex("");
-        }
-      } catch (e) {
-        console.error("Failed to fetch indexes:", e);
-        setEmbeddingIndexes([]);
-        setSelectedIndex("");
-      }
-    };
-    fetchIndexes();
-  }, [selectedTable, apiClient]);
-
   const handleReset = () => {
     setQuery("");
-    setStreamingAnswer("");
-    setClassification(null);
-    setHits([]);
-    setFollowupQuestions([]);
-    setConfidenceScores(null);
     setError(null);
     setProcessingTime(null);
     setSteps(DEFAULT_STEPS);
     setGenerator(DEFAULT_GENERATOR);
     setLimit(10);
+    dispatchPipeline({ type: "RESET" });
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -249,17 +198,34 @@ const RagPlaygroundPage: React.FC = () => {
     }
 
     // Reset state
-    setStreamingAnswer("");
-    setClassification(null);
-    setHits([]);
-    setFollowupQuestions([]);
-    setConfidenceScores(null);
     setIsLoading(true);
     setError(null);
     setProcessingTime(null);
     startTimeRef.current = performance.now();
 
+    // Determine enabled pipeline steps
+    const enabledSteps: PipelineStepId[] = [];
+    if (steps.classification.enabled) enabledSteps.push("classification");
+    enabledSteps.push("search");
+    enabledSteps.push("generation");
+    if (steps.confidence.enabled) enabledSteps.push("confidence");
+    if (steps.followup.enabled) enabledSteps.push("followup");
+
+    dispatchPipeline({ type: "START", enabledSteps });
+
+    // Track accumulated data for pipeline steps
+    let accumulatedAnswer = "";
+    const accumulatedHits: QueryHit[] = [];
+    const accumulatedFollowups: string[] = [];
+
     try {
+      // Mark search as running immediately
+      if (steps.classification.enabled) {
+        dispatchPipeline({ type: "STEP_START", stepId: "classification" });
+      } else {
+        dispatchPipeline({ type: "STEP_START", stepId: "search" });
+      }
+
       const controller = await apiClient.retrievalAgent(
         {
           query,
@@ -299,22 +265,45 @@ const RagPlaygroundPage: React.FC = () => {
           },
         },
         {
-          onClassification: (c) => setClassification(c),
-          onHit: (hit) => setHits((prev) => [...prev, hit]),
-          onAnswer: (chunk) => setStreamingAnswer((prev) => prev + chunk),
-          onFollowUpQuestion: (q) => setFollowupQuestions((prev) => [...prev, q]),
-          onConfidence: (c) =>
-            setConfidenceScores({
-              generation: c.generation_confidence,
-              context: c.context_relevance,
-            }),
+          onClassification: (c) => {
+            dispatchPipeline({ type: "STEP_COMPLETE", stepId: "classification", data: { classification: c } });
+            dispatchPipeline({ type: "STEP_START", stepId: "search" });
+          },
+          onHit: (hit) => {
+            accumulatedHits.push(hit);
+            dispatchPipeline({ type: "STEP_UPDATE", stepId: "search", data: { hits: [...accumulatedHits] } as SearchStepData });
+          },
+          onAnswer: (chunk) => {
+            // First answer chunk: complete search, start generation
+            if (accumulatedAnswer === "") {
+              dispatchPipeline({ type: "STEP_COMPLETE", stepId: "search", data: { hits: [...accumulatedHits] } as SearchStepData });
+              dispatchPipeline({ type: "STEP_START", stepId: "generation" });
+            }
+            accumulatedAnswer += chunk;
+            dispatchPipeline({ type: "STEP_UPDATE", stepId: "generation", data: { answer: accumulatedAnswer, provider: generator.provider, model: generator.model } as GenerationStepData });
+          },
+          onFollowUpQuestion: (q) => {
+            accumulatedFollowups.push(q);
+            dispatchPipeline({ type: "STEP_START", stepId: "followup" });
+            dispatchPipeline({ type: "STEP_UPDATE", stepId: "followup", data: { questions: [...accumulatedFollowups] } as FollowupStepData });
+          },
+          onConfidence: (c) => {
+            dispatchPipeline({ type: "STEP_COMPLETE", stepId: "confidence", data: { generation: c.generation_confidence, context: c.context_relevance } as ConfidenceStepData });
+          },
           onError: (e) => {
             setError(e);
             setIsLoading(false);
+            dispatchPipeline({ type: "ERROR", error: e });
           },
           onDone: () => {
             setIsLoading(false);
             setProcessingTime(performance.now() - startTimeRef.current);
+            // Complete any running steps
+            dispatchPipeline({ type: "STEP_COMPLETE", stepId: "generation", data: { answer: accumulatedAnswer, provider: generator.provider, model: generator.model } as GenerationStepData });
+            if (accumulatedFollowups.length > 0) {
+              dispatchPipeline({ type: "STEP_COMPLETE", stepId: "followup", data: { questions: accumulatedFollowups } as FollowupStepData });
+            }
+            dispatchPipeline({ type: "COMPLETE" });
           },
         }
       );
@@ -357,6 +346,16 @@ const RagPlaygroundPage: React.FC = () => {
               <CardTitle className="text-lg">Query</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Table & Index selectors at top of query card */}
+              <TableIndexSelector
+                tables={tables}
+                selectedTable={selectedTable}
+                onTableChange={setSelectedTable}
+                embeddingIndexes={embeddingIndexes}
+                selectedIndex={selectedIndex}
+                onIndexChange={setSelectedIndex}
+              />
+
               <Textarea
                 placeholder="Enter your question..."
                 value={query}
@@ -406,52 +405,6 @@ const RagPlaygroundPage: React.FC = () => {
               </CardHeader>
               <CollapsibleContent>
                 <CardContent className="space-y-6">
-                  {/* Table & Index */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Table</Label>
-                      <Select value={selectedTable} onValueChange={setSelectedTable}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select table..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tables.map((table) => (
-                            <SelectItem key={table.name} value={table.name}>
-                              {table.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Index</Label>
-                      <Select
-                        value={selectedIndex}
-                        onValueChange={setSelectedIndex}
-                        disabled={embeddingIndexes.length === 0}
-                      >
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              embeddingIndexes.length === 0
-                                ? "No embedding index"
-                                : "Select index..."
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {embeddingIndexes.map((idx) => (
-                            <SelectItem key={idx} value={idx}>
-                              {idx}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Separator />
-
                   {/* Generator Config */}
                   <div className="space-y-4">
                     <Label className="text-sm font-medium">Generator</Label>
@@ -661,10 +614,18 @@ const RagPlaygroundPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Right Column - Results */}
+        {/* Right Column - Pipeline Trace */}
         <Card className="flex flex-col">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Results</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Results</CardTitle>
+              {processingTime && (
+                <Badge variant="outline" className="gap-1.5">
+                  <Clock className="h-3 w-3" />
+                  {(processingTime / 1000).toFixed(1)}s
+                </Badge>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="flex-1 overflow-auto">
             {/* Error Display */}
@@ -674,162 +635,11 @@ const RagPlaygroundPage: React.FC = () => {
               </div>
             )}
 
-            {!streamingAnswer && !isLoading && !error ? (
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p>Run a query to see results</p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Stats Bar */}
-                {(isLoading || streamingAnswer) && (
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="gap-1.5">
-                      <Zap className="h-3 w-3" />
-                      {generator.provider}/{generator.model}
-                    </Badge>
-                    {hits.length > 0 && (
-                      <Badge variant="outline" className="gap-1.5">
-                        <BookOpen className="h-3 w-3" />
-                        {hits.length} docs
-                      </Badge>
-                    )}
-                    {processingTime && (
-                      <Badge variant="outline" className="gap-1.5">
-                        <Clock className="h-3 w-3" />
-                        {(processingTime / 1000).toFixed(1)}s
-                      </Badge>
-                    )}
-                    {confidenceScores && (
-                      <>
-                        <Badge
-                          variant="outline"
-                          className={`gap-1.5 ${
-                            confidenceScores.generation > 0.7
-                              ? "text-green-600"
-                              : confidenceScores.generation > 0.4
-                                ? "text-yellow-600"
-                                : "text-red-600"
-                          }`}
-                        >
-                          <Target className="h-3 w-3" />
-                          {(confidenceScores.generation * 100).toFixed(0)}% confidence
-                        </Badge>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Classification Result */}
-                {classification && (
-                  <div className="p-3 rounded-lg bg-muted/50 space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Sparkles className="h-4 w-4" />
-                      Classification
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <span className="text-muted-foreground">Strategy:</span>{" "}
-                        <span className="font-medium">{classification.strategy}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Mode:</span>{" "}
-                        <span className="font-medium">{classification.semantic_mode}</span>
-                      </div>
-                    </div>
-                    {classification.semantic_query && (
-                      <div className="text-xs">
-                        <span className="text-muted-foreground">Semantic Query:</span>{" "}
-                        <span className="italic">{classification.semantic_query}</span>
-                      </div>
-                    )}
-                    {classification.reasoning && (
-                      <div className="text-xs text-muted-foreground mt-2 p-2 bg-background rounded">
-                        {classification.reasoning}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Streaming Answer */}
-                {(streamingAnswer || isLoading) && (
-                  <div className="text-sm">
-                    {streamingAnswer ? (
-                      formatAnswer(streamingAnswer)
-                    ) : (
-                      <span className="text-muted-foreground italic">Generating...</span>
-                    )}
-                    {isLoading && (
-                      <span className="inline-block w-2 h-4 bg-foreground/50 animate-pulse ml-0.5" />
-                    )}
-                  </div>
-                )}
-
-                {/* Follow-up Questions */}
-                {followupQuestions.length > 0 && (
-                  <div className="space-y-2">
-                    <Separator />
-                    <div className="text-sm font-medium flex items-center gap-2">
-                      <HelpCircle className="h-4 w-4" />
-                      Follow-up Questions
-                    </div>
-                    <div className="space-y-1">
-                      {followupQuestions.map((q, i) => (
-                        <Button
-                          key={i}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start text-left h-auto py-2 text-sm"
-                          onClick={() => setQuery(q)}
-                        >
-                          {q}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Retrieved Context */}
-                {hits.length > 0 && (
-                  <Collapsible open={contextOpen} onOpenChange={setContextOpen}>
-                    <Separator />
-                    <CollapsibleTrigger asChild>
-                      <Button variant="ghost" size="sm" className="w-full justify-between mt-2">
-                        <span className="flex items-center gap-2">
-                          <BookOpen className="h-4 w-4" />
-                          Retrieved Context ({hits.length} documents)
-                        </span>
-                        {contextOpen ? (
-                          <ChevronDown className="h-4 w-4" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="space-y-2 mt-2">
-                      {hits.map((hit, i) => (
-                        <div key={hit._id || i} className="p-3 rounded-lg border text-xs space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium">{hit._id}</span>
-                            <Badge variant="secondary" className="text-xs">
-                              {hit._score?.toFixed(3)}
-                            </Badge>
-                          </div>
-                          {hit._source && (
-                            <pre className="text-muted-foreground overflow-x-auto whitespace-pre-wrap">
-                              {JSON.stringify(hit._source, null, 2).slice(0, 500)}
-                              {JSON.stringify(hit._source).length > 500 && "..."}
-                            </pre>
-                          )}
-                        </div>
-                      ))}
-                    </CollapsibleContent>
-                  </Collapsible>
-                )}
-              </div>
-            )}
+            <PipelineTrace
+              pipeline={pipeline}
+              onFollowupClick={(q) => setQuery(q)}
+              formatAnswer={formatAnswer}
+            />
           </CardContent>
         </Card>
       </div>

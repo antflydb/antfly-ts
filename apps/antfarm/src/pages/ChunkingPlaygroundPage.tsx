@@ -1,8 +1,9 @@
-import { type ChunkResponse, TermiteClient } from "@antfly/termite-sdk";
+import { type Chunk, type ChunkResponse, TermiteClient } from "@antfly/termite-sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { Clock, Database, Hash, RotateCcw, Scissors, Zap } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
 import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
 import type { SamplePreset } from "@/components/playground/SamplePresets";
@@ -32,6 +33,12 @@ interface ChunkConfig {
   separator: string;
   max_chunks: number;
   threshold: number;
+}
+
+function isTextChunk(
+  chunk: Chunk
+): chunk is Chunk & { text: string; start_char: number; end_char: number } {
+  return "text" in chunk;
 }
 
 const DEFAULT_CONFIG: ChunkConfig = {
@@ -110,6 +117,7 @@ The era of modern computing began with a flurry of development before and during
 
 const ChunkingPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Restore state from localStorage
   const [inputText, setInputText] = useState(() => {
@@ -164,6 +172,15 @@ const ChunkingPlaygroundPage: React.FC = () => {
     })();
     return () => controller.abort();
   }, [termiteApiUrl]);
+
+  // Handle ?model= URL param from Model Registry "Open in Playground"
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
+      setConfig((prev) => ({ ...prev, model: modelParam }));
+      setSearchParams((prev) => { prev.delete("model"); return prev; }, { replace: true });
+    }
+  }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
 
   const handleChunk = useCallback(async () => {
     if (!inputText.trim()) {
@@ -259,6 +276,9 @@ const ChunkingPlaygroundPage: React.FC = () => {
     let lastEnd = 0;
 
     result.chunks.forEach((chunk, index) => {
+      if (!isTextChunk(chunk)) return;
+
+      // Add any text before this chunk (gaps)
       if (chunk.start_char > lastEnd) {
         elements.push(
           <span key={`gap-${chunk.id}`} className="text-muted-foreground/50">
@@ -575,7 +595,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
 
                 {/* Chunk list */}
                 <div className="space-y-3">
-                  {result.chunks.map((chunk, index) => {
+                  {result.chunks.filter(isTextChunk).map((chunk, index) => {
                     const colorIndex = index % CHUNK_COLORS.length;
                     return (
                       <div

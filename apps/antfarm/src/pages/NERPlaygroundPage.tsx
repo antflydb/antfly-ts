@@ -1,7 +1,18 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { Clock, Hash, Percent, Plus, RotateCcw, Tag, X, Zap } from "lucide-react";
+import {
+  Clock,
+  Hash,
+  Percent,
+  Plus,
+  RotateCcw,
+  SlidersHorizontal,
+  Tag,
+  X,
+  Zap,
+} from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
 import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
 import type { SamplePreset } from "@/components/playground/SamplePresets";
@@ -20,8 +31,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
+import { fetchWithRetry } from "@/lib/utils";
 
 // NER response types matching Termite API
 interface NEREntity {
@@ -37,10 +50,57 @@ interface NERResponse {
   entities: NEREntity[][];
 }
 
+// Extract response types
+interface ExtractFieldValue {
+  value: string;
+  score?: number;
+  start?: number;
+  end?: number;
+}
+
+interface ExtractResponse {
+  model: string;
+  results: Record<string, Record<string, unknown>[]>[];
+}
+
+interface ModelInfo {
+  capabilities?: string[];
+}
+
+interface ModelsResponse {
+  recognizers: Record<string, ModelInfo>;
+  [key: string]: Record<string, ModelInfo>;
+}
+
+type PlaygroundMode = "recognize" | "extract";
+
+// Schema field for extract mode
+interface SchemaField {
+  name: string;
+  type: "str" | "list";
+}
+
+interface SchemaStructure {
+  name: string;
+  fields: SchemaField[];
+}
+
 // Default entity labels for GLiNER
 const DEFAULT_LABELS = ["person", "organization", "location"];
 
 const STORAGE_KEY = "antfarm-playground-ner";
+
+// Default extract schema
+const DEFAULT_SCHEMA: SchemaStructure[] = [
+  {
+    name: "person",
+    fields: [
+      { name: "name", type: "str" },
+      { name: "age", type: "str" },
+      { name: "company", type: "str" },
+    ],
+  },
+];
 
 // Standard entity type colors (for common NER labels)
 const STANDARD_LABEL_COLORS: Record<string, { bg: string; text: string; border: string }> = {
@@ -146,10 +206,42 @@ const SAMPLE_TEXTS = {
   },
 };
 
-const NERPlaygroundPage: React.FC = () => {
+const EXTRACT_SAMPLE_TEXT = `John Smith is a 35-year-old software engineer who works at Google in Mountain View. He graduated from Stanford University in 2012 with a degree in Computer Science. His colleague Jane Doe, age 29, is a product manager at the same company. She previously worked at Meta for three years.`;
+
+const EXTRACT_SAMPLES = {
+  people: {
+    name: "People & Companies",
+    description: "Extract personal and professional info",
+    text: EXTRACT_SAMPLE_TEXT,
+    schema: [
+      {
+        name: "person",
+        fields: [
+          { name: "name", type: "str" as const },
+          { name: "age", type: "str" as const },
+          { name: "company", type: "str" as const },
+          { name: "role", type: "str" as const },
+        ],
+      },
+    ],
+  },
+};
+
+const RecognizePlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Restore state from localStorage
+  const [mode, setMode] = useState<PlaygroundMode>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).mode;
+        if (parsed === "recognize" || parsed === "extract") return parsed;
+      }
+    } catch {}
+    return "recognize";
+  });
   const [inputText, setInputText] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -164,6 +256,8 @@ const NERPlaygroundPage: React.FC = () => {
     } catch {}
     return "";
   });
+
+  // Recognize mode state
   const [labels, setLabels] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -174,6 +268,7 @@ const NERPlaygroundPage: React.FC = () => {
     } catch {}
     return DEFAULT_LABELS;
   });
+  const [newLabel, setNewLabel] = useState("");
   const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -184,12 +279,21 @@ const NERPlaygroundPage: React.FC = () => {
     } catch {}
     return 0.5;
   });
-  const [newLabel, setNewLabel] = useState("");
-  const [result, setResult] = useState<NERResponse | null>(null);
+  const [recognizeResult, setRecognizeResult] = useState<NERResponse | null>(null);
+
+  // Extract mode state
+  const [schema, setSchema] = useState<SchemaStructure[]>(DEFAULT_SCHEMA);
+  const [extractThreshold, setExtractThreshold] = useState(0.3);
+  const [includeConfidence, setIncludeConfidence] = useState(false);
+  const [includeSpans, setIncludeSpans] = useState(false);
+  const [extractResult, setExtractResult] = useState<ExtractResponse | null>(null);
+
+  // Shared state
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingTime, setProcessingTime] = useState<number | null>(null);
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [recognizerModels, setRecognizerModels] = useState<string[]>([]);
+  const [extractorModels, setExtractorModels] = useState<string[]>([]);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const labelColorMapRef = useRef<Map<string, number>>(new Map());
@@ -198,9 +302,11 @@ const NERPlaygroundPage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ inputText, selectedModel, labels, confidenceThreshold })
+      JSON.stringify({ inputText, selectedModel, labels, confidenceThreshold, mode })
     );
-  }, [inputText, selectedModel, labels, confidenceThreshold]);
+  }, [inputText, selectedModel, labels, confidenceThreshold, mode]);
+
+  const availableModels = mode === "recognize" ? recognizerModels : extractorModels;
 
   // Fetch available models on mount
   useEffect(() => {
@@ -211,11 +317,16 @@ const NERPlaygroundPage: React.FC = () => {
           signal: controller.signal,
         });
         if (response.ok) {
-          const data = await response.json();
-          const modelList = data.recognizers || [];
-          setAvailableModels(modelList);
-          if (!selectedModel && modelList.length > 0) {
-            setSelectedModel(modelList[0]);
+          const data: ModelsResponse = await response.json();
+          const recognizers = Object.keys(data.recognizers || {});
+          setRecognizerModels(recognizers);
+          // Extractors are recognizers with "extraction" capability
+          const extractors = Object.entries(data.recognizers || {})
+            .filter(([, info]) => info.capabilities?.includes("extraction"))
+            .map(([name]) => name);
+          setExtractorModels(extractors);
+          if (recognizers.length > 0) {
+            setSelectedModel(recognizers[0]);
           }
         }
       } catch {
@@ -226,6 +337,25 @@ const NERPlaygroundPage: React.FC = () => {
     })();
     return () => controller.abort();
   }, [termiteApiUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update selected model when mode changes
+  useEffect(() => {
+    const models = mode === "recognize" ? recognizerModels : extractorModels;
+    if (models.length > 0) {
+      setSelectedModel(models[0]);
+    } else {
+      setSelectedModel("");
+    }
+  }, [mode, recognizerModels, extractorModels]);
+
+  // Handle ?model= URL param from Model Registry "Open in Playground"
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelsLoaded && recognizerModels.includes(modelParam)) {
+      setSelectedModel(modelParam);
+      setSearchParams((prev) => { prev.delete("model"); return prev; }, { replace: true });
+    }
+  }, [searchParams, modelsLoaded, recognizerModels, setSearchParams]);
 
   const getColorForLabel = (label: string) => {
     const normalizedLabel = label.toLowerCase();
@@ -255,8 +385,13 @@ const NERPlaygroundPage: React.FC = () => {
       return;
     }
 
-    if (labels.length === 0) {
+    if (mode === "recognize" && labels.length === 0) {
       setError("Please add at least one entity label");
+      return;
+    }
+
+    if (mode === "extract" && schema.length === 0) {
+      setError("Please add at least one structure to the schema");
       return;
     }
 
@@ -268,32 +403,61 @@ const NERPlaygroundPage: React.FC = () => {
     abortControllerRef.current = new AbortController();
     setIsLoading(true);
     setError(null);
-    setResult(null);
+    setRecognizeResult(null);
+    setExtractResult(null);
     labelColorMapRef.current.clear();
 
     const startTime = performance.now();
 
     try {
-      const response = await fetch(`${termiteApiUrl}/api/recognize`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: selectedModel,
-          texts: [inputText],
-          labels: labels,
-        }),
-        signal: abortControllerRef.current.signal,
-      });
+      if (mode === "recognize") {
+        const response = await fetchWithRetry(`${termiteApiUrl}/api/recognize`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: selectedModel,
+            texts: [inputText],
+            labels: labels,
+          }),
+          signal: abortControllerRef.current.signal,
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || `HTTP ${response.status}`);
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || `HTTP ${response.status}`);
+        }
+
+        const data: NERResponse = await response.json();
+        setRecognizeResult(data);
+      } else {
+        // Build schema for extract API
+        const apiSchema: Record<string, string[]> = {};
+        for (const structure of schema) {
+          apiSchema[structure.name] = structure.fields.map((f) => `${f.name}::${f.type}`);
+        }
+
+        const response = await fetchWithRetry(`${termiteApiUrl}/api/extract`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: selectedModel,
+            texts: [inputText],
+            schema: apiSchema,
+            threshold: extractThreshold,
+            include_confidence: includeConfidence,
+            include_spans: includeSpans,
+          }),
+          signal: abortControllerRef.current.signal,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || `HTTP ${response.status}`);
+        }
+
+        const data: ExtractResponse = await response.json();
+        setExtractResult(data);
       }
-
-      const data: NERResponse = await response.json();
-      setResult(data);
       setProcessingTime(performance.now() - startTime);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
@@ -326,7 +490,12 @@ const NERPlaygroundPage: React.FC = () => {
     setLabels(DEFAULT_LABELS);
     setNewLabel("");
     setConfidenceThreshold(0.5);
-    setResult(null);
+    setRecognizeResult(null);
+    setExtractResult(null);
+    setSchema(DEFAULT_SCHEMA);
+    setExtractThreshold(0.3);
+    setIncludeConfidence(false);
+    setIncludeSpans(false);
     setError(null);
     setProcessingTime(null);
     labelColorMapRef.current.clear();
@@ -352,12 +521,56 @@ const NERPlaygroundPage: React.FC = () => {
     }
   };
 
+  // Schema manipulation helpers
+  const addStructure = () => {
+    setSchema([...schema, { name: "", fields: [{ name: "", type: "str" }] }]);
+  };
+
+  const removeStructure = (index: number) => {
+    setSchema(schema.filter((_, i) => i !== index));
+  };
+
+  const updateStructureName = (index: number, name: string) => {
+    const updated = [...schema];
+    updated[index] = { ...updated[index], name };
+    setSchema(updated);
+  };
+
+  const addField = (structIndex: number) => {
+    const updated = [...schema];
+    updated[structIndex] = {
+      ...updated[structIndex],
+      fields: [...updated[structIndex].fields, { name: "", type: "str" }],
+    };
+    setSchema(updated);
+  };
+
+  const removeField = (structIndex: number, fieldIndex: number) => {
+    const updated = [...schema];
+    updated[structIndex] = {
+      ...updated[structIndex],
+      fields: updated[structIndex].fields.filter((_, i) => i !== fieldIndex),
+    };
+    setSchema(updated);
+  };
+
+  const updateField = (structIndex: number, fieldIndex: number, updates: Partial<SchemaField>) => {
+    const updated = [...schema];
+    updated[structIndex] = {
+      ...updated[structIndex],
+      fields: updated[structIndex].fields.map((f, i) =>
+        i === fieldIndex ? { ...f, ...updates } : f
+      ),
+    };
+    setSchema(updated);
+  };
+
   // Get filtered entities based on confidence threshold
   const getFilteredEntities = (): NEREntity[] => {
-    if (!result || !result.entities || result.entities.length === 0) {
+    if (!recognizeResult || !recognizeResult.entities || recognizeResult.entities.length === 0) {
       return [];
     }
-    return result.entities[0].filter((entity) => entity.score >= confidenceThreshold);
+    return recognizeResult.entities[0].filter((entity) => entity.score >= confidenceThreshold);
   };
 
   // Get entity count per label
@@ -375,7 +588,7 @@ const NERPlaygroundPage: React.FC = () => {
     const entities = getFilteredEntities();
 
     if (entities.length === 0) {
-      if (result) {
+      if (recognizeResult) {
         return (
           <div className="text-sm text-muted-foreground">
             No entities found{" "}
@@ -387,7 +600,7 @@ const NERPlaygroundPage: React.FC = () => {
       }
       return (
         <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-mono">
-          {inputText || 'Enter text and click "Extract Entities" to see results'}
+          {inputText || 'Enter text and click "Run" to see results'}
         </pre>
       );
     }
@@ -433,22 +646,102 @@ const NERPlaygroundPage: React.FC = () => {
     return [...new Set(entities.map((e) => e.label))];
   };
 
-  const samplePresets: SamplePreset[] = Object.values(SAMPLE_TEXTS).map((sample) => ({
-    name: sample.name,
-    description: sample.description,
-    onLoad: () => {
-      setInputText(sample.text);
-      setLabels(sample.labels);
-    },
-  }));
+  const samplePresets: SamplePreset[] = mode === "recognize"
+    ? Object.values(SAMPLE_TEXTS).map((sample) => ({
+        name: sample.name,
+        description: sample.description,
+        onLoad: () => {
+          setInputText(sample.text);
+          setLabels(sample.labels);
+        },
+      }))
+    : Object.values(EXTRACT_SAMPLES).map((sample) => ({
+        name: sample.name,
+        description: sample.description,
+        onLoad: () => {
+          setInputText(sample.text);
+          setSchema(sample.schema);
+        },
+      }));
+
+  // Render extract results
+  const renderExtractResults = () => {
+    if (!extractResult || !extractResult.results || extractResult.results.length === 0) {
+      return (
+        <div className="h-100 flex items-center justify-center text-muted-foreground">
+          <div className="text-center">
+            <SlidersHorizontal className="h-12 w-12 mx-auto mb-3 opacity-20" />
+            <p>Enter text and click "Run" to extract structured data</p>
+          </div>
+        </div>
+      );
+    }
+
+    const textResult = extractResult.results[0];
+
+    return (
+      <div className="h-100 overflow-y-auto space-y-4">
+        {Object.entries(textResult).map(([structName, instances]) => (
+          <div key={structName}>
+            <h4 className="text-sm font-semibold mb-2 capitalize">{structName}</h4>
+            {(instances as Record<string, unknown>[]).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No instances found</p>
+            ) : (
+              <div className="space-y-2">
+                {(instances as Record<string, unknown>[]).map((instance, idx) => (
+                  <div key={idx} className="p-3 bg-muted/50 rounded-lg border text-sm space-y-1">
+                    {Object.entries(instance).map(([fieldName, fieldValue]) => {
+                      // Handle both single ExtractFieldValue and arrays
+                      const values = Array.isArray(fieldValue)
+                        ? (fieldValue as ExtractFieldValue[])
+                        : [fieldValue as ExtractFieldValue];
+
+                      return (
+                        <div key={fieldName} className="flex gap-2">
+                          <span className="text-muted-foreground font-medium min-w-24">
+                            {fieldName}:
+                          </span>
+                          <span className="font-mono">
+                            {values.map((v, vi) => (
+                              <span key={vi}>
+                                {vi > 0 && ", "}
+                                {v.value}
+                                {includeConfidence && v.score != null && (
+                                  <span className="text-muted-foreground ml-1">
+                                    ({(v.score * 100).toFixed(0)}%)
+                                  </span>
+                                )}
+                                {includeSpans && v.start != null && v.end != null && (
+                                  <span className="text-muted-foreground ml-1">
+                                    [{v.start}-{v.end}]
+                                  </span>
+                                )}
+                              </span>
+                            ))}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const hasResult = mode === "recognize" ? recognizeResult !== null : extractResult !== null;
+  const resultModel = mode === "recognize" ? recognizeResult?.model : extractResult?.model;
 
   return (
     <div className="h-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">NER Playground</h1>
+          <h1 className="text-2xl font-bold">Recognize Playground</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Extract named entities from text using GLiNER models
+            Extract entities and structured data from text using GLiNER models
           </p>
         </div>
         <div className="flex gap-2">
@@ -472,6 +765,26 @@ const NERPlaygroundPage: React.FC = () => {
           <CardTitle className="text-lg">Configuration</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Mode Toggle */}
+          <div className="flex gap-2">
+            <Button
+              variant={mode === "recognize" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMode("recognize")}
+            >
+              <Tag className="h-4 w-4 mr-1" />
+              Recognize
+            </Button>
+            <Button
+              variant={mode === "extract" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setMode("extract")}
+            >
+              <SlidersHorizontal className="h-4 w-4 mr-1" />
+              Extract
+            </Button>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Model Selection */}
             <div className="space-y-2">
@@ -502,30 +815,57 @@ const NERPlaygroundPage: React.FC = () => {
               </Select>
             </div>
 
-            {/* Confidence Threshold */}
-            <div className="space-y-2">
-              <Label htmlFor="threshold">Confidence Threshold</Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="threshold"
-                  type="number"
-                  min={0}
-                  max={100}
-                  step={5}
-                  value={(confidenceThreshold * 100).toFixed(0)}
-                  onChange={(e) => {
-                    const val = Number.parseInt(e.target.value);
-                    if (!Number.isNaN(val) && val >= 0 && val <= 100) {
-                      setConfidenceThreshold(val / 100);
-                    }
-                  }}
-                  className="w-20"
-                />
-                <span className="text-sm text-muted-foreground">%</span>
+            {/* Confidence Threshold (recognize mode) */}
+            {mode === "recognize" && (
+              <div className="space-y-2">
+                <Label htmlFor="threshold">Confidence Threshold</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="threshold"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={(confidenceThreshold * 100).toFixed(0)}
+                    onChange={(e) => {
+                      const val = Number.parseInt(e.target.value);
+                      if (!Number.isNaN(val) && val >= 0 && val <= 100) {
+                        setConfidenceThreshold(val / 100);
+                      }
+                    }}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Extract Button */}
+            {/* Threshold (extract mode) */}
+            {mode === "extract" && (
+              <div className="space-y-2">
+                <Label htmlFor="extract-threshold">Threshold</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="extract-threshold"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={5}
+                    value={(extractThreshold * 100).toFixed(0)}
+                    onChange={(e) => {
+                      const val = Number.parseInt(e.target.value);
+                      if (!Number.isNaN(val) && val >= 0 && val <= 100) {
+                        setExtractThreshold(val / 100);
+                      }
+                    }}
+                    className="w-20"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+              </div>
+            )}
+
+            {/* Run Button */}
             <div className="space-y-2 flex items-end">
               <Button
                 onClick={handleRecognize}
@@ -539,60 +879,171 @@ const NERPlaygroundPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Tag className="h-4 w-4 mr-2" />
-                    Extract Entities
+                    {mode === "recognize" ? (
+                      <Tag className="h-4 w-4 mr-2" />
+                    ) : (
+                      <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    )}
+                    {mode === "recognize" ? "Extract Entities" : "Extract Data"}
                   </>
                 )}
               </Button>
             </div>
           </div>
 
-          {/* Entity Labels */}
-          <div className="space-y-2">
-            <Label>Entity Labels (GLiNER)</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {labels.map((label) => {
-                const colors = getColorForLabel(label);
-                return (
-                  <Badge
-                    key={label}
-                    variant="secondary"
-                    className={`${colors.bg} ${colors.text} ${colors.border} border gap-1`}
-                  >
-                    {label}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveLabel(label)}
-                      className="ml-1 hover:opacity-70"
-                      aria-label={`Remove ${label}`}
+          {/* Extract mode options */}
+          {mode === "extract" && (
+            <div className="flex gap-6">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="include-confidence"
+                  checked={includeConfidence}
+                  onCheckedChange={setIncludeConfidence}
+                />
+                <Label htmlFor="include-confidence" className="text-sm">
+                  Include confidence
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="include-spans"
+                  checked={includeSpans}
+                  onCheckedChange={setIncludeSpans}
+                />
+                <Label htmlFor="include-spans" className="text-sm">
+                  Include spans
+                </Label>
+              </div>
+            </div>
+          )}
+
+          {/* Entity Labels (recognize mode) */}
+          {mode === "recognize" && (
+            <div className="space-y-2">
+              <Label>Entity Labels (GLiNER)</Label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {labels.map((label) => {
+                  const colors = getColorForLabel(label);
+                  return (
+                    <Badge
+                      key={label}
+                      variant="secondary"
+                      className={`${colors.bg} ${colors.text} ${colors.border} border gap-1`}
                     >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                );
-              })}
+                      {label}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveLabel(label)}
+                        className="ml-1 hover:opacity-70"
+                        aria-label={`Remove ${label}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add custom label..."
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="max-w-xs"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddLabel}
+                  disabled={!newLabel.trim()}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                GLiNER models extract entities matching these labels. Press Enter or click + to add.
+              </p>
             </div>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add custom label..."
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="max-w-xs"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleAddLabel}
-                disabled={!newLabel.trim()}
-              >
-                <Plus className="h-4 w-4" />
+          )}
+
+          {/* Schema Builder (extract mode) */}
+          {mode === "extract" && (
+            <div className="space-y-3">
+              <Label>Extraction Schema</Label>
+              {schema.map((structure, si) => (
+                <div key={si} className="p-3 bg-muted/30 rounded-lg border space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Structure name (e.g. person)"
+                      value={structure.name}
+                      onChange={(e) => updateStructureName(si, e.target.value)}
+                      className="max-w-xs font-medium"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeStructure(si)}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="pl-4 space-y-1">
+                    {structure.fields.map((field, fi) => (
+                      <div key={fi} className="flex items-center gap-2">
+                        <Input
+                          placeholder="Field name"
+                          value={field.name}
+                          onChange={(e) => updateField(si, fi, { name: e.target.value })}
+                          className="max-w-48 text-sm"
+                        />
+                        <Select
+                          value={field.type}
+                          onValueChange={(val) =>
+                            updateField(si, fi, { type: val as "str" | "list" })
+                          }
+                        >
+                          <SelectTrigger className="w-20 text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="str">str</SelectItem>
+                            <SelectItem value="list">list</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeField(si, fi)}
+                          disabled={structure.fields.length <= 1}
+                          className="text-muted-foreground hover:text-destructive h-8 w-8 p-0"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => addField(si)}
+                      className="text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      Add Field
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addStructure}>
+                <Plus className="h-4 w-4 mr-1" />
+                Add Structure
               </Button>
+              <p className="text-xs text-muted-foreground">
+                Define structures with named fields. Each field can be "str" (single value) or
+                "list" (multiple values).
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              GLiNER models extract entities matching these labels. Press Enter or click + to add.
-            </p>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -604,20 +1055,26 @@ const NERPlaygroundPage: React.FC = () => {
       )}
 
       {/* Results Stats Bar */}
-      {result && (
+      {hasResult && (
         <div className="mb-6 flex flex-wrap items-center gap-3">
-          <Badge variant="secondary" className="gap-1.5">
-            <Hash className="h-3 w-3" />
-            {getFilteredEntities().length} entities
-          </Badge>
-          <Badge variant="secondary" className="gap-1.5">
-            <Zap className="h-3 w-3" />
-            {result.model}
-          </Badge>
-          <Badge variant="secondary" className="gap-1.5">
-            <Percent className="h-3 w-3" />
-            {(confidenceThreshold * 100).toFixed(0)}% threshold
-          </Badge>
+          {mode === "recognize" && (
+            <>
+              <Badge variant="secondary" className="gap-1.5">
+                <Hash className="h-3 w-3" />
+                {getFilteredEntities().length} entities
+              </Badge>
+              <Badge variant="secondary" className="gap-1.5">
+                <Percent className="h-3 w-3" />
+                {(confidenceThreshold * 100).toFixed(0)}% threshold
+              </Badge>
+            </>
+          )}
+          {resultModel && (
+            <Badge variant="secondary" className="gap-1.5">
+              <Zap className="h-3 w-3" />
+              {resultModel}
+            </Badge>
+          )}
           {processingTime && (
             <Badge variant="outline" className="gap-1.5">
               <Clock className="h-3 w-3" />
@@ -641,7 +1098,11 @@ const NERPlaygroundPage: React.FC = () => {
           </CardHeader>
           <CardContent className="flex-1">
             <Textarea
-              placeholder="Paste or type your text here to extract named entities..."
+              placeholder={
+                mode === "recognize"
+                  ? "Paste or type your text here to extract named entities..."
+                  : "Paste or type your text here to extract structured data..."
+              }
               className="h-100 resize-y font-mono text-sm"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
@@ -652,7 +1113,13 @@ const NERPlaygroundPage: React.FC = () => {
         {/* Output Panel */}
         <Card className="flex flex-col">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">{result ? "Extracted Entities" : "Preview"}</CardTitle>
+            <CardTitle className="text-lg">
+              {hasResult
+                ? mode === "recognize"
+                  ? "Extracted Entities"
+                  : "Extracted Data"
+                : "Preview"}
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
             {isLoading ? (
@@ -667,101 +1134,105 @@ const NERPlaygroundPage: React.FC = () => {
                 <Skeleton className="h-8 w-full" />
                 <Skeleton className="h-8 w-3/4" />
               </div>
-            ) : result ? (
-              <div className="h-100 overflow-y-auto space-y-4">
-                {/* Legend with entity counts */}
-                {getUniqueLabels().length > 0 && (
-                  <div className="flex flex-wrap gap-2 pb-2">
-                    {getUniqueLabels().map((label) => {
-                      const colors = getColorForLabel(label);
-                      const counts = getEntityCountByLabel();
-                      return (
-                        <Badge
-                          key={label}
-                          variant="outline"
-                          className={`${colors.bg} ${colors.text} ${colors.border} text-xs`}
-                        >
-                          {label} ({counts[label]})
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Highlighted text view */}
-                <div className="p-3 bg-muted/50 rounded-lg border max-h-37.5 overflow-y-auto">
-                  {renderHighlightedText()}
-                </div>
-
-                <Separator />
-
-                {/* Entity list */}
-                <div className="space-y-2">
-                  {getFilteredEntities().length > 0 ? (
-                    <div className="rounded-lg border overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead className="bg-muted/50">
-                          <tr>
-                            <th className="text-left px-3 py-2 font-medium">Entity</th>
-                            <th className="text-left px-3 py-2 font-medium">Label</th>
-                            <th className="text-right px-3 py-2 font-medium">Confidence</th>
-                            <th className="text-right px-3 py-2 font-medium">Position</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {getFilteredEntities().map((entity, index) => {
-                            const colors = getColorForLabel(entity.label);
-                            return (
-                              <tr key={index} className="border-t hover:bg-muted/30">
-                                <td className="px-3 py-2 font-mono">{entity.text}</td>
-                                <td className="px-3 py-2">
-                                  <Badge
-                                    variant="secondary"
-                                    className={`${colors.bg} ${colors.text} ${colors.border} border text-xs`}
-                                  >
-                                    {entity.label}
-                                  </Badge>
-                                </td>
-                                <td className="px-3 py-2 text-right tabular-nums">
-                                  {(entity.score * 100).toFixed(1)}%
-                                </td>
-                                <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">
-                                  {entity.start}-{entity.end}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No entities found above the confidence threshold
+            ) : mode === "recognize" ? (
+              recognizeResult ? (
+                <div className="h-100 overflow-y-auto space-y-4">
+                  {/* Legend with entity counts */}
+                  {getUniqueLabels().length > 0 && (
+                    <div className="flex flex-wrap gap-2 pb-2">
+                      {getUniqueLabels().map((label) => {
+                        const colors = getColorForLabel(label);
+                        const counts = getEntityCountByLabel();
+                        return (
+                          <Badge
+                            key={label}
+                            variant="outline"
+                            className={`${colors.bg} ${colors.text} ${colors.border} text-xs`}
+                          >
+                            {label} ({counts[label]})
+                          </Badge>
+                        );
+                      })}
                     </div>
                   )}
+
+                  {/* Highlighted text view */}
+                  <div className="p-3 bg-muted/50 rounded-lg border max-h-37.5 overflow-y-auto">
+                    {renderHighlightedText()}
+                  </div>
+
+                  <Separator />
+
+                  {/* Entity list */}
+                  <div className="space-y-2">
+                    {getFilteredEntities().length > 0 ? (
+                      <div className="rounded-lg border overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="text-left px-3 py-2 font-medium">Entity</th>
+                              <th className="text-left px-3 py-2 font-medium">Label</th>
+                              <th className="text-right px-3 py-2 font-medium">Confidence</th>
+                              <th className="text-right px-3 py-2 font-medium">Position</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {getFilteredEntities().map((entity, index) => {
+                              const colors = getColorForLabel(entity.label);
+                              return (
+                                <tr key={index} className="border-t hover:bg-muted/30">
+                                  <td className="px-3 py-2 font-mono">{entity.text}</td>
+                                  <td className="px-3 py-2">
+                                    <Badge
+                                      variant="secondary"
+                                      className={`${colors.bg} ${colors.text} ${colors.border} border text-xs`}
+                                    >
+                                      {entity.label}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-3 py-2 text-right tabular-nums">
+                                    {(entity.score * 100).toFixed(1)}%
+                                  </td>
+                                  <td className="px-3 py-2 text-right text-muted-foreground tabular-nums">
+                                    {entity.start}-{entity.end}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No entities found above the confidence threshold
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="h-100 flex items-center justify-center text-muted-foreground">
+                  <div className="text-center">
+                    <Tag className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                    <p className="mb-3">
+                      Enter text and press{" "}
+                      <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
+                      to extract entities
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setInputText(SAMPLE_TEXTS.tech.text);
+                        setLabels(SAMPLE_TEXTS.tech.labels);
+                      }}
+                    >
+                      Try a sample
+                    </Button>
+                  </div>
+                </div>
+              )
             ) : (
-              <div className="h-100 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <Tag className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p className="mb-3">
-                    Enter text and press{" "}
-                    <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
-                    to extract entities
-                  </p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setInputText(SAMPLE_TEXTS.tech.text);
-                      setLabels(SAMPLE_TEXTS.tech.labels);
-                    }}
-                  >
-                    Try a sample
-                  </Button>
-                </div>
-              </div>
+              renderExtractResults()
             )}
           </CardContent>
         </Card>
@@ -769,17 +1240,32 @@ const NERPlaygroundPage: React.FC = () => {
 
       {/* Help text */}
       <div className="mt-6 text-xs text-muted-foreground space-y-1">
-        <p>
-          <strong>GLiNER Models:</strong> Zero-shot named entity recognition. Add custom labels to
-          extract any entity types you need - no retraining required.
-        </p>
-        <p>
-          <strong>Confidence Threshold:</strong> Adjust the slider to filter out low-confidence
-          predictions. Higher thresholds show fewer but more reliable entities.
-        </p>
+        {mode === "recognize" ? (
+          <>
+            <p>
+              <strong>GLiNER Models:</strong> Zero-shot named entity recognition. Add custom labels
+              to extract any entity types you need - no retraining required.
+            </p>
+            <p>
+              <strong>Confidence Threshold:</strong> Adjust to filter out low-confidence
+              predictions. Higher thresholds show fewer but more reliable entities.
+            </p>
+          </>
+        ) : (
+          <>
+            <p>
+              <strong>GLiNER2 Extraction:</strong> Extract structured data from text by defining a
+              schema with structures and fields. The model maps text spans to your schema.
+            </p>
+            <p>
+              <strong>Field Types:</strong> Use "str" for single-value fields and "list" for fields
+              that can have multiple values.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
 };
 
-export default NERPlaygroundPage;
+export default RecognizePlaygroundPage;
