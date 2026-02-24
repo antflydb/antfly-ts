@@ -1,6 +1,8 @@
 import { MessageSquare } from "lucide-react";
 import type React from "react";
-import { PipelineStep } from "./PipelineStep";
+import { useCallback, useMemo, useState } from "react";
+import { PipelineDetailPanel } from "./PipelineDetailPanel";
+import { PipelineGraph } from "./PipelineGraph";
 import type { PipelineState } from "./pipeline-types";
 
 interface PipelineTraceProps {
@@ -14,6 +16,17 @@ export const PipelineTrace: React.FC<PipelineTraceProps> = ({
   onFollowupClick,
   formatAnswer,
 }) => {
+  const [selectedStepId, setSelectedStepId] = useState<string | null>(null);
+
+  const handleSelectStep = useCallback((stepId: string) => {
+    setSelectedStepId((prev) => (prev === stepId ? null : stepId));
+  }, []);
+
+  const selectedStep = useMemo(
+    () => pipeline.steps.find((s) => s.id === selectedStepId) ?? null,
+    [pipeline.steps, selectedStepId]
+  );
+
   if (pipeline.overallStatus === "idle" || pipeline.steps.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-muted-foreground">
@@ -40,17 +53,19 @@ export const PipelineTrace: React.FC<PipelineTraceProps> = ({
         )}
         {pipeline.overallStatus === "error" && <span className="text-xs text-red-500">Error</span>}
       </div>
-      <div className="space-y-2">
-        {pipeline.steps.map((step, i) => (
-          <PipelineStep
-            key={step.id}
-            step={step}
-            isLast={i === pipeline.steps.length - 1}
-            onFollowupClick={onFollowupClick}
-            formatAnswer={formatAnswer}
-          />
-        ))}
-      </div>
+
+      <PipelineGraph
+        steps={pipeline.steps}
+        selectedStepId={selectedStepId}
+        onSelectStep={handleSelectStep}
+      />
+
+      <PipelineDetailPanel
+        step={selectedStep}
+        open={selectedStepId !== null}
+        onFollowupClick={onFollowupClick}
+        formatAnswer={formatAnswer}
+      />
     </div>
   );
 };
