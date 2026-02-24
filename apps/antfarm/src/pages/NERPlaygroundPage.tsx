@@ -281,11 +281,41 @@ const RecognizePlaygroundPage: React.FC = () => {
   });
   const [recognizeResult, setRecognizeResult] = useState<NERResponse | null>(null);
 
-  // Extract mode state
-  const [schema, setSchema] = useState<SchemaStructure[]>(DEFAULT_SCHEMA);
-  const [extractThreshold, setExtractThreshold] = useState(0.3);
-  const [includeConfidence, setIncludeConfidence] = useState(false);
-  const [includeSpans, setIncludeSpans] = useState(false);
+  // Extract mode state (restored from localStorage)
+  const [schema, setSchema] = useState<SchemaStructure[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).schema;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_SCHEMA;
+  });
+  const [extractThreshold, setExtractThreshold] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const val = JSON.parse(saved).extractThreshold;
+        if (typeof val === "number") return val;
+      }
+    } catch {}
+    return 0.3;
+  });
+  const [includeConfidence, setIncludeConfidence] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).includeConfidence === true;
+    } catch {}
+    return false;
+  });
+  const [includeSpans, setIncludeSpans] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).includeSpans === true;
+    } catch {}
+    return false;
+  });
   const [extractResult, setExtractResult] = useState<ExtractResponse | null>(null);
 
   // Shared state
@@ -302,9 +332,9 @@ const RecognizePlaygroundPage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ inputText, selectedModel, labels, confidenceThreshold, mode })
+      JSON.stringify({ inputText, selectedModel, labels, confidenceThreshold, mode, schema, extractThreshold, includeConfidence, includeSpans })
     );
-  }, [inputText, selectedModel, labels, confidenceThreshold, mode]);
+  }, [inputText, selectedModel, labels, confidenceThreshold, mode, schema, extractThreshold, includeConfidence, includeSpans]);
 
   const availableModels = mode === "recognize" ? recognizerModels : extractorModels;
 
@@ -325,14 +355,16 @@ const RecognizePlaygroundPage: React.FC = () => {
             .filter(([, info]) => info.capabilities?.includes("extraction"))
             .map(([name]) => name);
           setExtractorModels(extractors);
-          if (recognizers.length > 0) {
-            setSelectedModel(recognizers[0]);
-          }
+          setSelectedModel((prev: string) =>
+            prev && recognizers.includes(prev) ? prev : recognizers[0] || ""
+          );
         }
       } catch {
         // Ignore fetch errors
       } finally {
-        setModelsLoaded(true);
+        if (!controller.signal.aborted) {
+          setModelsLoaded(true);
+        }
       }
     })();
     return () => controller.abort();
@@ -341,11 +373,9 @@ const RecognizePlaygroundPage: React.FC = () => {
   // Update selected model when mode changes
   useEffect(() => {
     const models = mode === "recognize" ? recognizerModels : extractorModels;
-    if (models.length > 0) {
-      setSelectedModel(models[0]);
-    } else {
-      setSelectedModel("");
-    }
+    setSelectedModel((prev: string) =>
+      prev && models.includes(prev) ? prev : models[0] || ""
+    );
   }, [mode, recognizerModels, extractorModels]);
 
   // Handle ?model= URL param from Model Registry "Open in Playground"
@@ -471,7 +501,7 @@ const RecognizePlaygroundPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, selectedModel, labels, termiteApiUrl]);
+  }, [inputText, selectedModel, labels, termiteApiUrl, mode, schema, extractThreshold, includeConfidence, includeSpans]);
 
   // Cmd+Enter shortcut
   useEffect(() => {

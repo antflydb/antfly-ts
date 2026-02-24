@@ -23,7 +23,7 @@ export function useTableIndexSelector(
 ): UseTableIndexSelectorReturn {
   const { syncToUrl = false } = options;
   const apiClient = useApi();
-  const [searchParams, setSearchParams] = syncToUrl ? useSearchParams() : [null, null];
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [tables, setTables] = useState<TableStatus[]>([]);
   const [selectedTable, setSelectedTableState] = useState("");
@@ -35,7 +35,7 @@ export function useTableIndexSelector(
   // Setters that optionally sync to URL
   const setSelectedTable = (table: string) => {
     setSelectedTableState(table);
-    if (syncToUrl && setSearchParams) {
+    if (syncToUrl) {
       setSearchParams(
         (prev) => {
           if (table) {
@@ -53,7 +53,7 @@ export function useTableIndexSelector(
 
   const setSelectedIndex = (index: string) => {
     setSelectedIndexState(index);
-    if (syncToUrl && setSearchParams) {
+    if (syncToUrl) {
       setSearchParams(
         (prev) => {
           if (index) {
@@ -76,7 +76,7 @@ export function useTableIndexSelector(
         setTables(response as TableStatus[]);
 
         // Read initial table from URL or default to first
-        const urlTable = syncToUrl && searchParams ? searchParams.get("table") : null;
+        const urlTable = syncToUrl ? searchParams.get("table") : null;
         const validUrlTable =
           urlTable && (response as TableStatus[]).some((t) => t.name === urlTable);
 
@@ -116,7 +116,7 @@ export function useTableIndexSelector(
         setEmbeddingIndexes(embeddingIdxs);
 
         // Read initial index from URL or default to first
-        const urlIndex = syncToUrl && searchParams ? searchParams.get("index") : null;
+        const urlIndex = syncToUrl ? searchParams.get("index") : null;
         const validUrlIndex = urlIndex && embeddingIdxs.includes(urlIndex);
 
         if (validUrlIndex) {

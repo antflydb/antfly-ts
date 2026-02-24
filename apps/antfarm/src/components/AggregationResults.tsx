@@ -51,7 +51,7 @@ const BarChart: React.FC<{ buckets: NonNullable<AggregationResultData["buckets"]
     return <p className="text-xs text-muted-foreground">No buckets returned</p>;
   }
 
-  const maxCount = Math.max(...buckets.map((b) => b.doc_count));
+  const maxCount = Math.max(...buckets.map((b) => b.doc_count ?? 0));
 
   return (
     <div className="space-y-1.5">
@@ -62,7 +62,8 @@ const BarChart: React.FC<{ buckets: NonNullable<AggregationResultData["buckets"]
         </Badge>
       </div>
       {buckets.map((bucket) => {
-        const pct = maxCount > 0 ? (bucket.doc_count / maxCount) * 100 : 0;
+        const count = bucket.doc_count ?? 0;
+        const pct = maxCount > 0 ? (count / maxCount) * 100 : 0;
         const label = bucket.key_as_string || bucket.key;
         return (
           <div key={bucket.key} className="flex items-center gap-2 text-xs">
@@ -79,7 +80,7 @@ const BarChart: React.FC<{ buckets: NonNullable<AggregationResultData["buckets"]
               />
             </div>
             <span className="w-12 text-right tabular-nums text-muted-foreground shrink-0">
-              {bucket.doc_count.toLocaleString()}
+              {count.toLocaleString()}
             </span>
           </div>
         );

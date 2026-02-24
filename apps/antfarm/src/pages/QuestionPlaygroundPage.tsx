@@ -141,14 +141,16 @@ const RewritingPlaygroundPage: React.FC = () => {
           const data: ModelsResponse = await response.json();
           const rewriters = Object.keys(data.rewriters || {});
           setAvailableModels(rewriters);
-          if (rewriters.length > 0) {
-            setSelectedModel(rewriters[0]);
-          }
+          setSelectedModel((prev: string) =>
+            prev && rewriters.includes(prev) ? prev : rewriters[0] || ""
+          );
         }
       } catch {
         // Ignore fetch errors
       } finally {
-        setModelsLoaded(true);
+        if (!controller.signal.aborted) {
+          setModelsLoaded(true);
+        }
       }
     })();
     return () => controller.abort();
@@ -361,7 +363,7 @@ const RewritingPlaygroundPage: React.FC = () => {
       <BackendInfoBar />
 
       {modelsLoaded && availableModels.length === 0 && (
-        <NoModelsGuide modelType="rewriter" typeName="question generation" />
+        <NoModelsGuide modelType="rewriter" typeName="rewriting" />
       )}
 
       {/* Configuration Panel */}

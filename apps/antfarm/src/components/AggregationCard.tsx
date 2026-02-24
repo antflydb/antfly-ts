@@ -43,7 +43,7 @@ const AggregationCard: React.FC<AggregationCardProps> = ({
   const type = aggregation.type || "terms";
   const colorClass = TYPE_COLORS[type] || "bg-muted text-muted-foreground";
 
-  const renderDetails = () => {
+  const details = (() => {
     const parts: string[] = [];
     if (aggregation.size) parts.push(`size: ${aggregation.size}`);
     if (aggregation.interval) parts.push(`interval: ${aggregation.interval}`);
@@ -51,7 +51,7 @@ const AggregationCard: React.FC<AggregationCardProps> = ({
     if (aggregation.ranges?.length) parts.push(`${aggregation.ranges.length} ranges`);
     if (aggregation.date_ranges?.length) parts.push(`${aggregation.date_ranges.length} ranges`);
     return parts.join(" · ");
-  };
+  })();
 
   return (
     <div className="flex items-start justify-between p-2.5 bg-muted/30 rounded-lg border group">
@@ -64,7 +64,7 @@ const AggregationCard: React.FC<AggregationCardProps> = ({
         </div>
         <div className="text-xs text-muted-foreground flex items-center gap-1.5">
           <code className="bg-muted px-1 py-0.5 rounded">{aggregation.field || "none"}</code>
-          {renderDetails() && <span>· {renderDetails()}</span>}
+          {details && <span>· {details}</span>}
         </div>
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

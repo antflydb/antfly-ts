@@ -90,7 +90,7 @@ const AggregationBuilder: React.FC<AggregationBuilderProps> = ({
 
     const config: AggregationConfig = { type, field };
 
-    if (isBucketing && type !== "histogram" && type !== "date_histogram") {
+    if (type === "terms") {
       config.size = size;
     }
 

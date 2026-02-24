@@ -8,29 +8,36 @@
 
 type QueryObject = Record<string, unknown>;
 
-export function normalizeSimplifiedDSL(query: unknown): QueryObject {
+const MAX_DEPTH = 50;
+
+export function normalizeSimplifiedDSL(query: unknown, depth = 0): QueryObject {
+  if (depth > MAX_DEPTH) {
+    return {};
+  }
+
   if (!query || typeof query !== "object" || Array.isArray(query)) {
-    return query as QueryObject;
+    return {};
   }
 
   const q = query as QueryObject;
   const result: QueryObject = {};
+  const recurse = (v: unknown) => normalizeSimplifiedDSL(v, depth + 1);
 
   // Transform "and" → "conjuncts"
   if ("and" in q) {
-    const children = Array.isArray(q.and) ? q.and.map(normalizeSimplifiedDSL) : [];
+    const children = Array.isArray(q.and) ? q.and.map(recurse) : [];
     return { ...copyExtraKeys(q, ["and"]), conjuncts: children };
   }
 
   // Transform "or" → "disjuncts"
   if ("or" in q) {
-    const children = Array.isArray(q.or) ? q.or.map(normalizeSimplifiedDSL) : [];
+    const children = Array.isArray(q.or) ? q.or.map(recurse) : [];
     return { ...copyExtraKeys(q, ["or"]), disjuncts: children };
   }
 
   // Transform "not" → "must_not" wrapper
   if ("not" in q) {
-    const inner = normalizeSimplifiedDSL(q.not);
+    const inner = recurse(q.not);
     return { ...copyExtraKeys(q, ["not"]), must_not: { disjuncts: [inner] } };
   }
 
@@ -38,9 +45,9 @@ export function normalizeSimplifiedDSL(query: unknown): QueryObject {
   for (const key of Object.keys(q)) {
     const val = q[key];
     if (key === "conjuncts" || key === "disjuncts") {
-      result[key] = Array.isArray(val) ? val.map(normalizeSimplifiedDSL) : val;
+      result[key] = Array.isArray(val) ? val.map(recurse) : val;
     } else if (key === "must" || key === "should" || key === "must_not") {
-      result[key] = normalizeSimplifiedDSL(val);
+      result[key] = recurse(val);
     } else {
       result[key] = val;
     }

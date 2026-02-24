@@ -203,11 +203,18 @@ export function getQuantizationInfo(
   return options.find((opt) => opt.type === type);
 }
 
+// Shell-safe: only allow alphanumeric, hyphens, underscores, dots, slashes, and colons
+function shellSafe(s: string): string {
+  return s.replace(/[^a-zA-Z0-9\-_./: ]/g, "");
+}
+
 // Generate download command for a model
 export function getDownloadCommand(model: TermiteModel, quantization?: QuantizationType): string {
+  const source = shellSafe(model.source);
+
   if (model.inRegistry) {
     // Registry pull: termite pull SOURCE (variant appended with colon)
-    let cmd = `termite pull ${model.source}`;
+    let cmd = `termite pull ${source}`;
     if (quantization) {
       cmd += `:${quantization}`;
     }
@@ -215,7 +222,7 @@ export function getDownloadCommand(model: TermiteModel, quantization?: Quantizat
   }
 
   // HuggingFace pull: termite pull SOURCE --type TYPE
-  let cmd = `termite pull ${model.source} --type ${model.type}`;
+  let cmd = `termite pull ${source} --type ${model.type}`;
   if (quantization) {
     const variantName = VARIANT_CLI_NAMES[quantization];
     if (!variantName) {

@@ -167,7 +167,9 @@ const ChunkingPlaygroundPage: React.FC = () => {
       } catch {
         // Ignore fetch errors
       } finally {
-        setModelsLoaded(true);
+        if (!controller.signal.aborted) {
+          setModelsLoaded(true);
+        }
       }
     })();
     return () => controller.abort();
@@ -348,7 +350,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
               <Select
                 value={config.model}
                 onValueChange={(value) => setConfig({ ...config, model: value })}
-                disabled={!modelsLoaded && availableModels.length === 0}
+                disabled={!modelsLoaded || availableModels.length === 0}
               >
                 <SelectTrigger id="model">
                   <SelectValue placeholder={!modelsLoaded ? "Loading..." : "Select model"} />
@@ -460,14 +462,15 @@ const ChunkingPlaygroundPage: React.FC = () => {
                   </Label>
                   <Input
                     id="threshold"
-                    type="text"
-                    defaultValue={config.threshold}
-                    onBlur={(e) => {
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={config.threshold}
+                    onChange={(e) => {
                       const val = parseFloat(e.target.value);
                       if (!Number.isNaN(val) && val >= 0 && val <= 1) {
                         setConfig({ ...config, threshold: val });
-                      } else {
-                        e.target.value = String(config.threshold);
                       }
                     }}
                   />

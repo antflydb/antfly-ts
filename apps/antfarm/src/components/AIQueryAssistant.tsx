@@ -22,30 +22,24 @@ import { useApi } from "@/hooks/use-api-config";
 import { normalizeSimplifiedDSL, usesSimplifiedDSL } from "@/utils/normalizeQuery";
 import { QueryDiffView } from "./QueryDiffView";
 
-const PROVIDER_DEFAULTS: Record<GeneratorProvider, string> = {
+const PROVIDER_DEFAULTS: Partial<Record<GeneratorProvider, string>> = {
   gemini: "gemini-2.5-flash",
   vertex: "gemini-2.5-flash",
   ollama: "llama3.3:70b",
   openai: "gpt-4.1",
-  openrouter: "openai/gpt-4.1",
   bedrock: "anthropic.claude-sonnet-4-5-20250929-v1:0",
   anthropic: "claude-sonnet-4-5-20250929",
   cohere: "command-r-plus",
-  termite: "gemma-3-1b-it",
-  mock: "mock",
 };
 
-const PROVIDER_LABELS: Record<GeneratorProvider, string> = {
+const PROVIDER_LABELS: Partial<Record<GeneratorProvider, string>> = {
   gemini: "Google AI (Gemini)",
   vertex: "Google Cloud Vertex AI",
   ollama: "Ollama (Local)",
   openai: "OpenAI",
-  openrouter: "OpenRouter",
   bedrock: "AWS Bedrock",
   anthropic: "Anthropic (Claude)",
   cohere: "Cohere",
-  termite: "Termite (Local)",
-  mock: "Mock (Testing)",
 };
 
 interface AIQueryAssistantProps {
@@ -173,7 +167,7 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
               <Button variant="ghost" size="sm" className="h-7 gap-1.5 text-muted-foreground">
                 <GearIcon className="h-3.5 w-3.5" />
                 {provider && (
-                  <span className="text-xs">{PROVIDER_LABELS[provider]}</span>
+                  <span className="text-xs">{PROVIDER_LABELS[provider] || provider}</span>
                 )}
               </Button>
             </PopoverTrigger>

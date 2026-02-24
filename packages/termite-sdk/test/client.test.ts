@@ -32,6 +32,7 @@ describe("TermiteClient", () => {
     expect(typeof client.recognize).toBe("function");
     expect(typeof client.extract).toBe("function");
     expect(typeof client.rewrite).toBe("function");
+    expect(typeof client.transcribe).toBe("function");
     expect(typeof client.listModels).toBe("function");
     expect(typeof client.getVersion).toBe("function");
     expect(typeof client.getRawClient).toBe("function");
@@ -465,6 +466,46 @@ describe("TermiteClient with mock fetch", () => {
       const result = await client.rewrite("flan-t5", ["input 1", "input 2"]);
 
       expect(result.texts).toHaveLength(2);
+    });
+  });
+
+  describe("transcribe", () => {
+    it("should transcribe audio", async () => {
+      const mockResponse = {
+        model: "openai/whisper-tiny",
+        text: "Hello, how are you today?",
+      };
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(mockResponse),
+        text: () => Promise.resolve(JSON.stringify(mockResponse)),
+        headers: new Headers({ "Content-Type": "application/json" }),
+      } as Response);
+
+      const client = new TermiteClient({ baseUrl: "http://localhost:8080/api" });
+      const result = await client.transcribe("base64audiodata", {
+        model: "openai/whisper-tiny",
+        language: "en",
+      });
+
+      expect(result.model).toBe("openai/whisper-tiny");
+      expect(result.text).toBe("Hello, how are you today?");
+      expect(fetch).toHaveBeenCalled();
+    });
+
+    it("should handle transcribe errors", async () => {
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ error: "Invalid audio" }),
+        text: () => Promise.resolve(JSON.stringify({ error: "Invalid audio" })),
+        headers: new Headers({ "Content-Type": "application/json" }),
+      } as Response);
+
+      const client = new TermiteClient({ baseUrl: "http://localhost:8080/api" });
+      await expect(client.transcribe("bad-data")).rejects.toThrow("Transcribe failed");
     });
   });
 

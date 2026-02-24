@@ -76,7 +76,7 @@ interface StepsConfig {
 
 const DEFAULT_GENERATOR: GeneratorConfig = {
   provider: "openai",
-  model: "gpt-5-mini",
+  model: "gpt-4o-mini",
   temperature: 0.7,
 };
 
@@ -217,6 +217,7 @@ const RagPlaygroundPage: React.FC = () => {
     let accumulatedAnswer = "";
     const accumulatedHits: QueryHit[] = [];
     const accumulatedFollowups: string[] = [];
+    let searchCompleted = false;
 
     try {
       // Mark search as running immediately
@@ -275,7 +276,8 @@ const RagPlaygroundPage: React.FC = () => {
           },
           onAnswer: (chunk) => {
             // First answer chunk: complete search, start generation
-            if (accumulatedAnswer === "") {
+            if (!searchCompleted) {
+              searchCompleted = true;
               dispatchPipeline({ type: "STEP_COMPLETE", stepId: "search", data: { hits: [...accumulatedHits] } as SearchStepData });
               dispatchPipeline({ type: "STEP_START", stepId: "generation" });
             }
@@ -298,7 +300,11 @@ const RagPlaygroundPage: React.FC = () => {
           onDone: () => {
             setIsLoading(false);
             setProcessingTime(performance.now() - startTimeRef.current);
-            // Complete any running steps
+            // Complete any running steps (search may still be running if no answer chunks arrived)
+            if (!searchCompleted) {
+              searchCompleted = true;
+              dispatchPipeline({ type: "STEP_COMPLETE", stepId: "search", data: { hits: [...accumulatedHits] } as SearchStepData });
+            }
             dispatchPipeline({ type: "STEP_COMPLETE", stepId: "generation", data: { answer: accumulatedAnswer, provider: generator.provider, model: generator.model } as GenerationStepData });
             if (accumulatedFollowups.length > 0) {
               dispatchPipeline({ type: "STEP_COMPLETE", stepId: "followup", data: { questions: accumulatedFollowups } as FollowupStepData });
