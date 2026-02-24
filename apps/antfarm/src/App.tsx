@@ -3,12 +3,12 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ApiConfigProvider } from "@/components/api-config-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { CommandPaletteProvider } from "@/components/command-palette-provider";
-import { TableProvider } from "@/components/table-provider";
 import { ConnectionStatusBanner } from "@/components/connection-status-banner";
 import { ContentWidthProvider, useContentWidth } from "@/components/content-width-provider";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { PrivateRoute } from "@/components/private-route";
 import { AppSidebar } from "@/components/sidebar";
+import { TableProvider } from "@/components/table-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import {

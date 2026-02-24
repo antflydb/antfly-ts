@@ -67,21 +67,15 @@ const SchemaFieldRow: React.FC<SchemaFieldRowProps> = ({
           )}
         </TableCell>
         <TableCell className="font-mono text-sm">
-          {name || (
-            <span className="text-muted-foreground italic">unnamed</span>
-          )}
-          {fieldNameError && (
-            <span className="text-destructive ml-2 text-xs">*</span>
-          )}
+          {name || <span className="text-muted-foreground italic">unnamed</span>}
+          {fieldNameError && <span className="text-destructive ml-2 text-xs">*</span>}
         </TableCell>
         <TableCell>
           <Badge variant="secondary">{type}</Badge>
         </TableCell>
         <TableCell>
           {detectionInfo && (
-            <Badge variant="outline">
-              {Math.round(detectionInfo.frequency * 100)}%
-            </Badge>
+            <Badge variant="outline">{Math.round(detectionInfo.frequency * 100)}%</Badge>
           )}
         </TableCell>
         <TableCell>

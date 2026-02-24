@@ -130,8 +130,7 @@ function formatAnswer(text: string): React.ReactNode {
 
 const RagPlaygroundPage: React.FC = () => {
   const apiClient = useApi();
-  const { tables, selectedTable, setSelectedTable, embeddingIndexes, selectedIndex, setSelectedIndex } =
-    useTable();
+  const { selectedTable, selectedIndex } = useTable();
 
   // Config state
   const [query, setQuery] = useState("");
@@ -296,6 +295,18 @@ const RagPlaygroundPage: React.FC = () => {
         </Button>
       </div>
 
+      {/* Active Table/Index Indicator */}
+      {selectedTable ? (
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Badge variant="secondary">{selectedTable}</Badge>
+          {selectedIndex && <Badge variant="outline">{selectedIndex}</Badge>}
+        </div>
+      ) : (
+        <div className="mb-4 p-3 rounded-lg border border-dashed text-sm text-muted-foreground">
+          Select a table from the sidebar to get started.
+        </div>
+      )}
+
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Query & Settings */}
@@ -355,52 +366,6 @@ const RagPlaygroundPage: React.FC = () => {
               </CardHeader>
               <CollapsibleContent>
                 <CardContent className="space-y-6">
-                  {/* Table & Index */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Table</Label>
-                      <Select value={selectedTable} onValueChange={setSelectedTable}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select table..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tables.map((table) => (
-                            <SelectItem key={table.name} value={table.name}>
-                              {table.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Index</Label>
-                      <Select
-                        value={selectedIndex}
-                        onValueChange={setSelectedIndex}
-                        disabled={embeddingIndexes.length === 0}
-                      >
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              embeddingIndexes.length === 0
-                                ? "No embedding index"
-                                : "Select index..."
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {embeddingIndexes.map((idx) => (
-                            <SelectItem key={idx} value={idx}>
-                              {idx}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Separator />
-
                   {/* Generator Config */}
                   <div className="space-y-4">
                     <Label className="text-sm font-medium">Generator</Label>
