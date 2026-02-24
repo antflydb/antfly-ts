@@ -1,5 +1,5 @@
 import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
-import { Command, Maximize2, Minimize2, Monitor } from "lucide-react";
+import { Search, Maximize2, Minimize2, Monitor } from "lucide-react";
 import type * as React from "react";
 import { useCommandPalette } from "@/components/command-palette-provider";
 import { useContentWidth } from "@/components/content-width-provider";
@@ -32,7 +32,7 @@ export function WorkspaceHeader({ title, className, ...props }: WorkspaceHeaderP
       <div className="ml-auto flex items-center gap-2">
         {/* Command Palette Trigger */}
         <Button variant="outline" size="sm" onClick={toggleCommandPalette} className="gap-2">
-          <Command className="size-4" />
+          <Search className="size-4" />
           <span className="hidden md:inline">⌘K</span>
         </Button>
 
@@ -53,11 +53,11 @@ export function WorkspaceHeader({ title, className, ...props }: WorkspaceHeaderP
           }
         >
           {theme === "system" ? (
-            <Monitor className="size-4" />
+            <SunIcon className="size-4" />
           ) : theme === "light" ? (
             <MoonIcon className="size-4" />
           ) : (
-            <SunIcon className="size-4" />
+            <Monitor className="size-4" />
           )}
         </Button>
 
