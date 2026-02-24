@@ -1,4 +1,4 @@
-import { generatorProviders, type TableStatus } from "@antfly/sdk";
+import { generatorProviders } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   Check,
@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +45,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
+import { useTable } from "@/hooks/use-table";
 import type { EvalItem, EvalItemResult, EvalRunResult } from "@/types/evals";
 
 // Generator provider type from SDK
@@ -98,12 +98,11 @@ const EvalsPlaygroundPage: React.FC = () => {
     importPromptfooSet,
   } = useEvalSets();
 
+  const { tables, selectedTable, setSelectedTable, embeddingIndexes, selectedIndex, setSelectedIndex } =
+    useTable();
+
   // State
   const [selectedSetName, setSelectedSetName] = useState<string>("");
-  const [selectedTable, setSelectedTable] = useState<string>("");
-  const [tables, setTables] = useState<TableStatus[]>([]);
-  const [embeddingIndexes, setEmbeddingIndexes] = useState<string[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<string>("");
   const [judge, setJudge] = useState<JudgeConfig>(DEFAULT_JUDGE);
   const [showJudgeSettings, setShowJudgeSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,56 +124,6 @@ const EvalsPlaygroundPage: React.FC = () => {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Fetch tables on mount
-  useEffect(() => {
-    const fetchTables = async () => {
-      try {
-        const response = await api.tables.list();
-        setTables(response as TableStatus[]);
-        if (response.length > 0 && !selectedTable) {
-          setSelectedTable(response[0].name);
-        }
-      } catch (e) {
-        console.error("Failed to fetch tables:", e);
-      }
-    };
-    fetchTables();
-  }, [selectedTable]);
-
-  // Fetch embedding indexes when table changes
-  useEffect(() => {
-    const fetchIndexes = async () => {
-      if (!selectedTable) {
-        setEmbeddingIndexes([]);
-        setSelectedIndex("");
-        return;
-      }
-      try {
-        const response = await apiClient.indexes.list(selectedTable);
-        // Filter to only embedding indexes (aknn type)
-        const embeddingIdxs = (response || [])
-          .filter(
-            (idx: { config?: { type?: string } }) =>
-              idx.config?.type?.includes("aknn") || idx.config?.type?.includes("embedding")
-          )
-          .map((idx: { config?: { name?: string } }) => idx.config?.name || "")
-          .filter(Boolean);
-        setEmbeddingIndexes(embeddingIdxs);
-        // Auto-select first embedding index
-        if (embeddingIdxs.length > 0) {
-          setSelectedIndex(embeddingIdxs[0]);
-        } else {
-          setSelectedIndex("");
-        }
-      } catch (e) {
-        console.error("Failed to fetch indexes:", e);
-        setEmbeddingIndexes([]);
-        setSelectedIndex("");
-      }
-    };
-    fetchIndexes();
-  }, [selectedTable, apiClient]);
 
   // Set first eval set as default
   useEffect(() => {

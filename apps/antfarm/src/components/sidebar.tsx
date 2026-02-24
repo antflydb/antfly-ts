@@ -1,4 +1,3 @@
-import type { TableStatus } from "@antfly/sdk";
 import {
   ArrowUpDown,
   Check,
@@ -29,7 +28,6 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { api } from "@/api";
 import { ProductSwitcher } from "@/components/product-switcher";
 import { SidebarUser } from "@/components/sidebar-user";
 import { Button } from "@/components/ui/button";
@@ -60,8 +58,9 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { isProductEnabled, type ProductId } from "@/config/products";
+import type { ProductId } from "@/config/products";
 import { useAuth } from "@/hooks/use-auth";
+import { useTable } from "@/hooks/use-table";
 import { cn } from "@/lib/utils";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -82,14 +81,8 @@ export function AppSidebar({
   const navigate = useNavigate();
   const { state: sidebarState, toggleSidebar, isMobile } = useSidebar();
   const { hasPermission } = useAuth();
+  const { tables, selectedTable, setSelectedTable } = useTable();
 
-  // Extract tableName from pathname since useParams doesn't work outside Route context
-  const tableName = React.useMemo(() => {
-    const match = location.pathname.match(/^\/tables\/([^/]+)/);
-    return match ? match[1] : undefined;
-  }, [location.pathname]);
-
-  const [tables, setTables] = React.useState<TableStatus[]>([]);
   const [overviewOpen, setOverviewOpen] = React.useState(true);
   const [dataOpen, setDataOpen] = React.useState(true);
   const [comboboxOpen, setComboboxOpen] = React.useState(false);
@@ -106,26 +99,8 @@ export function AppSidebar({
     setIsHovering(false);
   };
 
-  React.useEffect(() => {
-    if (!isProductEnabled("antfly")) return;
-
-    const fetchTables = async () => {
-      try {
-        const response = await api.tables.list();
-        if (response && Array.isArray(response)) {
-          setTables(response as TableStatus[]);
-        }
-      } catch {
-        // Silently fail - table list will be empty when server is down
-        // The ConnectionStatusBanner will show the appropriate error
-        setTables([]);
-      }
-    };
-    fetchTables();
-  }, []);
-
   const handleTableChange = (value: string) => {
-    navigate(`/tables/${value}`);
+    setSelectedTable(value);
   };
 
   const handleSectionClick = (section: string) => {
@@ -219,7 +194,7 @@ export function AppSidebar({
                     aria-expanded={comboboxOpen}
                     className="w-full justify-between"
                   >
-                    <span className="truncate">{tableName || "Select a table..."}</span>
+                    <span className="truncate">{selectedTable || "Select a table..."}</span>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
@@ -241,7 +216,7 @@ export function AppSidebar({
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                tableName === table.name ? "opacity-100" : "opacity-0"
+                                selectedTable === table.name ? "opacity-100" : "opacity-0"
                               )}
                             />
                             {table.name}
@@ -350,7 +325,7 @@ export function AppSidebar({
                 )}
 
                 {/* Overview Section - only show when on a table page */}
-                {isOnTablePage && tableName && (
+                {isOnTablePage && selectedTable && (
                   <Collapsible open={overviewOpen} onOpenChange={setOverviewOpen}>
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
@@ -407,7 +382,7 @@ export function AppSidebar({
                 )}
 
                 {/* Data Section - only show when on a table page */}
-                {isOnTablePage && tableName && (
+                {isOnTablePage && selectedTable && (
                   <Collapsible open={dataOpen} onOpenChange={setDataOpen}>
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
