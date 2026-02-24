@@ -25,6 +25,7 @@ import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
 import KnowledgeGraphPlaygroundPage from "./pages/KnowledgeGraphPlaygroundPage";
 import { LoginPage } from "./pages/LoginPage";
 import ModelsPage from "./pages/ModelsPage";
+import OCRPlaygroundPage from "./pages/OCRPlaygroundPage";
 import RecognizePlaygroundPage from "./pages/NERPlaygroundPage";
 import RewritingPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import RagPlaygroundPage from "./pages/RagPlaygroundPage";
@@ -103,6 +104,7 @@ function AppContent() {
                         <Route path="/playground/rewrite" element={<RewritingPlaygroundPage />} />
                         <Route path="/playground/rerank" element={<RerankingPlaygroundPage />} />
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
+                        <Route path="/playground/ocr" element={<OCRPlaygroundPage />} />
                       </>
                     )}
 

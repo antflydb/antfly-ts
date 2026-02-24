@@ -17,6 +17,7 @@ import {
   PanelLeftOpen,
   Plus,
   Repeat2,
+  ScanLine,
   Scissors,
   Search,
   Shield,
@@ -561,7 +562,8 @@ export function AppSidebar({
                           location.pathname === "/playground/recognize" ||
                           location.pathname === "/playground/rewrite" ||
                           location.pathname === "/playground/rerank" ||
-                          location.pathname === "/playground/kg"
+                          location.pathname === "/playground/kg" ||
+                          location.pathname === "/playground/ocr"
                         }
                         tooltip="Playgrounds"
                       >
@@ -654,6 +656,23 @@ export function AppSidebar({
                             >
                               <Network className="size-4" />
                               <span>Knowledge Graph</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={location.pathname === "/playground/ocr"}
+                          >
+                            <a
+                              href="/playground/ocr"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/ocr");
+                              }}
+                            >
+                              <ScanLine className="size-4" />
+                              <span>OCR</span>
                             </a>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>

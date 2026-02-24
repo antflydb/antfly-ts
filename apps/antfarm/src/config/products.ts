@@ -46,6 +46,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
       "/playground/rewrite",
       "/playground/rerank",
       "/playground/kg",
+      "/playground/ocr",
     ],
   },
 };
