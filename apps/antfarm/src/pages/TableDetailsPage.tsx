@@ -43,7 +43,7 @@ import AIQueryAssistant from "../components/AIQueryAssistant";
 import ChunkingForm from "../components/ChunkingForm";
 import CreateIndexDialog from "../components/CreateIndexDialog";
 import DocumentBuilder from "../components/DocumentBuilder";
-import FieldExplorer from "../components/FieldExplorer";
+
 import BulkInsert from "../components/Insert";
 import JsonViewer from "../components/JsonViewer";
 import MultiSelect from "../components/MultiSelect";
@@ -936,18 +936,18 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                   onSubmit={handleUpdateSchema}
                   theme={theme}
                   initialSchema={tableSchema}
+                  tableName={tableName}
                 />
               </div>
             ) : tableSchema?.document_schemas &&
               Object.keys(tableSchema.document_schemas).length > 0 ? (
               <JsonViewer json={tableSchema} />
             ) : (
-              <FieldExplorer
-                tableName={tableName || ""}
-                onSchemaGenerated={(schema) => {
-                  setTableSchema(schema);
-                  setIsEditingSchema(true);
-                }}
+              <DocumentSchemasForm
+                onSubmit={handleUpdateSchema}
+                theme={theme}
+                initialSchema={null}
+                tableName={tableName}
               />
             )}
           </div>

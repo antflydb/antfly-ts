@@ -153,6 +153,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Check if user has a specific permission
   const hasPermission = useCallback(
     (resource: string, resourceType: string, permissionType: string) => {
+      // When auth is disabled, grant all permissions
+      if (authEnabled === false) return true;
+
       if (!user) return false;
 
       // Check for exact match or wildcard permissions
@@ -164,7 +167,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return resourceMatch && typeMatch && permMatch;
       });
     },
-    [user]
+    [user, authEnabled]
   );
 
   // Check authentication on mount

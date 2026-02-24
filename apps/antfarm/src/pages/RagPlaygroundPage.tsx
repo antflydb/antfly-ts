@@ -23,7 +23,6 @@ import {
   pipelineReducer,
   type SearchStepData,
 } from "@/components/rag/pipeline-types";
-import { TableIndexSelector } from "@/components/TableIndexSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +40,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api-config";
-import { useTableIndexSelector } from "@/hooks/use-table-index-selector";
+import { useTable } from "@/hooks/use-table";
 
 // Generator provider type from SDK
 type GeneratorProvider = (typeof generatorProviders)[number];
@@ -134,16 +133,7 @@ function formatAnswer(text: string): React.ReactNode {
 
 const RagPlaygroundPage: React.FC = () => {
   const apiClient = useApi();
-
-  // Table & Index selection (shared hook with URL sync)
-  const {
-    tables,
-    selectedTable,
-    setSelectedTable,
-    embeddingIndexes,
-    selectedIndex,
-    setSelectedIndex,
-  } = useTableIndexSelector({ syncToUrl: true });
+  const { selectedTable, selectedIndex } = useTable();
 
   // Config state
   const [query, setQuery] = useState("");
@@ -386,6 +376,18 @@ const RagPlaygroundPage: React.FC = () => {
         </Button>
       </div>
 
+      {/* Active Table/Index Indicator */}
+      {selectedTable ? (
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Badge variant="secondary">{selectedTable}</Badge>
+          {selectedIndex && <Badge variant="outline">{selectedIndex}</Badge>}
+        </div>
+      ) : (
+        <div className="mb-4 p-3 rounded-lg border border-dashed text-sm text-muted-foreground">
+          Select a table from the sidebar to get started.
+        </div>
+      )}
+
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Query & Settings */}
@@ -396,16 +398,6 @@ const RagPlaygroundPage: React.FC = () => {
               <CardTitle className="text-lg">Query</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Table & Index selectors at top of query card */}
-              <TableIndexSelector
-                tables={tables}
-                selectedTable={selectedTable}
-                onTableChange={setSelectedTable}
-                embeddingIndexes={embeddingIndexes}
-                selectedIndex={selectedIndex}
-                onIndexChange={setSelectedIndex}
-              />
-
               <Textarea
                 placeholder="Enter your question..."
                 value={query}

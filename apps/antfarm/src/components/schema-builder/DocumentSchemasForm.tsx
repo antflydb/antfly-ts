@@ -66,6 +66,7 @@ interface DocumentSchemasFormProps {
   initialSchema?: TableSchema | null;
   title?: string;
   renderAsForm?: boolean;
+  tableName?: string;
 }
 
 interface JsonPayload {
@@ -77,6 +78,7 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
   initialSchema,
   title = "Edit Document Schemas",
   renderAsForm = true,
+  tableName,
 }) => {
   "use no memo";
   const [viewMode, setViewMode] = useState<"form" | "json">("form");
@@ -271,6 +273,7 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
               key={field.id}
               schemaIndex={index}
               onRemove={() => removeDocumentSchema(index)}
+              tableName={tableName}
             />
           ))}
           <Button

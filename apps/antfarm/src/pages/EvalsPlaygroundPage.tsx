@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TableIndexSelector } from "@/components/TableIndexSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +45,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
-import { useTableIndexSelector } from "@/hooks/use-table-index-selector";
+import { useTable } from "@/hooks/use-table";
 import type { EvalItem, EvalItemResult, EvalRunResult } from "@/types/evals";
 
 // Generator provider type from SDK
@@ -99,15 +98,7 @@ const EvalsPlaygroundPage: React.FC = () => {
     importPromptfooSet,
   } = useEvalSets();
 
-  // Table & Index selection (shared hook with URL sync)
-  const {
-    tables,
-    selectedTable,
-    setSelectedTable,
-    embeddingIndexes,
-    selectedIndex,
-    setSelectedIndex,
-  } = useTableIndexSelector({ syncToUrl: true });
+  const { selectedTable, selectedIndex } = useTable();
 
   // State
   const [selectedSetName, setSelectedSetName] = useState<string>("");
@@ -452,13 +443,25 @@ const EvalsPlaygroundPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Active Table/Index Indicator */}
+      {selectedTable ? (
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Badge variant="secondary">{selectedTable}</Badge>
+          {selectedIndex && <Badge variant="outline">{selectedIndex}</Badge>}
+        </div>
+      ) : (
+        <div className="mb-4 p-3 rounded-lg border border-dashed text-sm text-muted-foreground">
+          Select a table from the sidebar to get started.
+        </div>
+      )}
+
       {/* Configuration Panel */}
       <Card className="mb-6">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Eval Set Selection */}
             <div className="space-y-2">
               <Label>Eval Set</Label>
@@ -474,20 +477,6 @@ const EvalsPlaygroundPage: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Table & Index Selection */}
-            <div className="space-y-2">
-              <Label>Table & Index</Label>
-              <TableIndexSelector
-                tables={tables}
-                selectedTable={selectedTable}
-                onTableChange={setSelectedTable}
-                embeddingIndexes={embeddingIndexes}
-                selectedIndex={selectedIndex}
-                onIndexChange={setSelectedIndex}
-                compact
-              />
             </div>
 
             {/* Judge Settings Button */}
@@ -512,7 +501,11 @@ const EvalsPlaygroundPage: React.FC = () => {
               <Button
                 onClick={runEvals}
                 disabled={
-                  isLoading || !selectedSet || selectedSet.items.length === 0 || !selectedIndex
+                  isLoading ||
+                  !selectedSet ||
+                  selectedSet.items.length === 0 ||
+                  !selectedTable ||
+                  !selectedIndex
                 }
                 className="w-full"
               >
