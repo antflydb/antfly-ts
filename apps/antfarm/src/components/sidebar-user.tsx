@@ -31,13 +31,13 @@ function getInitials(name: string): string {
 
 export function SidebarUser(): React.JSX.Element | null {
   const { isMobile, state } = useSidebar();
-  const { user, logout } = useAuth();
+  const { user, logout, authEnabled } = useAuth();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = React.useState(false);
   const isCollapsed = state === "collapsed";
 
-  // Loading state - in Antfly we don't have a separate loading state
-  // but we can show skeleton while user is null initially
+  if (authEnabled === false) return null;
+
   if (!user) {
     return (
       <SidebarMenu>

@@ -2,7 +2,6 @@ import {
   type ClassificationTransformationResult,
   generatorProviders,
   type QueryHit,
-  type TableStatus,
 } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
@@ -20,8 +19,7 @@ import {
   Zap,
 } from "lucide-react";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "@/api";
+import { useCallback, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +37,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api-config";
+import { useTable } from "@/hooks/use-table";
 
 // Generator provider type from SDK
 type GeneratorProvider = (typeof generatorProviders)[number];
@@ -131,13 +130,10 @@ function formatAnswer(text: string): React.ReactNode {
 
 const RagPlaygroundPage: React.FC = () => {
   const apiClient = useApi();
+  const { selectedTable, selectedIndex } = useTable();
 
   // Config state
   const [query, setQuery] = useState("");
-  const [selectedTable, setSelectedTable] = useState("");
-  const [tables, setTables] = useState<TableStatus[]>([]);
-  const [embeddingIndexes, setEmbeddingIndexes] = useState<string[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState("");
   const [generator, setGenerator] = useState<GeneratorConfig>(DEFAULT_GENERATOR);
   const [limit, setLimit] = useState(10);
   const [steps, setSteps] = useState<StepsConfig>(DEFAULT_STEPS);
@@ -163,54 +159,6 @@ const RagPlaygroundPage: React.FC = () => {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const startTimeRef = useRef<number>(0);
-
-  // Fetch tables on mount
-  useEffect(() => {
-    const fetchTables = async () => {
-      try {
-        const response = await api.tables.list();
-        setTables(response as TableStatus[]);
-        if (response.length > 0 && !selectedTable) {
-          setSelectedTable(response[0].name);
-        }
-      } catch (e) {
-        console.error("Failed to fetch tables:", e);
-      }
-    };
-    fetchTables();
-  }, [selectedTable]);
-
-  // Fetch embedding indexes when table changes
-  useEffect(() => {
-    const fetchIndexes = async () => {
-      if (!selectedTable) {
-        setEmbeddingIndexes([]);
-        setSelectedIndex("");
-        return;
-      }
-      try {
-        const response = await apiClient.indexes.list(selectedTable);
-        const embeddingIdxs = (response || [])
-          .filter(
-            (idx: { config?: { type?: string } }) =>
-              idx.config?.type?.includes("aknn") || idx.config?.type?.includes("embedding")
-          )
-          .map((idx: { config?: { name?: string } }) => idx.config?.name || "")
-          .filter(Boolean);
-        setEmbeddingIndexes(embeddingIdxs);
-        if (embeddingIdxs.length > 0) {
-          setSelectedIndex(embeddingIdxs[0]);
-        } else {
-          setSelectedIndex("");
-        }
-      } catch (e) {
-        console.error("Failed to fetch indexes:", e);
-        setEmbeddingIndexes([]);
-        setSelectedIndex("");
-      }
-    };
-    fetchIndexes();
-  }, [selectedTable, apiClient]);
 
   const handleReset = () => {
     setQuery("");
@@ -347,6 +295,18 @@ const RagPlaygroundPage: React.FC = () => {
         </Button>
       </div>
 
+      {/* Active Table/Index Indicator */}
+      {selectedTable ? (
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Badge variant="secondary">{selectedTable}</Badge>
+          {selectedIndex && <Badge variant="outline">{selectedIndex}</Badge>}
+        </div>
+      ) : (
+        <div className="mb-4 p-3 rounded-lg border border-dashed text-sm text-muted-foreground">
+          Select a table from the sidebar to get started.
+        </div>
+      )}
+
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Query & Settings */}
@@ -406,52 +366,6 @@ const RagPlaygroundPage: React.FC = () => {
               </CardHeader>
               <CollapsibleContent>
                 <CardContent className="space-y-6">
-                  {/* Table & Index */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Table</Label>
-                      <Select value={selectedTable} onValueChange={setSelectedTable}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select table..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tables.map((table) => (
-                            <SelectItem key={table.name} value={table.name}>
-                              {table.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Index</Label>
-                      <Select
-                        value={selectedIndex}
-                        onValueChange={setSelectedIndex}
-                        disabled={embeddingIndexes.length === 0}
-                      >
-                        <SelectTrigger>
-                          <SelectValue
-                            placeholder={
-                              embeddingIndexes.length === 0
-                                ? "No embedding index"
-                                : "Select index..."
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {embeddingIndexes.map((idx) => (
-                            <SelectItem key={idx} value={idx}>
-                              {idx}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <Separator />
-
                   {/* Generator Config */}
                   <div className="space-y-4">
                     <Label className="text-sm font-medium">Generator</Label>

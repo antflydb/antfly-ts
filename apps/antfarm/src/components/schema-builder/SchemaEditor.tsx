@@ -15,13 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFieldDetection } from "@/hooks/use-field-detection";
 import MultiSelect from "../MultiSelect";
 import { ImportJsonDialog } from "./ImportJsonDialog";
@@ -266,12 +260,7 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove, tabl
           <PlusIcon className="h-4 w-4 mr-1" />
           Add Field
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setImportDialogOpen(true)}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
           Import from JSON
         </Button>
         {tableName && (

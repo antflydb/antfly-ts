@@ -1,20 +1,10 @@
 import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
-import { Command, LogOut, Maximize2, Minimize2, Monitor, User } from "lucide-react";
+import { Command, Maximize2, Minimize2, Monitor } from "lucide-react";
 import type * as React from "react";
-import { useNavigate } from "react-router-dom";
 import { useCommandPalette } from "@/components/command-palette-provider";
 import { useContentWidth } from "@/components/content-width-provider";
 import { SettingsDialog } from "@/components/SettingsDialog";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
 
@@ -26,17 +16,10 @@ export function WorkspaceHeader({ title, className, ...props }: WorkspaceHeaderP
   const { toggle: toggleCommandPalette } = useCommandPalette();
   const { contentWidth, toggleContentWidth } = useContentWidth();
   const { theme, setTheme } = useTheme();
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   const toggleTheme = () => {
     const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
     setTheme(next);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
   };
 
   return (
@@ -91,32 +74,6 @@ export function WorkspaceHeader({ title, className, ...props }: WorkspaceHeaderP
             <Minimize2 className="size-4" />
           )}
         </Button>
-
-        {/* User Menu */}
-        {user && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" title="User menu">
-                <User className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{user.username}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {user.permissions.length} permission(s)
-                  </span>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 size-4" />
-                Logout
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
       </div>
     </header>
   );
