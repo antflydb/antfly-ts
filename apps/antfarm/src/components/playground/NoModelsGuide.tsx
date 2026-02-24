@@ -84,9 +84,7 @@ export function NoModelsGuide({
           className={`h-4 w-4 mt-0.5 shrink-0 ${soft ? "text-muted-foreground" : "text-amber-600 dark:text-amber-400"}`}
         />
         <div className="flex-1 min-w-0">
-          <p className={titleClasses}>
-            No {typeName} models installed
-          </p>
+          <p className={titleClasses}>No {typeName} models installed</p>
           <p className={`${descClasses} mt-1`}>
             {soft
               ? `Download a model for semantic ${typeName} capabilities. The fixed-token mode still works without a model.`

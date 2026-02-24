@@ -101,9 +101,7 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
 
       // Normalize if using simplified DSL
       const needsNormalization = usesSimplifiedDSL(data.query);
-      const normalized = needsNormalization
-        ? normalizeSimplifiedDSL(data.query)
-        : data.query;
+      const normalized = needsNormalization ? normalizeSimplifiedDSL(data.query) : data.query;
       setNormalizedQuery(normalized);
       setWasNormalized(needsNormalization);
     } catch (err) {
@@ -175,7 +173,9 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
               <div className="space-y-3">
                 <h4 className="text-sm font-medium">Generator Settings</h4>
                 <div className="space-y-2">
-                  <Label htmlFor="ai-provider" className="text-xs">Provider</Label>
+                  <Label htmlFor="ai-provider" className="text-xs">
+                    Provider
+                  </Label>
                   <Select
                     value={provider}
                     onValueChange={(v) => handleProviderChange(v as GeneratorProvider)}
@@ -195,7 +195,9 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="ai-model" className="text-xs">Model</Label>
+                  <Label htmlFor="ai-model" className="text-xs">
+                    Model
+                  </Label>
                   <Input
                     id="ai-model"
                     placeholder={provider ? PROVIDER_DEFAULTS[provider] : "Default"}
@@ -248,9 +250,7 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
         {result && normalizedQuery && (
           <div className="rounded-lg border p-3 space-y-3 bg-muted/30">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium truncate flex-1 mr-2">
-                "{intent}"
-              </span>
+              <span className="text-sm font-medium truncate flex-1 mr-2">"{intent}"</span>
               <div className="flex items-center gap-2">
                 {wasNormalized && (
                   <Badge variant="outline" className="text-[10px]">
@@ -259,8 +259,7 @@ const AIQueryAssistant: React.FC<AIQueryAssistantProps> = ({
                 )}
                 {result.confidence !== undefined && (
                   <Badge variant={getConfidenceColor(result.confidence)}>
-                    {getConfidenceLabel(result.confidence)} (
-                    {Math.round(result.confidence * 100)}%)
+                    {getConfidenceLabel(result.confidence)} ({Math.round(result.confidence * 100)}%)
                   </Badge>
                 )}
               </div>

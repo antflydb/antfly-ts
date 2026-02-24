@@ -102,9 +102,7 @@ export const TableIndexSelector: React.FC<TableIndexSelectorProps> = ({
         >
           <SelectTrigger>
             <SelectValue
-              placeholder={
-                embeddingIndexes.length === 0 ? "No embedding index" : "Select index..."
-              }
+              placeholder={embeddingIndexes.length === 0 ? "No embedding index" : "Select index..."}
             />
           </SelectTrigger>
           <SelectContent>

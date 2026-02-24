@@ -239,21 +239,27 @@ const RecognizePlaygroundPage: React.FC = () => {
         const parsed = JSON.parse(saved).mode;
         if (parsed === "recognize" || parsed === "extract") return parsed;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "recognize";
   });
   const [inputText, setInputText] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).inputText || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [selectedModel, setSelectedModel] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).selectedModel || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
 
@@ -265,7 +271,9 @@ const RecognizePlaygroundPage: React.FC = () => {
         const parsed = JSON.parse(saved).labels;
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return DEFAULT_LABELS;
   });
   const [newLabel, setNewLabel] = useState("");
@@ -276,7 +284,9 @@ const RecognizePlaygroundPage: React.FC = () => {
         const val = JSON.parse(saved).confidenceThreshold;
         if (typeof val === "number") return val;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return 0.5;
   });
   const [recognizeResult, setRecognizeResult] = useState<NERResponse | null>(null);
@@ -289,7 +299,9 @@ const RecognizePlaygroundPage: React.FC = () => {
         const parsed = JSON.parse(saved).schema;
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return DEFAULT_SCHEMA;
   });
   const [extractThreshold, setExtractThreshold] = useState(() => {
@@ -299,21 +311,27 @@ const RecognizePlaygroundPage: React.FC = () => {
         const val = JSON.parse(saved).extractThreshold;
         if (typeof val === "number") return val;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return 0.3;
   });
   const [includeConfidence, setIncludeConfidence] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).includeConfidence === true;
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return false;
   });
   const [includeSpans, setIncludeSpans] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).includeSpans === true;
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return false;
   });
   const [extractResult, setExtractResult] = useState<ExtractResponse | null>(null);
@@ -332,9 +350,29 @@ const RecognizePlaygroundPage: React.FC = () => {
   useEffect(() => {
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ inputText, selectedModel, labels, confidenceThreshold, mode, schema, extractThreshold, includeConfidence, includeSpans })
+      JSON.stringify({
+        inputText,
+        selectedModel,
+        labels,
+        confidenceThreshold,
+        mode,
+        schema,
+        extractThreshold,
+        includeConfidence,
+        includeSpans,
+      })
     );
-  }, [inputText, selectedModel, labels, confidenceThreshold, mode, schema, extractThreshold, includeConfidence, includeSpans]);
+  }, [
+    inputText,
+    selectedModel,
+    labels,
+    confidenceThreshold,
+    mode,
+    schema,
+    extractThreshold,
+    includeConfidence,
+    includeSpans,
+  ]);
 
   const availableModels = mode === "recognize" ? recognizerModels : extractorModels;
 
@@ -373,9 +411,7 @@ const RecognizePlaygroundPage: React.FC = () => {
   // Update selected model when mode changes
   useEffect(() => {
     const models = mode === "recognize" ? recognizerModels : extractorModels;
-    setSelectedModel((prev: string) =>
-      prev && models.includes(prev) ? prev : models[0] || ""
-    );
+    setSelectedModel((prev: string) => (prev && models.includes(prev) ? prev : models[0] || ""));
   }, [mode, recognizerModels, extractorModels]);
 
   // Handle ?model= URL param from Model Registry "Open in Playground"
@@ -383,7 +419,13 @@ const RecognizePlaygroundPage: React.FC = () => {
     const modelParam = searchParams.get("model");
     if (modelParam && modelsLoaded && recognizerModels.includes(modelParam)) {
       setSelectedModel(modelParam);
-      setSearchParams((prev) => { prev.delete("model"); return prev; }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
     }
   }, [searchParams, modelsLoaded, recognizerModels, setSearchParams]);
 
@@ -501,7 +543,17 @@ const RecognizePlaygroundPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, selectedModel, labels, termiteApiUrl, mode, schema, extractThreshold, includeConfidence, includeSpans]);
+  }, [
+    inputText,
+    selectedModel,
+    labels,
+    termiteApiUrl,
+    mode,
+    schema,
+    extractThreshold,
+    includeConfidence,
+    includeSpans,
+  ]);
 
   // Cmd+Enter shortcut
   useEffect(() => {
@@ -676,23 +728,24 @@ const RecognizePlaygroundPage: React.FC = () => {
     return [...new Set(entities.map((e) => e.label))];
   };
 
-  const samplePresets: SamplePreset[] = mode === "recognize"
-    ? Object.values(SAMPLE_TEXTS).map((sample) => ({
-        name: sample.name,
-        description: sample.description,
-        onLoad: () => {
-          setInputText(sample.text);
-          setLabels(sample.labels);
-        },
-      }))
-    : Object.values(EXTRACT_SAMPLES).map((sample) => ({
-        name: sample.name,
-        description: sample.description,
-        onLoad: () => {
-          setInputText(sample.text);
-          setSchema(sample.schema);
-        },
-      }));
+  const samplePresets: SamplePreset[] =
+    mode === "recognize"
+      ? Object.values(SAMPLE_TEXTS).map((sample) => ({
+          name: sample.name,
+          description: sample.description,
+          onLoad: () => {
+            setInputText(sample.text);
+            setLabels(sample.labels);
+          },
+        }))
+      : Object.values(EXTRACT_SAMPLES).map((sample) => ({
+          name: sample.name,
+          description: sample.description,
+          onLoad: () => {
+            setInputText(sample.text);
+            setSchema(sample.schema);
+          },
+        }));
 
   // Render extract results
   const renderExtractResults = () => {

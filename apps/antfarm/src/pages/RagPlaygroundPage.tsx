@@ -1,7 +1,4 @@
-import {
-  generatorProviders,
-  type QueryHit,
-} from "@antfly/sdk";
+import { generatorProviders, type QueryHit } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   ChevronDown,
@@ -21,10 +18,10 @@ import {
   type ConfidenceStepData,
   type FollowupStepData,
   type GenerationStepData,
-  type PipelineStepId,
-  type SearchStepData,
   initialPipelineState,
+  type PipelineStepId,
   pipelineReducer,
+  type SearchStepData,
 } from "@/components/rag/pipeline-types";
 import { TableIndexSelector } from "@/components/TableIndexSelector";
 import { Badge } from "@/components/ui/badge";
@@ -267,30 +264,61 @@ const RagPlaygroundPage: React.FC = () => {
         },
         {
           onClassification: (c) => {
-            dispatchPipeline({ type: "STEP_COMPLETE", stepId: "classification", data: { classification: c } });
+            dispatchPipeline({
+              type: "STEP_COMPLETE",
+              stepId: "classification",
+              data: { classification: c },
+            });
             dispatchPipeline({ type: "STEP_START", stepId: "search" });
           },
           onHit: (hit) => {
             accumulatedHits.push(hit);
-            dispatchPipeline({ type: "STEP_UPDATE", stepId: "search", data: { hits: [...accumulatedHits] } as SearchStepData });
+            dispatchPipeline({
+              type: "STEP_UPDATE",
+              stepId: "search",
+              data: { hits: [...accumulatedHits] } as SearchStepData,
+            });
           },
           onAnswer: (chunk) => {
             // First answer chunk: complete search, start generation
             if (!searchCompleted) {
               searchCompleted = true;
-              dispatchPipeline({ type: "STEP_COMPLETE", stepId: "search", data: { hits: [...accumulatedHits] } as SearchStepData });
+              dispatchPipeline({
+                type: "STEP_COMPLETE",
+                stepId: "search",
+                data: { hits: [...accumulatedHits] } as SearchStepData,
+              });
               dispatchPipeline({ type: "STEP_START", stepId: "generation" });
             }
             accumulatedAnswer += chunk;
-            dispatchPipeline({ type: "STEP_UPDATE", stepId: "generation", data: { answer: accumulatedAnswer, provider: generator.provider, model: generator.model } as GenerationStepData });
+            dispatchPipeline({
+              type: "STEP_UPDATE",
+              stepId: "generation",
+              data: {
+                answer: accumulatedAnswer,
+                provider: generator.provider,
+                model: generator.model,
+              } as GenerationStepData,
+            });
           },
           onFollowUpQuestion: (q) => {
             accumulatedFollowups.push(q);
             dispatchPipeline({ type: "STEP_START", stepId: "followup" });
-            dispatchPipeline({ type: "STEP_UPDATE", stepId: "followup", data: { questions: [...accumulatedFollowups] } as FollowupStepData });
+            dispatchPipeline({
+              type: "STEP_UPDATE",
+              stepId: "followup",
+              data: { questions: [...accumulatedFollowups] } as FollowupStepData,
+            });
           },
           onConfidence: (c) => {
-            dispatchPipeline({ type: "STEP_COMPLETE", stepId: "confidence", data: { generation: c.generation_confidence, context: c.context_relevance } as ConfidenceStepData });
+            dispatchPipeline({
+              type: "STEP_COMPLETE",
+              stepId: "confidence",
+              data: {
+                generation: c.generation_confidence,
+                context: c.context_relevance,
+              } as ConfidenceStepData,
+            });
           },
           onError: (e) => {
             setError(e);
@@ -303,11 +331,27 @@ const RagPlaygroundPage: React.FC = () => {
             // Complete any running steps (search may still be running if no answer chunks arrived)
             if (!searchCompleted) {
               searchCompleted = true;
-              dispatchPipeline({ type: "STEP_COMPLETE", stepId: "search", data: { hits: [...accumulatedHits] } as SearchStepData });
+              dispatchPipeline({
+                type: "STEP_COMPLETE",
+                stepId: "search",
+                data: { hits: [...accumulatedHits] } as SearchStepData,
+              });
             }
-            dispatchPipeline({ type: "STEP_COMPLETE", stepId: "generation", data: { answer: accumulatedAnswer, provider: generator.provider, model: generator.model } as GenerationStepData });
+            dispatchPipeline({
+              type: "STEP_COMPLETE",
+              stepId: "generation",
+              data: {
+                answer: accumulatedAnswer,
+                provider: generator.provider,
+                model: generator.model,
+              } as GenerationStepData,
+            });
             if (accumulatedFollowups.length > 0) {
-              dispatchPipeline({ type: "STEP_COMPLETE", stepId: "followup", data: { questions: accumulatedFollowups } as FollowupStepData });
+              dispatchPipeline({
+                type: "STEP_COMPLETE",
+                stepId: "followup",
+                data: { questions: accumulatedFollowups } as FollowupStepData,
+              });
             }
             dispatchPipeline({ type: "COMPLETE" });
           },

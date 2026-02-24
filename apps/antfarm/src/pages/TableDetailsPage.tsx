@@ -38,6 +38,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { api, type ChunkerConfig, type TableSchema } from "../api";
+import AggregationResults from "../components/AggregationResults";
+import AIQueryAssistant from "../components/AIQueryAssistant";
 import ChunkingForm from "../components/ChunkingForm";
 import CreateIndexDialog from "../components/CreateIndexDialog";
 import DocumentBuilder from "../components/DocumentBuilder";
@@ -45,8 +47,6 @@ import FieldExplorer from "../components/FieldExplorer";
 import BulkInsert from "../components/Insert";
 import JsonViewer from "../components/JsonViewer";
 import MultiSelect from "../components/MultiSelect";
-import AggregationResults from "../components/AggregationResults";
-import AIQueryAssistant from "../components/AIQueryAssistant";
 import FieldSelector from "../components/querybuilder/FieldSelector";
 import QueryBuilder from "../components/querybuilder/QueryBuilder";
 import { QueryResultsList } from "../components/results";
@@ -881,9 +881,11 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
               </span>
             </div>
 
-            {queryResult && queryResult.aggregations && Object.keys(queryResult.aggregations).length > 0 && (
-              <AggregationResults aggregations={queryResult.aggregations} className="mt-6" />
-            )}
+            {queryResult &&
+              queryResult.aggregations &&
+              Object.keys(queryResult.aggregations).length > 0 && (
+                <AggregationResults aggregations={queryResult.aggregations} className="mt-6" />
+              )}
 
             {queryResult && (
               <Card className="mt-6 shadow-sm">

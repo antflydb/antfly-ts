@@ -178,14 +178,18 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).inputText || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [selectedModel, setSelectedModel] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).selectedModel || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [entityLabels, setEntityLabels] = useState<string[]>(() => {
@@ -195,7 +199,9 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         const parsed = JSON.parse(saved).entityLabels;
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return DEFAULT_ENTITY_LABELS;
   });
   const [relationLabels, setRelationLabels] = useState<string[]>(() => {
@@ -205,7 +211,9 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         const parsed = JSON.parse(saved).relationLabels;
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return DEFAULT_RELATION_LABELS;
   });
   const [newEntityLabel, setNewEntityLabel] = useState("");
@@ -217,7 +225,9 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         const parsed = JSON.parse(saved).config;
         if (parsed && typeof parsed === "object") return parsed;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return {
       similarity_threshold: 0.85,
       type_must_match: true,
@@ -292,7 +302,13 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
     const modelParam = searchParams.get("model");
     if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
       setSelectedModel(modelParam);
-      setSearchParams((prev) => { prev.delete("model"); return prev; }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
     }
   }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
 

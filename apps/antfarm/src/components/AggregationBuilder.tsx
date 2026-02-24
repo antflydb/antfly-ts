@@ -34,15 +34,7 @@ const METRIC_TYPES = [
   { value: "cardinality", label: "Cardinality" },
 ] as const;
 
-const CALENDAR_INTERVALS = [
-  "minute",
-  "hour",
-  "day",
-  "week",
-  "month",
-  "quarter",
-  "year",
-] as const;
+const CALENDAR_INTERVALS = ["minute", "hour", "day", "week", "month", "quarter", "year"] as const;
 
 type AggregationType =
   | (typeof BUCKETING_TYPES)[number]["value"]
@@ -201,18 +193,22 @@ const AggregationBuilder: React.FC<AggregationBuilderProps> = ({
       </div>
 
       {/* Size control for bucketing types (except histogram/date_histogram) */}
-      {isBucketing && type !== "histogram" && type !== "date_histogram" && type !== "range" && type !== "date_range" && (
-        <div>
-          <Label className="text-xs mb-1 block">Size</Label>
-          <Input
-            type="number"
-            value={size}
-            onChange={(e) => setSize(parseInt(e.target.value, 10) || 10)}
-            className="h-8 w-24"
-            min={1}
-          />
-        </div>
-      )}
+      {isBucketing &&
+        type !== "histogram" &&
+        type !== "date_histogram" &&
+        type !== "range" &&
+        type !== "date_range" && (
+          <div>
+            <Label className="text-xs mb-1 block">Size</Label>
+            <Input
+              type="number"
+              value={size}
+              onChange={(e) => setSize(parseInt(e.target.value, 10) || 10)}
+              className="h-8 w-24"
+              min={1}
+            />
+          </div>
+        )}
 
       {/* Range config */}
       {(type === "range" || type === "date_range") && (

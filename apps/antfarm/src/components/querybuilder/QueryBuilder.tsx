@@ -1,14 +1,14 @@
 import type { bleve_components, components } from "@antfly/sdk";
 import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons";
 import type React from "react";
+import AggregationBuilder, { type AggregationConfig } from "@/components/AggregationBuilder";
+import AggregationCard from "@/components/AggregationCard";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import AggregationBuilder, { type AggregationConfig } from "@/components/AggregationBuilder";
-import AggregationCard from "@/components/AggregationCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

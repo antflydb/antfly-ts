@@ -265,7 +265,8 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
       "Building recommendation engines",
       "Zero-shot classification via cosine similarity",
     ],
-    pipelineNote: "Embedders are the foundation of any vector search pipeline. They run at index time (to embed documents) and at query time (to embed the search query).",
+    pipelineNote:
+      "Embedders are the foundation of any vector search pipeline. They run at index time (to embed documents) and at query time (to embed the search query).",
   },
   reranker: {
     type: "reranker",
@@ -278,7 +279,8 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
       "Filtering out irrelevant results before LLM generation",
       "A/B testing different retrieval strategies",
     ],
-    pipelineNote: "Rerankers sit between retrieval and generation. They re-score the top-K results from an embedding search to produce a more accurate ranking.",
+    pipelineNote:
+      "Rerankers sit between retrieval and generation. They re-score the top-K results from an embedding search to produce a more accurate ranking.",
     playgroundRoute: "/playground/rerank",
   },
   chunker: {
@@ -292,7 +294,8 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
       "Preparing content for RAG pipelines",
       "Breaking down legal or technical documents by section",
     ],
-    pipelineNote: "Chunkers are the first step in an indexing pipeline. Good chunking directly impacts retrieval quality — chunks that are too large dilute relevance, too small lose context.",
+    pipelineNote:
+      "Chunkers are the first step in an indexing pipeline. Good chunking directly impacts retrieval quality — chunks that are too large dilute relevance, too small lose context.",
     playgroundRoute: "/playground/chunking",
   },
   recognizer: {
@@ -306,7 +309,8 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
       "Enriching search indexes with entity metadata",
       "Structured data extraction with custom schemas",
     ],
-    pipelineNote: "Recognizers enhance indexed documents with structured metadata. Entity annotations improve faceted search, filtering, and knowledge graph construction.",
+    pipelineNote:
+      "Recognizers enhance indexed documents with structured metadata. Entity annotations improve faceted search, filtering, and knowledge graph construction.",
     playgroundRoute: "/playground/recognize",
   },
   rewriter: {
@@ -320,7 +324,8 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
       "Query expansion and paraphrasing for better retrieval",
       "Building evaluation datasets automatically",
     ],
-    pipelineNote: "Rewriters are used in evaluation pipelines and query augmentation. They can generate synthetic Q&A pairs for testing search quality.",
+    pipelineNote:
+      "Rewriters are used in evaluation pipelines and query augmentation. They can generate synthetic Q&A pairs for testing search quality.",
     playgroundRoute: "/playground/rewrite",
   },
   generator: {
@@ -334,7 +339,8 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
       "Generating descriptions or metadata for content",
       "Powering conversational search interfaces",
     ],
-    pipelineNote: "Generators are the final step in a RAG pipeline. They synthesize retrieved context into a coherent answer for the user.",
+    pipelineNote:
+      "Generators are the final step in a RAG pipeline. They synthesize retrieved context into a coherent answer for the user.",
   },
   reader: {
     type: "reader",
@@ -347,7 +353,8 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
       "Powering FAQ and support answer systems",
       "Validating generated answers against source text",
     ],
-    pipelineNote: "Readers complement generators in QA pipelines. Where generators synthesize answers, readers extract exact spans — useful for verifiable, citation-backed responses.",
+    pipelineNote:
+      "Readers complement generators in QA pipelines. Where generators synthesize answers, readers extract exact spans — useful for verifiable, citation-backed responses.",
   },
 };
 

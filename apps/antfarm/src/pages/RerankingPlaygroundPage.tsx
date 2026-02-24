@@ -71,7 +71,9 @@ const RerankingPlaygroundPage: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).query || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [documents, setDocuments] = useState<string[]>(() => {
@@ -81,14 +83,18 @@ const RerankingPlaygroundPage: React.FC = () => {
         const docs = JSON.parse(saved).documents;
         if (Array.isArray(docs) && docs.length > 0) return docs;
       }
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return [""];
   });
   const [selectedModel, setSelectedModel] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).selectedModel || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [result, setResult] = useState<RerankResponse | null>(null);
@@ -101,10 +107,7 @@ const RerankingPlaygroundPage: React.FC = () => {
 
   // Persist state to localStorage
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ query, documents, selectedModel })
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ query, documents, selectedModel }));
   }, [query, documents, selectedModel]);
 
   // Fetch available models on mount
@@ -141,7 +144,13 @@ const RerankingPlaygroundPage: React.FC = () => {
     const modelParam = searchParams.get("model");
     if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
       setSelectedModel(modelParam);
-      setSearchParams((prev) => { prev.delete("model"); return prev; }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
     }
   }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
 
@@ -500,11 +509,19 @@ const RerankingPlaygroundPage: React.FC = () => {
               <div className="h-80 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <ArrowUpDown className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p className="mb-3">Add documents and press <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd> to rerank</p>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setQuery(SAMPLE_DATA.photosynthesis.query);
-                    setDocuments(SAMPLE_DATA.photosynthesis.documents);
-                  }}>
+                  <p className="mb-3">
+                    Add documents and press{" "}
+                    <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
+                    to rerank
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setQuery(SAMPLE_DATA.photosynthesis.query);
+                      setDocuments(SAMPLE_DATA.photosynthesis.documents);
+                    }}
+                  >
                     Try a sample
                   </Button>
                 </div>

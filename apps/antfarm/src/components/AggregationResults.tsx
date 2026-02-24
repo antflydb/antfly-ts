@@ -33,7 +33,9 @@ interface AggregationResultsProps {
 
 const StatCard: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
   <div className="flex flex-col items-center justify-center p-3 bg-muted/30 rounded-lg border">
-    <span className="text-2xl font-bold tabular-nums">{typeof value === "number" ? formatNumber(value) : value}</span>
+    <span className="text-2xl font-bold tabular-nums">
+      {typeof value === "number" ? formatNumber(value) : value}
+    </span>
     <span className="text-xs text-muted-foreground mt-0.5">{label}</span>
   </div>
 );
@@ -43,10 +45,10 @@ function formatNumber(n: number): string {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-const BarChart: React.FC<{ buckets: NonNullable<AggregationResultData["buckets"]>; name: string }> = ({
-  buckets,
-  name,
-}) => {
+const BarChart: React.FC<{
+  buckets: NonNullable<AggregationResultData["buckets"]>;
+  name: string;
+}> = ({ buckets, name }) => {
   if (buckets.length === 0) {
     return <p className="text-xs text-muted-foreground">No buckets returned</p>;
   }
@@ -72,10 +74,7 @@ const BarChart: React.FC<{ buckets: NonNullable<AggregationResultData["buckets"]
             </span>
             <div className="flex-1 h-5 bg-muted rounded-sm overflow-hidden relative">
               <div
-                className={cn(
-                  "h-full rounded-sm transition-all",
-                  "bg-primary/70"
-                )}
+                className={cn("h-full rounded-sm transition-all", "bg-primary/70")}
                 style={{ width: `${pct}%` }}
               />
             </div>
@@ -89,10 +88,7 @@ const BarChart: React.FC<{ buckets: NonNullable<AggregationResultData["buckets"]
   );
 };
 
-const AggregationResults: React.FC<AggregationResultsProps> = ({
-  aggregations,
-  className,
-}) => {
+const AggregationResults: React.FC<AggregationResultsProps> = ({ aggregations, className }) => {
   if (!aggregations || Object.keys(aggregations).length === 0) return null;
 
   return (

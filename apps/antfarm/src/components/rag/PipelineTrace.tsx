@@ -1,7 +1,7 @@
 import { MessageSquare } from "lucide-react";
 import type React from "react";
-import type { PipelineState } from "./pipeline-types";
 import { PipelineStep } from "./PipelineStep";
+import type { PipelineState } from "./pipeline-types";
 
 interface PipelineTraceProps {
   pipeline: PipelineState;
@@ -38,9 +38,7 @@ export const PipelineTrace: React.FC<PipelineTraceProps> = ({
         {pipeline.overallStatus === "complete" && (
           <span className="text-xs text-green-500">Complete</span>
         )}
-        {pipeline.overallStatus === "error" && (
-          <span className="text-xs text-red-500">Error</span>
-        )}
+        {pipeline.overallStatus === "error" && <span className="text-xs text-red-500">Error</span>}
       </div>
       <div className="space-y-2">
         {pipeline.steps.map((step, i) => (

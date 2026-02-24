@@ -124,14 +124,18 @@ const ChunkingPlaygroundPage: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).inputText || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [config, setConfig] = useState<ChunkConfig>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return { ...DEFAULT_CONFIG, ...JSON.parse(saved).config };
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return DEFAULT_CONFIG;
   });
   const [result, setResult] = useState<ChunkResponse | null>(null);
@@ -180,7 +184,13 @@ const ChunkingPlaygroundPage: React.FC = () => {
     const modelParam = searchParams.get("model");
     if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
       setConfig((prev) => ({ ...prev, model: modelParam }));
-      setSearchParams((prev) => { prev.delete("model"); return prev; }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
     }
   }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
 
@@ -356,17 +366,17 @@ const ChunkingPlaygroundPage: React.FC = () => {
                   <SelectValue placeholder={!modelsLoaded ? "Loading..." : "Select model"} />
                 </SelectTrigger>
                 <SelectContent>
-                  {modelsLoaded && availableModels.length > 0
-                    ? availableModels.map((model) => (
-                        <SelectItem key={model} value={model}>
-                          {model === "fixed" ? "Fixed Token Size" : model}
-                        </SelectItem>
-                      ))
-                    : (
-                        <>
-                          <SelectItem value="fixed">Fixed Token Size</SelectItem>
-                        </>
-                      )}
+                  {modelsLoaded && availableModels.length > 0 ? (
+                    availableModels.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        {model === "fixed" ? "Fixed Token Size" : model}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <>
+                      <SelectItem value="fixed">Fixed Token Size</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -630,8 +640,16 @@ const ChunkingPlaygroundPage: React.FC = () => {
               <div className="h-100 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Scissors className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p className="mb-3">Enter text and press <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd> to chunk</p>
-                  <Button variant="outline" size="sm" onClick={() => setInputText(SAMPLE_TEXTS.technical.text)}>
+                  <p className="mb-3">
+                    Enter text and press{" "}
+                    <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
+                    to chunk
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setInputText(SAMPLE_TEXTS.technical.text)}
+                  >
                     Try a sample
                   </Button>
                 </div>

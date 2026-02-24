@@ -939,7 +939,10 @@ const TypeContextBanner: React.FC<{
               <h4 className="text-xs font-medium text-foreground mb-2">Use cases</h4>
               <ul className="space-y-1">
                 {detail.useCases.map((useCase) => (
-                  <li key={useCase} className="text-xs text-muted-foreground flex items-start gap-2">
+                  <li
+                    key={useCase}
+                    className="text-xs text-muted-foreground flex items-start gap-2"
+                  >
                     <span className={cn("mt-1.5 w-1 h-1 rounded-full shrink-0", accent.bg)} />
                     {useCase}
                   </li>

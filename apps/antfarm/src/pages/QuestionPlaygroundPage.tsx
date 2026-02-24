@@ -1,13 +1,5 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import {
-  Clock,
-  HelpCircle,
-  ListPlus,
-  MessageCircle,
-  Plus,
-  RotateCcw,
-  Zap,
-} from "lucide-react";
+import { Clock, HelpCircle, ListPlus, MessageCircle, Plus, RotateCcw, Zap } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -88,21 +80,27 @@ const RewritingPlaygroundPage: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).context || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [answer, setAnswer] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).answer || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [selectedModel, setSelectedModel] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) return JSON.parse(saved).selectedModel || "";
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     return "";
   });
   const [result, setResult] = useState<RewriteResponse | null>(null);
@@ -123,10 +121,7 @@ const RewritingPlaygroundPage: React.FC = () => {
 
   // Persist state to localStorage
   useEffect(() => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ context, answer, selectedModel })
-    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ context, answer, selectedModel }));
   }, [context, answer, selectedModel]);
 
   // Fetch available models on mount — use rewriters, not generators
@@ -161,7 +156,13 @@ const RewritingPlaygroundPage: React.FC = () => {
     const modelParam = searchParams.get("model");
     if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
       setSelectedModel(modelParam);
-      setSearchParams((prev) => { prev.delete("model"); return prev; }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
     }
   }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
 

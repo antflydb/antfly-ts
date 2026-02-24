@@ -86,9 +86,7 @@ export const PipelineStep: React.FC<PipelineStepProps> = ({
   return (
     <div className="relative">
       {/* Vertical connector line */}
-      {!isLast && (
-        <div className="absolute left-[19px] top-10 bottom-0 w-px bg-border" />
-      )}
+      {!isLast && <div className="absolute left-[19px] top-10 bottom-0 w-px bg-border" />}
 
       <Collapsible open={isOpen} onOpenChange={setExpanded}>
         <CollapsibleTrigger asChild>
@@ -101,21 +99,18 @@ export const PipelineStep: React.FC<PipelineStepProps> = ({
             )}
             disabled={step.status === "pending"}
           >
-            <div className="flex items-center justify-center w-[22px] shrink-0">
-              {statusIcon()}
-            </div>
+            <div className="flex items-center justify-center w-[22px] shrink-0">{statusIcon()}</div>
             <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
             <span className="text-sm font-medium flex-1">{step.label}</span>
             {duration && (
               <span className="text-xs text-muted-foreground tabular-nums">{duration}</span>
             )}
-            {step.status !== "pending" && (
-              isOpen ? (
+            {step.status !== "pending" &&
+              (isOpen ? (
                 <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               ) : (
                 <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
-              )
-            )}
+              ))}
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent>
@@ -131,7 +126,7 @@ export const PipelineStep: React.FC<PipelineStepProps> = ({
 function renderStepContent(
   step: PipelineStepState,
   onFollowupClick?: (question: string) => void,
-  formatAnswer?: (text: string) => React.ReactNode,
+  formatAnswer?: (text: string) => React.ReactNode
 ): React.ReactNode {
   if (!step.data && step.status !== "running") return null;
 
