@@ -2,11 +2,12 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import React from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { fn } from "storybook/test";
-import SchemaField from "../components/schema-builder/SchemaField";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import SchemaFieldRow from "../components/schema-builder/SchemaFieldRow";
 
-const meta: Meta<typeof SchemaField> = {
-  title: "SchemaBuilder/SchemaField",
-  component: SchemaField,
+const meta: Meta<typeof SchemaFieldRow> = {
+  title: "SchemaBuilder/SchemaFieldRow",
+  component: SchemaFieldRow,
   parameters: {
     layout: "centered",
   },
@@ -23,14 +24,14 @@ const meta: Meta<typeof SchemaField> = {
                   type: "string",
                   description: "Unique identifier",
                   "x-antfly-index": true,
-                  "x-antfly-types": [],
+                  "x-antfly-types": ["keyword"],
                 },
                 {
                   name: "name",
                   type: "string",
                   description: "Product name",
                   "x-antfly-index": true,
-                  "x-antfly-types": [],
+                  "x-antfly-types": ["text", "keyword"],
                 },
               ],
             },
@@ -39,8 +40,22 @@ const meta: Meta<typeof SchemaField> = {
       });
       return (
         <FormProvider {...methods}>
-          <div className="w-[1000px]">
-            <Story />
+          <div className="w-[800px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[28px]" />
+                  <TableHead>Field</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Seen</TableHead>
+                  <TableHead>Antfly Types</TableHead>
+                  <TableHead className="w-[40px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <Story />
+              </TableBody>
+            </Table>
           </div>
         </FormProvider>
       );
@@ -48,16 +63,39 @@ const meta: Meta<typeof SchemaField> = {
   ],
   args: {
     onRemove: fn(),
+    onToggleExpand: fn(),
+    isExpanded: false,
   },
 };
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
+export const Collapsed: Story = {
   args: {
     schemaIndex: 0,
     fieldIndex: 0,
+  },
+};
+
+export const Expanded: Story = {
+  args: {
+    schemaIndex: 0,
+    fieldIndex: 0,
+    isExpanded: true,
+  },
+};
+
+export const WithDetectionInfo: Story = {
+  args: {
+    schemaIndex: 0,
+    fieldIndex: 1,
+    isExpanded: true,
+    detectionInfo: {
+      frequency: 0.96,
+      sampleCount: 50,
+      exampleValue: "Wireless Bluetooth Headphones",
+    },
   },
 };
 
@@ -87,8 +125,22 @@ export const WithError: Story = {
       }, [methods]);
       return (
         <FormProvider {...methods}>
-          <div className="w-[1000px]">
-            <Story />
+          <div className="w-[800px]">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[28px]" />
+                  <TableHead>Field</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Seen</TableHead>
+                  <TableHead>Antfly Types</TableHead>
+                  <TableHead className="w-[40px]" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <Story />
+              </TableBody>
+            </Table>
           </div>
         </FormProvider>
       );
@@ -97,5 +149,6 @@ export const WithError: Story = {
   args: {
     schemaIndex: 0,
     fieldIndex: 0,
+    isExpanded: true,
   },
 };
