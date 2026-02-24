@@ -1,15 +1,13 @@
 import type { bleve_components, components } from "@antfly/sdk";
-import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons";
+import { Cross2Icon, PlusIcon, TrashIcon } from "@radix-ui/react-icons";
 import type React from "react";
-import AggregationBuilder, { type AggregationConfig } from "@/components/AggregationBuilder";
-import AggregationCard from "@/components/AggregationCard";
+import { useState } from "react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -42,6 +40,8 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
   availableFields = [],
   availableBasicFields = [],
 }) => {
+  const [newFacetName, setNewFacetName] = useState("");
+  const [newFacetField, setNewFacetField] = useState("");
   let queryRequest: QueryRequest;
   try {
     const parsed = JSON.parse(value);
@@ -105,13 +105,17 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
     onChange(JSON.stringify(newQueryRequest, null, 2));
   };
 
-  const handleAddAggregation = (name: string, config: AggregationConfig) => {
-    const newAggregations = {
-      ...queryRequest.aggregations,
-      [name]: config,
-    };
-    const newQueryRequest = { ...queryRequest, aggregations: newAggregations };
-    onChange(JSON.stringify(newQueryRequest, null, 2));
+  const addFacet = () => {
+    if (newFacetName && newFacetField) {
+      const newAggregations = {
+        ...queryRequest.aggregations,
+        [newFacetName]: { type: "terms" as const, field: newFacetField, size: 5 },
+      };
+      const newQueryRequest = { ...queryRequest, aggregations: newAggregations };
+      onChange(JSON.stringify(newQueryRequest, null, 2));
+      setNewFacetName("");
+      setNewFacetField("");
+    }
   };
 
   const removeFacet = (name: string) => {
@@ -214,31 +218,66 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
 
           <AccordionItem value="aggregations" className="border rounded-lg bg-card/50 px-3">
             <AccordionTrigger className="py-2.5 hover:no-underline">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-sm">Aggregations</span>
-                {queryRequest.aggregations && Object.keys(queryRequest.aggregations).length > 0 && (
-                  <Badge variant="secondary" className="h-5 text-xs">
-                    {Object.keys(queryRequest.aggregations).length}
-                  </Badge>
-                )}
-              </div>
+              <span className="font-medium text-sm">Aggregations</span>
             </AccordionTrigger>
             <AccordionContent className="pb-3 pt-1 space-y-2">
               {queryRequest.aggregations &&
                 Object.entries(queryRequest.aggregations).map(([name, aggregation]) => (
-                  <AggregationCard
+                  <div
                     key={name}
-                    name={name}
-                    aggregation={aggregation}
-                    onDelete={() => removeFacet(name)}
-                  />
+                    className="flex items-start justify-between p-2 bg-muted/30 rounded border"
+                  >
+                    <div>
+                      <div className="font-medium text-sm">{name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        <code className="bg-muted px-1 py-0.5 rounded">
+                          {aggregation.field || "none"}
+                        </code>
+                        {" • "}
+                        Type: {aggregation.type || "terms"}
+                        {" • "}
+                        Size: {aggregation.size || 5}
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeFacet(name)}
+                      className="h-7 w-7 p-0"
+                    >
+                      <TrashIcon className="h-3 w-3" />
+                    </Button>
+                  </div>
                 ))}
 
-              <div className="border-t pt-2">
-                <AggregationBuilder
+              <div className="border-t pt-2 space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs mb-1 block">Title</Label>
+                    <Input
+                      placeholder="e.g., Categories"
+                      value={newFacetName}
+                      onChange={(e) => setNewFacetName(e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs mb-1 block">Field</Label>
+                    <Input
+                      placeholder="e.g., category"
+                      value={newFacetField}
+                      onChange={(e) => setNewFacetField(e.target.value)}
+                      className="h-8"
+                    />
+                  </div>
+                </div>
+                <Button onClick={addFacet} className="w-full h-8" size="sm">
+                  <PlusIcon className="h-3 w-3 mr-1" />
+                  Add Aggregation
+                </Button>
+                <FieldSelector
                   availableFields={availableFields}
-                  availableBasicFields={availableBasicFields}
-                  onAdd={handleAddAggregation}
+                  onFieldSelect={(field) => setNewFacetField(field)}
                 />
               </div>
             </AccordionContent>
