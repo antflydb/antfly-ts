@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -44,6 +45,8 @@ import {
   getHardwareCapabilities,
   HARDWARE_INFO,
   type HardwareCapability,
+  MODEL_TYPE_DETAILS,
+  MODEL_TYPE_PLAYGROUND,
   type ModelType,
   type QuantizationOption,
   type QuantizationType,
@@ -545,6 +548,7 @@ const ModelDetailSheet: React.FC<{
   quantizationOptions: QuantizationOption[];
   allowDownloads: boolean;
 }> = ({ model, open, onOpenChange, types, quantizationOptions, allowDownloads }) => {
+  const navigate = useNavigate();
   const [selectedVariant, setSelectedVariant] = useState<QuantizationType | undefined>(undefined);
   const [selectedPreset, setSelectedPreset] = useState<VariantPreset | null>("recommended");
   const [showAllVariants, setShowAllVariants] = useState(false);
@@ -864,6 +868,21 @@ const ModelDetailSheet: React.FC<{
             </div>
           </div>
 
+          {/* Open in Playground button */}
+          {model.inRegistry && MODEL_TYPE_PLAYGROUND[model.type] && (
+            <Button
+              className="w-full"
+              onClick={() => {
+                const route = MODEL_TYPE_PLAYGROUND[model.type];
+                navigate(`${route}?model=${encodeURIComponent(model.name)}`);
+                onOpenChange(false);
+              }}
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Open in Playground
+            </Button>
+          )}
+
           {/* HuggingFace link */}
           <a
             href={model.sourceUrl}
@@ -885,10 +904,82 @@ const ModelDetailSheet: React.FC<{
   );
 };
 
+// Type context banner - shows when a specific type filter is selected
+const TypeContextBanner: React.FC<{
+  selectedType: ModelType;
+  navigate: ReturnType<typeof useNavigate>;
+}> = ({ selectedType, navigate }) => {
+  const detail = MODEL_TYPE_DETAILS[selectedType];
+  const Icon = MODEL_TYPE_ICONS[selectedType];
+  const accent = MODEL_TYPE_ACCENT[selectedType];
+
+  return (
+    <div
+      className={cn(
+        "mb-8 rounded-xl border-l-4 p-5 bg-card border border-border",
+        accent.border.replace("/20", "/40")
+      )}
+    >
+      <div className="flex items-start gap-4">
+        <div
+          className={cn(
+            "flex items-center justify-center w-12 h-12 rounded-xl shrink-0",
+            "bg-muted border",
+            accent.border
+          )}
+        >
+          <Icon className={cn("w-6 h-6", accent.text)} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={cn("text-lg font-semibold mb-1", accent.text)}>{detail.tagline}</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-3">{detail.description}</p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <h4 className="text-xs font-medium text-foreground mb-2">Use cases</h4>
+              <ul className="space-y-1">
+                {detail.useCases.map((useCase) => (
+                  <li
+                    key={useCase}
+                    className="text-xs text-muted-foreground flex items-start gap-2"
+                  >
+                    <span className={cn("mt-1.5 w-1 h-1 rounded-full shrink-0", accent.bg)} />
+                    {useCase}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-xs font-medium text-foreground mb-2">Pipeline context</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">{detail.pipelineNote}</p>
+              {detail.playgroundRoute && (
+                <button
+                  type="button"
+                  onClick={() => navigate(detail.playgroundRoute!)}
+                  className={cn(
+                    "mt-3 inline-flex items-center gap-1.5 text-xs font-medium",
+                    accent.text,
+                    "hover:underline"
+                  )}
+                >
+                  <Sparkles className="w-3 h-3" />
+                  Try in Playground
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main page component
 const ModelsPage: React.FC = () => {
   const { models, types, quantizationOptions, loading, error, retry } = useTermiteRegistry();
   const { apiUrl, termiteApiUrl } = useApiConfig();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState<ModelType | "all">("all");
   const [selectedModel, setSelectedModel] = useState<TermiteModel | null>(null);
@@ -1142,6 +1233,11 @@ const ModelsPage: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Type Context Banner - shows when a specific type is selected */}
+      {selectedType !== "all" && (
+        <TypeContextBanner selectedType={selectedType} navigate={navigate} />
+      )}
 
       {/* Results */}
       {filteredModels.length === 0 ? (
