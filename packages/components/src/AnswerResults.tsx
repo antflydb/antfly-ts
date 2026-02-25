@@ -46,10 +46,23 @@ export interface AnswerResultsProps {
   renderHits?: (hits: QueryHit[]) => ReactNode;
   renderEvalResult?: (evalResult: EvalResult) => ReactNode;
 
+  // Configuration overrides
+  systemPrompt?: string; // → steps.generation.system_prompt
+  generationContext?: string; // → steps.generation.generation_context
+  limit?: number; // → queries[0].limit (default: 10)
+  followUpCount?: number; // → steps.followup.count
+
   // Callbacks
   onStreamStart?: () => void;
   onStreamEnd?: () => void;
   onError?: (error: string) => void;
+
+  // Detailed streaming callbacks
+  onClassification?: (data: ClassificationTransformationResult) => void;
+  onHit?: (hit: QueryHit) => void;
+  onAnswerChunk?: (chunk: string) => void;
+  onConfidence?: (data: GenerationConfidence) => void;
+  onFollowUpQuestion?: (question: string) => void;
 
   children?: ReactNode;
 }
@@ -65,6 +78,10 @@ export default function AnswerResults({
   fields,
   semanticIndexes,
   eval: evalConfig,
+  systemPrompt,
+  generationContext,
+  limit,
+  followUpCount,
   showClassification = false,
   showReasoning = false,
   showFollowUpQuestions = true,
@@ -82,6 +99,11 @@ export default function AnswerResults({
   onStreamStart,
   onStreamEnd,
   onError: onErrorCallback,
+  onClassification: onClassificationCallback,
+  onHit: onHitCallback,
+  onAnswerChunk: onAnswerChunkCallback,
+  onConfidence: onConfidenceCallback,
+  onFollowUpQuestion: onFollowUpQuestionCallback,
   children,
 }: AnswerResultsProps) {
   const [{ widgets, url, table: defaultTable, headers }, dispatch] = useSharedContext();
@@ -151,12 +173,14 @@ export default function AnswerResults({
           ...(fields?.length ? { fields: fields } : {}),
           ...(filterQuery ? { filter_query: filterQuery } : {}),
           ...(exclusionQuery ? { exclusion_query: exclusionQuery } : {}),
-          limit: 10,
+          limit: limit ?? 10,
         },
       ],
       steps: {
         generation: {
           enabled: true,
+          ...(systemPrompt ? { system_prompt: systemPrompt } : {}),
+          ...(generationContext ? { generation_context: generationContext } : {}),
         },
         classification: {
           enabled: true,
@@ -164,6 +188,7 @@ export default function AnswerResults({
         },
         followup: {
           enabled: showFollowUpQuestions,
+          ...(followUpCount ? { count: followUpCount } : {}),
         },
         confidence: {
           enabled: showConfidence,
@@ -193,21 +218,26 @@ export default function AnswerResults({
         const controller = await streamAnswer(url, retrievalRequest, headers || {}, {
           onClassification: (data) => {
             setClassification(data);
+            onClassificationCallback?.(data);
           },
           onReasoning: (chunk) => {
             setReasoning((prev) => prev + chunk);
           },
           onHit: (hit) => {
             setHits((prev) => [...prev, hit]);
+            onHitCallback?.(hit);
           },
           onAnswer: (chunk) => {
             setAnswer((prev) => prev + chunk);
+            onAnswerChunkCallback?.(chunk);
           },
           onConfidence: (data) => {
             setConfidence(data);
+            onConfidenceCallback?.(data);
           },
           onFollowUpQuestion: (question) => {
             setFollowUpQuestions((prev) => [...prev, question]);
+            onFollowUpQuestionCallback?.(question);
           },
           onEvalResult: (data) => {
             setEvalResult(data);
@@ -286,12 +316,21 @@ export default function AnswerResults({
     filterQuery,
     exclusionQuery,
     evalConfig,
+    systemPrompt,
+    generationContext,
+    limit,
+    followUpCount,
     showReasoning,
     showFollowUpQuestions,
     showConfidence,
     onStreamStart,
     onStreamEnd,
     onErrorCallback,
+    onClassificationCallback,
+    onHitCallback,
+    onAnswerChunkCallback,
+    onConfidenceCallback,
+    onFollowUpQuestionCallback,
   ]);
 
   // Register this component as a widget (for consistency with other components)

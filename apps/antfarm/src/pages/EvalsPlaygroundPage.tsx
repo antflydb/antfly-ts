@@ -147,9 +147,11 @@ const EvalsPlaygroundPage: React.FC = () => {
   const handleDeleteSet = () => {
     if (!selectedSetName) return;
     if (!confirm(`Delete eval set "${selectedSetName}"?`)) return;
-    deleteEvalSet(selectedSetName);
-    const names = getEvalSetNames();
-    setSelectedSetName(names.length > 0 ? names[0] : "");
+    const deletedName = selectedSetName;
+    deleteEvalSet(deletedName);
+    // deleteEvalSet triggers async state update, so getEvalSetNames() would return stale data.
+    // Reset selection and let the useEffect at line 137 pick the new first set.
+    setSelectedSetName("");
     setResults(null);
   };
 
@@ -372,7 +374,7 @@ const EvalsPlaygroundPage: React.FC = () => {
           });
         } catch (err) {
           if (err instanceof Error && err.name === "AbortError") {
-            break;
+            return;
           }
           itemResults.push({
             itemId: item.id,
