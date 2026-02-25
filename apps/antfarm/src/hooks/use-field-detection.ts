@@ -8,11 +8,18 @@ import {
 } from "@/components/schema-builder/schema-utils";
 import { useApi } from "@/hooks/use-api-config";
 
+export interface DetectionGroup {
+  typeName: string;
+  fields: DetectedField[];
+  docCount: number;
+}
+
 interface UseFieldDetectionResult {
   detect: () => Promise<DetectedField[]>;
   isDetecting: boolean;
   detectionError: string | null;
   detectedFields: DetectedField[];
+  detectionGroups: DetectionGroup[];
   sampleCount: number;
 }
 
@@ -21,6 +28,7 @@ export function useFieldDetection(tableName?: string): UseFieldDetectionResult {
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectionError, setDetectionError] = useState<string | null>(null);
   const [detectedFields, setDetectedFields] = useState<DetectedField[]>([]);
+  const [detectionGroups, setDetectionGroups] = useState<DetectionGroup[]>([]);
   const [sampleCount, setSampleCount] = useState(0);
 
   const reservedNames = useMemo(() => new Set(RESERVED_FIELD_NAMES), []);
@@ -31,6 +39,7 @@ export function useFieldDetection(tableName?: string): UseFieldDetectionResult {
     setIsDetecting(true);
     setDetectionError(null);
     setDetectedFields([]);
+    setDetectionGroups([]);
 
     try {
       const response = await client.tables.query(tableName, {
@@ -48,7 +57,18 @@ export function useFieldDetection(tableName?: string): UseFieldDetectionResult {
       const count = results.length;
       setSampleCount(count);
 
-      const fieldMap = new Map<
+      // Group hits by _type
+      const typeGroups = new Map<string, QueryHit[]>();
+      for (const hit of results) {
+        const typeName = (hit._source?._type as string) || "default";
+        const group = typeGroups.get(typeName) || [];
+        group.push(hit);
+        typeGroups.set(typeName, group);
+      }
+
+      // Build per-type field detection
+      const groups: DetectionGroup[] = [];
+      const allFieldMap = new Map<
         string,
         {
           name: string;
@@ -58,31 +78,76 @@ export function useFieldDetection(tableName?: string): UseFieldDetectionResult {
         }
       >();
 
-      for (const hit of results) {
-        const source = hit._source;
-        if (!source) continue;
+      for (const [typeName, typeHits] of typeGroups) {
+        const typeFieldMap = new Map<
+          string,
+          {
+            name: string;
+            exampleValue: unknown;
+            seenCount: number;
+            inferredType: "string" | "number" | "boolean" | "object" | "array";
+          }
+        >();
 
-        for (const [key, value] of Object.entries(source)) {
-          if (key.startsWith("_") || reservedNames.has(key)) continue;
+        for (const hit of typeHits) {
+          const source = hit._source;
+          if (!source) continue;
 
-          const existing = fieldMap.get(key);
-          if (existing) {
-            existing.seenCount++;
-            if (existing.exampleValue === null && value !== null) {
-              existing.exampleValue = value;
+          for (const [key, value] of Object.entries(source)) {
+            if (key.startsWith("_") || reservedNames.has(key)) continue;
+
+            // Per-type tracking
+            const existing = typeFieldMap.get(key);
+            if (existing) {
+              existing.seenCount++;
+              if (existing.exampleValue === null && value !== null) {
+                existing.exampleValue = value;
+              }
+            } else {
+              typeFieldMap.set(key, {
+                name: key,
+                exampleValue: value,
+                seenCount: 1,
+                inferredType: inferJSONType(value),
+              });
             }
-          } else {
-            fieldMap.set(key, {
-              name: key,
-              exampleValue: value,
-              seenCount: 1,
-              inferredType: inferJSONType(value),
-            });
+
+            // Global tracking
+            const globalExisting = allFieldMap.get(key);
+            if (globalExisting) {
+              globalExisting.seenCount++;
+              if (globalExisting.exampleValue === null && value !== null) {
+                globalExisting.exampleValue = value;
+              }
+            } else {
+              allFieldMap.set(key, {
+                name: key,
+                exampleValue: value,
+                seenCount: 1,
+                inferredType: inferJSONType(value),
+              });
+            }
           }
         }
+
+        const typeFields = Array.from(typeFieldMap.values())
+          .sort((a, b) => b.seenCount - a.seenCount)
+          .map(
+            (f): DetectedField => ({
+              name: f.name,
+              inferredType: f.inferredType,
+              exampleValue: f.exampleValue,
+              frequency: f.seenCount / typeHits.length,
+              sampleCount: typeHits.length,
+              suggestedAntflyTypes: getDefaultAntflyType(f.inferredType, f.exampleValue),
+            })
+          );
+
+        groups.push({ typeName, fields: typeFields, docCount: typeHits.length });
       }
 
-      const sorted = Array.from(fieldMap.values())
+      // Flat list (all types combined) for backward compatibility
+      const sorted = Array.from(allFieldMap.values())
         .sort((a, b) => b.seenCount - a.seenCount)
         .map(
           (f): DetectedField => ({
@@ -96,6 +161,7 @@ export function useFieldDetection(tableName?: string): UseFieldDetectionResult {
         );
 
       setDetectedFields(sorted);
+      setDetectionGroups(groups);
       return sorted;
     } catch (err) {
       setDetectionError(err instanceof Error ? err.message : "Failed to detect fields");
@@ -105,5 +171,5 @@ export function useFieldDetection(tableName?: string): UseFieldDetectionResult {
     }
   }, [tableName, client, reservedNames]);
 
-  return { detect, isDetecting, detectionError, detectedFields, sampleCount };
+  return { detect, isDetecting, detectionError, detectedFields, detectionGroups, sampleCount };
 }

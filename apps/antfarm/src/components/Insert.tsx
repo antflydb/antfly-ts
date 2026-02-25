@@ -6,21 +6,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/shadcn-io/spinner";
 import { Textarea } from "@/components/ui/textarea";
 
 import { api, type TableSchema } from "../api";
-import { Combobox } from "./Combobox";
 
 interface BulkInsertProps {
   tableName: string;
@@ -43,6 +45,7 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const idFieldInputRef = useRef<HTMLInputElement>(null);
   const [idFieldSuggestions, setIdFieldSuggestions] = useState<string[]>([]);
 
   const form = useForm<InsertFormData>({
@@ -105,6 +108,29 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
     }
   };
 
+  const insertFieldAtCursor = useCallback(
+    (fieldName: string) => {
+      const input = idFieldInputRef.current;
+      const template = `{{${fieldName}}}`;
+      if (input) {
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? start;
+        const newValue =
+          input.value.slice(0, start) + template + input.value.slice(end);
+        setValue("idField", newValue, { shouldValidate: true });
+        requestAnimationFrame(() => {
+          const cursorPos = start + template.length;
+          input.focus();
+          input.setSelectionRange(cursorPos, cursorPos);
+        });
+      } else {
+        const current = form.getValues("idField") ?? "";
+        setValue("idField", current + template, { shouldValidate: true });
+      }
+    },
+    [setValue, form],
+  );
+
   const onSubmit = useCallback(async () => {
     if (!jsonFile || !idField || !tableName) {
       setError("Please select a file and specify the ID field.");
@@ -127,12 +153,33 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
       try {
         const lines = content.split("\n").filter((line) => line.trim() !== "");
         const inserts: BatchRequest["inserts"] = {};
+        const isTemplate = idField.includes("{{");
 
         for (const line of lines) {
           const doc = JSON.parse(line);
-          const id = doc[idField];
+          let id: string;
+
+          if (isTemplate) {
+            id = idField.replace(
+              /\{\{(\w+)\}\}/g,
+              (_, key: string) => {
+                const val = doc[key];
+                if (val === undefined || val === null) {
+                  throw new Error(
+                    `Template field "{{${key}}}" not found in document: ${line.slice(0, 100)}`,
+                  );
+                }
+                return String(val);
+              },
+            );
+          } else {
+            id = doc[idField];
+          }
+
           if (!id) {
-            throw new Error(`ID field "${idField}" not found in one of the documents.`);
+            throw new Error(
+              `ID field "${idField}" produced an empty ID for document: ${line.slice(0, 100)}`,
+            );
           }
           inserts[id] = doc;
         }
@@ -176,7 +223,10 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
           <Form {...form}>
             <form className="flex flex-col gap-4" onSubmit={form.handleSubmit(onSubmit)}>
               <p className="text-gray-500 mb-4">
-                Upload a newline-delimited JSON file. Each line should be a valid JSON object.
+                Upload a newline-delimited JSON file. Each line should be a valid JSON object. The
+                ID field supports Handlebars-style templates like{" "}
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">{"{{category}}-{{slug}}"}</code>{" "}
+                to compose IDs from multiple fields.
               </p>
 
               <FormField
@@ -216,19 +266,33 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
                   <FormItem>
                     <FormLabel>ID Field</FormLabel>
                     <FormControl>
-                      <Combobox
-                        options={idFieldSuggestions.map((suggestion) => ({
-                          value: suggestion,
-                          label: suggestion,
-                        }))}
-                        value={field.value}
-                        onChange={field.onChange}
-                        placeholder="Enter or select ID field"
-                        searchPlaceholder="Search ID fields..."
-                        emptyText="No ID fields found."
-                        allowCustomValue={true}
+                      <Input
+                        {...field}
+                        ref={(el) => {
+                          field.ref(el);
+                          (idFieldInputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+                        }}
+                        placeholder="e.g. id or {{category}}-{{slug}}"
                       />
                     </FormControl>
+                    <FormDescription>
+                      A field name (e.g. <code className="text-xs">id</code>) or a template (e.g.{" "}
+                      <code className="text-xs">{"{{category}}-{{slug}}"}</code>).
+                    </FormDescription>
+                    {idFieldSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-1">
+                        {idFieldSuggestions.map((name) => (
+                          <Badge
+                            key={name}
+                            variant="secondary"
+                            className="cursor-pointer hover:bg-secondary/80"
+                            onClick={() => insertFieldAtCursor(name)}
+                          >
+                            {name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
