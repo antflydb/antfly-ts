@@ -369,6 +369,7 @@ const RagPlaygroundPage: React.FC = () => {
         <AnswerResults
           id="rag-answer"
           searchBoxId="rag-query"
+          table={selectedTable}
           generator={{
             provider: generator.provider,
             model: generator.model,
