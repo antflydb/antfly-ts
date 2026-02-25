@@ -1,8 +1,8 @@
-import { Cross2Icon, MagnifyingGlassIcon, PlusIcon, ReloadIcon } from "@radix-ui/react-icons";
+import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons";
 import { Info } from "lucide-react";
 import { InputData, jsonInputForTargetLanguage, quicktype } from "quicktype-core";
 import type React from "react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useFieldDetection } from "@/hooks/use-field-detection";
 import MultiSelect from "../MultiSelect";
 import { ImportJsonDialog } from "./ImportJsonDialog";
 import SchemaFieldRow from "./SchemaFieldRow";
@@ -25,7 +24,7 @@ import { type FieldDetectionInfo, RESERVED_FIELD_NAMES } from "./schema-utils";
 interface SchemaEditorProps {
   schemaIndex: number;
   onRemove: () => void;
-  tableName?: string;
+  detectionMetaMap?: Map<string, FieldDetectionInfo>;
 }
 
 interface SchemaProperty {
@@ -36,7 +35,11 @@ interface SchemaProperty {
   "x-antfly-types"?: string[];
 }
 
-const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove, tableName }) => {
+const SchemaEditor: React.FC<SchemaEditorProps> = ({
+  schemaIndex,
+  onRemove,
+  detectionMetaMap = new Map(),
+}) => {
   const { control, setValue, watch } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -45,43 +48,8 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove, tabl
 
   const [isImportDialogOpen, setImportDialogOpen] = useState(false);
   const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null);
-  const [detectionMetaMap, setDetectionMetaMap] = useState<Map<string, FieldDetectionInfo>>(
-    new Map()
-  );
-
-  const { detect, isDetecting, detectionError, detectedFields, sampleCount } =
-    useFieldDetection(tableName);
 
   const properties = watch(`document_schemas.${schemaIndex}.properties`) || [];
-
-  const handleDetect = useCallback(async () => {
-    const results = await detect();
-    if (results.length === 0) return;
-
-    const currentProps = properties as SchemaProperty[];
-    const existingNames = new Set(currentProps.map((p: SchemaProperty) => p.name));
-    const newMetaMap = new Map<string, FieldDetectionInfo>();
-
-    for (const detected of results) {
-      newMetaMap.set(detected.name, {
-        frequency: detected.frequency,
-        sampleCount: detected.sampleCount,
-        exampleValue: detected.exampleValue,
-      });
-
-      if (!existingNames.has(detected.name)) {
-        append({
-          name: detected.name,
-          type: detected.inferredType === "array" ? "array" : detected.inferredType,
-          description: "",
-          "x-antfly-index": true,
-          "x-antfly-types": detected.suggestedAntflyTypes,
-        });
-      }
-    }
-
-    setDetectionMetaMap(newMetaMap);
-  }, [detect, properties, append]);
 
   async function handleImport(jsonString: string) {
     if (!jsonString.trim()) return;
@@ -263,32 +231,7 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove, tabl
         <Button type="button" variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
           Import from JSON
         </Button>
-        {tableName && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isDetecting}
-            onClick={handleDetect}
-          >
-            {isDetecting && <ReloadIcon className="h-4 w-4 mr-1 animate-spin" />}
-            <MagnifyingGlassIcon className="h-4 w-4 mr-1" />
-            Detect from Data
-          </Button>
-        )}
       </div>
-
-      {detectionError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{detectionError}</AlertDescription>
-        </Alert>
-      )}
-
-      {sampleCount > 0 && detectedFields.length > 0 && (
-        <p className="text-sm text-muted-foreground mb-2">
-          Detected {detectedFields.length} fields from {sampleCount} sampled documents
-        </p>
-      )}
 
       {fields.length > 0 ? (
         <div className="border rounded-md">
@@ -324,10 +267,7 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove, tabl
       ) : (
         <div className="border rounded-md p-8 text-center text-muted-foreground">
           <p>No fields defined yet.</p>
-          <p className="text-sm mt-1">
-            Add fields manually, import from JSON, or{" "}
-            {tableName ? "detect from existing data." : "import from a JSON sample."}
-          </p>
+          <p className="text-sm mt-1">Add fields manually or import from JSON.</p>
         </div>
       )}
 
