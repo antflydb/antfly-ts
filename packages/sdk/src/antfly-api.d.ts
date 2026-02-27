@@ -2518,20 +2518,10 @@ export interface components {
              */
             distance_over?: number;
             /**
-             * @description Strategy for merging full-text and semantic search results. Only applies
-             *     when both `full_text_search` and `semantic_search` are specified.
-             *
-             *     Options:
-             *     - `rrf` (default): Reciprocal Rank Fusion - Combines based on result rankings.
-             *       Works well when both search types return relevant results.
-             *     - `rsf`: Relative Score Fusion - Normalizes scores within a window and
-             *       combines weighted scores. Better when score distributions differ significantly.
-             *     - `failover`: Uses full-text search if semantic embedding generation fails.
-             *       Useful for reliability when embedding service may be unavailable.
-             *
-             *     **Most users should use the default `rrf`.**
+             * @description Configuration for merging full-text and semantic search results.
+             *     Only applies when both `full_text_search` and `semantic_search` are specified.
              */
-            merge_strategy?: components["schemas"]["MergeStrategy"];
+            merge_config?: components["schemas"]["MergeConfig"];
             /**
              * @description If true, returns only the total count of matching documents without retrieving the actual documents.
              *     Useful for pagination and displaying result counts.
@@ -3487,6 +3477,29 @@ export interface components {
          * @enum {string}
          */
         MergeStrategy: "rrf" | "rsf" | "failover";
+        /** @description Configuration for result fusion when combining multiple search indexes. */
+        MergeConfig: {
+            strategy?: components["schemas"]["MergeStrategy"];
+            /**
+             * @description Named weights keyed by index name. `full_text` for the full-text search index;
+             *     embedding index names for vector indexes.
+             *     Unspecified indexes default to 1.0. Applied in both RRF and RSF.
+             * @example {
+             *       "full_text": 0.3,
+             *       "title_embedding": 1
+             *     }
+             */
+            weights?: {
+                [key: string]: number;
+            };
+            /** @description RSF normalization window size. Defaults to `limit`. */
+            window_size?: number;
+            /**
+             * Format: double
+             * @description RRF k constant (1/(k+rank)). Defaults to 60.0.
+             */
+            rank_constant?: number;
+        };
         /**
          * @description The reranking provider to use.
          * @enum {string}
