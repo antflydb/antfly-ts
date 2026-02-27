@@ -581,6 +581,13 @@ export interface components {
              * @default true
              */
             truncate?: boolean;
+            /** @description Maximum number of non-zero entries per sparse vector (only for sparse models, default 256) */
+            top_k?: number;
+            /**
+             * Format: float
+             * @description Minimum weight threshold for sparse vector entries (only for sparse models, default 0.0)
+             */
+            min_weight?: number;
         };
         /**
          * @example {
@@ -605,8 +612,17 @@ export interface components {
              * @example BAAI/bge-small-en-v1.5
              */
             model: string;
-            /** @description Array of embedding vectors (one per input string) */
-            embeddings: number[][];
+            /** @description Array of dense embedding vectors (one per input, populated for dense models) */
+            embeddings?: number[][];
+            /** @description Array of sparse embedding vectors (one per input, populated for sparse models) */
+            sparse_embeddings?: components["schemas"]["SparseVector"][];
+        };
+        /** @description A sparse vector with parallel index/value arrays, sorted by index ascending */
+        SparseVector: {
+            /** @description Token IDs from the model vocabulary (sorted ascending) */
+            indices: number[];
+            /** @description Corresponding weights for each index (always positive) */
+            values: number[];
         };
         /** @description A chunk of content. Text chunks have mime_type text/plain. */
         Chunk: (components["schemas"]["TextContent"] | components["schemas"]["BinaryContent"]) & {

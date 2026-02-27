@@ -72,7 +72,7 @@ export type IndexType = components["schemas"]["IndexType"];
 export type IndexStatus = components["schemas"]["IndexStatus"];
 
 // Graph index types
-export type GraphIndexV0Config = components["schemas"]["GraphIndexV0Config"];
+export type GraphIndexConfig = components["schemas"]["GraphIndexConfig"];
 export type EdgeTypeConfig = components["schemas"]["EdgeTypeConfig"];
 export type EdgeTopology = NonNullable<EdgeTypeConfig["topology"]>;
 

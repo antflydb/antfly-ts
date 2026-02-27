@@ -81,11 +81,11 @@ function Row(props: {
     return match ? match[1] : null;
   };
 
-  const version = index.config.type === "full_text_v0" ? getVersion(index.config.name) : null;
+  const version = index.config.type === "full_text" ? getVersion(index.config.name) : null;
 
   // Extract model and provider for vector indexes
   const getModelInfo = () => {
-    if (index.config.type === "aknn_v0") {
+    if (index.config.type === "embeddings") {
       const embedderConfig = (index.config as { embedder?: { model?: string; provider?: string } })
         .embedder;
       return {
@@ -100,22 +100,22 @@ function Row(props: {
 
   return (
     <TableRow>
-      {index.config.type !== "full_text_v0" && <TableCell>{index.config.name}</TableCell>}
-      {index.config.type === "full_text_v0" && version && <TableCell>{version}</TableCell>}
-      {index.config.type === "aknn_v0" && modelInfo && (
+      {index.config.type !== "full_text" && <TableCell>{index.config.name}</TableCell>}
+      {index.config.type === "full_text" && version && <TableCell>{version}</TableCell>}
+      {index.config.type === "embeddings" && modelInfo && (
         <>
           <TableCell>{modelInfo.provider}</TableCell>
           <TableCell>{modelInfo.model}</TableCell>
         </>
       )}
-      {(index.config.type === "aknn_v0" || index.config.type === "full_text_v0") && (
+      {(index.config.type === "embeddings" || index.config.type === "full_text") && (
         <TableCell>
           {"total_indexed" in (index.status || {})
             ? (index.status as { total_indexed?: number }).total_indexed
             : "N/A"}
         </TableCell>
       )}
-      {index.config.type === "full_text_v0" && (
+      {index.config.type === "full_text" && (
         <TableCell>
           {"disk_usage" in (index.status || {}) &&
           (index.status as { disk_usage?: number }).disk_usage !== undefined
@@ -196,7 +196,7 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
   // Auto-select first vector index when indexes load
   useEffect(() => {
     if (queryIndexes.length === 0) {
-      const vectorIndexes = indexes.filter((idx) => idx.config.type === "aknn_v0");
+      const vectorIndexes = indexes.filter((idx) => idx.config.type === "embeddings");
       if (vectorIndexes.length > 0) {
         setQueryIndexes([vectorIndexes[0].config.name]);
       }
@@ -445,8 +445,8 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
 
   const sortedIndexTypes = Object.keys(groupedIndexes).sort();
   const indexTypeDisplayNames: Record<string, string> = {
-    aknn_v0: "Vector Indexes",
-    full_text_v0: "Full Text Index",
+    embeddings: "Vector Indexes",
+    full_text: "Full Text Index",
   };
 
   const handleFieldInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -580,17 +580,17 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{type === "full_text_v0" ? "Version" : "Name"}</TableHead>
-                      {type === "aknn_v0" && (
+                      <TableHead>{type === "full_text" ? "Version" : "Name"}</TableHead>
+                      {type === "embeddings" && (
                         <>
                           <TableHead>Provider</TableHead>
                           <TableHead>Model</TableHead>
                         </>
                       )}
-                      {(type === "aknn_v0" || type === "full_text_v0") && (
+                      {(type === "embeddings" || type === "full_text") && (
                         <TableHead>Total Indexed</TableHead>
                       )}
-                      {type === "full_text_v0" && <TableHead>Disk Usage</TableHead>}
+                      {type === "full_text" && <TableHead>Disk Usage</TableHead>}
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -749,14 +749,14 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                         <div className="space-y-2.5">
                           <div>
                             <Label className="text-xs mb-1 block">Vector Index</Label>
-                            {indexes.filter((idx) => idx.config.type === "aknn_v0").length === 0 ? (
+                            {indexes.filter((idx) => idx.config.type === "embeddings").length === 0 ? (
                               <p className="text-xs text-muted-foreground">
                                 No vector indexes available. Create one to enable semantic search.
                               </p>
                             ) : (
                               <MultiSelect
                                 options={indexes
-                                  .filter((idx) => idx.config.type === "aknn_v0")
+                                  .filter((idx) => idx.config.type === "embeddings")
                                   .map((index) => ({
                                     label: index.config.name,
                                     value: index.config.name,

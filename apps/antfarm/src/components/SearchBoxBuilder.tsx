@@ -166,11 +166,11 @@ export default function SearchBoxBuilder({
     if (
       useSemanticSearch &&
       semanticIndexes.length === 0 &&
-      availableSemanticIndexes.aknn_v0?.length > 0
+      availableSemanticIndexes.embeddings?.length > 0
     ) {
-      setSemanticIndexes([availableSemanticIndexes.aknn_v0[0]]);
+      setSemanticIndexes([availableSemanticIndexes.embeddings[0]]);
     }
-  }, [useSemanticSearch, semanticIndexes.length, availableSemanticIndexes.aknn_v0]);
+  }, [useSemanticSearch, semanticIndexes.length, availableSemanticIndexes.embeddings]);
 
   const handleAddSearchField = (searchField: string) => {
     if (searchField?.trim() && !searchFields.includes(searchField)) {
@@ -783,8 +783,8 @@ ${facetsCode}${resultsCode}
                   <div className="space-y-4">
                     <div>
                       <Label>Vector Indexes</Label>
-                      {!availableSemanticIndexes.aknn_v0 ||
-                      availableSemanticIndexes.aknn_v0.length === 0 ? (
+                      {!availableSemanticIndexes.embeddings ||
+                      availableSemanticIndexes.embeddings.length === 0 ? (
                         <p className="text-sm text-destructive mt-2">
                           No vector indexes available. Create a vector index to enable semantic
                           search.
@@ -792,7 +792,7 @@ ${facetsCode}${resultsCode}
                       ) : (
                         <div className="mt-2">
                           <div className="flex flex-wrap gap-2">
-                            {availableSemanticIndexes.aknn_v0?.map((index) => {
+                            {availableSemanticIndexes.embeddings?.map((index) => {
                               const isSelected = semanticIndexes.includes(index);
                               return (
                                 <Badge
@@ -936,8 +936,8 @@ ${facetsCode}${resultsCode}
                       {useSemanticAutosuggest && (
                         <div>
                           <Label>Vector Indexes</Label>
-                          {!availableSemanticIndexes.aknn_v0 ||
-                          availableSemanticIndexes.aknn_v0.length === 0 ? (
+                          {!availableSemanticIndexes.embeddings ||
+                          availableSemanticIndexes.embeddings.length === 0 ? (
                             <p className="text-sm text-muted-foreground mt-2">
                               No vector indexes available. Create a vector index to enable semantic
                               autosuggest.
@@ -945,7 +945,7 @@ ${facetsCode}${resultsCode}
                           ) : (
                             <div className="mt-2">
                               <div className="flex flex-wrap gap-2">
-                                {availableSemanticIndexes.aknn_v0?.map((index) => {
+                                {availableSemanticIndexes.embeddings?.map((index) => {
                                   const isSelected = autosuggestSemanticIndexes.includes(index);
                                   return (
                                     <Badge

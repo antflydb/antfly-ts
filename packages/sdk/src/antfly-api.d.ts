@@ -3626,7 +3626,7 @@ export interface components {
             /**
              * @description Reference to search results to use as nodes:
              *     - "$full_text_results" - use full-text search results
-             *     - "$aknn_results.index_name" - use vector search results from specific index
+             *     - "$embeddings_results.index_name" - use vector search results from specific index
              */
             result_ref?: string;
             /** @description Maximum number of nodes to select from the referenced results */
@@ -3715,7 +3715,7 @@ export interface components {
         /** @description Declarative graph query to execute after full-text/vector searches */
         GraphQuery: {
             type: components["schemas"]["GraphQueryType"];
-            /** @description Graph index name (must be graph_v0 type) */
+            /** @description Graph index name (must be graph type) */
             index_name: string;
             /** @description Starting node(s) for the query */
             start_nodes?: components["schemas"]["GraphNodeSelector"];
@@ -5170,7 +5170,7 @@ export interface components {
              */
             max_tool_iterations?: number;
         };
-        BleveIndexV2Config: {
+        FullTextIndexConfig: {
             /** @description Whether to use memory-only storage */
             mem_only?: boolean;
         };
@@ -5758,9 +5758,15 @@ export interface components {
                 [key: string]: unknown;
             };
         };
-        EmbeddingIndexConfig: {
-            /** @description Vector dimension */
-            dimension: number;
+        /** @description Unified configuration for embeddings indexes. When sparse is true, creates a sparse vector index (SPLADE inverted index). When sparse is false (default), creates a dense vector index (HNSW). For dense indexes, dimension can be omitted if an embedder is configured — it will be auto-detected. */
+        EmbeddingsIndexConfig: {
+            /**
+             * @description When true, creates a sparse (SPLADE) inverted index. When false (default), creates a dense (HNSW) vector index.
+             * @default false
+             */
+            sparse?: boolean;
+            /** @description Vector dimension for dense indexes. Can be omitted when an embedder is configured (auto-detected via probe). Ignored for sparse indexes. */
+            dimension?: number;
             /** @description Field to extract embeddings from */
             field?: string;
             /**
@@ -5768,14 +5774,30 @@ export interface components {
              * @example Hello, {{#if (eq Name "John")}}Johnathan{{else}}{{Name}}{{/if}}! You are {{Age}} years old.
              */
             template?: string;
-            /** @description Whether to use in-memory only storage */
+            /** @description Whether to use in-memory only storage (dense only) */
             mem_only?: boolean;
             /** @description Configuration for the embeddings plugin */
             embedder?: components["schemas"]["EmbedderConfig"];
-            /** @description Configuration for the summarizer plugin */
+            /** @description Configuration for the summarizer plugin (dense only) */
             summarizer?: components["schemas"]["GeneratorConfig"];
-            /** @description Configuration for the chunking plugin. When specified, documents are automatically chunked at write time before indexing. */
+            /** @description Configuration for the chunking plugin. When specified, documents are automatically chunked at write time before indexing. (dense only) */
             chunker?: components["schemas"]["ChunkerConfig"];
+            /**
+             * @description Default number of results to return from search (sparse only)
+             * @default 10
+             */
+            top_k?: number;
+            /**
+             * Format: float
+             * @description Minimum weight threshold for sparse vector entries (sparse only)
+             * @default 0
+             */
+            min_weight?: number;
+            /**
+             * @description Number of documents per posting list chunk (sparse only)
+             * @default 1024
+             */
+            chunk_size?: number;
         };
         /** @description Configuration for a specific edge type */
         EdgeTypeConfig: {
@@ -5815,14 +5837,14 @@ export interface components {
             /** @description Required metadata fields for this edge type */
             required_metadata?: string[];
         };
-        /** @description Configuration for graph_v0 index type */
-        GraphIndexV0Config: {
+        /** @description Configuration for graph index type */
+        GraphIndexConfig: {
             /** @description Configuration for generating node summaries (enables tree navigation in AnswerAgent) */
             summarizer?: components["schemas"]["GeneratorConfig"];
             /**
              * @description Handlebars template for generating summarizer input text.
              *     Uses document fields as template variables.
-             *     Same pattern as EmbeddingIndexConfig.template.
+             *     Same pattern as EmbeddingsConfig template.
              * @example {{title}}
              *     {{content}}
              */
@@ -5836,7 +5858,7 @@ export interface components {
          * @description The type of the index.
          * @enum {string}
          */
-        IndexType: "full_text_v0" | "aknn_v0" | "graph_v0";
+        IndexType: "full_text" | "embeddings" | "graph";
         /** @description Configuration for an index */
         IndexConfig: {
             /** @description Name of the index */
@@ -5845,6 +5867,11 @@ export interface components {
             description?: string;
             type: components["schemas"]["IndexType"];
             /**
+             * @description Version of the index implementation. Defaults to 0.
+             * @default 0
+             */
+            version?: number;
+            /**
              * @description List of enrichment names to apply to documents before indexing. Enrichments must be defined at the table level.
              * @example [
              *       "semantic_chunks",
@@ -5852,7 +5879,7 @@ export interface components {
              *     ]
              */
             enrichments?: string[];
-        } & (components["schemas"]["BleveIndexV2Config"] | components["schemas"]["EmbeddingIndexConfig"] | components["schemas"]["GraphIndexV0Config"]);
+        } & (components["schemas"]["FullTextIndexConfig"] | components["schemas"]["EmbeddingsIndexConfig"] | components["schemas"]["GraphIndexConfig"]);
         /** @description Defines the structure of a document type */
         DocumentSchema: {
             /** @description A description of the document type. */
@@ -5965,7 +5992,7 @@ export interface components {
              */
             dynamic_templates?: components["schemas"]["DynamicTemplate"][];
         };
-        BleveIndexV2Stats: {
+        FullTextIndexStats: {
             /** @description Error message if stats could not be retrieved */
             error?: string;
             /**
@@ -5981,12 +6008,13 @@ export interface components {
             /** @description Whether the index is currently rebuilding */
             rebuilding?: boolean;
         };
-        EmbeddingIndexStats: {
+        /** @description Statistics for an embeddings index (dense or sparse) */
+        EmbeddingsIndexStats: {
             /** @description Error message if stats could not be retrieved */
             error?: string;
             /**
              * Format: uint64
-             * @description Number of vectors in the index
+             * @description Number of vectors/documents in the index
              */
             total_indexed?: number;
             /**
@@ -5996,12 +6024,17 @@ export interface components {
             disk_usage?: number;
             /**
              * Format: uint64
-             * @description Total number of nodes in the index
+             * @description Total number of nodes in the index (dense only)
              */
             total_nodes?: number;
+            /**
+             * Format: uint64
+             * @description Number of unique terms in the inverted index (sparse only)
+             */
+            total_terms?: number;
         };
-        /** @description Statistics for graph_v0 index */
-        GraphIndexV0Stats: {
+        /** @description Statistics for graph index */
+        GraphIndexStats: {
             /** @description Error message if stats could not be retrieved */
             error?: string;
             /**
@@ -6015,7 +6048,7 @@ export interface components {
             };
         };
         /** @description Statistics for an index */
-        IndexStats: components["schemas"]["BleveIndexV2Stats"] | components["schemas"]["EmbeddingIndexStats"] | components["schemas"]["GraphIndexV0Stats"];
+        IndexStats: components["schemas"]["FullTextIndexStats"] | components["schemas"]["EmbeddingsIndexStats"] | components["schemas"]["GraphIndexStats"];
         User: {
             /** @example johndoe */
             username: string;
