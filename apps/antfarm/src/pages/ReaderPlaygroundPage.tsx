@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
+import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -365,6 +367,12 @@ const ReaderPlaygroundPage: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      <BackendInfoBar />
+
+      {modelsLoaded && availableReaders.length === 0 && (
+        <NoModelsGuide modelType="reader" typeName="reader" />
+      )}
 
       {/* Content */}
       <div className="space-y-6">

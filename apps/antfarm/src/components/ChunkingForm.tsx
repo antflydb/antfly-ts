@@ -167,7 +167,7 @@ const ChunkingForm: React.FC<ChunkingFormProps> = ({ fieldPrefix = "" }) => {
 
       {/* Advanced settings accordion */}
       <Accordion type="single" collapsible>
-        <AccordionItem value="advanced">
+        <AccordionItem value="advanced" className="border-b last:border-b-0">
           <AccordionTrigger>Advanced Settings</AccordionTrigger>
           <AccordionContent>
             <FormField

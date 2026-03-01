@@ -72,7 +72,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
       setIsOpen(false);
 
       if (action === "toggle-theme") {
-        setTheme(theme === "dark" ? "light" : "dark");
+        setTheme(theme === "system" ? "light" : theme === "light" ? "dark" : "system");
       } else if (action === "toggle-width") {
         toggleContentWidth();
       } else if (href) {

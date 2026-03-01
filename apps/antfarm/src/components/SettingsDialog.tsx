@@ -1,4 +1,5 @@
 import { Settings } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useApiConfig } from "@/hooks/use-api-config";
 
-export function SettingsDialog() {
+interface SettingsDialogProps {
+  trigger?: ReactNode;
+}
+
+export function SettingsDialog({ trigger }: SettingsDialogProps = {}) {
   const { apiUrl, setApiUrl, resetToDefault, termiteApiUrl, setTermiteApiUrl, resetTermiteApiUrl } =
     useApiConfig();
   const [tempUrl, setTempUrl] = useState(apiUrl);
@@ -43,9 +48,11 @@ export function SettingsDialog() {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Settings">
-          <Settings className="h-4 w-4" />
-        </Button>
+        {trigger || (
+          <Button variant="ghost" size="icon" title="Settings">
+            <Settings className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-131.25">
         <DialogHeader>

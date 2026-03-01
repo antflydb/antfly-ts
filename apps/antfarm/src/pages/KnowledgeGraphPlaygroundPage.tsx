@@ -1,7 +1,12 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { Clock, FileText, GitBranch, Hash, Network, Plus, RotateCcw, X, Zap } from "lucide-react";
+import { Clock, GitBranch, Hash, Network, Plus, RotateCcw, X, Zap } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
+import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
+import type { SamplePreset } from "@/components/playground/SamplePresets";
+import { SamplePresets } from "@/components/playground/SamplePresets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -97,6 +102,8 @@ const ENTITY_TYPE_COLORS: Record<string, string> = {
   default: "#6b7280", // gray
 };
 
+const STORAGE_KEY = "antfarm-playground-knowledge-graph";
+
 const SAMPLE_TEXTS = [
   "Elon Musk founded SpaceX in 2002. He is also the CEO of Tesla.",
   "SpaceX is headquartered in Hawthorne, California.",
@@ -164,19 +171,71 @@ function buildGraphFromResponse(data: RecognizeResponse): KGResult {
 
 const KnowledgeGraphPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
-  const [inputText, setInputText] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [entityLabels, setEntityLabels] = useState<string[]>(DEFAULT_ENTITY_LABELS);
-  const [relationLabels, setRelationLabels] = useState<string[]>(DEFAULT_RELATION_LABELS);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Restore state from localStorage
+  const [inputText, setInputText] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).inputText || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
+  const [selectedModel, setSelectedModel] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).selectedModel || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
+  const [entityLabels, setEntityLabels] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).entityLabels;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_ENTITY_LABELS;
+  });
+  const [relationLabels, setRelationLabels] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).relationLabels;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_RELATION_LABELS;
+  });
   const [newEntityLabel, setNewEntityLabel] = useState("");
   const [newRelationLabel, setNewRelationLabel] = useState("");
-  const [config, setConfig] = useState<ResolverConfig>({
-    similarity_threshold: 0.85,
-    type_must_match: true,
-    min_entity_confidence: 0.0,
-    min_relation_confidence: 0.0,
-    deduplicate_relations: true,
-    track_provenance: true,
+  const [config, setConfig] = useState<ResolverConfig>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).config;
+        if (parsed && typeof parsed === "object") return parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+    return {
+      similarity_threshold: 0.85,
+      type_must_match: true,
+      min_entity_confidence: 0.0,
+      min_relation_confidence: 0.0,
+      deduplicate_relations: true,
+      track_provenance: true,
+    };
   });
   const [result, setResult] = useState<KGResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -188,11 +247,22 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
   const [selectedEdge, setSelectedEdge] = useState<KGEdge | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ inputText, selectedModel, entityLabels, relationLabels, config })
+    );
+  }, [inputText, selectedModel, entityLabels, relationLabels, config]);
+
   // Fetch available models on mount
   useEffect(() => {
-    const fetchModels = async () => {
+    const controller = new AbortController();
+    (async () => {
       try {
-        const response = await fetch(`${termiteApiUrl}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
+          signal: controller.signal,
+        });
         if (response.ok) {
           const data: ModelsResponse = await response.json();
           const recognizersMap = data.recognizers || {};
@@ -212,18 +282,35 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
           });
 
           setAvailableModels(models);
-          if (models.length > 0) {
-            setSelectedModel(models[0]);
-          }
+          setSelectedModel((prev: string) =>
+            prev && models.includes(prev) ? prev : models[0] || ""
+          );
         }
       } catch {
-        console.error("Failed to fetch models");
+        // Ignore fetch errors
       } finally {
-        setModelsLoaded(true);
+        if (!controller.signal.aborted) {
+          setModelsLoaded(true);
+        }
       }
-    };
-    fetchModels();
+    })();
+    return () => controller.abort();
   }, [termiteApiUrl]);
+
+  // Handle ?model= URL param from Model Registry "Open in Playground"
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
+      setSelectedModel(modelParam);
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
 
   const getNodeColor = (type: string): string => {
     return ENTITY_TYPE_COLORS[type.toLowerCase()] || ENTITY_TYPE_COLORS.default;
@@ -240,7 +327,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
     return model;
   };
 
-  const handleBuildGraph = async () => {
+  const handleBuildGraph = useCallback(async () => {
     if (!inputText.trim()) {
       setError("Please enter some text to build a knowledge graph from");
       return;
@@ -275,8 +362,8 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
       // Split input by double newlines to get multiple texts
       const texts = inputText
         .split(/\n\n+/)
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0);
+        .map((t: string) => t.trim())
+        .filter((t: string) => t.length > 0);
 
       // Build request body for /api/recognize with resolver config
       const requestBody: Record<string, unknown> = {
@@ -315,12 +402,26 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
+        err instanceof Error
+          ? err.message
+          : "Failed to connect to Termite. Make sure Termite is running."
       );
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inputText, selectedModel, isRebelModel, entityLabels, relationLabels, config, termiteApiUrl]);
+
+  // Cmd+Enter shortcut
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleBuildGraph();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [handleBuildGraph]);
 
   const handleReset = () => {
     setInputText("");
@@ -341,11 +442,16 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
     setProcessingTime(null);
     setSelectedNode(null);
     setSelectedEdge(null);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
-  const loadSampleText = () => {
-    setInputText(SAMPLE_TEXTS.join("\n\n"));
-  };
+  const samplePresets: SamplePreset[] = [
+    {
+      name: "Tech Companies",
+      description: "People, companies, and acquisitions",
+      onLoad: () => setInputText(SAMPLE_TEXTS.join("\n\n")),
+    },
+  ];
 
   const handleAddEntityLabel = () => {
     const trimmed = newEntityLabel.trim().toLowerCase();
@@ -369,8 +475,8 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
     return new Map(result.nodes.map((n) => [n.id, n]));
   }, [result]);
 
-  // Simple graph visualization component
-  const GraphVisualization = useCallback(() => {
+  // Simple graph visualization
+  const graphVisualization = useMemo(() => {
     if (!result || result.nodes.length === 0) {
       return (
         <div className="h-80 flex items-center justify-center text-muted-foreground">
@@ -517,16 +623,23 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadSampleText}>
-            <FileText className="h-4 w-4 mr-2" />
-            Load Sample
-          </Button>
+          <SamplePresets presets={samplePresets} />
           <Button variant="outline" onClick={handleReset}>
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset
           </Button>
         </div>
       </div>
+
+      <BackendInfoBar />
+
+      {modelsLoaded && availableModels.length === 0 && (
+        <NoModelsGuide
+          modelType="recognizer"
+          requiredCapability="relations"
+          typeName="relation extraction"
+        />
+      )}
 
       {/* Configuration Panel */}
       <Card className="mb-6">
@@ -801,7 +914,7 @@ const KnowledgeGraphPlaygroundPage: React.FC = () => {
                 </TabsList>
 
                 <TabsContent value="visual" className="mt-0">
-                  <GraphVisualization />
+                  {graphVisualization}
                   {(selectedNode || selectedEdge) && (
                     <div className="mt-4 p-3 bg-muted/50 rounded-lg border text-sm">
                       {selectedNode && (

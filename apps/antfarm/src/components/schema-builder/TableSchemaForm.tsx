@@ -244,7 +244,7 @@ const TableSchemaForm: React.FC<TableSchemaFormProps> = ({ onSubmit }) => {
             </Button>
 
             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="advanced-settings">
+              <AccordionItem value="advanced-settings" className="border-b last:border-b-0">
                 <AccordionTrigger>Advanced</AccordionTrigger>
                 <AccordionContent>
                   <FormField

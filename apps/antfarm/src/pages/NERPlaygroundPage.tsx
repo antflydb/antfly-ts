@@ -1,7 +1,6 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   Clock,
-  FileText,
   Hash,
   Percent,
   Plus,
@@ -12,7 +11,12 @@ import {
   Zap,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
+import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
+import type { SamplePreset } from "@/components/playground/SamplePresets";
+import { SamplePresets } from "@/components/playground/SamplePresets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
@@ -82,6 +87,8 @@ interface SchemaStructure {
 
 // Default entity labels for GLiNER
 const DEFAULT_LABELS = ["person", "organization", "location"];
+
+const STORAGE_KEY = "antfarm-playground-ner";
 
 // Default extract schema
 const DEFAULT_SCHEMA: SchemaStructure[] = [
@@ -178,27 +185,155 @@ const DYNAMIC_COLORS = [
   },
 ];
 
-const RECOGNIZE_SAMPLE_TEXT = `Apple Inc. announced that Tim Cook will be visiting the new headquarters in Cupertino, California next Monday. The company plans to unveil several new products, including the iPhone 16 and MacBook Pro. Meanwhile, Google's CEO Sundar Pichai confirmed that the search giant is expanding its AI research team in London. Microsoft and Amazon are also investing heavily in artificial intelligence, with Jeff Bezos recently stating that AWS will double its machine learning capabilities by 2025.`;
+const SAMPLE_TEXTS = {
+  tech: {
+    name: "Tech News",
+    description: "Companies, people, and products",
+    text: `Apple Inc. announced that Tim Cook will be visiting the new headquarters in Cupertino, California next Monday. The company plans to unveil several new products, including the iPhone 16 and MacBook Pro. Meanwhile, Google's CEO Sundar Pichai confirmed that the search giant is expanding its AI research team in London. Microsoft and Amazon are also investing heavily in artificial intelligence, with Jeff Bezos recently stating that AWS will double its machine learning capabilities by 2025.`,
+    labels: ["person", "organization", "location", "product", "date"],
+  },
+  scientific: {
+    name: "Scientific Text",
+    description: "Research entities and methods",
+    text: `The CRISPR-Cas9 gene editing system, developed by Jennifer Doudna and Emmanuelle Charpentier at UC Berkeley and the Max Planck Institute, has revolutionized molecular biology. Their 2020 Nobel Prize in Chemistry recognized the potential of this technology for treating genetic diseases like sickle cell anemia and cystic fibrosis. Recent clinical trials at Massachusetts General Hospital have shown promising results using CRISPR to target the BCL11A gene in patients with beta-thalassemia.`,
+    labels: ["person", "organization", "technology", "disease", "gene"],
+  },
+  product: {
+    name: "Product Review",
+    description: "Brands, features, and specifications",
+    text: `The Sony WH-1000XM5 wireless headphones deliver exceptional noise cancellation powered by the V1 processor. Priced at $399, they compete directly with the Bose QuietComfort Ultra and Apple AirPods Max. The 30-hour battery life and multipoint Bluetooth 5.2 connectivity make them ideal for commuters. Sony's LDAC codec support enables high-resolution audio streaming up to 990 kbps, surpassing the standard SBC and AAC codecs used by most competitors.`,
+    labels: ["product", "brand", "feature", "specification", "price"],
+  },
+};
 
 const EXTRACT_SAMPLE_TEXT = `John Smith is a 35-year-old software engineer who works at Google in Mountain View. He graduated from Stanford University in 2012 with a degree in Computer Science. His colleague Jane Doe, age 29, is a product manager at the same company. She previously worked at Meta for three years.`;
 
+const EXTRACT_SAMPLES = {
+  people: {
+    name: "People & Companies",
+    description: "Extract personal and professional info",
+    text: EXTRACT_SAMPLE_TEXT,
+    schema: [
+      {
+        name: "person",
+        fields: [
+          { name: "name", type: "str" as const },
+          { name: "age", type: "str" as const },
+          { name: "company", type: "str" as const },
+          { name: "role", type: "str" as const },
+        ],
+      },
+    ],
+  },
+};
+
 const RecognizePlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
-  const [mode, setMode] = useState<PlaygroundMode>("recognize");
-  const [inputText, setInputText] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Restore state from localStorage
+  const [mode, setMode] = useState<PlaygroundMode>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).mode;
+        if (parsed === "recognize" || parsed === "extract") return parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+    return "recognize";
+  });
+  const [inputText, setInputText] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).inputText || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
+  const [selectedModel, setSelectedModel] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).selectedModel || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
 
   // Recognize mode state
-  const [labels, setLabels] = useState<string[]>(DEFAULT_LABELS);
+  const [labels, setLabels] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).labels;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_LABELS;
+  });
   const [newLabel, setNewLabel] = useState("");
-  const [confidenceThreshold, setConfidenceThreshold] = useState(0.5);
+  const [confidenceThreshold, setConfidenceThreshold] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const val = JSON.parse(saved).confidenceThreshold;
+        if (typeof val === "number") return val;
+      }
+    } catch {
+      /* ignore */
+    }
+    return 0.5;
+  });
   const [recognizeResult, setRecognizeResult] = useState<NERResponse | null>(null);
 
-  // Extract mode state
-  const [schema, setSchema] = useState<SchemaStructure[]>(DEFAULT_SCHEMA);
-  const [extractThreshold, setExtractThreshold] = useState(0.3);
-  const [includeConfidence, setIncludeConfidence] = useState(false);
-  const [includeSpans, setIncludeSpans] = useState(false);
+  // Extract mode state (restored from localStorage)
+  const [schema, setSchema] = useState<SchemaStructure[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved).schema;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_SCHEMA;
+  });
+  const [extractThreshold, setExtractThreshold] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const val = JSON.parse(saved).extractThreshold;
+        if (typeof val === "number") return val;
+      }
+    } catch {
+      /* ignore */
+    }
+    return 0.3;
+  });
+  const [includeConfidence, setIncludeConfidence] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).includeConfidence === true;
+    } catch {
+      /* ignore */
+    }
+    return false;
+  });
+  const [includeSpans, setIncludeSpans] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).includeSpans === true;
+    } catch {
+      /* ignore */
+    }
+    return false;
+  });
   const [extractResult, setExtractResult] = useState<ExtractResponse | null>(null);
 
   // Shared state
@@ -211,13 +346,44 @@ const RecognizePlaygroundPage: React.FC = () => {
   const abortControllerRef = useRef<AbortController | null>(null);
   const labelColorMapRef = useRef<Map<string, number>>(new Map());
 
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        inputText,
+        selectedModel,
+        labels,
+        confidenceThreshold,
+        mode,
+        schema,
+        extractThreshold,
+        includeConfidence,
+        includeSpans,
+      })
+    );
+  }, [
+    inputText,
+    selectedModel,
+    labels,
+    confidenceThreshold,
+    mode,
+    schema,
+    extractThreshold,
+    includeConfidence,
+    includeSpans,
+  ]);
+
   const availableModels = mode === "recognize" ? recognizerModels : extractorModels;
 
   // Fetch available models on mount
   useEffect(() => {
-    const fetchModels = async () => {
+    const controller = new AbortController();
+    (async () => {
       try {
-        const response = await fetch(`${termiteApiUrl}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
+          signal: controller.signal,
+        });
         if (response.ok) {
           const data: ModelsResponse = await response.json();
           const recognizers = Object.keys(data.recognizers || {});
@@ -227,28 +393,41 @@ const RecognizePlaygroundPage: React.FC = () => {
             .filter(([, info]) => info.capabilities?.includes("extraction"))
             .map(([name]) => name);
           setExtractorModels(extractors);
-          if (recognizers.length > 0) {
-            setSelectedModel(recognizers[0]);
-          }
+          setSelectedModel((prev: string) =>
+            prev && recognizers.includes(prev) ? prev : recognizers[0] || ""
+          );
         }
       } catch {
-        console.error("Failed to fetch models");
+        // Ignore fetch errors
       } finally {
-        setModelsLoaded(true);
+        if (!controller.signal.aborted) {
+          setModelsLoaded(true);
+        }
       }
-    };
-    fetchModels();
-  }, [termiteApiUrl]);
+    })();
+    return () => controller.abort();
+  }, [termiteApiUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update selected model when mode changes
   useEffect(() => {
     const models = mode === "recognize" ? recognizerModels : extractorModels;
-    if (models.length > 0) {
-      setSelectedModel(models[0]);
-    } else {
-      setSelectedModel("");
-    }
+    setSelectedModel((prev: string) => (prev && models.includes(prev) ? prev : models[0] || ""));
   }, [mode, recognizerModels, extractorModels]);
+
+  // Handle ?model= URL param from Model Registry "Open in Playground"
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelsLoaded && recognizerModels.includes(modelParam)) {
+      setSelectedModel(modelParam);
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, modelsLoaded, recognizerModels, setSearchParams]);
 
   const getColorForLabel = (label: string) => {
     const normalizedLabel = label.toLowerCase();
@@ -267,7 +446,7 @@ const RecognizePlaygroundPage: React.FC = () => {
     return DYNAMIC_COLORS[labelColorMapRef.current.get(normalizedLabel)!];
   };
 
-  const handleRecognize = async () => {
+  const handleRecognize = useCallback(async () => {
     if (!inputText.trim()) {
       setError("Please enter some text to analyze");
       return;
@@ -357,12 +536,36 @@ const RecognizePlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
+        err instanceof Error
+          ? err.message
+          : "Failed to connect to Termite. Make sure Termite is running."
       );
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [
+    inputText,
+    selectedModel,
+    labels,
+    termiteApiUrl,
+    mode,
+    schema,
+    extractThreshold,
+    includeConfidence,
+    includeSpans,
+  ]);
+
+  // Cmd+Enter shortcut
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleRecognize();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [handleRecognize]);
 
   const handleReset = () => {
     setInputText("");
@@ -378,6 +581,7 @@ const RecognizePlaygroundPage: React.FC = () => {
     setError(null);
     setProcessingTime(null);
     labelColorMapRef.current.clear();
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   const handleAddLabel = () => {
@@ -396,26 +600,6 @@ const RecognizePlaygroundPage: React.FC = () => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleAddLabel();
-    }
-  };
-
-  const loadSampleText = () => {
-    if (mode === "recognize") {
-      setInputText(RECOGNIZE_SAMPLE_TEXT);
-      setLabels(["person", "organization", "location", "product", "date"]);
-    } else {
-      setInputText(EXTRACT_SAMPLE_TEXT);
-      setSchema([
-        {
-          name: "person",
-          fields: [
-            { name: "name", type: "str" },
-            { name: "age", type: "str" },
-            { name: "company", type: "str" },
-            { name: "role", type: "str" },
-          ],
-        },
-      ]);
     }
   };
 
@@ -469,6 +653,16 @@ const RecognizePlaygroundPage: React.FC = () => {
       return [];
     }
     return recognizeResult.entities[0].filter((entity) => entity.score >= confidenceThreshold);
+  };
+
+  // Get entity count per label
+  const getEntityCountByLabel = (): Record<string, number> => {
+    const entities = getFilteredEntities();
+    const counts: Record<string, number> = {};
+    for (const entity of entities) {
+      counts[entity.label] = (counts[entity.label] || 0) + 1;
+    }
+    return counts;
   };
 
   // Render text with entity highlighting
@@ -533,6 +727,25 @@ const RecognizePlaygroundPage: React.FC = () => {
     const entities = getFilteredEntities();
     return [...new Set(entities.map((e) => e.label))];
   };
+
+  const samplePresets: SamplePreset[] =
+    mode === "recognize"
+      ? Object.values(SAMPLE_TEXTS).map((sample) => ({
+          name: sample.name,
+          description: sample.description,
+          onLoad: () => {
+            setInputText(sample.text);
+            setLabels(sample.labels);
+          },
+        }))
+      : Object.values(EXTRACT_SAMPLES).map((sample) => ({
+          name: sample.name,
+          description: sample.description,
+          onLoad: () => {
+            setInputText(sample.text);
+            setSchema(sample.schema);
+          },
+        }));
 
   // Render extract results
   const renderExtractResults = () => {
@@ -615,16 +828,19 @@ const RecognizePlaygroundPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadSampleText}>
-            <FileText className="h-4 w-4 mr-2" />
-            Load Sample
-          </Button>
+          <SamplePresets presets={samplePresets} />
           <Button variant="outline" onClick={handleReset}>
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset
           </Button>
         </div>
       </div>
+
+      <BackendInfoBar />
+
+      {modelsLoaded && availableModels.length === 0 && (
+        <NoModelsGuide modelType="recognizer" typeName="NER recognizer" />
+      )}
 
       {/* Configuration Panel */}
       <Card className="mb-6">
@@ -989,21 +1205,34 @@ const RecognizePlaygroundPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
-            {mode === "recognize" ? (
+            {isLoading ? (
+              <div className="h-100 space-y-3">
+                <div className="flex gap-2">
+                  <Skeleton className="h-6 w-16" />
+                  <Skeleton className="h-6 w-20" />
+                  <Skeleton className="h-6 w-14" />
+                </div>
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-3/4" />
+              </div>
+            ) : mode === "recognize" ? (
               recognizeResult ? (
                 <div className="h-100 overflow-y-auto space-y-4">
-                  {/* Legend */}
+                  {/* Legend with entity counts */}
                   {getUniqueLabels().length > 0 && (
                     <div className="flex flex-wrap gap-2 pb-2">
                       {getUniqueLabels().map((label) => {
                         const colors = getColorForLabel(label);
+                        const counts = getEntityCountByLabel();
                         return (
                           <Badge
                             key={label}
                             variant="outline"
                             className={`${colors.bg} ${colors.text} ${colors.border} text-xs`}
                           >
-                            {label}
+                            {label} ({counts[label]})
                           </Badge>
                         );
                       })}
@@ -1067,7 +1296,21 @@ const RecognizePlaygroundPage: React.FC = () => {
                 <div className="h-100 flex items-center justify-center text-muted-foreground">
                   <div className="text-center">
                     <Tag className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                    <p>Enter text and click "Extract Entities" to see results</p>
+                    <p className="mb-3">
+                      Enter text and press{" "}
+                      <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
+                      to extract entities
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setInputText(SAMPLE_TEXTS.tech.text);
+                        setLabels(SAMPLE_TEXTS.tech.labels);
+                      }}
+                    >
+                      Try a sample
+                    </Button>
                   </div>
                 </div>
               )

@@ -97,27 +97,6 @@ export function AppSidebar({
   const handleSectionClick = (section: string) => {
     if (!selectedTable) return;
 
-    if (section === "rag") {
-      navigate("/playground/rag");
-      return;
-    }
-    if (section === "evals") {
-      navigate("/playground/evals");
-      return;
-    }
-    if (section === "embedding") {
-      navigate("/playground/embedding");
-      return;
-    }
-    if (section === "reranking") {
-      navigate("/playground/reranking");
-      return;
-    }
-    if (section === "chunking") {
-      navigate("/playground/chunking");
-      return;
-    }
-
     // Section-based items: navigate to table page if needed, then set section
     if (!location.pathname.startsWith("/tables/")) {
       navigate(`/tables/${selectedTable}`);
@@ -430,62 +409,122 @@ export function AppSidebar({
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    asChild
                     isActive={location.pathname === "/playground/rag"}
                     tooltip="RAG"
                     disabled={!selectedTable}
                     className="disabled:opacity-50"
-                    onClick={() => handleSectionClick("rag")}
                   >
-                    <MessageSquare className="size-4" />
-                    <span>RAG</span>
+                    <a
+                      href="/playground/rag"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(
+                          selectedTable
+                            ? `/playground/rag?table=${encodeURIComponent(selectedTable)}`
+                            : "/playground/rag"
+                        );
+                      }}
+                    >
+                      <MessageSquare className="size-4" />
+                      <span>RAG</span>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    asChild
                     isActive={location.pathname === "/playground/evals"}
                     tooltip="Evals"
                     disabled={!selectedTable}
                     className="disabled:opacity-50"
-                    onClick={() => handleSectionClick("evals")}
                   >
-                    <ClipboardCheck className="size-4" />
-                    <span>Evals</span>
+                    <a
+                      href="/playground/evals"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(
+                          selectedTable
+                            ? `/playground/evals?table=${encodeURIComponent(selectedTable)}`
+                            : "/playground/evals"
+                        );
+                      }}
+                    >
+                      <ClipboardCheck className="size-4" />
+                      <span>Evals</span>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    asChild
                     isActive={location.pathname === "/playground/embedding"}
                     tooltip="Embedding"
                     disabled={!selectedTable}
                     className="disabled:opacity-50"
-                    onClick={() => handleSectionClick("embedding")}
                   >
-                    <Waypoints className="size-4" />
-                    <span>Embedding</span>
+                    <a
+                      href="/playground/embedding"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(
+                          selectedTable
+                            ? `/playground/embedding?table=${encodeURIComponent(selectedTable)}`
+                            : "/playground/embedding"
+                        );
+                      }}
+                    >
+                      <Waypoints className="size-4" />
+                      <span>Embedding</span>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    asChild
                     isActive={location.pathname === "/playground/reranking"}
                     tooltip="Reranking"
                     disabled={!selectedTable}
                     className="disabled:opacity-50"
-                    onClick={() => handleSectionClick("reranking")}
                   >
-                    <ArrowUpDown className="size-4" />
-                    <span>Reranking</span>
+                    <a
+                      href="/playground/reranking"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(
+                          selectedTable
+                            ? `/playground/reranking?table=${encodeURIComponent(selectedTable)}`
+                            : "/playground/reranking"
+                        );
+                      }}
+                    >
+                      <ArrowUpDown className="size-4" />
+                      <span>Reranking</span>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton
+                    asChild
                     isActive={location.pathname === "/playground/chunking"}
                     tooltip="Chunking"
                     disabled={!selectedTable}
                     className="disabled:opacity-50"
-                    onClick={() => handleSectionClick("chunking")}
                   >
-                    <Scissors className="size-4" />
-                    <span>Chunking</span>
+                    <a
+                      href="/playground/chunking"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(
+                          selectedTable
+                            ? `/playground/chunking?table=${encodeURIComponent(selectedTable)}`
+                            : "/playground/chunking"
+                        );
+                      }}
+                    >
+                      <Scissors className="size-4" />
+                      <span>Chunking</span>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

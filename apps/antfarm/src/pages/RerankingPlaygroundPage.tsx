@@ -1,7 +1,12 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { ArrowUpDown, Clock, FileText, Hash, Plus, RotateCcw, Trash2, Zap } from "lucide-react";
+import { ArrowUpDown, Clock, Hash, Plus, RotateCcw, Trash2, Zap } from "lucide-react";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
+import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
+import type { SamplePreset } from "@/components/playground/SamplePresets";
+import { SamplePresets } from "@/components/playground/SamplePresets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,22 +44,59 @@ interface RankedDocument {
   rank: number;
 }
 
-const SAMPLE_QUERY = "How does photosynthesis work in plants?";
+const STORAGE_KEY = "antfarm-playground-reranking";
 
-const SAMPLE_DOCUMENTS = [
-  "Photosynthesis is the process by which green plants and certain other organisms transform light energy into chemical energy. During photosynthesis, plants capture light energy and use it to convert water and carbon dioxide into oxygen and glucose.",
-  "The water cycle describes how water evaporates from the surface of the earth, rises into the atmosphere, cools and condenses into clouds, and falls back to the surface as precipitation.",
-  "Chloroplasts are the organelles responsible for photosynthesis in plant cells. They contain chlorophyll, the green pigment that absorbs light energy, primarily from the blue and red wavelengths.",
-  "The French Revolution was a period of radical political and societal change in France that began with the Estates General of 1789 and ended with the formation of the French Consulate in November 1799.",
-  "Plants use the Calvin cycle, also known as the light-independent reactions, to convert CO2 into organic molecules. This process takes place in the stroma of chloroplasts and uses ATP and NADPH produced during the light reactions.",
-  "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed.",
-];
+const SAMPLE_DATA = {
+  photosynthesis: {
+    name: "Photosynthesis",
+    description: "Science documents with mixed relevance",
+    query: "How does photosynthesis work in plants?",
+    documents: [
+      "Photosynthesis is the process by which green plants and certain other organisms transform light energy into chemical energy. During photosynthesis, plants capture light energy and use it to convert water and carbon dioxide into oxygen and glucose.",
+      "The water cycle describes how water evaporates from the surface of the earth, rises into the atmosphere, cools and condenses into clouds, and falls back to the surface as precipitation.",
+      "Chloroplasts are the organelles responsible for photosynthesis in plant cells. They contain chlorophyll, the green pigment that absorbs light energy, primarily from the blue and red wavelengths.",
+      "The French Revolution was a period of radical political and societal change in France that began with the Estates General of 1789 and ended with the formation of the French Consulate in November 1799.",
+      "Plants use the Calvin cycle, also known as the light-independent reactions, to convert CO2 into organic molecules. This process takes place in the stroma of chloroplasts and uses ATP and NADPH produced during the light reactions.",
+      "Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed.",
+    ],
+  },
+};
 
 const RerankingPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
-  const [query, setQuery] = useState("");
-  const [documents, setDocuments] = useState<string[]>([""]);
-  const [selectedModel, setSelectedModel] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Restore state from localStorage
+  const [query, setQuery] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).query || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
+  const [documents, setDocuments] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const docs = JSON.parse(saved).documents;
+        if (Array.isArray(docs) && docs.length > 0) return docs;
+      }
+    } catch {
+      /* ignore */
+    }
+    return [""];
+  });
+  const [selectedModel, setSelectedModel] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).selectedModel || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
   const [result, setResult] = useState<RerankResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,30 +105,56 @@ const RerankingPlaygroundPage: React.FC = () => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ query, documents, selectedModel }));
+  }, [query, documents, selectedModel]);
+
   // Fetch available models on mount
   useEffect(() => {
-    const fetchModels = async () => {
+    const controller = new AbortController();
+    (async () => {
       try {
-        const response = await fetch(`${termiteApiUrl}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
+          signal: controller.signal,
+        });
         if (response.ok) {
           const data: ModelsResponse = await response.json();
           const rerankers = Object.keys(data.rerankers || {});
           setAvailableModels(rerankers);
-          if (rerankers.length > 0) {
+          setSelectedModel((prev: string) => {
+            if (prev && rerankers.includes(prev)) return prev;
             const builtin = rerankers.find((m) => m === "antfly-builtin-reranker");
-            setSelectedModel(builtin || rerankers[0]);
-          }
+            return builtin || rerankers[0] || "";
+          });
         }
       } catch {
-        console.error("Failed to fetch models");
+        // Ignore fetch errors
       } finally {
-        setModelsLoaded(true);
+        if (!controller.signal.aborted) {
+          setModelsLoaded(true);
+        }
       }
-    };
-    fetchModels();
+    })();
+    return () => controller.abort();
   }, [termiteApiUrl]);
 
-  const handleRerank = async () => {
+  // Handle ?model= URL param from Model Registry "Open in Playground"
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
+      setSelectedModel(modelParam);
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
+
+  const handleRerank = useCallback(async () => {
     const nonEmptyDocs = documents.filter((d) => d.trim());
 
     if (!query.trim()) {
@@ -141,12 +209,26 @@ const RerankingPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
+        err instanceof Error
+          ? err.message
+          : "Failed to connect to Termite. Make sure Termite is running."
       );
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [query, documents, selectedModel, termiteApiUrl]);
+
+  // Cmd+Enter shortcut
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleRerank();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [handleRerank]);
 
   const handleReset = () => {
     setQuery("");
@@ -154,26 +236,25 @@ const RerankingPlaygroundPage: React.FC = () => {
     setResult(null);
     setError(null);
     setProcessingTime(null);
-  };
-
-  const loadSampleData = () => {
-    setQuery(SAMPLE_QUERY);
-    setDocuments(SAMPLE_DOCUMENTS);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   const addDocument = () => {
     setDocuments([...documents, ""]);
+    setResult(null);
   };
 
   const removeDocument = (index: number) => {
     if (documents.length <= 1) return;
     setDocuments(documents.filter((_, i) => i !== index));
+    setResult(null);
   };
 
   const updateDocument = (index: number, text: string) => {
     const updated = [...documents];
     updated[index] = text;
     setDocuments(updated);
+    setResult(null);
   };
 
   // Get ranked documents sorted by score
@@ -212,6 +293,15 @@ const RerankingPlaygroundPage: React.FC = () => {
     return "bg-red-400";
   };
 
+  const samplePresets: SamplePreset[] = Object.values(SAMPLE_DATA).map((sample) => ({
+    name: sample.name,
+    description: sample.description,
+    onLoad: () => {
+      setQuery(sample.query);
+      setDocuments(sample.documents);
+    },
+  }));
+
   return (
     <div className="h-full">
       <div className="flex items-center justify-between mb-6">
@@ -222,16 +312,19 @@ const RerankingPlaygroundPage: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadSampleData}>
-            <FileText className="h-4 w-4 mr-2" />
-            Load Sample
-          </Button>
+          <SamplePresets presets={samplePresets} />
           <Button variant="outline" onClick={handleReset}>
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset
           </Button>
         </div>
       </div>
+
+      <BackendInfoBar />
+
+      {modelsLoaded && availableModels.length === 0 && (
+        <NoModelsGuide modelType="reranker" typeName="reranker" />
+      )}
 
       {/* Configuration Panel */}
       <Card className="mb-6">
@@ -416,7 +509,21 @@ const RerankingPlaygroundPage: React.FC = () => {
               <div className="h-80 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <ArrowUpDown className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p>Add documents and click "Rerank" to see results</p>
+                  <p className="mb-3">
+                    Add documents and press{" "}
+                    <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
+                    to rerank
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setQuery(SAMPLE_DATA.photosynthesis.query);
+                      setDocuments(SAMPLE_DATA.photosynthesis.documents);
+                    }}
+                  >
+                    Try a sample
+                  </Button>
                 </div>
               </div>
             )}

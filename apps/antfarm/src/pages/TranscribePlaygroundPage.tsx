@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -227,6 +228,8 @@ const TranscribePlaygroundPage: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      <BackendInfoBar />
 
       {/* Config */}
       <div className="space-y-6">
