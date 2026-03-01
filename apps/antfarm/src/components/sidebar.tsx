@@ -22,6 +22,7 @@ import {
   Upload,
   Wrench,
   X,
+  Waypoints,
 } from "lucide-react";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -100,6 +101,18 @@ export function AppSidebar({
     }
     if (section === "evals") {
       navigate("/playground/evals");
+      return;
+    }
+    if (section === "embedding") {
+      navigate("/playground/embedding");
+      return;
+    }
+    if (section === "reranking") {
+      navigate("/playground/reranking");
+      return;
+    }
+    if (section === "chunking") {
+      navigate("/playground/chunking");
       return;
     }
 
@@ -252,6 +265,25 @@ export function AppSidebar({
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
+
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/cluster"}
+                    tooltip="Cluster Overview"
+                  >
+                    <a
+                      href="/cluster"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate("/cluster");
+                      }}
+                    >
+                      <Network className="size-4" />
+                      <span>Cluster</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -336,18 +368,6 @@ export function AppSidebar({
                     <span>Indexes</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    isActive={isOnTablePage && currentSection === "chunking"}
-                    tooltip="Chunking"
-                    disabled={!selectedTable}
-                    className="disabled:opacity-50"
-                    onClick={() => handleSectionClick("chunking")}
-                  >
-                    <Sparkles className="size-4" />
-                    <span>Chunking</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
 
                 {/* Ingest subgroup */}
                 <div className="px-2 py-1.5 text-xs font-medium text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden">
@@ -430,6 +450,42 @@ export function AppSidebar({
                     <span>Evals</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname === "/playground/embedding"}
+                    tooltip="Embedding"
+                    disabled={!selectedTable}
+                    className="disabled:opacity-50"
+                    onClick={() => handleSectionClick("embedding")}
+                  >
+                    <Waypoints className="size-4" />
+                    <span>Embedding</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname === "/playground/reranking"}
+                    tooltip="Reranking"
+                    disabled={!selectedTable}
+                    className="disabled:opacity-50"
+                    onClick={() => handleSectionClick("reranking")}
+                  >
+                    <ArrowUpDown className="size-4" />
+                    <span>Reranking</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    isActive={location.pathname === "/playground/chunking"}
+                    tooltip="Chunking"
+                    disabled={!selectedTable}
+                    className="disabled:opacity-50"
+                    onClick={() => handleSectionClick("chunking")}
+                  >
+                    <Scissors className="size-4" />
+                    <span>Chunking</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -466,11 +522,12 @@ export function AppSidebar({
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         isActive={
-                          location.pathname === "/playground/chunking" ||
+                          location.pathname === "/playground/chunk" ||
                           location.pathname === "/playground/recognize" ||
                           location.pathname === "/playground/rewrite" ||
                           location.pathname === "/playground/rerank" ||
-                          location.pathname === "/playground/kg"
+                          location.pathname === "/playground/kg" ||
+                          location.pathname === "/playground/embed"
                         }
                         tooltip="Playgrounds"
                       >
@@ -483,13 +540,13 @@ export function AppSidebar({
                         <SidebarMenuItem>
                           <SidebarMenuButton
                             asChild
-                            isActive={location.pathname === "/playground/chunking"}
+                            isActive={location.pathname === "/playground/chunk"}
                           >
                             <a
-                              href="/playground/chunking"
+                              href="/playground/chunk"
                               onClick={(e) => {
                                 e.preventDefault();
-                                navigate("/playground/chunking");
+                                navigate("/playground/chunk");
                               }}
                             >
                               <Scissors className="size-4" />
@@ -562,6 +619,23 @@ export function AppSidebar({
                             >
                               <Network className="size-4" />
                               <span>Knowledge Graph</span>
+                            </a>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={location.pathname === "/playground/embed"}
+                          >
+                            <a
+                              href="/playground/embed"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/embed");
+                              }}
+                            >
+                              <Waypoints className="size-4" />
+                              <span>Embedding</span>
                             </a>
                           </SidebarMenuButton>
                         </SidebarMenuItem>

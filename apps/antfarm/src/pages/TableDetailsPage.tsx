@@ -1,11 +1,8 @@
 import type { IndexStatus, QueryRequest, QueryResult } from "@antfly/sdk";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
-import { z } from "zod";
 import {
   Accordion,
   AccordionContent,
@@ -23,7 +20,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -37,10 +33,9 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { api, type ChunkerConfig, type TableSchema } from "../api";
+import { api, type TableSchema } from "../api";
 import AggregationResults from "../components/AggregationResults";
 import AIQueryAssistant from "../components/AIQueryAssistant";
-import ChunkingForm from "../components/ChunkingForm";
 import CreateIndexDialog from "../components/CreateIndexDialog";
 import DocumentBuilder from "../components/DocumentBuilder";
 
@@ -203,32 +198,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     }
   }, [indexes, queryIndexes.length]);
 
-  // Chunking builder form
-  const chunkerFormSchema = z.object({
-    provider: z.enum(["termite", "mock"]),
-    strategy: z.enum(["hugot", "fixed"]),
-    api_url: z.string().optional(),
-    target_tokens: z.number().optional(),
-    overlap_tokens: z.number().optional(),
-    separator: z.string().optional(),
-    max_chunks: z.number().optional(),
-    threshold: z.number().optional(),
-  });
-
-  const chunkerForm = useForm<ChunkerConfig>({
-    resolver: zodResolver(chunkerFormSchema),
-    defaultValues: {
-      provider: "termite",
-      strategy: "fixed",
-      target_tokens: 500,
-      overlap_tokens: 50,
-      separator: "\n\n",
-      max_chunks: 50,
-    },
-  });
-
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const chunkerConfig = chunkerForm.watch();
 
   const semanticQueryRequestString = useMemo(() => {
     const queryRequest: QueryRequest = {};
@@ -393,9 +362,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     }
   };
 
-  const handleCopyChunkerJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(chunkerConfig, null, 2));
-  };
 
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
@@ -610,54 +576,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
           </div>
         )}
 
-        {/* Chunking Section */}
-        {currentSection === "chunking" && (
-          <div className="flex flex-col gap-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Chunking Configuration Builder</h2>
-              <p className="text-muted-foreground">
-                Configure chunking settings to split documents into smaller segments. Copy the
-                generated JSON to use in your index configuration.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Configuration Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configuration</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Form {...chunkerForm}>
-                    <form className="flex flex-col gap-4">
-                      <ChunkingForm />
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-
-              {/* JSON Output */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>JSON Output</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="relative">
-                      <JsonViewer json={chunkerConfig} />
-                    </div>
-                    <Button onClick={handleCopyChunkerJson} className="w-full">
-                      Copy JSON
-                    </Button>
-                    <p className="text-sm text-muted-foreground">
-                      Use this JSON when creating an index by pasting it into the "chunker" field.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
 
         {/* Search Section */}
         {currentSection === "semantic" && (

@@ -20,8 +20,12 @@ import {
 } from "@/config/products";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
+import AntflyChunkingPlaygroundPage from "./pages/AntflyChunkingPlaygroundPage";
+import AntflyEmbeddingPlaygroundPage from "./pages/AntflyEmbeddingPlaygroundPage";
+import AntflyRerankingPlaygroundPage from "./pages/AntflyRerankingPlaygroundPage";
 import ChunkingPlaygroundPage from "./pages/ChunkingPlaygroundPage";
 import CreateTablePage from "./pages/CreateTablePage";
+import EmbeddingPlaygroundPage from "./pages/EmbeddingPlaygroundPage";
 import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
 import KnowledgeGraphPlaygroundPage from "./pages/KnowledgeGraphPlaygroundPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -30,6 +34,7 @@ import RecognizePlaygroundPage from "./pages/NERPlaygroundPage";
 import RewritingPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import RagPlaygroundPage from "./pages/RagPlaygroundPage";
 import RerankingPlaygroundPage from "./pages/RerankingPlaygroundPage";
+import ClusterPage from "./pages/ClusterPage";
 import { SecretsPage } from "./pages/SecretsPage";
 import TableDetailsPage from "./pages/TableDetailsPage";
 import TablesListPage from "./pages/TablesListPage";
@@ -90,8 +95,12 @@ function AppContent() {
                         />
                         <Route path="/users" element={<UsersPage />} />
                         <Route path="/secrets" element={<SecretsPage />} />
+                        <Route path="/cluster" element={<ClusterPage />} />
                         <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
                         <Route path="/playground/rag" element={<RagPlaygroundPage />} />
+                        <Route path="/playground/embedding" element={<AntflyEmbeddingPlaygroundPage />} />
+                        <Route path="/playground/reranking" element={<AntflyRerankingPlaygroundPage />} />
+                        <Route path="/playground/chunking" element={<AntflyChunkingPlaygroundPage />} />
                       </>
                     )}
 
@@ -99,11 +108,12 @@ function AppContent() {
                     {isProductEnabled("termite") && (
                       <>
                         <Route path="/models" element={<ModelsPage />} />
-                        <Route path="/playground/chunking" element={<ChunkingPlaygroundPage />} />
+                        <Route path="/playground/chunk" element={<ChunkingPlaygroundPage />} />
                         <Route path="/playground/recognize" element={<RecognizePlaygroundPage />} />
                         <Route path="/playground/rewrite" element={<RewritingPlaygroundPage />} />
                         <Route path="/playground/rerank" element={<RerankingPlaygroundPage />} />
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
+                        <Route path="/playground/embed" element={<EmbeddingPlaygroundPage />} />
                       </>
                     )}
 

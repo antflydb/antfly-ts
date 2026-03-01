@@ -271,7 +271,7 @@ export interface paths {
          *       "full_text_search": {"query": "laptop gaming"},
          *       "semantic_search": "high performance gaming computers",
          *       "indexes": ["product_embedding"],
-         *       "filter_query": {"query": "price:<2000 AND in_stock:true"},
+         *       "filter_query": {"query": "+price:<2000 +in_stock:true"},
          *       "fields": ["name", "price", "description"],
          *       "limit": 15
          *     }
@@ -1122,6 +1122,15 @@ export interface components {
              *     See the Table Management documentation for comprehensive TTL configuration and use cases.
              */
             schema?: components["schemas"]["TableSchema"];
+            /**
+             * @description PostgreSQL CDC replication sources. Streams INSERT/UPDATE/DELETE changes from
+             *     PostgreSQL tables into this Antfly table via logical replication.
+             *
+             *     Multiple sources can feed into a single table (e.g., `users` + `scores` → Antfly `users`).
+             *     Each source uses `on_update`/`on_delete` transforms to control how PG events map to
+             *     Antfly document operations. Requires `wal_level=logical` on the PostgreSQL source.
+             */
+            replication_sources?: components["schemas"]["ReplicationSource"][];
         };
         /** @enum {string} */
         AntflyType: "search_as_you_type" | "keyword" | "text" | "html" | "numeric" | "datetime" | "boolean" | "link" | "geopoint" | "geoshape" | "embedding" | "blob";
@@ -1139,6 +1148,8 @@ export interface components {
                 [key: string]: components["schemas"]["ShardConfig"];
             };
             schema?: components["schemas"]["TableSchema"];
+            /** @description PostgreSQL CDC replication sources configured for this table. */
+            replication_sources?: components["schemas"]["ReplicationSource"][];
         };
         /**
          * @description Type of aggregation to compute:
@@ -2337,11 +2348,11 @@ export interface components {
              *     Examples:
              *     - Simple: `{"query": "computer"}`
              *     - Field-specific: `{"query": "body:computer"}`
-             *     - Boolean: `{"query": "artificial AND intelligence"}`
+             *     - Boolean: `{"query": "+artificial +intelligence"}`
              *     - Range: `{"query": "year:>2020"}`
              *     - Phrase: `{"query": "\"exact phrase\""}`
              * @example {
-             *       "query": "body:computer AND category:technology",
+             *       "query": "+body:computer +category:technology",
              *       "boost": 1
              *     }
              */
@@ -2407,9 +2418,9 @@ export interface components {
              *     Use for:
              *     - Status filtering: `"status:published"`
              *     - Date ranges: `"created_at:>2023-01-01"`
-             *     - Category filtering: `"category:technology AND language:en"`
+             *     - Category filtering: `"+category:technology +language:en"`
              * @example {
-             *       "query": "category:technology AND year:>2020",
+             *       "query": "+category:technology +year:>2020",
              *       "boost": 1
              *     }
              */
@@ -3286,6 +3297,106 @@ export interface components {
              * @default false
              */
             nullable?: boolean;
+        };
+        ReplicationSource: {
+            /**
+             * @description Type of the replication source. Currently only "postgres" is supported.
+             * @example postgres
+             * @enum {string}
+             */
+            type: "postgres";
+            /**
+             * @description Data source name (connection string) for the PostgreSQL database.
+             *     Supports `${secret:key_name}` references that resolve from the Antfly keystore
+             *     or environment variables. Requires `wal_level=logical` on the source.
+             * @example ${secret:pg_dsn}
+             */
+            dsn: string;
+            /**
+             * @description Name of the table in the PostgreSQL database to replicate from.
+             * @example users
+             */
+            postgres_table: string;
+            /**
+             * @description Template for constructing the Antfly document key from PG columns.
+             *     A plain string (e.g., "id") uses that column's value directly.
+             *     Use `{{column}}` syntax for composite keys: `{{tenant_id}}:{{user_id}}`.
+             * @default id
+             * @example id
+             */
+            key_template?: string;
+            /**
+             * @description PostgreSQL replication slot name. If omitted, auto-derived from
+             *     the Antfly table and PG table names. Specify this when using
+             *     pre-created slots (e.g., on Supabase or Neon).
+             */
+            slot_name?: string;
+            /**
+             * @description PostgreSQL publication name. If omitted, auto-derived and created
+             *     automatically. Specify this when using pre-created publications.
+             */
+            publication_name?: string;
+            /**
+             * @description Transform operations applied on INSERT/UPDATE events. Values can
+             *     reference PG columns via `{{column}}` syntax. If omitted, auto-generates
+             *     `$set` for every column (passthrough mode).
+             * @example [
+             *       {
+             *         "op": "$set",
+             *         "path": "email",
+             *         "value": "{{user_email}}"
+             *       },
+             *       {
+             *         "op": "$set",
+             *         "path": "score",
+             *         "value": "{{score}}"
+             *       },
+             *       {
+             *         "op": "$merge",
+             *         "value": "{{metadata}}"
+             *       },
+             *       {
+             *         "op": "$set",
+             *         "path": "active",
+             *         "value": true
+             *       }
+             *     ]
+             */
+            on_update?: components["schemas"]["ReplicationTransformOp"][];
+            /**
+             * @description Transform operations applied on DELETE events. If omitted, auto-derives
+             *     `$unset` ops from `on_update`'s `$set` paths (safe for multi-source).
+             *     Use `$delete_document` op to delete the entire Antfly document.
+             * @example [
+             *       {
+             *         "op": "$set",
+             *         "path": "active",
+             *         "value": false
+             *       }
+             *     ]
+             */
+            on_delete?: components["schemas"]["ReplicationTransformOp"][];
+        };
+        ReplicationTransformOp: {
+            /**
+             * @description Transform operation. Standard ops: `$set`, `$unset`, `$inc`, `$push`, `$pull`,
+             *     `$addToSet`, `$pop`, `$mul`, `$min`, `$max`, `$currentDate`, `$rename`.
+             *     Replication-specific: `$merge` (flatten JSONB into top-level fields),
+             *     `$delete_document` (delete entire Antfly doc, `on_delete` only).
+             * @example $set
+             */
+            op: string;
+            /**
+             * @description Antfly document field path. Required for `$set`, `$unset`, etc.
+             * @example email
+             */
+            path?: string;
+            /**
+             * @description Value for the operation. Can be a literal (string, number, boolean)
+             *     or a `{{column}}` reference to a PG column value. Use `{{col.key}}` to
+             *     navigate into decoded JSONB columns.
+             */
+            value?: unknown;
         };
         /**
          * Format: double
