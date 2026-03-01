@@ -86,6 +86,9 @@ export async function semanticSearch(
     // Get query embedding from Termite
     // Use the same model as the pre-computed embeddings
     const response = await termiteClient.embed(index.model, query);
+    if (!response.embeddings?.[0]) {
+      return [];
+    }
     const queryVec = response.embeddings[0];
 
     // Score all commands using cosine similarity
