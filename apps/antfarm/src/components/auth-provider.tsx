@@ -1,6 +1,7 @@
 import { AntflyClient } from "@antfly/sdk";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
+import { isProductEnabled } from "../config/products";
 import type { Permission, User } from "../contexts/auth-context";
 import { AuthContext } from "../contexts/auth-context";
 import { useApiConfig } from "../hooks/use-api-config";
@@ -53,6 +54,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Check if authentication is enabled
   const checkAuthEnabled = useCallback(async (): Promise<boolean> => {
+    // Termite has no auth - skip the check when Antfly is not enabled
+    if (!isProductEnabled("antfly")) {
+      return false;
+    }
+
     try {
       const client = createClient();
       const status = await client.getStatus();
@@ -147,6 +153,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Check if user has a specific permission
   const hasPermission = useCallback(
     (resource: string, resourceType: string, permissionType: string) => {
+      // When auth is disabled, grant all permissions
+      if (authEnabled === false) return true;
+
       if (!user) return false;
 
       // Check for exact match or wildcard permissions
@@ -158,7 +167,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return resourceMatch && typeMatch && permMatch;
       });
     },
-    [user]
+    [user, authEnabled]
   );
 
   // Check authentication on mount

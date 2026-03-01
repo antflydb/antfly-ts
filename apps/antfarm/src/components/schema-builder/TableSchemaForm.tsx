@@ -29,7 +29,7 @@ import IndexField from "./IndexField";
 
 const indexConfigSchema = z.object({
   name: z.string().min(1),
-  type: z.enum(["aknn_v0", "full_text_v0"]),
+  type: z.enum(["embeddings", "full_text"]),
   sourceType: z.enum(["field", "template"]).optional(),
   field: z.string().optional(),
   template: z.string().optional(),
@@ -55,7 +55,7 @@ const tableSchemaFormSchema = z
   })
   .superRefine((data, ctx) => {
     data.indexes.forEach((index, i) => {
-      if (index.type === "aknn_v0") {
+      if (index.type === "embeddings") {
         if (!index.sourceType) {
           ctx.addIssue({
             code: "custom",
@@ -228,7 +228,7 @@ const TableSchemaForm: React.FC<TableSchemaFormProps> = ({ onSubmit }) => {
               onClick={() =>
                 appendIndex({
                   name: "",
-                  type: "aknn_v0",
+                  type: "embeddings",
                   sourceType: "field",
                   field: "",
                   dimension: 0,
@@ -244,7 +244,7 @@ const TableSchemaForm: React.FC<TableSchemaFormProps> = ({ onSubmit }) => {
             </Button>
 
             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="advanced-settings">
+              <AccordionItem value="advanced-settings" className="border-b last:border-b-0">
                 <AccordionTrigger>Advanced</AccordionTrigger>
                 <AccordionContent>
                   <FormField

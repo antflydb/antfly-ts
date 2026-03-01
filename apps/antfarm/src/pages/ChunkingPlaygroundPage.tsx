@@ -1,8 +1,13 @@
-import { type ChunkResponse, TermiteClient } from "@antfly/termite-sdk";
+import { type Chunk, type ChunkResponse, TermiteClient } from "@antfly/termite-sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import { Clock, Database, Hash, RotateCcw, Scissors, Zap } from "lucide-react";
 import type React from "react";
-import { useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
+import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
+import type { SamplePreset } from "@/components/playground/SamplePresets";
+import { SamplePresets } from "@/components/playground/SamplePresets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
 
@@ -29,6 +35,12 @@ interface ChunkConfig {
   threshold: number;
 }
 
+function isTextChunk(
+  chunk: Chunk
+): chunk is Chunk & { text: string; start_char: number; end_char: number } {
+  return "text" in chunk;
+}
+
 const DEFAULT_CONFIG: ChunkConfig = {
   model: "fixed",
   target_tokens: 500,
@@ -37,6 +49,8 @@ const DEFAULT_CONFIG: ChunkConfig = {
   max_chunks: 50,
   threshold: 0.5,
 };
+
+const STORAGE_KEY = "antfarm-playground-chunking";
 
 // Color palette for chunk visualization
 const CHUNK_COLORS = [
@@ -61,14 +75,75 @@ const CHUNK_TEXT_COLORS = [
   "text-indigo-700 dark:text-indigo-300",
 ];
 
+const SAMPLE_TEXTS = {
+  technical: {
+    name: "Technical Documentation",
+    description: "Distributed systems architecture overview",
+    text: `Distributed databases achieve horizontal scalability by partitioning data across multiple nodes. Each node is responsible for a subset of the data, determined by a partitioning strategy such as consistent hashing or range-based partitioning.
+
+Replication ensures durability and availability. In a leader-follower model, writes go to the leader and are asynchronously replicated to followers. This provides eventual consistency but may result in stale reads from followers.
+
+Consensus protocols like Raft and Paxos are used to maintain agreement across nodes. Raft simplifies the leader election process and log replication, making it more practical for production systems than classical Paxos.
+
+Vector search adds a new dimension to distributed databases. By storing high-dimensional embeddings alongside traditional data, databases can perform semantic similarity searches. This requires specialized index structures like HNSW (Hierarchical Navigable Small World) graphs that must be distributed across nodes while maintaining search quality.
+
+Query routing in distributed systems involves determining which nodes contain relevant data. For vector queries, this often means searching multiple shards and merging results, as the nearest neighbors may be distributed across partitions.`,
+  },
+  wikipedia: {
+    name: "Wikipedia Excerpt",
+    description: "History of computing article",
+    text: `The history of computing hardware covers the developments from early simple devices to aid calculation to modern day computers. Before the 20th century, most calculations were done by humans. Early mechanical tools to help humans with digital calculations, like the abacus, were called "calculating machines" or "calculators".
+
+The first aids to computation were purely mechanical devices which required the operator to set up the initial values of an elementary arithmetic operation, then manipulate the device to obtain the result. The abacus was early used for arithmetic tasks. The Roman abacus was used in Babylonia as early as 2400 BC.
+
+Charles Babbage, an English mechanical engineer and polymath, originated the concept of a programmable computer. Considered the "father of the computer", he conceptualized and invented the first mechanical computer in the early 19th century. After working on his revolutionary difference engine, designed to aid in navigational calculations, in 1833 he realized that a much more general design, an Analytical Engine, was possible.
+
+The era of modern computing began with a flurry of development before and during World War II. Most digital computers built in this period were electromechanical. Circuit-based computers and the introduction of vacuum tubes allowed for faster and more reliable machines. The development of transistors in the late 1940s at Bell Laboratories allowed a new generation of computers to be designed with greatly reduced power consumption.`,
+  },
+  legal: {
+    name: "Legal Contract",
+    description: "Software license agreement excerpt",
+    text: `1. GRANT OF LICENSE. Subject to the terms of this Agreement, Licensor hereby grants to Licensee a non-exclusive, non-transferable, limited license to use the Software solely for Licensee's internal business purposes.
+
+2. RESTRICTIONS. Licensee shall not: (a) sublicense, sell, resell, transfer, assign, or otherwise dispose of or make available to any third party the Software; (b) modify or make derivative works based upon the Software; (c) reverse engineer or access the Software in order to build a competitive product or service.
+
+3. INTELLECTUAL PROPERTY. The Software and all copies thereof are proprietary to Licensor and title thereto remains in Licensor. All applicable rights to patents, copyrights, trademarks, and trade secrets in the Software are and shall remain in Licensor.
+
+4. CONFIDENTIALITY. Each party agrees that all code, inventions, know-how, business, technical and financial information disclosed to such party constitute the confidential property of the disclosing party. Each party shall hold in confidence and not use or disclose the other party's confidential information.
+
+5. WARRANTY DISCLAIMER. THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.`,
+  },
+};
+
 const ChunkingPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
-  const [inputText, setInputText] = useState("");
-  const [config, setConfig] = useState<ChunkConfig>(DEFAULT_CONFIG);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Restore state from localStorage
+  const [inputText, setInputText] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).inputText || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
+  const [config, setConfig] = useState<ChunkConfig>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return { ...DEFAULT_CONFIG, ...JSON.parse(saved).config };
+    } catch {
+      /* ignore */
+    }
+    return DEFAULT_CONFIG;
+  });
   const [result, setResult] = useState<ChunkResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingTime, setProcessingTime] = useState<number | null>(null);
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const termiteClient = useMemo(
@@ -76,13 +151,55 @@ const ChunkingPlaygroundPage: React.FC = () => {
     [termiteApiUrl]
   );
 
-  const handleChunk = async () => {
+  // Persist state to localStorage
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ inputText, config }));
+  }, [inputText, config]);
+
+  // Fetch available chunker models
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
+          signal: controller.signal,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setAvailableModels(data.chunkers || []);
+        }
+      } catch {
+        // Ignore fetch errors
+      } finally {
+        if (!controller.signal.aborted) {
+          setModelsLoaded(true);
+        }
+      }
+    })();
+    return () => controller.abort();
+  }, [termiteApiUrl]);
+
+  // Handle ?model= URL param from Model Registry "Open in Playground"
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
+      setConfig((prev) => ({ ...prev, model: modelParam }));
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
+
+  const handleChunk = useCallback(async () => {
     if (!inputText.trim()) {
       setError("Please enter some text to chunk");
       return;
     }
 
-    // Cancel any previous request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -95,7 +212,6 @@ const ChunkingPlaygroundPage: React.FC = () => {
     const startTime = performance.now();
 
     try {
-      // Convert escaped separator back to actual characters
       const actualSeparator = config.separator.replace(/\\n/g, "\n").replace(/\\t/g, "\t");
 
       const data = await termiteClient.chunk(
@@ -118,12 +234,26 @@ const ChunkingPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
+        err instanceof Error
+          ? err.message
+          : "Failed to connect to Termite. Make sure Termite is running."
       );
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inputText, config, termiteClient]);
+
+  // Cmd+Enter shortcut
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleChunk();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [handleChunk]);
 
   const handleReset = () => {
     setConfig(DEFAULT_CONFIG);
@@ -131,12 +261,18 @@ const ChunkingPlaygroundPage: React.FC = () => {
     setResult(null);
     setError(null);
     setProcessingTime(null);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   const estimateTokens = (text: string): number => {
-    // Rough approximation: 1 token ≈ 4 characters for English
     return Math.ceil(text.length / 4);
   };
+
+  const samplePresets: SamplePreset[] = Object.values(SAMPLE_TEXTS).map((sample) => ({
+    name: sample.name,
+    description: sample.description,
+    onLoad: () => setInputText(sample.text),
+  }));
 
   // Render text with chunk boundaries highlighted
   const renderHighlightedText = () => {
@@ -152,6 +288,8 @@ const ChunkingPlaygroundPage: React.FC = () => {
     let lastEnd = 0;
 
     result.chunks.forEach((chunk, index) => {
+      if (!isTextChunk(chunk)) return;
+
       // Add any text before this chunk (gaps)
       if (chunk.start_char > lastEnd) {
         elements.push(
@@ -161,7 +299,6 @@ const ChunkingPlaygroundPage: React.FC = () => {
         );
       }
 
-      // Add the chunk with highlighting
       const colorIndex = index % CHUNK_COLORS.length;
       elements.push(
         <span
@@ -176,7 +313,6 @@ const ChunkingPlaygroundPage: React.FC = () => {
       lastEnd = chunk.end_char;
     });
 
-    // Add any remaining text after the last chunk
     if (lastEnd < inputText.length) {
       elements.push(
         <span key="end" className="text-muted-foreground/50">
@@ -197,11 +333,20 @@ const ChunkingPlaygroundPage: React.FC = () => {
             Experiment with different chunking models and configurations
           </p>
         </div>
-        <Button variant="outline" onClick={handleReset}>
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Reset
-        </Button>
+        <div className="flex gap-2">
+          <SamplePresets presets={samplePresets} />
+          <Button variant="outline" onClick={handleReset}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Reset
+          </Button>
+        </div>
       </div>
+
+      <BackendInfoBar />
+
+      {modelsLoaded && availableModels.length === 0 && (
+        <NoModelsGuide modelType="chunker" typeName="semantic chunker" soft />
+      )}
 
       {/* Configuration Panel */}
       <Card className="mb-6">
@@ -210,20 +355,28 @@ const ChunkingPlaygroundPage: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-2">
               <Label htmlFor="model">Model</Label>
               <Select
                 value={config.model}
                 onValueChange={(value) => setConfig({ ...config, model: value })}
+                disabled={!modelsLoaded || availableModels.length === 0}
               >
                 <SelectTrigger id="model">
-                  <SelectValue />
+                  <SelectValue placeholder={!modelsLoaded ? "Loading..." : "Select model"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fixed">Fixed Token Size</SelectItem>
-                  <SelectItem value="chonky-mmbert-small-multilingual-1">
-                    Chonky (ONNX Semantic)
-                  </SelectItem>
+                  {modelsLoaded && availableModels.length > 0 ? (
+                    availableModels.map((model) => (
+                      <SelectItem key={model} value={model}>
+                        {model === "fixed" ? "Fixed Token Size" : model}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <>
+                      <SelectItem value="fixed">Fixed Token Size</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -319,14 +472,15 @@ const ChunkingPlaygroundPage: React.FC = () => {
                   </Label>
                   <Input
                     id="threshold"
-                    type="text"
-                    defaultValue={config.threshold}
-                    onBlur={(e) => {
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={config.threshold}
+                    onChange={(e) => {
                       const val = parseFloat(e.target.value);
                       if (!Number.isNaN(val) && val >= 0 && val <= 1) {
                         setConfig({ ...config, threshold: val });
-                      } else {
-                        e.target.value = String(config.threshold);
                       }
                     }}
                   />
@@ -437,7 +591,13 @@ const ChunkingPlaygroundPage: React.FC = () => {
             <CardTitle className="text-lg">{result ? "Chunked Output" : "Preview"}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
-            {result ? (
+            {isLoading ? (
+              <div className="h-100 space-y-3">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : result ? (
               <div className="h-100 overflow-y-auto space-y-4">
                 {/* Highlighted text view */}
                 <div className="p-3 bg-muted/50 rounded-lg border max-h-37.5 overflow-y-auto">
@@ -448,7 +608,7 @@ const ChunkingPlaygroundPage: React.FC = () => {
 
                 {/* Chunk list */}
                 <div className="space-y-3">
-                  {result.chunks.map((chunk, index) => {
+                  {result.chunks.filter(isTextChunk).map((chunk, index) => {
                     const colorIndex = index % CHUNK_COLORS.length;
                     return (
                       <div
@@ -480,7 +640,18 @@ const ChunkingPlaygroundPage: React.FC = () => {
               <div className="h-100 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <Scissors className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p>Enter text and click "Chunk" to see results</p>
+                  <p className="mb-3">
+                    Enter text and press{" "}
+                    <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
+                    to chunk
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setInputText(SAMPLE_TEXTS.technical.text)}
+                  >
+                    Try a sample
+                  </Button>
                 </div>
               </div>
             )}

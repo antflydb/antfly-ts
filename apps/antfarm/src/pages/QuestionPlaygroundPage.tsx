@@ -1,16 +1,12 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import {
-  Clock,
-  FileText,
-  HelpCircle,
-  ListPlus,
-  MessageCircle,
-  Plus,
-  RotateCcw,
-  Zap,
-} from "lucide-react";
+import { Clock, HelpCircle, ListPlus, MessageCircle, Plus, RotateCcw, Zap } from "lucide-react";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
+import { NoModelsGuide } from "@/components/playground/NoModelsGuide";
+import type { SamplePreset } from "@/components/playground/SamplePresets";
+import { SamplePresets } from "@/components/playground/SamplePresets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,34 +27,83 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useApiConfig } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
+import { fetchWithRetry } from "@/lib/utils";
 
-// Generate response types matching Termite API
-interface GenerateResponse {
+// Rewrite response types matching Termite API
+interface RewriteResponse {
   model: string;
   texts: string[][];
 }
 
-interface ModelsResponse {
-  chunkers: string[];
-  rerankers: string[];
-  ner: string[];
-  embedders: string[];
-  generators: string[];
+interface ModelInfo {
+  capabilities?: string[];
 }
 
-const SAMPLE_CONTEXT = `The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower from 1887 to 1889 as the entrance arch for the 1889 World's Fair. The tower is 330 metres tall and was the tallest man-made structure in the world until the Chrysler Building in New York City was built in 1930.`;
+interface ModelsResponse {
+  rewriters: Record<string, ModelInfo>;
+  [key: string]: Record<string, ModelInfo>;
+}
 
-const SAMPLE_ANSWER = "Gustave Eiffel";
+const STORAGE_KEY = "antfarm-playground-question";
 
-const QuestionPlaygroundPage: React.FC = () => {
+const SAMPLE_DATA = {
+  eiffel: {
+    name: "Eiffel Tower",
+    description: "Historical fact about Paris landmark",
+    context: `The Eiffel Tower is a wrought-iron lattice tower on the Champ de Mars in Paris, France. It is named after the engineer Gustave Eiffel, whose company designed and built the tower from 1887 to 1889 as the entrance arch for the 1889 World's Fair. The tower is 330 metres tall and was the tallest man-made structure in the world until the Chrysler Building in New York City was built in 1930.`,
+    answer: "Gustave Eiffel",
+  },
+  dna: {
+    name: "DNA Discovery",
+    description: "Scientific breakthrough in biology",
+    context: `The structure of DNA was discovered in 1953 by James Watson and Francis Crick at the University of Cambridge. They built on the X-ray crystallography work of Rosalind Franklin and Maurice Wilkins at King's College London. The double helix model they proposed explained how genetic information is stored and replicated, earning Watson, Crick, and Wilkins the Nobel Prize in Physiology or Medicine in 1962.`,
+    answer: "James Watson and Francis Crick",
+  },
+  internet: {
+    name: "Internet History",
+    description: "Technology and computing origins",
+    context: `The World Wide Web was invented by Tim Berners-Lee in 1989 while working at CERN in Geneva, Switzerland. He proposed an information management system that used hypertext to link documents across computer networks. The first website, info.cern.ch, went live on December 20, 1990. By 1993, CERN had made the World Wide Web software available on a royalty-free basis, enabling the explosive growth of the internet.`,
+    answer: "Tim Berners-Lee",
+  },
+};
+
+const RewritingPlaygroundPage: React.FC = () => {
   const { termiteApiUrl } = useApiConfig();
-  const [context, setContext] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [selectedModel, setSelectedModel] = useState("");
-  const [result, setResult] = useState<GenerateResponse | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Restore state from localStorage
+  const [context, setContext] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).context || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
+  const [answer, setAnswer] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).answer || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
+  const [selectedModel, setSelectedModel] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) return JSON.parse(saved).selectedModel || "";
+    } catch {
+      /* ignore */
+    }
+    return "";
+  });
+  const [result, setResult] = useState<RewriteResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processingTime, setProcessingTime] = useState<number | null>(null);
@@ -74,26 +119,52 @@ const QuestionPlaygroundPage: React.FC = () => {
   const [selectedQuestion, setSelectedQuestion] = useState("");
   const [evalSetSuccess, setEvalSetSuccess] = useState(false);
 
-  // Fetch available models on mount and when URL changes
+  // Persist state to localStorage
   useEffect(() => {
-    const fetchModels = async () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ context, answer, selectedModel }));
+  }, [context, answer, selectedModel]);
+
+  // Fetch available models on mount — use rewriters, not generators
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
       try {
-        const response = await fetch(`${termiteApiUrl}/api/models`);
+        const response = await fetch(`${termiteApiUrl}/api/models`, {
+          signal: controller.signal,
+        });
         if (response.ok) {
           const data: ModelsResponse = await response.json();
-          setAvailableModels(data.generators || []);
-          if (data.generators && data.generators.length > 0) {
-            setSelectedModel(data.generators[0]);
-          }
+          const rewriters = Object.keys(data.rewriters || {});
+          setAvailableModels(rewriters);
+          setSelectedModel((prev: string) =>
+            prev && rewriters.includes(prev) ? prev : rewriters[0] || ""
+          );
         }
       } catch {
-        console.error("Failed to fetch models");
+        // Ignore fetch errors
       } finally {
-        setModelsLoaded(true);
+        if (!controller.signal.aborted) {
+          setModelsLoaded(true);
+        }
       }
-    };
-    fetchModels();
-  }, [termiteApiUrl]);
+    })();
+    return () => controller.abort();
+  }, [termiteApiUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Handle ?model= URL param from Model Registry "Open in Playground"
+  useEffect(() => {
+    const modelParam = searchParams.get("model");
+    if (modelParam && modelsLoaded && availableModels.includes(modelParam)) {
+      setSelectedModel(modelParam);
+      setSearchParams(
+        (prev) => {
+          prev.delete("model");
+          return prev;
+        },
+        { replace: true }
+      );
+    }
+  }, [searchParams, modelsLoaded, availableModels, setSearchParams]);
 
   // Format input for LMQG question generation models
   const formatInput = (ctx: string, ans: string): string => {
@@ -105,7 +176,7 @@ const QuestionPlaygroundPage: React.FC = () => {
     return `generate question: ${highlightedContext}`;
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     if (!context.trim()) {
       setError("Please enter a context passage");
       return;
@@ -142,7 +213,7 @@ const QuestionPlaygroundPage: React.FC = () => {
     try {
       const formattedInput = formatInput(context, answer);
 
-      const response = await fetch(`${termiteApiUrl}/api/question`, {
+      const response = await fetchWithRetry(`${termiteApiUrl}/api/rewrite`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -159,7 +230,7 @@ const QuestionPlaygroundPage: React.FC = () => {
         throw new Error(errorText || `HTTP ${response.status}`);
       }
 
-      const data: GenerateResponse = await response.json();
+      const data: RewriteResponse = await response.json();
       setResult(data);
       setProcessingTime(performance.now() - startTime);
     } catch (err) {
@@ -167,12 +238,26 @@ const QuestionPlaygroundPage: React.FC = () => {
         return;
       }
       setError(
-        err instanceof Error ? err.message : `Failed to connect to Termite at ${termiteApiUrl}`
+        err instanceof Error
+          ? err.message
+          : "Failed to connect to Termite. Make sure Termite is running."
       );
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [context, answer, selectedModel, termiteApiUrl]);
+
+  // Cmd+Enter shortcut
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        handleGenerate();
+      }
+    };
+    document.addEventListener("keydown", down);
+    return () => document.removeEventListener("keydown", down);
+  }, [handleGenerate]);
 
   const handleReset = () => {
     setContext("");
@@ -180,11 +265,7 @@ const QuestionPlaygroundPage: React.FC = () => {
     setResult(null);
     setError(null);
     setProcessingTime(null);
-  };
-
-  const loadSampleText = () => {
-    setContext(SAMPLE_CONTEXT);
-    setAnswer(SAMPLE_ANSWER);
+    localStorage.removeItem(STORAGE_KEY);
   };
 
   const openAddToEvalSetDialog = (question: string) => {
@@ -237,7 +318,7 @@ const QuestionPlaygroundPage: React.FC = () => {
 
     return (
       <>
-        {parts.map((part, index) =>
+        {parts.map((part: string, index: number) =>
           part.toLowerCase() === answer.toLowerCase() ? (
             <span
               key={index}
@@ -253,26 +334,38 @@ const QuestionPlaygroundPage: React.FC = () => {
     );
   };
 
+  const samplePresets: SamplePreset[] = Object.values(SAMPLE_DATA).map((sample) => ({
+    name: sample.name,
+    description: sample.description,
+    onLoad: () => {
+      setContext(sample.context);
+      setAnswer(sample.answer);
+    },
+  }));
+
   return (
     <div className="h-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Question Generation Playground</h1>
+          <h1 className="text-2xl font-bold">Rewriting Playground</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Generate questions from context and answer pairs using Seq2Seq models
+            Transform text using Seq2Seq models (question generation, paraphrasing, etc.)
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={loadSampleText}>
-            <FileText className="h-4 w-4 mr-2" />
-            Load Sample
-          </Button>
+          <SamplePresets presets={samplePresets} />
           <Button variant="outline" onClick={handleReset}>
             <RotateCcw className="h-4 w-4 mr-2" />
             Reset
           </Button>
         </div>
       </div>
+
+      <BackendInfoBar />
+
+      {modelsLoaded && availableModels.length === 0 && (
+        <NoModelsGuide modelType="rewriter" typeName="rewriting" />
+      )}
 
       {/* Configuration Panel */}
       <Card className="mb-6">
@@ -400,7 +493,13 @@ const QuestionPlaygroundPage: React.FC = () => {
             <CardTitle className="text-lg">{result ? "Generated Question" : "Preview"}</CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-hidden">
-            {result ? (
+            {isLoading ? (
+              <div className="space-y-6">
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-32 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            ) : result ? (
               <div className="space-y-6">
                 {/* Generated Question(s) */}
                 <div className="space-y-3">
@@ -452,7 +551,21 @@ const QuestionPlaygroundPage: React.FC = () => {
               <div className="h-80 flex items-center justify-center text-muted-foreground">
                 <div className="text-center">
                   <HelpCircle className="h-12 w-12 mx-auto mb-3 opacity-20" />
-                  <p>Enter context and answer, then click "Generate Question"</p>
+                  <p className="mb-3">
+                    Enter context and answer, then press{" "}
+                    <kbd className="px-1.5 py-0.5 text-xs border rounded bg-muted">Cmd+Enter</kbd>{" "}
+                    to generate
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setContext(SAMPLE_DATA.eiffel.context);
+                      setAnswer(SAMPLE_DATA.eiffel.answer);
+                    }}
+                  >
+                    Try a sample
+                  </Button>
                 </div>
               </div>
             )}
@@ -560,4 +673,4 @@ const QuestionPlaygroundPage: React.FC = () => {
   );
 };
 
-export default QuestionPlaygroundPage;
+export default RewritingPlaygroundPage;

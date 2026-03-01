@@ -1,4 +1,4 @@
-import { generatorProviders, type TableStatus } from "@antfly/sdk";
+import { generatorProviders } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   Check,
@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api } from "@/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +45,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api-config";
 import { useEvalSets } from "@/hooks/use-eval-sets";
+import { useTable } from "@/hooks/use-table";
 import type { EvalItem, EvalItemResult, EvalRunResult } from "@/types/evals";
 
 // Generator provider type from SDK
@@ -98,12 +98,10 @@ const EvalsPlaygroundPage: React.FC = () => {
     importPromptfooSet,
   } = useEvalSets();
 
+  const { selectedTable, selectedIndex } = useTable();
+
   // State
   const [selectedSetName, setSelectedSetName] = useState<string>("");
-  const [selectedTable, setSelectedTable] = useState<string>("");
-  const [tables, setTables] = useState<TableStatus[]>([]);
-  const [embeddingIndexes, setEmbeddingIndexes] = useState<string[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState<string>("");
   const [judge, setJudge] = useState<JudgeConfig>(DEFAULT_JUDGE);
   const [showJudgeSettings, setShowJudgeSettings] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,56 +123,6 @@ const EvalsPlaygroundPage: React.FC = () => {
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Fetch tables on mount
-  useEffect(() => {
-    const fetchTables = async () => {
-      try {
-        const response = await api.tables.list();
-        setTables(response as TableStatus[]);
-        if (response.length > 0 && !selectedTable) {
-          setSelectedTable(response[0].name);
-        }
-      } catch (e) {
-        console.error("Failed to fetch tables:", e);
-      }
-    };
-    fetchTables();
-  }, [selectedTable]);
-
-  // Fetch embedding indexes when table changes
-  useEffect(() => {
-    const fetchIndexes = async () => {
-      if (!selectedTable) {
-        setEmbeddingIndexes([]);
-        setSelectedIndex("");
-        return;
-      }
-      try {
-        const response = await apiClient.indexes.list(selectedTable);
-        // Filter to only embedding indexes (aknn type)
-        const embeddingIdxs = (response || [])
-          .filter(
-            (idx: { config?: { type?: string } }) =>
-              idx.config?.type?.includes("aknn") || idx.config?.type?.includes("embedding")
-          )
-          .map((idx: { config?: { name?: string } }) => idx.config?.name || "")
-          .filter(Boolean);
-        setEmbeddingIndexes(embeddingIdxs);
-        // Auto-select first embedding index
-        if (embeddingIdxs.length > 0) {
-          setSelectedIndex(embeddingIdxs[0]);
-        } else {
-          setSelectedIndex("");
-        }
-      } catch (e) {
-        console.error("Failed to fetch indexes:", e);
-        setEmbeddingIndexes([]);
-        setSelectedIndex("");
-      }
-    };
-    fetchIndexes();
-  }, [selectedTable, apiClient]);
 
   // Set first eval set as default
   useEffect(() => {
@@ -199,9 +147,11 @@ const EvalsPlaygroundPage: React.FC = () => {
   const handleDeleteSet = () => {
     if (!selectedSetName) return;
     if (!confirm(`Delete eval set "${selectedSetName}"?`)) return;
-    deleteEvalSet(selectedSetName);
-    const names = getEvalSetNames();
-    setSelectedSetName(names.length > 0 ? names[0] : "");
+    const deletedName = selectedSetName;
+    deleteEvalSet(deletedName);
+    // deleteEvalSet triggers async state update, so getEvalSetNames() would return stale data.
+    // Reset selection and let the useEffect at line 137 pick the new first set.
+    setSelectedSetName("");
     setResults(null);
   };
 
@@ -424,7 +374,7 @@ const EvalsPlaygroundPage: React.FC = () => {
           });
         } catch (err) {
           if (err instanceof Error && err.name === "AbortError") {
-            break;
+            return;
           }
           itemResults.push({
             itemId: item.id,
@@ -493,13 +443,25 @@ const EvalsPlaygroundPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Active Table/Index Indicator */}
+      {selectedTable ? (
+        <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
+          <Badge variant="secondary">{selectedTable}</Badge>
+          {selectedIndex && <Badge variant="outline">{selectedIndex}</Badge>}
+        </div>
+      ) : (
+        <div className="mb-4 p-3 rounded-lg border border-dashed text-sm text-muted-foreground">
+          Select a table from the sidebar to get started.
+        </div>
+      )}
+
       {/* Configuration Panel */}
       <Card className="mb-6">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">Configuration</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Eval Set Selection */}
             <div className="space-y-2">
               <Label>Eval Set</Label>
@@ -515,37 +477,6 @@ const EvalsPlaygroundPage: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Table Selection */}
-            <div className="space-y-2">
-              <Label>Table</Label>
-              <Select value={selectedTable} onValueChange={setSelectedTable}>
-                <SelectTrigger className="max-w-[200px]">
-                  <SelectValue placeholder="Select table..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {tables.map((table) => (
-                    <SelectItem key={table.name} value={table.name}>
-                      {table.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {embeddingIndexes.length > 0 && (
-                <Select value={selectedIndex} onValueChange={setSelectedIndex}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select index..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {embeddingIndexes.map((idx) => (
-                      <SelectItem key={idx} value={idx}>
-                        {idx}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
             </div>
 
             {/* Judge Settings Button */}
@@ -570,7 +501,11 @@ const EvalsPlaygroundPage: React.FC = () => {
               <Button
                 onClick={runEvals}
                 disabled={
-                  isLoading || !selectedSet || selectedSet.items.length === 0 || !selectedIndex
+                  isLoading ||
+                  !selectedSet ||
+                  selectedSet.items.length === 0 ||
+                  !selectedTable ||
+                  !selectedIndex
                 }
                 className="w-full"
               >

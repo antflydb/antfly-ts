@@ -73,7 +73,7 @@ const CreateIndexDialog: React.FC<CreateIndexDialogProps> = ({
   const [viewMode, setViewMode] = useState<"form" | "json">("form");
   const [jsonPayload, setJsonPayload] = useState<IndexConfig>({
     name: "",
-    type: "aknn_v0",
+    type: "embeddings",
     dimension: 0,
     embedder: { provider: "ollama", model: "" },
   });
@@ -100,7 +100,7 @@ const CreateIndexDialog: React.FC<CreateIndexDialogProps> = ({
         const { sourceType, chunker, ...rest } = data;
         const indexConfig = {
           name: rest.name || "",
-          type: "aknn_v0" as const,
+          type: "embeddings" as const,
           dimension: rest.dimension || 0,
           field: sourceType === "field" ? rest.field : undefined,
           template: sourceType === "template" ? rest.template : undefined,
@@ -162,7 +162,7 @@ const CreateIndexDialog: React.FC<CreateIndexDialogProps> = ({
 
         indexConfig = {
           name: data.name,
-          type: "aknn_v0" as const,
+          type: "embeddings" as const,
           dimension: data.dimension || 0,
           field: data.sourceType === "field" ? data.field : undefined,
           template: data.sourceType === "template" ? data.template : undefined,
@@ -182,7 +182,7 @@ const CreateIndexDialog: React.FC<CreateIndexDialogProps> = ({
   const handleViewChange = (checked: boolean) => {
     const newMode = checked ? "json" : "form";
     if (newMode === "form") {
-      if (!("embedder" in jsonPayload)) {
+      if (!("embedder" in jsonPayload) || !("dimension" in jsonPayload)) {
         return;
       }
       const { name, dimension, field, template, embedder } = jsonPayload;

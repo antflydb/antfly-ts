@@ -7,7 +7,8 @@ export type ModelType =
   | "chunker"
   | "recognizer"
   | "rewriter"
-  | "generator";
+  | "generator"
+  | "reader";
 
 export type RecognizerCapability = "labels" | "zeroshot" | "relations" | "answers";
 
@@ -202,12 +203,26 @@ export function getQuantizationInfo(
   return options.find((opt) => opt.type === type);
 }
 
+// Shell-safe: only allow alphanumeric, hyphens, underscores, dots, slashes, and colons
+function shellSafe(s: string): string {
+  return s.replace(/[^a-zA-Z0-9\-_./: ]/g, "");
+}
+
 // Generate download command for a model
 export function getDownloadCommand(model: TermiteModel, quantization?: QuantizationType): string {
-  // Base command: termite pull hf:SOURCE --type TYPE
-  let cmd = `termite pull hf:${model.source} --type ${model.type}`;
+  const source = shellSafe(model.source);
 
-  // Add variant flag if specified
+  if (model.inRegistry) {
+    // Registry pull: termite pull SOURCE (variant appended with colon)
+    let cmd = `termite pull ${source}`;
+    if (quantization) {
+      cmd += `:${quantization}`;
+    }
+    return cmd;
+  }
+
+  // HuggingFace pull: termite pull SOURCE --type TYPE
+  let cmd = `termite pull ${source} --type ${model.type}`;
   if (quantization) {
     const variantName = VARIANT_CLI_NAMES[quantization];
     if (!variantName) {
@@ -219,6 +234,129 @@ export function getDownloadCommand(model: TermiteModel, quantization?: Quantizat
 
   return cmd;
 }
+
+// Map model types to their playground routes
+export const MODEL_TYPE_PLAYGROUND: Partial<Record<ModelType, string>> = {
+  chunker: "/playground/chunking",
+  recognizer: "/playground/recognize",
+  rewriter: "/playground/rewrite",
+  reranker: "/playground/rerank",
+};
+
+// Detailed model type information for educational banners
+export interface ModelTypeDetail {
+  type: ModelType;
+  tagline: string;
+  description: string;
+  useCases: string[];
+  pipelineNote: string;
+  playgroundRoute?: string;
+}
+
+export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
+  embedder: {
+    type: "embedder",
+    tagline: "Convert text into dense vector representations",
+    description:
+      "Embedding models transform text into high-dimensional vectors that capture semantic meaning. Similar texts produce similar vectors, enabling semantic search, clustering, and recommendation systems.",
+    useCases: [
+      "Semantic search over documents and knowledge bases",
+      "Clustering similar content for deduplication",
+      "Building recommendation engines",
+      "Zero-shot classification via cosine similarity",
+    ],
+    pipelineNote:
+      "Embedders are the foundation of any vector search pipeline. They run at index time (to embed documents) and at query time (to embed the search query).",
+  },
+  reranker: {
+    type: "reranker",
+    tagline: "Score document relevance with cross-encoder precision",
+    description:
+      "Rerankers use cross-encoder architectures to jointly evaluate a query-document pair, producing a fine-grained relevance score. They are slower than embeddings but significantly more accurate for ranking.",
+    useCases: [
+      "Improving search result ordering after initial retrieval",
+      "RAG pipelines to select the best context passages",
+      "Filtering out irrelevant results before LLM generation",
+      "A/B testing different retrieval strategies",
+    ],
+    pipelineNote:
+      "Rerankers sit between retrieval and generation. They re-score the top-K results from an embedding search to produce a more accurate ranking.",
+    playgroundRoute: "/playground/rerank",
+  },
+  chunker: {
+    type: "chunker",
+    tagline: "Split documents into semantically coherent pieces",
+    description:
+      "Chunking models intelligently split long documents into smaller segments that preserve meaning. Unlike fixed-size splitting, semantic chunkers detect natural topic boundaries using neural networks.",
+    useCases: [
+      "Preprocessing documents before embedding for search",
+      "Splitting long articles while preserving context",
+      "Preparing content for RAG pipelines",
+      "Breaking down legal or technical documents by section",
+    ],
+    pipelineNote:
+      "Chunkers are the first step in an indexing pipeline. Good chunking directly impacts retrieval quality — chunks that are too large dilute relevance, too small lose context.",
+    playgroundRoute: "/playground/chunking",
+  },
+  recognizer: {
+    type: "recognizer",
+    tagline: "Extract named entities and structured data from text",
+    description:
+      "Recognizer models identify and classify entities (people, organizations, dates, custom types) in text. GLiNER-based models support zero-shot recognition — add any label without retraining.",
+    useCases: [
+      "Extracting people, places, and organizations from documents",
+      "Building knowledge graphs from unstructured text",
+      "Enriching search indexes with entity metadata",
+      "Structured data extraction with custom schemas",
+    ],
+    pipelineNote:
+      "Recognizers enhance indexed documents with structured metadata. Entity annotations improve faceted search, filtering, and knowledge graph construction.",
+    playgroundRoute: "/playground/recognize",
+  },
+  rewriter: {
+    type: "rewriter",
+    tagline: "Transform text using sequence-to-sequence models",
+    description:
+      "Rewriter models use T5/FLAN-T5 architectures for text transformation tasks like question generation, paraphrasing, and summarization. They take a text input and produce a transformed output.",
+    useCases: [
+      "Generating evaluation questions from context passages",
+      "Creating training data for search quality testing",
+      "Query expansion and paraphrasing for better retrieval",
+      "Building evaluation datasets automatically",
+    ],
+    pipelineNote:
+      "Rewriters are used in evaluation pipelines and query augmentation. They can generate synthetic Q&A pairs for testing search quality.",
+    playgroundRoute: "/playground/rewrite",
+  },
+  generator: {
+    type: "generator",
+    tagline: "Generate text responses using language models",
+    description:
+      "Generator models produce natural language output for tasks like answering questions, summarization, and content generation. In Termite, generators power the answer synthesis step in RAG pipelines.",
+    useCases: [
+      "Answering questions based on retrieved context (RAG)",
+      "Summarizing search results into concise answers",
+      "Generating descriptions or metadata for content",
+      "Powering conversational search interfaces",
+    ],
+    pipelineNote:
+      "Generators are the final step in a RAG pipeline. They synthesize retrieved context into a coherent answer for the user.",
+  },
+  reader: {
+    type: "reader",
+    tagline: "Extract precise answers from context passages",
+    description:
+      "Reader models perform extractive question answering — given a question and a passage, they identify the exact span of text that answers the question, along with a confidence score.",
+    useCases: [
+      "Extractive QA over retrieved documents",
+      "Finding specific facts in long documents",
+      "Powering FAQ and support answer systems",
+      "Validating generated answers against source text",
+    ],
+    pipelineNote:
+      "Readers complement generators in QA pipelines. Where generators synthesize answers, readers extract exact spans — useful for verifiable, citation-backed responses.",
+  },
+};
 
 // Get the model card URL
 export function getModelCardUrl(model: TermiteModel): string {

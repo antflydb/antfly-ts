@@ -2,6 +2,7 @@
 
 import { TermiteClient } from "@antfly/termite-sdk";
 import {
+  ArrowUpDown,
   ClipboardCheck,
   HelpCircle,
   Library,
@@ -12,6 +13,7 @@ import {
   Moon,
   Network,
   Plus,
+  Repeat2,
   Scissors,
   Sun,
   Table,
@@ -108,8 +110,9 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
 
   const playgroundCommands = [
     { icon: Scissors, label: "Chunking Playground", href: "/playground/chunking" },
-    { icon: Tag, label: "NER Playground", href: "/playground/recognize" },
-    { icon: HelpCircle, label: "Question Gen", href: "/playground/question" },
+    { icon: Tag, label: "Recognize Playground", href: "/playground/recognize" },
+    { icon: Repeat2, label: "Rewriting Playground", href: "/playground/rewrite" },
+    { icon: ArrowUpDown, label: "Reranking Playground", href: "/playground/rerank" },
     { icon: Network, label: "Knowledge Graph", href: "/playground/kg" },
     { icon: ClipboardCheck, label: "Evals", href: "/playground/evals" },
   ];
@@ -172,7 +175,7 @@ export function CommandPaletteProvider({ children }: { children: React.ReactNode
       setIsOpen(false);
 
       if (action === "toggle-theme") {
-        setTheme(theme === "dark" ? "light" : "dark");
+        setTheme(theme === "system" ? "light" : theme === "light" ? "dark" : "system");
       } else if (action === "toggle-width") {
         toggleContentWidth();
       } else if (href) {

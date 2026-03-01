@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ApiConfigProvider } from "@/components/api-config-provider";
 import { AuthProvider } from "@/components/auth-provider";
 import { CommandPaletteProvider } from "@/components/command-palette-provider";
@@ -8,6 +8,7 @@ import { ContentWidthProvider, useContentWidth } from "@/components/content-widt
 import { ErrorBoundary } from "@/components/error-boundary";
 import { PrivateRoute } from "@/components/private-route";
 import { AppSidebar } from "@/components/sidebar";
+import { TableProvider } from "@/components/table-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import {
@@ -15,26 +16,46 @@ import {
   getDefaultRoute,
   isProductEnabled,
   type ProductId,
+  productForPath,
 } from "@/config/products";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { cn } from "@/lib/utils";
+import AntflyChunkingPlaygroundPage from "./pages/AntflyChunkingPlaygroundPage";
+import AntflyEmbeddingPlaygroundPage from "./pages/AntflyEmbeddingPlaygroundPage";
+import AntflyRerankingPlaygroundPage from "./pages/AntflyRerankingPlaygroundPage";
 import ChunkingPlaygroundPage from "./pages/ChunkingPlaygroundPage";
+import ClusterPage from "./pages/ClusterPage";
 import CreateTablePage from "./pages/CreateTablePage";
+import EmbeddingPlaygroundPage from "./pages/EmbeddingPlaygroundPage";
 import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
 import KnowledgeGraphPlaygroundPage from "./pages/KnowledgeGraphPlaygroundPage";
 import { LoginPage } from "./pages/LoginPage";
 import ModelsPage from "./pages/ModelsPage";
-import NERPlaygroundPage from "./pages/NERPlaygroundPage";
-import QuestionPlaygroundPage from "./pages/QuestionPlaygroundPage";
+import RecognizePlaygroundPage from "./pages/NERPlaygroundPage";
+import RewritingPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import RagPlaygroundPage from "./pages/RagPlaygroundPage";
+import ReaderPlaygroundPage from "./pages/ReaderPlaygroundPage";
+import RerankingPlaygroundPage from "./pages/RerankingPlaygroundPage";
+import { SecretsPage } from "./pages/SecretsPage";
 import TableDetailsPage from "./pages/TableDetailsPage";
 import TablesListPage from "./pages/TablesListPage";
+import TranscribePlaygroundPage from "./pages/TranscribePlaygroundPage";
 import { UsersPage } from "./pages/UsersPage";
 
 function AppContent() {
   const [currentSection, setCurrentSection] = useState("indexes");
   const [currentProduct, setCurrentProduct] = useState<ProductId>(defaultProduct);
   const { contentWidth } = useContentWidth();
+  const location = useLocation();
+
+  // Sync currentProduct with the current route so direct navigation
+  // (bookmarks, refresh, shared links) shows the correct sidebar.
+  useEffect(() => {
+    const product = productForPath(location.pathname);
+    if (product && isProductEnabled(product)) {
+      setCurrentProduct(product);
+    }
+  }, [location.pathname]);
 
   return (
     <Routes>
@@ -75,6 +96,22 @@ function AppContent() {
                           }
                         />
                         <Route path="/users" element={<UsersPage />} />
+                        <Route path="/secrets" element={<SecretsPage />} />
+                        <Route path="/cluster" element={<ClusterPage />} />
+                        <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
+                        <Route path="/playground/rag" element={<RagPlaygroundPage />} />
+                        <Route
+                          path="/playground/embedding"
+                          element={<AntflyEmbeddingPlaygroundPage />}
+                        />
+                        <Route
+                          path="/playground/reranking"
+                          element={<AntflyRerankingPlaygroundPage />}
+                        />
+                        <Route
+                          path="/playground/chunking"
+                          element={<AntflyChunkingPlaygroundPage />}
+                        />
                       </>
                     )}
 
@@ -82,12 +119,17 @@ function AppContent() {
                     {isProductEnabled("termite") && (
                       <>
                         <Route path="/models" element={<ModelsPage />} />
-                        <Route path="/playground/chunking" element={<ChunkingPlaygroundPage />} />
-                        <Route path="/playground/recognize" element={<NERPlaygroundPage />} />
-                        <Route path="/playground/question" element={<QuestionPlaygroundPage />} />
+                        <Route path="/playground/chunk" element={<ChunkingPlaygroundPage />} />
+                        <Route path="/playground/recognize" element={<RecognizePlaygroundPage />} />
+                        <Route path="/playground/rewrite" element={<RewritingPlaygroundPage />} />
+                        <Route path="/playground/rerank" element={<RerankingPlaygroundPage />} />
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
-                        <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
-                        <Route path="/playground/rag" element={<RagPlaygroundPage />} />
+                        <Route path="/playground/embed" element={<EmbeddingPlaygroundPage />} />
+                        <Route path="/playground/read" element={<ReaderPlaygroundPage />} />
+                        <Route
+                          path="/playground/transcribe"
+                          element={<TranscribePlaygroundPage />}
+                        />
                       </>
                     )}
 
@@ -112,7 +154,9 @@ function App() {
           <AuthProvider>
             <ContentWidthProvider>
               <CommandPaletteProvider>
-                <AppContent />
+                <TableProvider>
+                  <AppContent />
+                </TableProvider>
               </CommandPaletteProvider>
             </ContentWidthProvider>
           </AuthProvider>

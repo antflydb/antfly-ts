@@ -1,4 +1,4 @@
-import { Cross2Icon } from "@radix-ui/react-icons";
+import { Cross2Icon, PlusIcon } from "@radix-ui/react-icons";
 import { Info } from "lucide-react";
 import { InputData, jsonInputForTargetLanguage, quicktype } from "quicktype-core";
 import type React from "react";
@@ -15,13 +15,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import MultiSelect from "../MultiSelect";
 import { ImportJsonDialog } from "./ImportJsonDialog";
-import SchemaField from "./SchemaField";
+import SchemaFieldRow from "./SchemaFieldRow";
+import { type FieldDetectionInfo, RESERVED_FIELD_NAMES } from "./schema-utils";
 
 interface SchemaEditorProps {
   schemaIndex: number;
   onRemove: () => void;
+  detectionMetaMap?: Map<string, FieldDetectionInfo>;
 }
 
 interface SchemaProperty {
@@ -32,7 +35,11 @@ interface SchemaProperty {
   "x-antfly-types"?: string[];
 }
 
-const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) => {
+const SchemaEditor: React.FC<SchemaEditorProps> = ({
+  schemaIndex,
+  onRemove,
+  detectionMetaMap = new Map(),
+}) => {
   const { control, setValue, watch } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -40,14 +47,13 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) =>
   });
 
   const [isImportDialogOpen, setImportDialogOpen] = useState(false);
+  const [expandedFieldId, setExpandedFieldId] = useState<string | null>(null);
 
-  // Watch the properties to get field names for the include-in-all selector
   const properties = watch(`document_schemas.${schemaIndex}.properties`) || [];
 
   async function handleImport(jsonString: string) {
-    if (!jsonString.trim()) {
-      return;
-    }
+    if (!jsonString.trim()) return;
+
     try {
       const lines = jsonString.trim().split("\n");
       let samples = [jsonString];
@@ -58,15 +64,12 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) =>
           }
           samples = lines;
         } catch (e) {
-          // Not a valid jsonl, treat as a single json blob
           console.warn("Input is not valid JSONL, treating as single JSON blob.", e);
         }
       }
+
       const jsonInput = jsonInputForTargetLanguage("json-schema");
-      await jsonInput.addSource({
-        name: "Root",
-        samples: samples,
-      });
+      await jsonInput.addSource({ name: "Root", samples });
 
       const inputData = new InputData();
       inputData.addInput(jsonInput);
@@ -78,33 +81,27 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) =>
       });
 
       const schema = JSON.parse(schemaLines.join("\n"));
-      let properties = schema.properties;
+      let schemaProperties = schema.properties;
 
       if (schema.type === "array" && schema.items?.properties) {
-        properties = schema.items.properties;
+        schemaProperties = schema.items.properties;
       } else if (schema.definitions) {
         const firstDefinitionKey = Object.keys(schema.definitions)[0];
         if (firstDefinitionKey) {
-          properties = schema.definitions[firstDefinitionKey].properties;
+          schemaProperties = schema.definitions[firstDefinitionKey].properties;
         }
       }
 
-      if (!properties) {
+      if (!schemaProperties) {
         console.warn('Could not find "properties" in the generated schema.');
         return;
       }
 
-      const reservedFieldNames = new Set([`_type`, `_id`, `_embeddings`, `_summaries`]);
-      const newFields = Object.keys(properties)
-        .filter((key) => {
-          if (reservedFieldNames.has(key)) {
-            console.warn(`Skipping reserved field name "${key}" from imported JSON.`);
-            return false;
-          }
-          return true;
-        })
+      const reservedSet = new Set(RESERVED_FIELD_NAMES);
+      const newFields = Object.keys(schemaProperties)
+        .filter((key) => !reservedSet.has(key))
         .map((key) => {
-          const prop = properties[key];
+          const prop = schemaProperties[key];
           return {
             name: key,
             type: prop.type,
@@ -120,8 +117,12 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) =>
     }
   }
 
+  const toggleExpand = (fieldId: string) => {
+    setExpandedFieldId((prev) => (prev === fieldId ? null : fieldId));
+  };
+
   return (
-    <div className="p-4 border border-gray-300 rounded-md mb-4">
+    <div className="p-4 border border-border rounded-md mb-4">
       <div className="flex justify-between items-center mb-4">
         <div className="flex gap-4">
           <FormField
@@ -163,17 +164,14 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) =>
         name={`document_schemas.${schemaIndex}.x-antfly-include-in-all`}
         defaultValue={[]}
         render={({ field }) => {
-          // Get text-based field names for the selector
-          const textBasedFields = properties
+          const textBasedFields = (properties as SchemaProperty[])
             .filter((prop: SchemaProperty) => {
               if (!prop?.name) return false;
-              // Only include text-based fields (text, html, keyword, search_as_you_type, link)
-              const antflyTypes = prop["x-antfly-types"] || [];
-              const hasTextTypes = antflyTypes.some((t: string) =>
+              const types = prop["x-antfly-types"] || [];
+              const hasTextTypes = types.some((t: string) =>
                 ["text", "html", "keyword", "search_as_you_type", "link"].includes(t)
               );
-              // If no x-antfly-types specified, check if it's a string type (defaults to text)
-              const isStringType = prop.type === "string" && antflyTypes.length === 0;
+              const isStringType = prop.type === "string" && types.length === 0;
               return hasTextTypes || isStringType;
             })
             .map((prop: SchemaProperty) => prop.name);
@@ -203,6 +201,7 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) =>
       />
 
       <h4 className="text-lg font-semibold mb-2">Fields</h4>
+
       <Alert className="mb-4">
         <Info className="h-4 w-4" />
         <AlertTitle>Info</AlertTitle>
@@ -210,33 +209,68 @@ const SchemaEditor: React.FC<SchemaEditorProps> = ({ schemaIndex, onRemove }) =>
           The _type field is reserved and will be used to determine the document type on upload.
         </AlertDescription>
       </Alert>
-      {fields.map((field, index) => (
-        <SchemaField
-          key={field.id}
-          schemaIndex={schemaIndex}
-          fieldIndex={index}
-          onRemove={() => remove(index)}
-        />
-      ))}
-      <div className="flex gap-2 mt-4">
+
+      <div className="flex gap-2 mb-4">
         <Button
           type="button"
           variant="outline"
-          onClick={() =>
+          size="sm"
+          onClick={() => {
             append({
               name: "",
               type: "string",
               description: "",
               "x-antfly-index": true,
-            })
-          }
+              "x-antfly-types": [],
+            });
+          }}
         >
+          <PlusIcon className="h-4 w-4 mr-1" />
           Add Field
         </Button>
-        <Button type="button" variant="outline" onClick={() => setImportDialogOpen(true)}>
+        <Button type="button" variant="outline" size="sm" onClick={() => setImportDialogOpen(true)}>
           Import from JSON
         </Button>
       </div>
+
+      {fields.length > 0 ? (
+        <div className="border rounded-md">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[28px]" />
+                <TableHead>Field</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Seen</TableHead>
+                <TableHead>Antfly Types</TableHead>
+                <TableHead className="w-[40px]" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {fields.map((field, index) => {
+                const fieldName = properties[index]?.name;
+                return (
+                  <SchemaFieldRow
+                    key={field.id}
+                    schemaIndex={schemaIndex}
+                    fieldIndex={index}
+                    isExpanded={expandedFieldId === field.id}
+                    onToggleExpand={() => toggleExpand(field.id)}
+                    onRemove={() => remove(index)}
+                    detectionInfo={fieldName ? detectionMetaMap.get(fieldName) : undefined}
+                  />
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="border rounded-md p-8 text-center text-muted-foreground">
+          <p>No fields defined yet.</p>
+          <p className="text-sm mt-1">Add fields manually or import from JSON.</p>
+        </div>
+      )}
+
       <ImportJsonDialog
         open={isImportDialogOpen}
         onClose={() => setImportDialogOpen(false)}

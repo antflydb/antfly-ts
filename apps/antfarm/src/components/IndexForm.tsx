@@ -248,7 +248,7 @@ const IndexForm: React.FC<IndexFormProps> = ({ fieldPrefix = "", schemaFields = 
       />
 
       <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="advanced-settings">
+        <AccordionItem value="advanced-settings" className="border-b last:border-b-0">
           <AccordionTrigger>Advanced</AccordionTrigger>
           <AccordionContent>
             <div className="flex flex-col gap-3 mt-3">
@@ -268,7 +268,7 @@ const IndexForm: React.FC<IndexFormProps> = ({ fieldPrefix = "", schemaFields = 
 
               <div className="border-t pt-3 mt-3">
                 <Accordion type="single" collapsible>
-                  <AccordionItem value="chunking">
+                  <AccordionItem value="chunking" className="border-b last:border-b-0">
                     <AccordionTrigger>Document Chunking (Optional)</AccordionTrigger>
                     <AccordionContent>
                       <div className="flex flex-col gap-3 mt-3">

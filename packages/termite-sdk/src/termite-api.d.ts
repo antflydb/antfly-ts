@@ -44,27 +44,6 @@ export interface paths {
          *     Supports multiple content types via Accept header:
          *     - `application/octet-stream`: Binary serialization (default, most efficient)
          *     - `application/json`: JSON response with model name and embeddings
-         *
-         *     ## Examples
-         *
-         *     Text embedding (Ollama-compatible):
-         *     ```json
-         *     {
-         *       "model": "BAAI/bge-small-en-v1.5",
-         *       "input": ["hello world", "machine learning"]
-         *     }
-         *     ```
-         *
-         *     Multimodal embedding (OpenAI-compatible):
-         *     ```json
-         *     {
-         *       "model": "openai/clip-vit-base-patch32",
-         *       "input": [
-         *         {"type": "text", "text": "a photo of a cat"},
-         *         {"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0..."}}
-         *       ]
-         *     }
-         *     ```
          */
         post: operations["generateEmbeddings"];
         delete?: never;
@@ -101,20 +80,6 @@ export interface paths {
          *     ## Caching
          *
          *     Results are cached in memory for 2 minutes. Cache key includes both config and text content.
-         *
-         *     ## Example
-         *
-         *     ```json
-         *     {
-         *       "text": "This is a long document...",
-         *       "config": {
-         *         "model": "fixed",
-         *         "target_tokens": 500,
-         *         "overlap_tokens": 50,
-         *         "separator": "\n\n"
-         *       }
-         *     }
-         *     ```
          */
         post: operations["chunkText"];
         delete?: never;
@@ -150,19 +115,6 @@ export interface paths {
          *     - Models are auto-discovered from `models_dir/rerankers/`
          *     - Supports quantized models (`model_quantized.onnx`)
          *     - Automatically prefers quantized variants if available
-         *
-         *     ## Example
-         *
-         *     ```json
-         *     {
-         *       "model": "BAAI/bge-reranker-v2-m3",
-         *       "query": "machine learning applications",
-         *       "prompts": [
-         *         "Introduction to Machine Learning: This guide covers...",
-         *         "Deep Learning Fundamentals: Neural networks are..."
-         *       ]
-         *     }
-         *     ```
          *
          *     For document-based reranking with field extraction, use the client-side
          *     `lib/reranking` package which handles rendering before calling this endpoint.
@@ -201,42 +153,8 @@ export interface paths {
          *
          *     ## Input Format
          *
-         *     Uses OpenAI-compatible chat format with messages array:
-         *     ```json
-         *     {
-         *       "model": "google/gemma-3-1b-it",
-         *       "messages": [
-         *         {"role": "system", "content": "You are a helpful assistant."},
-         *         {"role": "user", "content": "Hello!"}
-         *       ],
-         *       "max_tokens": 256,
-         *       "stream": false
-         *     }
-         *     ```
-         *
-         *     ## Example (Non-streaming)
-         *
-         *     ```bash
-         *     curl -X POST http://localhost:8080/api/generate \
-         *       -H "Content-Type: application/json" \
-         *       -d '{
-         *         "model": "google/gemma-3-1b-it",
-         *         "messages": [{"role": "user", "content": "What is machine learning?"}],
-         *         "max_tokens": 100
-         *       }'
-         *     ```
-         *
-         *     ## Example (Streaming)
-         *
-         *     ```bash
-         *     curl -X POST http://localhost:8080/api/generate \
-         *       -H "Content-Type: application/json" \
-         *       -d '{
-         *         "model": "google/gemma-3-1b-it",
-         *         "messages": [{"role": "user", "content": "Hello!"}],
-         *         "stream": true
-         *       }'
-         *     ```
+         *     Uses OpenAI-compatible chat format with messages array containing role
+         *     (system, user, assistant) and content. Set `stream: true` for streaming responses.
          */
         post: operations["generateContent"];
         delete?: never;
@@ -272,15 +190,6 @@ export interface paths {
          *     - Supports quantized variants (model_i8.onnx)
          *     - Compatible with HuggingFace BERT-based recognition models
          *     - GLiNER models support custom entity labels via the `labels` parameter
-         *
-         *     ## Example
-         *
-         *     ```json
-         *     {
-         *       "model": "dslim/bert-base-NER",
-         *       "texts": ["John Smith works at Google.", "Apple Inc. is in Cupertino."]
-         *     }
-         *     ```
          */
         post: operations["recognizeEntities"];
         delete?: never;
@@ -321,28 +230,10 @@ export interface paths {
          *     - **Intent Detection**: Identify user intents from text
          *     - **Content Moderation**: Detect inappropriate content types
          *
-         *     ## Example
-         *
-         *     ```json
-         *     {
-         *       "model": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
-         *       "texts": ["I love this product!", "The service was terrible."],
-         *       "labels": ["positive", "negative", "neutral"]
-         *     }
-         *     ```
-         *
          *     ## Multilingual Support
          *
          *     The mDeBERTa-mnli-xnli model supports 100+ languages. You can classify text
-         *     in any supported language using labels in that language:
-         *
-         *     ```json
-         *     {
-         *       "model": "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli",
-         *       "texts": ["J'adore ce produit!"],
-         *       "labels": ["positif", "négatif", "neutre"]
-         *     }
-         *     ```
+         *     in any supported language using labels in that language.
          */
         post: operations["classifyText"];
         delete?: never;
@@ -376,16 +267,6 @@ export interface paths {
          *     - **Query Generation**: Generate search queries from documents
          *     - **Paraphrasing**: Rewrite text in different words
          *     - **Translation**: Translate text between languages
-         *
-         *     ## Example
-         *
-         *     For question generation with LMQG models:
-         *     ```json
-         *     {
-         *       "model": "lmqg/flan-t5-small-squad-qg",
-         *       "inputs": ["generate question: <hl> Beyonce <hl> Beyonce starred as Etta James in Cadillac Records."]
-         *     }
-         *     ```
          */
         post: operations["rewriteText"];
         delete?: never;
@@ -424,27 +305,6 @@ export interface paths {
          *     - **Donut DocVQA**: `<s_docvqa><s_question>...</s_question><s_answer>` for visual QA
          *     - **Florence-2 OCR**: `<OCR>` for text extraction
          *     - **Florence-2 Caption**: `<CAPTION>` for image description
-         *
-         *     ## Example
-         *
-         *     ```json
-         *     {
-         *       "model": "microsoft/trocr-base-printed",
-         *       "images": [
-         *         {"url": "data:image/png;base64,iVBORw0KGgo..."}
-         *       ],
-         *       "max_tokens": 256
-         *     }
-         *     ```
-         *
-         *     With Donut for receipt parsing:
-         *     ```json
-         *     {
-         *       "model": "naver-clova-ix/donut-base-finetuned-cord-v2",
-         *       "images": [{"url": "data:image/png;base64,..."}],
-         *       "prompt": "<s_cord-v2>"
-         *     }
-         *     ```
          */
         post: operations["readImages"];
         delete?: never;
@@ -502,6 +362,72 @@ export interface paths {
          *     ```
          */
         post: operations["transcribeAudio"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/extract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Extract structured data from text
+         * @description Extracts structured data from text using GLiNER2 models.
+         *     Field names in the schema are treated as NER labels, and the model's
+         *     span extraction pipeline populates field values.
+         *
+         *     ## Schema Format
+         *
+         *     The schema maps structure names to arrays of field definitions:
+         *     ```json
+         *     {
+         *       "person": ["name::str", "age::str", "skills::list"]
+         *     }
+         *     ```
+         *
+         *     Field types:
+         *     - `::str` - Keep only the top-scoring span (default if no type specified)
+         *     - `::list` - Keep all extracted spans as an array
+         *     - `::[opt1|opt2]::str` - Choice field, classified against options
+         *
+         *     ## Example
+         *
+         *     ```json
+         *     {
+         *       "model": "fastino/gliner2-base-v1",
+         *       "texts": ["John Smith is 30 years old and works at Google."],
+         *       "schema": {
+         *         "person": ["name::str", "age::str", "company::str"]
+         *       }
+         *     }
+         *     ```
+         *
+         *     Response:
+         *     ```json
+         *     {
+         *       "model": "fastino/gliner2-base-v1",
+         *       "results": [
+         *         {
+         *           "person": [
+         *             {
+         *               "name": {"value": "John Smith"},
+         *               "age": {"value": "30"},
+         *               "company": {"value": "Google"}
+         *             }
+         *           ]
+         *         }
+         *       ]
+         *     }
+         *     ```
+         */
+        post: operations["extractJSON"];
         delete?: never;
         options?: never;
         head?: never;
@@ -619,8 +545,20 @@ export interface components {
             type: "image_url";
             image_url: components["schemas"]["ImageURL"];
         };
-        /** @description A content part for multimodal embedding (text or image) */
-        ContentPart: components["schemas"]["TextContentPart"] | components["schemas"]["ImageURLContentPart"];
+        /** @description Inline binary media content (audio, image, etc.) */
+        MediaContentPart: {
+            /** @enum {string} */
+            type: "media";
+            /**
+             * Format: byte
+             * @description Base64-encoded binary data
+             */
+            data: string;
+            /** @description MIME type (audio/wav, image/gif, image/png, etc.) */
+            mime_type: string;
+        };
+        /** @description A content part for multimodal input (text, image URL, or inline media) */
+        ContentPart: components["schemas"]["TextContentPart"] | components["schemas"]["ImageURLContentPart"] | components["schemas"]["MediaContentPart"];
         EmbedRequest: {
             /**
              * @description Name of the embedder model from models_dir/embedders/
@@ -643,6 +581,13 @@ export interface components {
              * @default true
              */
             truncate?: boolean;
+            /** @description Maximum number of non-zero entries per sparse vector (only for sparse models, default 256) */
+            top_k?: number;
+            /**
+             * Format: float
+             * @description Minimum weight threshold for sparse vector entries (only for sparse models, default 0.0)
+             */
+            min_weight?: number;
         };
         /**
          * @example {
@@ -667,19 +612,24 @@ export interface components {
              * @example BAAI/bge-small-en-v1.5
              */
             model: string;
-            /** @description Array of embedding vectors (one per input string) */
-            embeddings: number[][];
+            /** @description Array of dense embedding vectors (one per input, populated for dense models) */
+            embeddings?: number[][];
+            /** @description Array of sparse embedding vectors (one per input, populated for sparse models) */
+            sparse_embeddings?: components["schemas"]["SparseVector"][];
         };
-        /** @description A chunk of text with position information. */
-        Chunk: {
+        /** @description A sparse vector with parallel index/value arrays, sorted by index ascending */
+        SparseVector: {
+            /** @description Token IDs from the model vocabulary (sorted ascending) */
+            indices: number[];
+            /** @description Corresponding weights for each index (always positive) */
+            values: number[];
+        };
+        /** @description A chunk of content. Text chunks have mime_type text/plain. */
+        Chunk: (components["schemas"]["TextContent"] | components["schemas"]["BinaryContent"]) & {
             /** @description Sequence number of the chunk (0, 1, 2, ...) */
             id: number;
-            /** @description The chunk content */
-            text: string;
-            /** @description Character position in original text where chunk starts */
-            start_char: number;
-            /** @description Character position in original text where chunk ends (exclusive) */
-            end_char: number;
+            /** @description MIME type: text/plain, audio/wav, image/png, etc. */
+            mime_type: string;
         };
         /**
          * @description Configuration for chunking requests to Termite API.
@@ -724,13 +674,31 @@ export interface components {
              * @example 0.5
              */
             threshold?: number;
+            /**
+             * @description Window duration in ms for audio chunking (default: 30000)
+             * @default 30000
+             */
+            window_duration_ms?: number;
+            /**
+             * @description Overlap duration in ms between audio chunks (default: 0)
+             * @default 0
+             */
+            overlap_duration_ms?: number;
         };
         ChunkRequest: {
             /**
-             * @description Text to chunk
+             * @description Input content to chunk. Supports two formats:
+             *     - Text string: `"This is a long document..."` (backward compatible)
+             *     - ContentPart: `{"type": "media", "data": "<base64>", "mime_type": "audio/wav"}`
+             *     - ContentPart: `{"type": "text", "text": "..."}`
+             */
+            input?: string | components["schemas"]["ContentPart"];
+            /**
+             * @deprecated
+             * @description DEPRECATED: Use 'input' instead. Text to chunk.
              * @example This is a long document that needs to be split into smaller chunks...
              */
-            text: string;
+            text?: string;
             config?: components["schemas"]["ChunkConfig"];
         };
         /**
@@ -857,6 +825,47 @@ export interface components {
              *     ]
              */
             relation_labels?: string[];
+            resolver?: components["schemas"]["ResolverConfig"];
+        };
+        /**
+         * @description Configuration for entity resolution. When present in a RecognizeRequest,
+         *     the response entities and relations are deduplicated via entity resolution
+         *     (e.g., "Elon Musk" and "Musk" are merged into a single entity).
+         */
+        ResolverConfig: {
+            /**
+             * Format: float
+             * @description Jaro-Winkler similarity threshold for merging entities (0.0-1.0)
+             * @default 0.85
+             */
+            similarity_threshold?: number;
+            /**
+             * @description Whether entity types must match for merging
+             * @default true
+             */
+            type_must_match?: boolean;
+            /**
+             * Format: float
+             * @description Minimum confidence score for entities to be included
+             * @default 0
+             */
+            min_entity_confidence?: number;
+            /**
+             * Format: float
+             * @description Minimum confidence score for relations to be included
+             * @default 0
+             */
+            min_relation_confidence?: number;
+            /**
+             * @description Whether to deduplicate relations after entity resolution
+             * @default true
+             */
+            deduplicate_relations?: boolean;
+            /**
+             * @description Whether to track mention provenance for resolved entities
+             * @default true
+             */
+            track_provenance?: boolean;
         };
         Relation: {
             /** @description The subject/head entity in the relationship */
@@ -966,6 +975,95 @@ export interface components {
              */
             classifications: components["schemas"]["ClassifyResult"][][];
         };
+        ExtractRequest: {
+            /**
+             * @description Name of recognizer model with 'extraction' capability
+             * @example fastino/gliner2-base-v1
+             */
+            model: string;
+            /**
+             * @description Texts to extract structured data from
+             * @example [
+             *       "John Smith is 30 years old and works at Google."
+             *     ]
+             */
+            texts: string[];
+            /**
+             * @description Extraction schema mapping structure names to field definitions.
+             *     Each field is defined as "field_name::type" where type is "str" or "list".
+             *     Optional choice fields: "field_name::[opt1|opt2]::str".
+             *     If no type is specified, defaults to "str".
+             * @example {
+             *       "person": [
+             *         "name::str",
+             *         "age::str",
+             *         "company::str"
+             *       ]
+             *     }
+             */
+            schema: {
+                [key: string]: string[];
+            };
+            /**
+             * Format: float
+             * @description Score threshold for span extraction (0.0-1.0)
+             * @default 0.3
+             */
+            threshold?: number;
+            /**
+             * @description If true, don't allow nested/overlapping entities
+             * @default true
+             */
+            flat_ner?: boolean;
+            /**
+             * @description If true, include confidence scores in output
+             * @default false
+             */
+            include_confidence?: boolean;
+            /**
+             * @description If true, include character offset spans in output
+             * @default false
+             */
+            include_spans?: boolean;
+        };
+        ExtractFieldValue: {
+            /**
+             * @description The extracted text value
+             * @example John Smith
+             */
+            value: string;
+            /**
+             * Format: float
+             * @description Confidence score (only present when include_confidence=true)
+             * @example 0.95
+             */
+            score?: number;
+            /**
+             * @description Character offset where value begins (only present when include_spans=true)
+             * @example 0
+             */
+            start?: number;
+            /**
+             * @description Character offset where value ends (only present when include_spans=true)
+             * @example 10
+             */
+            end?: number;
+        };
+        ExtractResponse: {
+            /** @description Name of model used for extraction */
+            model: string;
+            /**
+             * @description Array of extraction results (one per input text).
+             *     Each result maps structure names to arrays of extracted instances.
+             *     Each instance maps field names to ExtractFieldValue (for ::str fields)
+             *     or arrays of ExtractFieldValue (for ::list fields).
+             */
+            results: {
+                [key: string]: {
+                    [key: string]: unknown;
+                }[];
+            }[];
+        };
         ReadRequest: {
             /**
              * @description Name of reader model from models_dir/readers/
@@ -999,6 +1097,16 @@ export interface components {
              */
             max_tokens?: number;
         };
+        TextRegion: {
+            /** @description Recognized text within the region */
+            text: string;
+            /** @description Bounding box [x1, y1, x2, y2] in pixel coordinates */
+            bbox: number[];
+            /** @description Recognition confidence score (0-1) */
+            confidence?: number;
+            /** @description Semantic label from layout analysis (e.g., text, title, table) */
+            label?: string;
+        };
         ReadResult: {
             /**
              * @description Extracted text from the image
@@ -1018,6 +1126,11 @@ export interface components {
             fields?: {
                 [key: string]: string;
             };
+            /**
+             * @description Individual text regions with bounding boxes and recognized text.
+             *     Populated by multi-stage OCR models (Surya, PaddleOCR).
+             */
+            regions?: components["schemas"]["TextRegion"][];
         };
         ReadResponse: {
             /** @description Name of model used for reading */
@@ -1056,135 +1169,52 @@ export interface components {
              */
             language?: string;
         };
-        ModelsResponse: {
-            /**
-             * @description Available chunking models (always includes "fixed")
-             * @example [
-             *       "fixed",
-             *       "mirth/chonky-mmbert-small-multilingual-1"
-             *     ]
-             */
-            chunkers: string[];
-            /**
-             * @description Available reranking models
-             * @example [
-             *       "BAAI/bge-reranker-v2-m3"
-             *     ]
-             */
-            rerankers: string[];
-            /**
-             * @description Available zero-shot classification models
-             * @example [
-             *       "MoritzLaurer/mDeBERTa-v3-base-mnli-xnli"
-             *     ]
-             */
-            classifiers: string[];
-            /**
-             * @description Available embedding models from models_dir/embedders/
-             * @example [
-             *       "BAAI/bge-small-en-v1.5",
-             *       "BAAI/bge-small-en-v1.5:i8"
-             *     ]
-             */
-            embedders: string[];
-            /**
-             * @description Available generator/LLM models from models_dir/generators/
-             * @example [
-             *       "google/gemma-3-1b-it",
-             *       "onnxruntime/Gemma-3-ONNX"
-             *     ]
-             */
-            generators: string[];
-            /**
-             * @description Available recognizer models from models_dir/recognizers/
-             * @example [
-             *       "dslim/bert-base-NER",
-             *       "dslim/bert-large-NER",
-             *       "onnx-community/gliner_small-v2.1"
-             *     ]
-             */
-            recognizers: string[];
-            /**
-             * @description Available GLiNER extractor models (zero-shot recognition with custom labels)
-             * @example [
-             *       "onnx-community/gliner_small-v2.1",
-             *       "onnx-community/gliner-multitask"
-             *     ]
-             */
-            extractors?: string[];
-            /**
-             * @description Available Seq2Seq rewriter models from models_dir/rewriters/
-             * @example [
-             *       "lmqg/flan-t5-small-squad-qg",
-             *       "lmqg/flan-t5-base-squad-qg"
-             *     ]
-             */
-            rewriters: string[];
-            /**
-             * @description Available reader/OCR models from models_dir/readers/
-             * @example [
-             *       "microsoft/trocr-base-printed",
-             *       "naver-clova-ix/donut-base-finetuned-cord-v2"
-             *     ]
-             */
-            readers: string[];
-            /**
-             * @description Available transcriber/speech-to-text models from models_dir/transcribers/
-             * @example [
-             *       "openai/whisper-tiny",
-             *       "openai/whisper-base"
-             *     ]
-             */
-            transcribers: string[];
-            /**
-             * @description Detailed information about recognizer models including capabilities.
-             *     Map of model name to model info. Use this to determine what capabilities
-             *     each recognizer supports (labels, zeroshot, relations, answers).
-             * @example {
-             *       "dslim/bert-base-NER": {
-             *         "capabilities": [
-             *           "labels"
-             *         ]
-             *       },
-             *       "onnx-community/gliner_small-v2.1": {
-             *         "capabilities": [
-             *           "labels",
-             *           "zeroshot"
-             *         ]
-             *       },
-             *       "onnx-community/gliner-multitask": {
-             *         "capabilities": [
-             *           "labels",
-             *           "zeroshot",
-             *           "relations",
-             *           "answers"
-             *         ]
-             *       }
-             *     }
-             */
-            recognizer_info?: {
-                [key: string]: components["schemas"]["RecognizerModelInfo"];
-            };
+        /** @description Information about a model including its capabilities */
+        ModelInfo: {
+            /** @description List of capabilities this model supports (omitted when empty) */
+            capabilities?: string[];
         };
-        /**
-         * @description Capability that a recognizer model supports:
-         *     - labels: Entity extraction (NER) - extracts labeled spans like PER, ORG, LOC
-         *     - zeroshot: Supports arbitrary labels at inference time (GLiNER models)
-         *     - relations: Relation extraction between entities (GLiNER multitask, REBEL)
-         *     - answers: Extractive question answering (GLiNER multitask)
-         * @enum {string}
-         */
-        RecognizerCapability: "labels" | "zeroshot" | "relations" | "answers";
-        /** @description Detailed information about a recognizer model */
-        RecognizerModelInfo: {
-            /**
-             * @description List of capabilities this recognizer model supports
-             * @example [
-             *       "labels",
-             *       "zeroshot"
-             *     ]
-             */
-            capabilities?: components["schemas"]["RecognizerCapability"][];
+        ModelsResponse: {
+            /** @description Available chunking models (always includes "fixed") */
+            chunkers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available reranking models */
+            rerankers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available zero-shot classification models */
+            classifiers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available embedding models from models_dir/embedders/ */
+            embedders: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available extractor models (NER models with 'extraction' capability) */
+            extractors: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available generator/LLM models from models_dir/generators/ */
+            generators: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available recognizer models from models_dir/recognizers/ */
+            recognizers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available Seq2Seq rewriter models from models_dir/rewriters/ */
+            rewriters: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available reader/OCR models from models_dir/readers/ */
+            readers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
+            /** @description Available transcriber/speech-to-text models from models_dir/transcribers/ */
+            transcribers: {
+                [key: string]: components["schemas"]["ModelInfo"];
+            };
         };
         /** @description A tool (function) that the model can call */
         Tool: {
@@ -1580,6 +1610,13 @@ export interface components {
             model_strategies?: {
                 [key: string]: "eager" | "lazy" | "bounded";
             };
+            /**
+             * @description Whether the dashboard should show model download commands.
+             *     Defaults to true for standalone/swarm mode. Set to false in managed
+             *     deployments (e.g., Kubernetes operator) where models are managed externally.
+             * @default true
+             */
+            allow_downloads?: boolean;
             log?: components["schemas"]["schemas-Config"];
         };
         VersionResponse: {
@@ -1603,6 +1640,42 @@ export interface components {
              * @example go1.25.0
              */
             go_version: string;
+            /**
+             * @description Whether model downloads are allowed in this deployment
+             * @example true
+             */
+            allow_downloads?: boolean;
+        };
+        /** @description Text content with character offsets. */
+        TextContent: {
+            /** @description The chunk text content */
+            text: string;
+            /** @description Character position in original text where chunk starts */
+            start_char: number;
+            /** @description Character position in original text where chunk ends (exclusive) */
+            end_char: number;
+        };
+        /** @description Binary media content with format-specific metadata. */
+        BinaryContent: {
+            /**
+             * Format: byte
+             * @description Base64-encoded binary data (valid WAV, PNG, etc.)
+             */
+            data?: string;
+            /**
+             * Format: float
+             * @description Audio: window start time in milliseconds
+             */
+            start_time_ms?: number;
+            /**
+             * Format: float
+             * @description Audio: window end time in milliseconds
+             */
+            end_time_ms?: number;
+            /** @description Animation: frame number */
+            frame_index?: number;
+            /** @description Animation: display delay in milliseconds */
+            frame_delay_ms?: number;
         };
         ContentSecurityConfig: {
             /**
@@ -2209,6 +2282,66 @@ export interface operations {
                 };
             };
             /** @description Transcription service unavailable (no models configured) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    extractJSON: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ExtractRequest"];
+            };
+        };
+        responses: {
+            /** @description Extraction completed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtractResponse"];
+                };
+            };
+            /** @description Invalid request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Model not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Extraction service unavailable (no models configured) */
             503: {
                 headers: {
                     [name: string]: unknown;

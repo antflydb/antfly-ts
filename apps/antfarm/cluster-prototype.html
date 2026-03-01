@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antfarm — Cluster Overview</title>
+<style>
+/* ============================================================
+   ANTFARM CLUSTER OVERVIEW — Design Prototype
+   Aesthetic: Precision Industrial
+   Think: power grid control room meets Swiss typography
+   ============================================================ */
+
+/* --- Aeonik approximation (Suisse Int'l as fallback) --- */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  /* --- Antfarm Token Mirror (Light) --- */
+  --bg: #ffffff;
+  --bg-secondary: #fafafa;
+  --fg: #1c2024;
+  --fg-muted: #737373;
+  --fg-faint: #a3a3a3;
+  --card: #ffffff;
+  --card-border: #e4e4e7;
+  --border: #e4e4e7;
+  --border-subtle: #f0f0f0;
+  --surface-raised: #f5f5f5;
+  --surface-sunken: #fafafa;
+
+  /* Semantic */
+  --success: #22c55e;
+  --success-muted: #f0fdf4;
+  --success-fg: #15803d;
+  --danger: #ef4444;
+  --danger-muted: #fef2f2;
+  --danger-fg: #b91c1c;
+  --warning: #f59e0b;
+  --warning-muted: #fffbeb;
+  --warning-fg: #92400e;
+  --info: #3b82f6;
+  --info-muted: #eff6ff;
+  --info-fg: #1d4ed8;
+  --info-light: #bfdbfe;
+  --info-lighter: #dbeafe;
+
+  /* Shard-specific */
+  --shard-leader: #2563eb;
+  --shard-leader-text: #ffffff;
+  --shard-follower: #dbeafe;
+  --shard-follower-text: #1d4ed8;
+  --shard-follower-border: #bfdbfe;
+  --shard-init: #3b82f6;
+  --shard-init-glow: rgba(59, 130, 246, 0.3);
+  --shard-split: #f59e0b;
+  --shard-split-text: #78350f;
+  --shard-split-bg: #fef3c7;
+  --shard-split-border: #fde68a;
+  --shard-unassigned: #fecaca;
+  --shard-unassigned-text: #991b1b;
+  --shard-unassigned-border: #fca5a5;
+
+  /* Layout */
+  --radius: 8px;
+  --radius-sm: 5px;
+  --radius-xs: 3px;
+  --font-body: "DM Sans", "Aeonik", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", monospace;
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+
+  /* Capacity bar */
+  --cap-track: #f0f0f0;
+  --cap-fill: #1c2024;
+  --cap-fill-warn: #f59e0b;
+  --cap-fill-danger: #ef4444;
+}
+
+.dark {
+  --bg: #0f0f0f;
+  --bg-secondary: #0a0a0a;
+  --fg: #edeef0;
+  --fg-muted: #a1a1a1;
+  --fg-faint: #525252;
+  --card: #161616;
+  --card-border: #262626;
+  --border: #262626;
+  --border-subtle: #1a1a1a;
+  --surface-raised: #1a1a1a;
+  --surface-sunken: #0a0a0a;
+
+  --success: #4ade80;
+  --success-muted: #0a1a0c;
+  --success-fg: #86efac;
+  --danger: #f87171;
+  --danger-muted: #1a0808;
+  --danger-fg: #fca5a5;
+  --warning: #fbbf24;
+  --warning-muted: #1a1508;
+  --warning-fg: #fde68a;
+  --info: #60a5fa;
+  --info-muted: #081a2a;
+  --info-fg: #93c5fd;
+  --info-light: #1e3a5f;
+  --info-lighter: #0f2544;
+
+  --shard-leader: #3b82f6;
+  --shard-leader-text: #ffffff;
+  --shard-follower: #1e3a5f;
+  --shard-follower-text: #93c5fd;
+  --shard-follower-border: #2c5282;
+  --shard-init: #60a5fa;
+  --shard-init-glow: rgba(96, 165, 250, 0.25);
+  --shard-split: #fbbf24;
+  --shard-split-text: #fef3c7;
+  --shard-split-bg: #3d3015;
+  --shard-split-border: #5c4a1e;
+  --shard-unassigned: #3d1515;
+  --shard-unassigned-text: #fca5a5;
+  --shard-unassigned-border: #5c1e1e;
+
+  --cap-track: #262626;
+  --cap-fill: #e5e5e5;
+  --cap-fill-warn: #fbbf24;
+  --cap-fill-danger: #f87171;
+}
+
+html { font-size: 16px; }
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.45;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Page Shell ---- */
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- Theme Toggle ---- */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.theme-toggle:hover { color: var(--fg); border-color: var(--fg-faint); }
+.theme-toggle svg { width: 14px; height: 14px; }
+
+/* ---- Refresh Controls ---- */
+.refresh-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  background: var(--surface-raised);
+  color: var(--fg-muted);
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.refresh-btn:hover { color: var(--fg); background: var(--border); }
+.refresh-btn.active {
+  background: var(--fg);
+  color: var(--bg);
+}
+.refresh-btn svg { width: 13px; height: 13px; }
+.refresh-divider { width: 1px; height: 20px; background: var(--border); }
+
+/* ================================================================
+   SECTION 1: CLUSTER STATUS BAR
+   Inspired by CockroachDB's overview panel — dense, factual
+   ================================================================ */
+.status-bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+.health-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px 4px 8px;
+  border-radius: 100px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.health-badge .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.health-badge.healthy {
+  background: var(--success-muted);
+  color: var(--success-fg);
+}
+.health-badge.healthy .dot {
+  background: var(--success);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+.health-badge.degraded {
+  background: var(--warning-muted);
+  color: var(--warning-fg);
+}
+.health-badge.degraded .dot {
+  background: var(--warning);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+.health-badge.unhealthy {
+  background: var(--danger-muted);
+  color: var(--danger-fg);
+}
+.health-badge.unhealthy .dot {
+  background: var(--danger);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+.status-metrics {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.status-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.status-metric .value {
+  font-size: var(--text-base);
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+}
+.status-metric .label {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.status-capacity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
+}
+.cap-label {
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.cap-bar-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cap-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--cap-track);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.cap-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--cap-fill);
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cap-bar-fill.warn { background: var(--cap-fill-warn); }
+.cap-bar-fill.danger { background: var(--cap-fill-danger); }
+.cap-pct {
+  font-size: var(--text-xs);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--fg-muted);
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ================================================================
+   SECTION 2: NODE CARDS
+   Inspired by MongoDB Atlas card layout + CockroachDB node list
+   ================================================================ */
+.nodes-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.node-card {
+  padding: 12px 14px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 0.15s;
+}
+.node-card:hover { border-color: var(--fg-faint); }
+
+.node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.node-id-group {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.node-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.node-dot.healthy {
+  background: var(--success);
+  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.15);
+}
+.node-dot.unhealthy {
+  background: var(--danger);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+.node-name {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+}
+.node-role {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--surface-raised);
+  color: var(--fg-muted);
+}
+.node-role.leader {
+  background: var(--info-muted);
+  color: var(--info-fg);
+}
+
+.node-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.node-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+}
+.node-detail-label { color: var(--fg-muted); }
+.node-detail-value {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--fg);
+}
+.node-detail-value.url {
+  color: var(--fg-faint);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.node-detail-value.time { color: var(--fg-faint); }
+
+.node-cap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+.node-cap .cap-bar { height: 4px; }
+.node-cap .cap-pct { font-size: 10px; }
+
+/* ================================================================
+   SECTION 3: SHARD MATRIX
+   The hero — Cerebro-inspired table×node grid
+   ================================================================ */
+.matrix-section {
+  margin-top: 4px;
+}
+.matrix-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fg-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.matrix-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.matrix-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+.legend-swatch {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.legend-swatch.leader { background: var(--shard-leader); }
+.legend-swatch.follower {
+  background: var(--shard-follower);
+  border: 1px solid var(--shard-follower-border);
+}
+.legend-swatch.init {
+  background: var(--shard-init);
+  animation: shard-pulse 2s ease-in-out infinite;
+}
+.legend-swatch.split {
+  background: var(--shard-split-bg);
+  border: 1px solid var(--shard-split-border);
+}
+.legend-swatch.unassigned {
+  background: var(--shard-unassigned);
+  border: 1px solid var(--shard-unassigned-border);
+}
+
+.matrix {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.matrix th, .matrix td {
+  padding: 0;
+  text-align: left;
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+}
+.matrix th:last-child, .matrix td:last-child { border-right: none; }
+.matrix tr:last-child td { border-bottom: none; }
+
+/* Column headers */
+.matrix thead th {
+  padding: 10px 12px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--card-border);
+  vertical-align: bottom;
+}
+.matrix thead th.node-col {
+  text-align: center;
+  min-width: 140px;
+}
+.col-node-id {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: var(--text-xs);
+  color: var(--fg);
+  text-transform: none;
+  letter-spacing: -0.01em;
+  display: block;
+}
+.col-node-sub {
+  font-size: 10px;
+  color: var(--fg-faint);
+  text-transform: none;
+  letter-spacing: 0;
+  display: block;
+  margin-top: 1px;
+}
+
+/* Row header (table info) */
+.matrix td.table-cell {
+  padding: 10px 14px;
+  background: var(--card);
+  min-width: 180px;
+  vertical-align: top;
+}
+.table-name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  letter-spacing: -0.01em;
+  margin-bottom: 3px;
+}
+.table-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--text-xs);
+  color: var(--fg-muted);
+}
+.table-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.table-meta-item svg { width: 11px; height: 11px; opacity: 0.6; }
+
+/* Shard cells */
+.matrix td.shard-cell {
+  padding: 8px 10px;
+  background: var(--card);
+  vertical-align: top;
+  min-height: 44px;
+}
+.shard-cell-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 28px;
+}
+
+/* ---- Individual Shard Blocks ---- */
+.shard {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+  cursor: default;
+  position: relative;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.shard:hover {
+  transform: translateY(-1px);
+  z-index: 2;
+}
+
+.shard.leader {
+  background: var(--shard-leader);
+  color: var(--shard-leader-text);
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+}
+.shard.leader:hover {
+  box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35);
+}
+
+.shard.follower {
+  background: var(--shard-follower);
+  color: var(--shard-follower-text);
+  border: 1px solid var(--shard-follower-border);
+}
+.shard.follower:hover {
+  border-color: var(--shard-follower-text);
+}
+
+.shard.initializing {
+  background: var(--shard-init);
+  color: var(--shard-leader-text);
+  animation: shard-pulse 2s ease-in-out infinite;
+}
+
+.shard.splitting {
+  background: var(--shard-split-bg);
+  color: var(--shard-split-text);
+  border: 1px solid var(--shard-split-border);
+}
+.shard.splitting::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1px;
+  height: 60%;
+  background: var(--shard-split);
+  opacity: 0.6;
+}
+
+.shard.unassigned {
+  background: var(--shard-unassigned);
+  color: var(--shard-unassigned-text);
+  border: 1px dashed var(--shard-unassigned-border);
+}
+
+@keyframes shard-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* ---- Tooltip ---- */
+.shard .tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 10px;
+  background: var(--fg);
+  color: var(--bg);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  letter-spacing: 0;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  line-height: 1.55;
+}
+.shard .tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--fg);
+}
+.shard:hover .tooltip { display: block; }
+.tooltip-row { display: flex; justify-content: space-between; gap: 12px; }
+.tooltip-label { opacity: 0.55; }
+.tooltip-val { text-align: right; }
+.tooltip-divider { height: 1px; background: rgba(255,255,255,0.12); margin: 3px 0; }
+
+/* ---- Metadata Raft (small footer) ---- */
+.metadata-section {
+  margin-top: 16px;
+  padding: 10px 14px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: var(--text-xs);
+}
+.metadata-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+.metadata-peers {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.metadata-peer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+}
+.metadata-peer.leader {
+  background: var(--info-muted);
+  border-color: var(--info-light);
+  color: var(--info-fg);
+}
+.metadata-peer .peer-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--fg-faint);
+}
+.metadata-peer.leader .peer-dot {
+  background: var(--info);
+}
+
+/* ---- Staggered entrance ---- */
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  animation: slide-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
+.delay-6 { animation-delay: 0.3s; }
+.delay-7 { animation-delay: 0.35s; }
+
+/* ---- Empty cell visual ---- */
+.shard-cell.empty {
+  background: var(--surface-sunken);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .page { padding: 16px; }
+  .status-bar { grid-template-columns: 1fr; gap: 12px; }
+  .nodes-row { grid-template-columns: 1fr; }
+  .matrix { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <!-- Page Header -->
+  <div class="page-header animate-in">
+    <div class="page-title">Cluster</div>
+    <div class="page-actions">
+      <div class="refresh-group">
+        <button class="refresh-btn" onclick="location.reload()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+          Refresh
+        </button>
+        <div class="refresh-divider"></div>
+        <button class="refresh-btn active" data-interval="10">10s</button>
+        <button class="refresh-btn" data-interval="30">30s</button>
+        <button class="refresh-btn" data-interval="0">Off</button>
+      </div>
+      <button class="theme-toggle" onclick="document.documentElement.classList.toggle('dark')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        Theme
+      </button>
+    </div>
+  </div>
+
+  <!-- Section 1: Cluster Status Bar -->
+  <div class="status-bar animate-in delay-1">
+    <div class="health-badge healthy">
+      <span class="dot"></span>
+      Healthy
+    </div>
+    <div class="status-metrics">
+      <div class="status-metric">
+        <span class="value">3</span>
+        <span class="label">Nodes</span>
+      </div>
+      <div class="status-metric">
+        <span class="value">4</span>
+        <span class="label">Tables</span>
+      </div>
+      <div class="status-metric">
+        <span class="value">14</span>
+        <span class="label">Shards</span>
+      </div>
+      <div class="status-metric">
+        <span class="value">42</span>
+        <span class="label">Replicas</span>
+      </div>
+    </div>
+    <div class="status-capacity">
+      <span class="cap-label">Capacity</span>
+      <div class="cap-bar-wrap">
+        <div class="cap-bar">
+          <div class="cap-bar-fill" style="width: 34%"></div>
+        </div>
+        <span class="cap-pct">34%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Node Cards -->
+  <div class="nodes-row">
+    <!-- Node 1 — Metadata Leader -->
+    <div class="node-card animate-in delay-2">
+      <div class="node-header">
+        <div class="node-id-group">
+          <span class="node-dot healthy"></span>
+          <span class="node-name">node-1a2b</span>
+        </div>
+        <span class="node-role leader">META LEADER</span>
+      </div>
+      <div class="node-details">
+        <div class="node-detail-row">
+          <span class="node-detail-label">Endpoint</span>
+          <span class="node-detail-value url">10.0.1.10:8080</span>
+        </div>
+        <div class="node-detail-row">
+          <span class="node-detail-label">Shards</span>
+          <span class="node-detail-value">14</span>
+        </div>
+        <div class="node-detail-row">
+          <span class="node-detail-label">Last seen</span>
+          <span class="node-detail-value time">2s ago</span>
+        </div>
+      </div>
+      <div class="node-cap">
+        <div class="cap-bar">
+          <div class="cap-bar-fill" style="width: 42%"></div>
+        </div>
+        <span class="cap-pct">42%</span>
+      </div>
+    </div>
+
+    <!-- Node 2 -->
+    <div class="node-card animate-in delay-3">
+      <div class="node-header">
+        <div class="node-id-group">
+          <span class="node-dot healthy"></span>
+          <span class="node-name">node-3c4d</span>
+        </div>
+        <span class="node-role">VOTER</span>
+      </div>
+      <div class="node-details">
+        <div class="node-detail-row">
+          <span class="node-detail-label">Endpoint</span>
+          <span class="node-detail-value url">10.0.1.11:8080</span>
+        </div>
+        <div class="node-detail-row">
+          <span class="node-detail-label">Shards</span>
+          <span class="node-detail-value">14</span>
+        </div>
+        <div class="node-detail-row">
+          <span class="node-detail-label">Last seen</span>
+          <span class="node-detail-value time">1s ago</span>
+        </div>
+      </div>
+      <div class="node-cap">
+        <div class="cap-bar">
+          <div class="cap-bar-fill" style="width: 38%"></div>
+        </div>
+        <span class="cap-pct">38%</span>
+      </div>
+    </div>
+
+    <!-- Node 3 -->
+    <div class="node-card animate-in delay-4">
+      <div class="node-header">
+        <div class="node-id-group">
+          <span class="node-dot healthy"></span>
+          <span class="node-name">node-5e6f</span>
+        </div>
+        <span class="node-role">VOTER</span>
+      </div>
+      <div class="node-details">
+        <div class="node-detail-row">
+          <span class="node-detail-label">Endpoint</span>
+          <span class="node-detail-value url">10.0.1.12:8080</span>
+        </div>
+        <div class="node-detail-row">
+          <span class="node-detail-label">Shards</span>
+          <span class="node-detail-value">14</span>
+        </div>
+        <div class="node-detail-row">
+          <span class="node-detail-label">Last seen</span>
+          <span class="node-detail-value time">3s ago</span>
+        </div>
+      </div>
+      <div class="node-cap">
+        <div class="cap-bar">
+          <div class="cap-bar-fill" style="width: 29%"></div>
+        </div>
+        <span class="cap-pct">29%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Shard Matrix -->
+  <div class="matrix-section animate-in delay-5">
+    <div class="matrix-label">Shard Allocation</div>
+
+    <div class="matrix-legend">
+      <div class="legend-item"><div class="legend-swatch leader"></div> Leader</div>
+      <div class="legend-item"><div class="legend-swatch follower"></div> Follower</div>
+      <div class="legend-item"><div class="legend-swatch init"></div> Initializing</div>
+      <div class="legend-item"><div class="legend-swatch split"></div> Splitting</div>
+      <div class="legend-item"><div class="legend-swatch unassigned"></div> Unassigned</div>
+    </div>
+
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th style="min-width:180px">Table</th>
+          <th class="node-col">
+            <span class="col-node-id">node-1a2b</span>
+            <span class="col-node-sub">10.0.1.10</span>
+          </th>
+          <th class="node-col">
+            <span class="col-node-id">node-3c4d</span>
+            <span class="col-node-sub">10.0.1.11</span>
+          </th>
+          <th class="node-col">
+            <span class="col-node-id">node-5e6f</span>
+            <span class="col-node-sub">10.0.1.12</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Table: products (5 shards, healthy, good distribution) -->
+        <tr>
+          <td class="table-cell">
+            <div class="table-name">products</div>
+            <div class="table-meta">
+              <span class="table-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                5 shards
+              </span>
+              <span class="table-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                1.2 GB
+              </span>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard leader">
+                s0
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s0</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Leader</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Range</span><span class="tooltip-val">0000...3fff</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">245 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+              <div class="shard follower">
+                s1
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s1</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Follower</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Range</span><span class="tooltip-val">4000...7fff</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">198 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard follower">
+                s0
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s0</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Follower</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Range</span><span class="tooltip-val">0000...3fff</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">244 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+              <div class="shard leader">
+                s1
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s1</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Leader</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Range</span><span class="tooltip-val">4000...7fff</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">201 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+              <div class="shard leader">
+                s4
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s4</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Leader</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Range</span><span class="tooltip-val">c000...ffff</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">112 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard leader">
+                s2
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s2</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Leader</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Range</span><span class="tooltip-val">8000...bfff</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">310 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+              <div class="shard leader">
+                s3
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s3</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Leader</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Range</span><span class="tooltip-val">8000...bfff</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">189 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+              <div class="shard follower">
+                s4
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s4</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Follower</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Range</span><span class="tooltip-val">c000...ffff</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">110 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Table: users (3 shards, one initializing) -->
+        <tr>
+          <td class="table-cell">
+            <div class="table-name">users</div>
+            <div class="table-meta">
+              <span class="table-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                3 shards
+              </span>
+              <span class="table-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                840 MB
+              </span>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard leader">
+                s0
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s0</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Leader</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">312 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+              <div class="shard follower">
+                s2
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s2</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Follower</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">198 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Voters</span><span class="tooltip-val">3</span></div>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard follower">s0</div>
+              <div class="shard leader">s1</div>
+              <div class="shard initializing">
+                s2
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s2</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">State</span><span class="tooltip-val" style="color:#60a5fa">Initializing</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">42 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Snapshot</span><span class="tooltip-val">67%</span></div>
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard follower">s1</div>
+              <div class="shard leader">s2</div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Table: articles (4 shards, one splitting) -->
+        <tr>
+          <td class="table-cell">
+            <div class="table-name">articles</div>
+            <div class="table-meta">
+              <span class="table-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                4 shards
+              </span>
+              <span class="table-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                2.1 GB
+              </span>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard follower">s0</div>
+              <div class="shard splitting">
+                s1
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s1</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">State</span><span class="tooltip-val" style="color:#fbbf24">Splitting</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Role</span><span class="tooltip-val">Leader</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Disk</span><span class="tooltip-val">890 MB</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Split key</span><span class="tooltip-val">6000</span></div>
+                </div>
+              </div>
+              <div class="shard follower">s3</div>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard leader">s0</div>
+              <div class="shard follower">s1</div>
+              <div class="shard leader">s2</div>
+              <div class="shard follower">s3</div>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard follower">s0</div>
+              <div class="shard follower">s2</div>
+              <div class="shard leader">s3</div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Table: embeddings (2 shards, one unassigned) -->
+        <tr>
+          <td class="table-cell">
+            <div class="table-name">embeddings</div>
+            <div class="table-meta">
+              <span class="table-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+                2 shards
+              </span>
+              <span class="table-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                3.4 GB
+              </span>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard leader">s0</div>
+              <div class="shard follower">s1</div>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard follower">s0</div>
+              <div class="shard leader">s1</div>
+            </div>
+          </td>
+          <td class="shard-cell">
+            <div class="shard-cell-inner">
+              <div class="shard unassigned">
+                s0
+                <div class="tooltip">
+                  <div class="tooltip-row"><span class="tooltip-label">Shard</span><span class="tooltip-val">s0</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">State</span><span class="tooltip-val" style="color:#f87171">Unassigned</span></div>
+                  <div class="tooltip-divider"></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Expected</span><span class="tooltip-val">Replica</span></div>
+                  <div class="tooltip-row"><span class="tooltip-label">Reported</span><span class="tooltip-val">No</span></div>
+                </div>
+              </div>
+              <div class="shard follower">s1</div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Metadata Raft Group -->
+  <div class="metadata-section animate-in delay-6">
+    <span class="metadata-label">Metadata Raft</span>
+    <div class="metadata-peers">
+      <span class="metadata-peer leader">
+        <span class="peer-dot"></span>
+        node-1a2b
+      </span>
+      <span class="metadata-peer">
+        <span class="peer-dot"></span>
+        node-3c4d
+      </span>
+      <span class="metadata-peer">
+        <span class="peer-dot"></span>
+        node-5e6f
+      </span>
+    </div>
+    <span style="font-size:var(--text-xs); color:var(--fg-faint); font-family:var(--font-mono)">term 847 · applied 12,491</span>
+  </div>
+</div>
+
+<script>
+// Auto-refresh toggle
+document.querySelectorAll('.refresh-btn[data-interval]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.refresh-btn[data-interval]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+</script>
+
+</body>
+</html>

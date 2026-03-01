@@ -24,6 +24,56 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List secrets status
+         * @description List all configured secret names and their status (keystore, env var, or both).
+         *     Never returns secret values — only names and configuration status.
+         */
+        get: operations["listSecrets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/secrets/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Store a secret
+         * @description Store a secret in the keystore. Only available in swarm (single-node) mode.
+         *     Returns 503 in multi-node mode.
+         */
+        put: operations["putSecret"];
+        post?: never;
+        /**
+         * Delete a secret
+         * @description Remove a secret from the keystore. Only available in swarm (single-node) mode.
+         *     Returns 503 in multi-node mode.
+         */
+        delete: operations["deleteSecret"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/batch": {
         parameters: {
             query?: never;
@@ -221,7 +271,7 @@ export interface paths {
          *       "full_text_search": {"query": "laptop gaming"},
          *       "semantic_search": "high performance gaming computers",
          *       "indexes": ["product_embedding"],
-         *       "filter_query": {"query": "price:<2000 AND in_stock:true"},
+         *       "filter_query": {"query": "+price:<2000 +in_stock:true"},
          *       "fields": ["name", "price", "description"],
          *       "limit": 15
          *     }
@@ -872,6 +922,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/{userName}/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /**
+         * List API keys for a user
+         * @description Returns all API keys owned by the specified user. Secrets are never included.
+         */
+        get: operations["listApiKeys"];
+        put?: never;
+        /**
+         * Create a new API key
+         * @description Creates a new API key for the specified user. The cleartext secret is returned only in this response.
+         */
+        post: operations["createApiKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{userName}/api-keys/{keyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+                /** @description The API key ID. */
+                keyId: components["parameters"]["KeyIdPathParameter"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete an API key
+         * @description Permanently deletes the specified API key. Subsequent requests using this key will be rejected.
+         */
+        delete: operations["deleteApiKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -891,8 +993,33 @@ export interface components {
             message?: string;
             /** @description Indicates whether authentication is enabled for the cluster */
             auth_enabled?: boolean;
+            /** @description Indicates whether the cluster is running in single-node swarm mode */
+            swarm_mode?: boolean;
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * @description Source of the secret configuration
+         * @enum {string}
+         */
+        SecretStatus: "configured_keystore" | "configured_env" | "configured_both";
+        SecretEntry: {
+            /** @description Secret name (e.g., openai.api_key) */
+            key: string;
+            status: components["schemas"]["SecretStatus"];
+            /** @description Corresponding environment variable name (e.g., OPENAI_API_KEY) */
+            env_var?: string;
+            /** Format: date-time */
+            created_at?: string;
+            /** Format: date-time */
+            updated_at?: string;
+        };
+        SecretList: {
+            secrets: components["schemas"]["SecretEntry"][];
+        };
+        SecretWriteRequest: {
+            /** @description Secret value (stored encrypted, never returned) */
+            value: string;
         };
         ByteRange: string[];
         /**
@@ -995,6 +1122,15 @@ export interface components {
              *     See the Table Management documentation for comprehensive TTL configuration and use cases.
              */
             schema?: components["schemas"]["TableSchema"];
+            /**
+             * @description PostgreSQL CDC replication sources. Streams INSERT/UPDATE/DELETE changes from
+             *     PostgreSQL tables into this Antfly table via logical replication.
+             *
+             *     Multiple sources can feed into a single table (e.g., `users` + `scores` → Antfly `users`).
+             *     Each source uses `on_update`/`on_delete` transforms to control how PG events map to
+             *     Antfly document operations. Requires `wal_level=logical` on the PostgreSQL source.
+             */
+            replication_sources?: components["schemas"]["ReplicationSource"][];
         };
         /** @enum {string} */
         AntflyType: "search_as_you_type" | "keyword" | "text" | "html" | "numeric" | "datetime" | "boolean" | "link" | "geopoint" | "geoshape" | "embedding" | "blob";
@@ -1012,6 +1148,8 @@ export interface components {
                 [key: string]: components["schemas"]["ShardConfig"];
             };
             schema?: components["schemas"]["TableSchema"];
+            /** @description PostgreSQL CDC replication sources configured for this table. */
+            replication_sources?: components["schemas"]["ReplicationSource"][];
         };
         /**
          * @description Type of aggregation to compute:
@@ -2210,11 +2348,11 @@ export interface components {
              *     Examples:
              *     - Simple: `{"query": "computer"}`
              *     - Field-specific: `{"query": "body:computer"}`
-             *     - Boolean: `{"query": "artificial AND intelligence"}`
+             *     - Boolean: `{"query": "+artificial +intelligence"}`
              *     - Range: `{"query": "year:>2020"}`
              *     - Phrase: `{"query": "\"exact phrase\""}`
              * @example {
-             *       "query": "body:computer AND category:technology",
+             *       "query": "+body:computer +category:technology",
              *       "boost": 1
              *     }
              */
@@ -2280,9 +2418,9 @@ export interface components {
              *     Use for:
              *     - Status filtering: `"status:published"`
              *     - Date ranges: `"created_at:>2023-01-01"`
-             *     - Category filtering: `"category:technology AND language:en"`
+             *     - Category filtering: `"+category:technology +language:en"`
              * @example {
-             *       "query": "category:technology AND year:>2020",
+             *       "query": "+category:technology +year:>2020",
              *       "boost": 1
              *     }
              */
@@ -2391,20 +2529,10 @@ export interface components {
              */
             distance_over?: number;
             /**
-             * @description Strategy for merging full-text and semantic search results. Only applies
-             *     when both `full_text_search` and `semantic_search` are specified.
-             *
-             *     Options:
-             *     - `rrf` (default): Reciprocal Rank Fusion - Combines based on result rankings.
-             *       Works well when both search types return relevant results.
-             *     - `rsf`: Relative Score Fusion - Normalizes scores within a window and
-             *       combines weighted scores. Better when score distributions differ significantly.
-             *     - `failover`: Uses full-text search if semantic embedding generation fails.
-             *       Useful for reliability when embedding service may be unavailable.
-             *
-             *     **Most users should use the default `rrf`.**
+             * @description Configuration for merging full-text and semantic search results.
+             *     Only applies when both `full_text_search` and `semantic_search` are specified.
              */
-            merge_strategy?: components["schemas"]["MergeStrategy"];
+            merge_config?: components["schemas"]["MergeConfig"];
             /**
              * @description If true, returns only the total count of matching documents without retrieving the actual documents.
              *     Useful for pagination and displaying result counts.
@@ -3170,6 +3298,106 @@ export interface components {
              */
             nullable?: boolean;
         };
+        ReplicationSource: {
+            /**
+             * @description Type of the replication source. Currently only "postgres" is supported.
+             * @example postgres
+             * @enum {string}
+             */
+            type: "postgres";
+            /**
+             * @description Data source name (connection string) for the PostgreSQL database.
+             *     Supports `${secret:key_name}` references that resolve from the Antfly keystore
+             *     or environment variables. Requires `wal_level=logical` on the source.
+             * @example ${secret:pg_dsn}
+             */
+            dsn: string;
+            /**
+             * @description Name of the table in the PostgreSQL database to replicate from.
+             * @example users
+             */
+            postgres_table: string;
+            /**
+             * @description Template for constructing the Antfly document key from PG columns.
+             *     A plain string (e.g., "id") uses that column's value directly.
+             *     Use `{{column}}` syntax for composite keys: `{{tenant_id}}:{{user_id}}`.
+             * @default id
+             * @example id
+             */
+            key_template?: string;
+            /**
+             * @description PostgreSQL replication slot name. If omitted, auto-derived from
+             *     the Antfly table and PG table names. Specify this when using
+             *     pre-created slots (e.g., on Supabase or Neon).
+             */
+            slot_name?: string;
+            /**
+             * @description PostgreSQL publication name. If omitted, auto-derived and created
+             *     automatically. Specify this when using pre-created publications.
+             */
+            publication_name?: string;
+            /**
+             * @description Transform operations applied on INSERT/UPDATE events. Values can
+             *     reference PG columns via `{{column}}` syntax. If omitted, auto-generates
+             *     `$set` for every column (passthrough mode).
+             * @example [
+             *       {
+             *         "op": "$set",
+             *         "path": "email",
+             *         "value": "{{user_email}}"
+             *       },
+             *       {
+             *         "op": "$set",
+             *         "path": "score",
+             *         "value": "{{score}}"
+             *       },
+             *       {
+             *         "op": "$merge",
+             *         "value": "{{metadata}}"
+             *       },
+             *       {
+             *         "op": "$set",
+             *         "path": "active",
+             *         "value": true
+             *       }
+             *     ]
+             */
+            on_update?: components["schemas"]["ReplicationTransformOp"][];
+            /**
+             * @description Transform operations applied on DELETE events. If omitted, auto-derives
+             *     `$unset` ops from `on_update`'s `$set` paths (safe for multi-source).
+             *     Use `$delete_document` op to delete the entire Antfly document.
+             * @example [
+             *       {
+             *         "op": "$set",
+             *         "path": "active",
+             *         "value": false
+             *       }
+             *     ]
+             */
+            on_delete?: components["schemas"]["ReplicationTransformOp"][];
+        };
+        ReplicationTransformOp: {
+            /**
+             * @description Transform operation. Standard ops: `$set`, `$unset`, `$inc`, `$push`, `$pull`,
+             *     `$addToSet`, `$pop`, `$mul`, `$min`, `$max`, `$currentDate`, `$rename`.
+             *     Replication-specific: `$merge` (flatten JSONB into top-level fields),
+             *     `$delete_document` (delete entire Antfly doc, `on_delete` only).
+             * @example $set
+             */
+            op: string;
+            /**
+             * @description Antfly document field path. Required for `$set`, `$unset`, etc.
+             * @example email
+             */
+            path?: string;
+            /**
+             * @description Value for the operation. Can be a literal (string, number, boolean)
+             *     or a `{{column}}` reference to a PG column value. Use `{{col.key}}` to
+             *     navigate into decoded JSONB columns.
+             */
+            value?: unknown;
+        };
         /**
          * Format: double
          * @description A floating-point number used to decrease or increase the relevance scores of a query.
@@ -3360,6 +3588,29 @@ export interface components {
          * @enum {string}
          */
         MergeStrategy: "rrf" | "rsf" | "failover";
+        /** @description Configuration for result fusion when combining multiple search indexes. */
+        MergeConfig: {
+            strategy?: components["schemas"]["MergeStrategy"];
+            /**
+             * @description Named weights keyed by index name. `full_text` for the full-text search index;
+             *     embedding index names for vector indexes.
+             *     Unspecified indexes default to 1.0. Applied in both RRF and RSF.
+             * @example {
+             *       "full_text": 0.3,
+             *       "title_embedding": 1
+             *     }
+             */
+            weights?: {
+                [key: string]: number;
+            };
+            /** @description RSF normalization window size. Defaults to `limit`. */
+            window_size?: number;
+            /**
+             * Format: double
+             * @description RRF k constant (1/(k+rank)). Defaults to 60.0.
+             */
+            rank_constant?: number;
+        };
         /**
          * @description The reranking provider to use.
          * @enum {string}
@@ -3499,7 +3750,7 @@ export interface components {
             /**
              * @description Reference to search results to use as nodes:
              *     - "$full_text_results" - use full-text search results
-             *     - "$aknn_results.index_name" - use vector search results from specific index
+             *     - "$embeddings_results.index_name" - use vector search results from specific index
              */
             result_ref?: string;
             /** @description Maximum number of nodes to select from the referenced results */
@@ -3588,7 +3839,7 @@ export interface components {
         /** @description Declarative graph query to execute after full-text/vector searches */
         GraphQuery: {
             type: components["schemas"]["GraphQueryType"];
-            /** @description Graph index name (must be graph_v0 type) */
+            /** @description Graph index name (must be graph type) */
             index_name: string;
             /** @description Starting node(s) for the query */
             start_nodes?: components["schemas"]["GraphNodeSelector"];
@@ -3846,6 +4097,8 @@ export interface components {
             top_p?: number;
             /** @description Top-k sampling parameter. */
             top_k?: number;
+            /** @description HTTP response timeout in seconds for Ollama API calls. Defaults to 540 (9 minutes). Increase for large models on slow hardware. */
+            timeout?: number;
         };
         /**
          * @description Configuration for the Termite generative AI provider.
@@ -3887,6 +4140,8 @@ export interface components {
             top_p?: number;
             /** @description Top-k sampling parameter. */
             top_k?: number;
+            /** @description HTTP response timeout in seconds for Termite API calls. Defaults to 540 (9 minutes). Increase for large models on slow hardware. */
+            timeout?: number;
         };
         /**
          * @description Configuration for the OpenAI generative AI provider.
@@ -5039,7 +5294,7 @@ export interface components {
              */
             max_tool_iterations?: number;
         };
-        BleveIndexV2Config: {
+        FullTextIndexConfig: {
             /** @description Whether to use memory-only storage */
             mem_only?: boolean;
         };
@@ -5627,9 +5882,15 @@ export interface components {
                 [key: string]: unknown;
             };
         };
-        EmbeddingIndexConfig: {
-            /** @description Vector dimension */
-            dimension: number;
+        /** @description Unified configuration for embeddings indexes. When sparse is true, creates a sparse vector index (SPLADE inverted index). When sparse is false (default), creates a dense vector index (HNSW). For dense indexes, dimension can be omitted if an embedder is configured — it will be auto-detected. */
+        EmbeddingsIndexConfig: {
+            /**
+             * @description When true, creates a sparse (SPLADE) inverted index. When false (default), creates a dense (HNSW) vector index.
+             * @default false
+             */
+            sparse?: boolean;
+            /** @description Vector dimension for dense indexes. Can be omitted when an embedder is configured (auto-detected via probe). Ignored for sparse indexes. */
+            dimension?: number;
             /** @description Field to extract embeddings from */
             field?: string;
             /**
@@ -5637,14 +5898,30 @@ export interface components {
              * @example Hello, {{#if (eq Name "John")}}Johnathan{{else}}{{Name}}{{/if}}! You are {{Age}} years old.
              */
             template?: string;
-            /** @description Whether to use in-memory only storage */
+            /** @description Whether to use in-memory only storage (dense only) */
             mem_only?: boolean;
             /** @description Configuration for the embeddings plugin */
             embedder?: components["schemas"]["EmbedderConfig"];
-            /** @description Configuration for the summarizer plugin */
+            /** @description Configuration for the summarizer plugin (dense only) */
             summarizer?: components["schemas"]["GeneratorConfig"];
-            /** @description Configuration for the chunking plugin. When specified, documents are automatically chunked at write time before indexing. */
+            /** @description Configuration for the chunking plugin. When specified, documents are automatically chunked at write time before indexing. (dense only) */
             chunker?: components["schemas"]["ChunkerConfig"];
+            /**
+             * @description Default number of results to return from search (sparse only)
+             * @default 10
+             */
+            top_k?: number;
+            /**
+             * Format: float
+             * @description Minimum weight threshold for sparse vector entries (sparse only)
+             * @default 0
+             */
+            min_weight?: number;
+            /**
+             * @description Number of documents per posting list chunk (sparse only)
+             * @default 1024
+             */
+            chunk_size?: number;
         };
         /** @description Configuration for a specific edge type */
         EdgeTypeConfig: {
@@ -5684,14 +5961,14 @@ export interface components {
             /** @description Required metadata fields for this edge type */
             required_metadata?: string[];
         };
-        /** @description Configuration for graph_v0 index type */
-        GraphIndexV0Config: {
+        /** @description Configuration for graph index type */
+        GraphIndexConfig: {
             /** @description Configuration for generating node summaries (enables tree navigation in AnswerAgent) */
             summarizer?: components["schemas"]["GeneratorConfig"];
             /**
              * @description Handlebars template for generating summarizer input text.
              *     Uses document fields as template variables.
-             *     Same pattern as EmbeddingIndexConfig.template.
+             *     Same pattern as EmbeddingsConfig template.
              * @example {{title}}
              *     {{content}}
              */
@@ -5705,7 +5982,7 @@ export interface components {
          * @description The type of the index.
          * @enum {string}
          */
-        IndexType: "full_text_v0" | "aknn_v0" | "graph_v0";
+        IndexType: "full_text" | "embeddings" | "graph";
         /** @description Configuration for an index */
         IndexConfig: {
             /** @description Name of the index */
@@ -5714,6 +5991,11 @@ export interface components {
             description?: string;
             type: components["schemas"]["IndexType"];
             /**
+             * @description Version of the index implementation. Defaults to 0.
+             * @default 0
+             */
+            version?: number;
+            /**
              * @description List of enrichment names to apply to documents before indexing. Enrichments must be defined at the table level.
              * @example [
              *       "semantic_chunks",
@@ -5721,7 +6003,7 @@ export interface components {
              *     ]
              */
             enrichments?: string[];
-        } & (components["schemas"]["BleveIndexV2Config"] | components["schemas"]["EmbeddingIndexConfig"] | components["schemas"]["GraphIndexV0Config"]);
+        } & (components["schemas"]["FullTextIndexConfig"] | components["schemas"]["EmbeddingsIndexConfig"] | components["schemas"]["GraphIndexConfig"]);
         /** @description Defines the structure of a document type */
         DocumentSchema: {
             /** @description A description of the document type. */
@@ -5834,7 +6116,7 @@ export interface components {
              */
             dynamic_templates?: components["schemas"]["DynamicTemplate"][];
         };
-        BleveIndexV2Stats: {
+        FullTextIndexStats: {
             /** @description Error message if stats could not be retrieved */
             error?: string;
             /**
@@ -5850,12 +6132,13 @@ export interface components {
             /** @description Whether the index is currently rebuilding */
             rebuilding?: boolean;
         };
-        EmbeddingIndexStats: {
+        /** @description Statistics for an embeddings index (dense or sparse) */
+        EmbeddingsIndexStats: {
             /** @description Error message if stats could not be retrieved */
             error?: string;
             /**
              * Format: uint64
-             * @description Number of vectors in the index
+             * @description Number of vectors/documents in the index
              */
             total_indexed?: number;
             /**
@@ -5865,12 +6148,17 @@ export interface components {
             disk_usage?: number;
             /**
              * Format: uint64
-             * @description Total number of nodes in the index
+             * @description Total number of nodes in the index (dense only)
              */
             total_nodes?: number;
+            /**
+             * Format: uint64
+             * @description Number of unique terms in the inverted index (sparse only)
+             */
+            total_terms?: number;
         };
-        /** @description Statistics for graph_v0 index */
-        GraphIndexV0Stats: {
+        /** @description Statistics for graph index */
+        GraphIndexStats: {
             /** @description Error message if stats could not be retrieved */
             error?: string;
             /**
@@ -5884,7 +6172,7 @@ export interface components {
             };
         };
         /** @description Statistics for an index */
-        IndexStats: components["schemas"]["BleveIndexV2Stats"] | components["schemas"]["EmbeddingIndexStats"] | components["schemas"]["GraphIndexV0Stats"];
+        IndexStats: components["schemas"]["FullTextIndexStats"] | components["schemas"]["EmbeddingsIndexStats"] | components["schemas"]["GraphIndexStats"];
         User: {
             /** @example johndoe */
             username: string;
@@ -5941,6 +6229,64 @@ export interface components {
             /** @example Operation completed successfully */
             message?: string;
         };
+        /** @description Public metadata for an API key (secrets are never returned after creation). */
+        ApiKey: {
+            /**
+             * @description Unique identifier for the API key.
+             * @example aBcDeFgHiJkLmNoPqRsT
+             */
+            key_id: string;
+            /**
+             * @description Human-readable name for the API key.
+             * @example CI pipeline key
+             */
+            name: string;
+            /**
+             * @description Owner of the API key.
+             * @example johndoe
+             */
+            username: string;
+            /** @description Optional permission scoping. If empty, inherits owner's full permissions. */
+            permissions?: components["schemas"]["Permission"][] | null;
+            /**
+             * Format: date-time
+             * @description When the API key was created.
+             */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description When the API key expires. Null means never.
+             */
+            expires_at?: string | null;
+        };
+        /** @description API key creation response including the cleartext secret (shown once). */
+        ApiKeyWithSecret: components["schemas"]["ApiKey"] & {
+            /**
+             * @description Cleartext secret for the API key. Store securely — it cannot be retrieved again.
+             * @example dGhpcyBpcyBhIHNlY3JldA
+             */
+            key_secret: string;
+            /**
+             * @description Pre-encoded credential ready for the Authorization header: base64(key_id:key_secret).
+             * @example YUJjRGVGZ0hpSmtMbU5vUHFSc1Q6ZEdocGN5QnBjeUJoSUhObFkzSmxkQQ==
+             */
+            encoded: string;
+        };
+        /** @description Request to create a new API key. */
+        CreateApiKeyRequest: {
+            /**
+             * @description Human-readable name for the API key.
+             * @example CI pipeline key
+             */
+            name: string;
+            /**
+             * @description Duration until expiration (e.g., '720h' for 30 days). Empty means never.
+             * @example 720h
+             */
+            expires_in?: string;
+            /** @description Optional permission scoping. Each permission must be a subset of the creator's permissions. */
+            permissions?: components["schemas"]["Permission"][] | null;
+        };
     };
     responses: {
         /** @description Bad request */
@@ -5974,6 +6320,8 @@ export interface components {
     parameters: {
         /** @description The username. */
         UserNamePathParameter: string;
+        /** @description The API key ID. */
+        KeyIdPathParameter: string;
     };
     requestBodies: never;
     headers: never;
@@ -6009,6 +6357,122 @@ export interface operations {
                 };
             };
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    listSecrets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Secret status list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretList"];
+                };
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    putSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SecretWriteRequest"];
+            };
+        };
+        responses: {
+            /** @description Secret stored successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretEntry"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Service unavailable - secret management not available in multi-node mode */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Secret key name (e.g., openai.api_key) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Secret deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized - authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+            /** @description Service unavailable - secret management not available in multi-node mode */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
         };
     };
     multiBatchWrite: {
@@ -7295,6 +7759,161 @@ export interface operations {
                 };
             };
             /** @description User not found or Role not found for the given resource */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listApiKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful operation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKey"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    createApiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+            };
+            cookie?: never;
+        };
+        /** @description API key creation details */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateApiKeyRequest"];
+            };
+        };
+        responses: {
+            /** @description API key created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyWithSecret"];
+                };
+            };
+            /** @description Bad Request (e.g., invalid input) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Forbidden (e.g., requested permissions exceed creator's permissions) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description User not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    deleteApiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The username. */
+                userName: components["parameters"]["UserNamePathParameter"];
+                /** @description The API key ID. */
+                keyId: components["parameters"]["KeyIdPathParameter"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description API key deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description API key not found */
             404: {
                 headers: {
                     [name: string]: unknown;

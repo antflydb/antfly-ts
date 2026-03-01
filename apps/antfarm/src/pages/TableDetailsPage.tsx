@@ -1,11 +1,8 @@
 import type { IndexStatus, QueryRequest, QueryResult } from "@antfly/sdk";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
 import { useParams } from "react-router-dom";
-import { z } from "zod";
 import {
   Accordion,
   AccordionContent,
@@ -23,7 +20,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Form } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -37,15 +33,15 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { api, type ChunkerConfig, type TableSchema } from "../api";
-import ChunkingForm from "../components/ChunkingForm";
+import { api, type TableSchema } from "../api";
+import AggregationResults from "../components/AggregationResults";
+import AIQueryAssistant from "../components/AIQueryAssistant";
 import CreateIndexDialog from "../components/CreateIndexDialog";
 import DocumentBuilder from "../components/DocumentBuilder";
-import FieldExplorer from "../components/FieldExplorer";
+
 import BulkInsert from "../components/Insert";
 import JsonViewer from "../components/JsonViewer";
 import MultiSelect from "../components/MultiSelect";
-import QueryBuilderAgent from "../components/QueryBuilderAgent";
 import FieldSelector from "../components/querybuilder/FieldSelector";
 import QueryBuilder from "../components/querybuilder/QueryBuilder";
 import { QueryResultsList } from "../components/results";
@@ -80,11 +76,11 @@ function Row(props: {
     return match ? match[1] : null;
   };
 
-  const version = index.config.type === "full_text_v0" ? getVersion(index.config.name) : null;
+  const version = index.config.type === "full_text" ? getVersion(index.config.name) : null;
 
   // Extract model and provider for vector indexes
   const getModelInfo = () => {
-    if (index.config.type === "aknn_v0") {
+    if (index.config.type === "embeddings") {
       const embedderConfig = (index.config as { embedder?: { model?: string; provider?: string } })
         .embedder;
       return {
@@ -99,22 +95,22 @@ function Row(props: {
 
   return (
     <TableRow>
-      {index.config.type !== "full_text_v0" && <TableCell>{index.config.name}</TableCell>}
-      {index.config.type === "full_text_v0" && version && <TableCell>{version}</TableCell>}
-      {index.config.type === "aknn_v0" && modelInfo && (
+      {index.config.type !== "full_text" && <TableCell>{index.config.name}</TableCell>}
+      {index.config.type === "full_text" && version && <TableCell>{version}</TableCell>}
+      {index.config.type === "embeddings" && modelInfo && (
         <>
           <TableCell>{modelInfo.provider}</TableCell>
           <TableCell>{modelInfo.model}</TableCell>
         </>
       )}
-      {(index.config.type === "aknn_v0" || index.config.type === "full_text_v0") && (
+      {(index.config.type === "embeddings" || index.config.type === "full_text") && (
         <TableCell>
           {"total_indexed" in (index.status || {})
             ? (index.status as { total_indexed?: number }).total_indexed
             : "N/A"}
         </TableCell>
       )}
-      {index.config.type === "full_text_v0" && (
+      {index.config.type === "full_text" && (
         <TableCell>
           {"disk_usage" in (index.status || {}) &&
           (index.status as { disk_usage?: number }).disk_usage !== undefined
@@ -195,39 +191,12 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
   // Auto-select first vector index when indexes load
   useEffect(() => {
     if (queryIndexes.length === 0) {
-      const vectorIndexes = indexes.filter((idx) => idx.config.type === "aknn_v0");
+      const vectorIndexes = indexes.filter((idx) => idx.config.type === "embeddings");
       if (vectorIndexes.length > 0) {
         setQueryIndexes([vectorIndexes[0].config.name]);
       }
     }
   }, [indexes, queryIndexes.length]);
-
-  // Chunking builder form
-  const chunkerFormSchema = z.object({
-    provider: z.enum(["termite", "mock"]),
-    strategy: z.enum(["hugot", "fixed"]),
-    api_url: z.string().optional(),
-    target_tokens: z.number().optional(),
-    overlap_tokens: z.number().optional(),
-    separator: z.string().optional(),
-    max_chunks: z.number().optional(),
-    threshold: z.number().optional(),
-  });
-
-  const chunkerForm = useForm<ChunkerConfig>({
-    resolver: zodResolver(chunkerFormSchema),
-    defaultValues: {
-      provider: "termite",
-      strategy: "fixed",
-      target_tokens: 500,
-      overlap_tokens: 50,
-      separator: "\n\n",
-      max_chunks: 50,
-    },
-  });
-
-  // eslint-disable-next-line react-hooks/incompatible-library
-  const chunkerConfig = chunkerForm.watch();
 
   const semanticQueryRequestString = useMemo(() => {
     const queryRequest: QueryRequest = {};
@@ -392,10 +361,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     }
   };
 
-  const handleCopyChunkerJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(chunkerConfig, null, 2));
-  };
-
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
   };
@@ -444,8 +409,8 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
 
   const sortedIndexTypes = Object.keys(groupedIndexes).sort();
   const indexTypeDisplayNames: Record<string, string> = {
-    aknn_v0: "Vector Indexes",
-    full_text_v0: "Full Text Index",
+    embeddings: "Vector Indexes",
+    full_text: "Full Text Index",
   };
 
   const handleFieldInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -579,17 +544,17 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{type === "full_text_v0" ? "Version" : "Name"}</TableHead>
-                      {type === "aknn_v0" && (
+                      <TableHead>{type === "full_text" ? "Version" : "Name"}</TableHead>
+                      {type === "embeddings" && (
                         <>
                           <TableHead>Provider</TableHead>
                           <TableHead>Model</TableHead>
                         </>
                       )}
-                      {(type === "aknn_v0" || type === "full_text_v0") && (
+                      {(type === "embeddings" || type === "full_text") && (
                         <TableHead>Total Indexed</TableHead>
                       )}
-                      {type === "full_text_v0" && <TableHead>Disk Usage</TableHead>}
+                      {type === "full_text" && <TableHead>Disk Usage</TableHead>}
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -609,55 +574,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
           </div>
         )}
 
-        {/* Chunking Section */}
-        {currentSection === "chunking" && (
-          <div className="flex flex-col gap-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Chunking Configuration Builder</h2>
-              <p className="text-muted-foreground">
-                Configure chunking settings to split documents into smaller segments. Copy the
-                generated JSON to use in your index configuration.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Configuration Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configuration</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Form {...chunkerForm}>
-                    <form className="flex flex-col gap-4">
-                      <ChunkingForm />
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-
-              {/* JSON Output */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>JSON Output</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="relative">
-                      <JsonViewer json={chunkerConfig} />
-                    </div>
-                    <Button onClick={handleCopyChunkerJson} className="w-full">
-                      Copy JSON
-                    </Button>
-                    <p className="text-sm text-muted-foreground">
-                      Use this JSON when creating an index by pasting it into the "chunker" field.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
         {/* Search Section */}
         {currentSection === "semantic" && (
           <div className="flex flex-col gap-6">
@@ -669,27 +585,27 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
               </TabsList>
               <div className="pt-3">
                 <TabsContent value="builder" className="space-y-3">
+                  <AIQueryAssistant
+                    tableName={tableName}
+                    schemaFields={availableSearchableFields.map((f) => f.originalField)}
+                    currentQuery={(() => {
+                      try {
+                        return JSON.parse(filterQuery);
+                      } catch {
+                        return {};
+                      }
+                    })()}
+                    onQueryApplied={(query) => {
+                      setFilterQuery(JSON.stringify(query, null, 2));
+                    }}
+                    onQueryAppliedAndRun={(query) => {
+                      setFilterQuery(JSON.stringify(query, null, 2));
+                      // Defer run to next tick so state is updated
+                      setTimeout(() => handleRunQuery(), 0);
+                    }}
+                  />
+
                   <Accordion type="multiple" defaultValue={["semantic"]} className="space-y-2">
-                    {/* AI Query Builder */}
-                    <AccordionItem value="ai-builder" className="border rounded-lg bg-card/50 px-3">
-                      <AccordionTrigger className="py-2.5 hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">AI Query Builder</span>
-                          <Badge variant="outline" className="h-5 text-xs">
-                            Beta
-                          </Badge>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="pb-3 pt-1">
-                        <QueryBuilderAgent
-                          tableName={tableName}
-                          schemaFields={availableSearchableFields.map((f) => f.originalField)}
-                          onQueryGenerated={(query) => {
-                            setFilterQuery(JSON.stringify(query, null, 2));
-                          }}
-                        />
-                      </AccordionContent>
-                    </AccordionItem>
                     {/* Field Selection - Collapsible */}
                     <AccordionItem value="fields" className="border rounded-lg bg-card/50 px-3">
                       <AccordionTrigger className="py-2.5 hover:no-underline">
@@ -748,14 +664,15 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                         <div className="space-y-2.5">
                           <div>
                             <Label className="text-xs mb-1 block">Vector Index</Label>
-                            {indexes.filter((idx) => idx.config.type === "aknn_v0").length === 0 ? (
+                            {indexes.filter((idx) => idx.config.type === "embeddings").length ===
+                            0 ? (
                               <p className="text-xs text-muted-foreground">
                                 No vector indexes available. Create one to enable semantic search.
                               </p>
                             ) : (
                               <MultiSelect
                                 options={indexes
-                                  .filter((idx) => idx.config.type === "aknn_v0")
+                                  .filter((idx) => idx.config.type === "embeddings")
                                   .map((index) => ({
                                     label: index.config.name,
                                     value: index.config.name,
@@ -880,6 +797,12 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
               </span>
             </div>
 
+            {queryResult &&
+              queryResult.aggregations &&
+              Object.keys(queryResult.aggregations).length > 0 && (
+                <AggregationResults aggregations={queryResult.aggregations} className="mt-6" />
+              )}
+
             {queryResult && (
               <Card className="mt-6 shadow-sm">
                 <CardHeader>
@@ -929,18 +852,18 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                   onSubmit={handleUpdateSchema}
                   theme={theme}
                   initialSchema={tableSchema}
+                  tableName={tableName}
                 />
               </div>
             ) : tableSchema?.document_schemas &&
               Object.keys(tableSchema.document_schemas).length > 0 ? (
               <JsonViewer json={tableSchema} />
             ) : (
-              <FieldExplorer
-                tableName={tableName || ""}
-                onSchemaGenerated={(schema) => {
-                  setTableSchema(schema);
-                  setIsEditingSchema(true);
-                }}
+              <DocumentSchemasForm
+                onSubmit={handleUpdateSchema}
+                theme={theme}
+                initialSchema={null}
+                tableName={tableName}
               />
             )}
           </div>
