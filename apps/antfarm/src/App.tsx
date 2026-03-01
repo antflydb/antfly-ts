@@ -30,6 +30,8 @@ import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
 import KnowledgeGraphPlaygroundPage from "./pages/KnowledgeGraphPlaygroundPage";
 import { LoginPage } from "./pages/LoginPage";
 import ModelsPage from "./pages/ModelsPage";
+import ReaderPlaygroundPage from "./pages/ReaderPlaygroundPage";
+import TranscribePlaygroundPage from "./pages/TranscribePlaygroundPage";
 import RecognizePlaygroundPage from "./pages/NERPlaygroundPage";
 import RewritingPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import RagPlaygroundPage from "./pages/RagPlaygroundPage";
@@ -114,6 +116,8 @@ function AppContent() {
                         <Route path="/playground/rerank" element={<RerankingPlaygroundPage />} />
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
                         <Route path="/playground/embed" element={<EmbeddingPlaygroundPage />} />
+                        <Route path="/playground/read" element={<ReaderPlaygroundPage />} />
+                        <Route path="/playground/transcribe" element={<TranscribePlaygroundPage />} />
                       </>
                     )}
 

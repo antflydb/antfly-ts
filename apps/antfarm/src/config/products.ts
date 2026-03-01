@@ -51,6 +51,8 @@ export const PRODUCTS: Record<ProductId, Product> = {
       "/playground/rerank",
       "/playground/kg",
       "/playground/embed",
+      "/playground/read",
+      "/playground/transcribe",
     ],
   },
 };

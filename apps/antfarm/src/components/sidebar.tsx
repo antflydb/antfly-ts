@@ -9,10 +9,12 @@ import {
   KeyRound,
   Library,
   MessageSquare,
+  Mic,
   Network,
   PanelLeft,
   PanelLeftOpen,
   Repeat2,
+  ScanLine,
   Scissors,
   Search,
   Shield,
@@ -527,7 +529,9 @@ export function AppSidebar({
                           location.pathname === "/playground/rewrite" ||
                           location.pathname === "/playground/rerank" ||
                           location.pathname === "/playground/kg" ||
-                          location.pathname === "/playground/embed"
+                          location.pathname === "/playground/embed" ||
+                          location.pathname === "/playground/read" ||
+                          location.pathname === "/playground/transcribe"
                         }
                         tooltip="Playgrounds"
                       >
@@ -636,6 +640,40 @@ export function AppSidebar({
                             >
                               <Waypoints className="size-4" />
                               <span>Embedding</span>
+                            </a>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={location.pathname === "/playground/read"}
+                          >
+                            <a
+                              href="/playground/read"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/read");
+                              }}
+                            >
+                              <ScanLine className="size-4" />
+                              <span>Reader</span>
+                            </a>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                          <SidebarMenuButton
+                            asChild
+                            isActive={location.pathname === "/playground/transcribe"}
+                          >
+                            <a
+                              href="/playground/transcribe"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate("/playground/transcribe");
+                              }}
+                            >
+                              <Mic className="size-4" />
+                              <span>Transcribe</span>
                             </a>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
