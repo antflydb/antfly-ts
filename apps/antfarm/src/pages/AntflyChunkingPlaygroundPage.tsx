@@ -101,7 +101,7 @@ function extractDocumentText(source: Record<string, unknown>): string {
 
 const AntflyChunkingPlaygroundPage: React.FC = () => {
   const { client, termiteApiUrl } = useApiConfig();
-  const { selectedTable, embeddingIndexes, selectedIndex } = useTable();
+  const { selectedTable, selectedIndex } = useTable();
 
   const [config, setConfig] = useState<ChunkConfig>(DEFAULT_CONFIG);
   const [inputText, setInputText] = useState("");

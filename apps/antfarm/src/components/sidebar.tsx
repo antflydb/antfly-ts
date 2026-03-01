@@ -18,7 +18,6 @@ import {
   Scissors,
   Search,
   Shield,
-  Sparkles,
   Table as TableIcon,
   Tag,
   Upload,
