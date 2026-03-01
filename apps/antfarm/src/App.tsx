@@ -24,22 +24,22 @@ import AntflyChunkingPlaygroundPage from "./pages/AntflyChunkingPlaygroundPage";
 import AntflyEmbeddingPlaygroundPage from "./pages/AntflyEmbeddingPlaygroundPage";
 import AntflyRerankingPlaygroundPage from "./pages/AntflyRerankingPlaygroundPage";
 import ChunkingPlaygroundPage from "./pages/ChunkingPlaygroundPage";
+import ClusterPage from "./pages/ClusterPage";
 import CreateTablePage from "./pages/CreateTablePage";
 import EmbeddingPlaygroundPage from "./pages/EmbeddingPlaygroundPage";
 import EvalsPlaygroundPage from "./pages/EvalsPlaygroundPage";
 import KnowledgeGraphPlaygroundPage from "./pages/KnowledgeGraphPlaygroundPage";
 import { LoginPage } from "./pages/LoginPage";
 import ModelsPage from "./pages/ModelsPage";
-import ReaderPlaygroundPage from "./pages/ReaderPlaygroundPage";
-import TranscribePlaygroundPage from "./pages/TranscribePlaygroundPage";
 import RecognizePlaygroundPage from "./pages/NERPlaygroundPage";
 import RewritingPlaygroundPage from "./pages/QuestionPlaygroundPage";
 import RagPlaygroundPage from "./pages/RagPlaygroundPage";
+import ReaderPlaygroundPage from "./pages/ReaderPlaygroundPage";
 import RerankingPlaygroundPage from "./pages/RerankingPlaygroundPage";
-import ClusterPage from "./pages/ClusterPage";
 import { SecretsPage } from "./pages/SecretsPage";
 import TableDetailsPage from "./pages/TableDetailsPage";
 import TablesListPage from "./pages/TablesListPage";
+import TranscribePlaygroundPage from "./pages/TranscribePlaygroundPage";
 import { UsersPage } from "./pages/UsersPage";
 
 function AppContent() {
@@ -100,9 +100,18 @@ function AppContent() {
                         <Route path="/cluster" element={<ClusterPage />} />
                         <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
                         <Route path="/playground/rag" element={<RagPlaygroundPage />} />
-                        <Route path="/playground/embedding" element={<AntflyEmbeddingPlaygroundPage />} />
-                        <Route path="/playground/reranking" element={<AntflyRerankingPlaygroundPage />} />
-                        <Route path="/playground/chunking" element={<AntflyChunkingPlaygroundPage />} />
+                        <Route
+                          path="/playground/embedding"
+                          element={<AntflyEmbeddingPlaygroundPage />}
+                        />
+                        <Route
+                          path="/playground/reranking"
+                          element={<AntflyRerankingPlaygroundPage />}
+                        />
+                        <Route
+                          path="/playground/chunking"
+                          element={<AntflyChunkingPlaygroundPage />}
+                        />
                       </>
                     )}
 
@@ -117,7 +126,10 @@ function AppContent() {
                         <Route path="/playground/kg" element={<KnowledgeGraphPlaygroundPage />} />
                         <Route path="/playground/embed" element={<EmbeddingPlaygroundPage />} />
                         <Route path="/playground/read" element={<ReaderPlaygroundPage />} />
-                        <Route path="/playground/transcribe" element={<TranscribePlaygroundPage />} />
+                        <Route
+                          path="/playground/transcribe"
+                          element={<TranscribePlaygroundPage />}
+                        />
                       </>
                     )}
 

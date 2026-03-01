@@ -1,15 +1,5 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import {
-  Clock,
-  Copy,
-  FileText,
-  Hash,
-  RotateCcw,
-  ScanLine,
-  Upload,
-  X,
-  Zap,
-} from "lucide-react";
+import { Clock, Copy, FileText, Hash, RotateCcw, ScanLine, Upload, X, Zap } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BackendInfoBar } from "@/components/playground/BackendInfoBar";
@@ -264,8 +254,7 @@ const ReaderPlaygroundPage: React.FC = () => {
         images: images.map((img) => ({ url: img.dataUri })),
       };
       if (prompt.trim()) body.prompt = prompt.trim();
-      if (maxTokens && Number.parseInt(maxTokens) > 0)
-        body.max_tokens = Number.parseInt(maxTokens);
+      if (maxTokens && Number.parseInt(maxTokens) > 0) body.max_tokens = Number.parseInt(maxTokens);
 
       const response = await fetchWithRetry(`${termiteApiUrl}/api/read`, {
         method: "POST",
@@ -508,9 +497,7 @@ const ReaderPlaygroundPage: React.FC = () => {
                 tabIndex={0}
               >
                 <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Drop images here or click to browse
-                </p>
+                <p className="text-sm text-muted-foreground">Drop images here or click to browse</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Supports PNG, JPG, WebP, and more
                 </p>
@@ -545,11 +532,7 @@ const ReaderPlaygroundPage: React.FC = () => {
                       role="button"
                       tabIndex={0}
                     >
-                      <img
-                        src={img.dataUri}
-                        alt={img.name}
-                        className="w-full h-16 object-cover"
-                      />
+                      <img src={img.dataUri} alt={img.name} className="w-full h-16 object-cover" />
                       <button
                         type="button"
                         className="absolute top-0.5 right-0.5 p-0.5 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
@@ -584,9 +567,7 @@ const ReaderPlaygroundPage: React.FC = () => {
           {/* Output */}
           <Card className="flex flex-col">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">
-                {readResult ? "Results" : "Output"}
-              </CardTitle>
+              <CardTitle className="text-lg">{readResult ? "Results" : "Output"}</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 overflow-hidden">
               {readResult && currentResult ? (
@@ -725,9 +706,7 @@ const ReaderPlaygroundPage: React.FC = () => {
                                 {currentResult.regions!.some((r) => r.label) && (
                                   <th className="text-left p-2 font-medium">Label</th>
                                 )}
-                                {currentResult.regions!.some(
-                                  (r) => r.confidence != null
-                                ) && (
+                                {currentResult.regions!.some((r) => r.confidence != null) && (
                                   <th className="text-left p-2 font-medium">Confidence</th>
                                 )}
                               </tr>
@@ -740,9 +719,7 @@ const ReaderPlaygroundPage: React.FC = () => {
                                   {currentResult.regions!.some((r) => r.label) && (
                                     <td className="p-2 text-xs">{region.label || "-"}</td>
                                   )}
-                                  {currentResult.regions!.some(
-                                    (r) => r.confidence != null
-                                  ) && (
+                                  {currentResult.regions!.some((r) => r.confidence != null) && (
                                     <td className="p-2 font-mono text-xs">
                                       {region.confidence != null
                                         ? `${(region.confidence * 100).toFixed(1)}%`
@@ -793,8 +770,8 @@ const ReaderPlaygroundPage: React.FC = () => {
       {/* Help text */}
       <div className="mt-6 text-xs text-muted-foreground space-y-1">
         <p>
-          Extracts text, structured fields, and text regions from images using vision models
-          (e.g., Donut, Florence, TrOCR). Set a prompt to guide extraction for specific models.
+          Extracts text, structured fields, and text regions from images using vision models (e.g.,
+          Donut, Florence, TrOCR). Set a prompt to guide extraction for specific models.
         </p>
       </div>
     </div>

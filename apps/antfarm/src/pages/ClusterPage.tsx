@@ -1,12 +1,31 @@
-import { AlertTriangle, Database, GitBranch, Loader2, Network, RefreshCw, Scissors } from "lucide-react";
+import {
+  AlertTriangle,
+  Database,
+  GitBranch,
+  Loader2,
+  Network,
+  RefreshCw,
+  Scissors,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useClusterStatus, type ShardInfoData, type ShardStatus, type StoreInfo } from "@/hooks/use-cluster-status";
+import {
+  type ShardInfoData,
+  type ShardStatus,
+  type StoreInfo,
+  useClusterStatus,
+} from "@/hooks/use-cluster-status";
 import { cn } from "@/lib/utils";
 
 // --- Utilities ---
@@ -94,23 +113,40 @@ function getStoreShardCount(shards: Record<string, ShardStatus>, storeId: string
 
 function HealthBadge({ health }: { health: string }) {
   const config: Record<string, { className: string; label: string }> = {
-    healthy: { className: "bg-[var(--success-50)] text-[var(--success-700)] border-[var(--success-200)]", label: "Healthy" },
-    degraded: { className: "bg-[var(--warning-50)] text-[var(--warning-700)] border-[var(--warning-200)]", label: "Degraded" },
-    unhealthy: { className: "bg-[var(--danger-50)] text-[var(--danger-700)] border-[var(--danger-200)]", label: "Unhealthy" },
-    error: { className: "bg-[var(--danger-50)] text-[var(--danger-700)] border-[var(--danger-200)]", label: "Error" },
-    unknown: { className: "bg-[var(--gray-3)] text-[var(--gray-7)] border-[var(--gray-4)]", label: "Unknown" },
+    healthy: {
+      className: "bg-[var(--success-50)] text-[var(--success-700)] border-[var(--success-200)]",
+      label: "Healthy",
+    },
+    degraded: {
+      className: "bg-[var(--warning-50)] text-[var(--warning-700)] border-[var(--warning-200)]",
+      label: "Degraded",
+    },
+    unhealthy: {
+      className: "bg-[var(--danger-50)] text-[var(--danger-700)] border-[var(--danger-200)]",
+      label: "Unhealthy",
+    },
+    error: {
+      className: "bg-[var(--danger-50)] text-[var(--danger-700)] border-[var(--danger-200)]",
+      label: "Error",
+    },
+    unknown: {
+      className: "bg-[var(--gray-3)] text-[var(--gray-7)] border-[var(--gray-4)]",
+      label: "Unknown",
+    },
   };
   const { className, label } = config[health] ?? config.unknown;
 
   return (
     <Badge className={cn("text-xs font-medium", className)}>
-      <span className={cn(
-        "inline-block w-1.5 h-1.5 rounded-full mr-1",
-        health === "healthy" && "bg-[var(--success-500)]",
-        health === "degraded" && "bg-[var(--warning-500)]",
-        (health === "unhealthy" || health === "error") && "bg-[var(--danger-500)]",
-        health === "unknown" && "bg-[var(--gray-6)]",
-      )} />
+      <span
+        className={cn(
+          "inline-block w-1.5 h-1.5 rounded-full mr-1",
+          health === "healthy" && "bg-[var(--success-500)]",
+          health === "degraded" && "bg-[var(--warning-500)]",
+          (health === "unhealthy" || health === "error") && "bg-[var(--danger-500)]",
+          health === "unknown" && "bg-[var(--gray-6)]"
+        )}
+      />
       {label}
     </Badge>
   );
@@ -147,7 +183,8 @@ function ShardBlock({ shard, storeId }: { shard: ShardStatus; storeId: string })
     follower: "bg-[var(--info-100)] text-[var(--info-700)] border-[var(--info-300)]",
     initializing: "bg-[var(--info-500)] text-white border-[var(--info-500)] animate-pulse",
     splitting: "bg-[var(--warning-100)] text-[var(--warning-700)] border-[var(--warning-300)]",
-    unassigned: "bg-[var(--danger-100)] text-[var(--danger-600)] border-[var(--danger-300)] border-dashed",
+    unassigned:
+      "bg-[var(--danger-100)] text-[var(--danger-600)] border-[var(--danger-300)] border-dashed",
   };
 
   const roleLabels: Record<ShardRole, string> = {
@@ -164,7 +201,7 @@ function ShardBlock({ shard, storeId }: { shard: ShardStatus; storeId: string })
         <button
           className={cn(
             "inline-flex items-center justify-center min-w-[28px] h-6 px-1.5 rounded text-[10px] font-mono font-medium border cursor-default transition-colors",
-            roleStyles[role],
+            roleStyles[role]
           )}
         >
           {role === "splitting" && <Scissors className="w-2.5 h-2.5 mr-0.5" />}
@@ -183,7 +220,9 @@ function ShardBlock({ shard, storeId }: { shard: ShardStatus; storeId: string })
           {byteRange.length === 2 && (
             <>
               <span className="text-muted-foreground">Range</span>
-              <span className="font-mono">{truncateRange(byteRange[0])} .. {truncateRange(byteRange[1])}</span>
+              <span className="font-mono">
+                {truncateRange(byteRange[0])} .. {truncateRange(byteRange[1])}
+              </span>
             </>
           )}
           <span className="text-muted-foreground">Disk</span>
@@ -203,7 +242,9 @@ function NodeCard({ store, shardCount }: { store: StoreInfo; shardCount: number 
   try {
     const url = new URL(store.api_url);
     apiHost = `${url.hostname}:${url.port || (url.protocol === "https:" ? "443" : "80")}`;
-  } catch { /* use raw */ }
+  } catch {
+    /* use raw */
+  }
 
   return (
     <Card className="py-3 gap-2 min-w-[180px]">
@@ -251,10 +292,23 @@ function MetadataRaftCard({ metadataInfo }: { metadataInfo: ShardInfoData }) {
 function ShardLegend() {
   const items = [
     { label: "Leader", className: "bg-[var(--info-600)] text-white border-[var(--info-600)]" },
-    { label: "Follower", className: "bg-[var(--info-100)] text-[var(--info-700)] border-[var(--info-300)]" },
-    { label: "Initializing", className: "bg-[var(--info-500)] text-white border-[var(--info-500)] animate-pulse" },
-    { label: "Splitting", className: "bg-[var(--warning-100)] text-[var(--warning-700)] border-[var(--warning-300)]" },
-    { label: "Unassigned", className: "bg-[var(--danger-100)] text-[var(--danger-600)] border-[var(--danger-300)] border-dashed" },
+    {
+      label: "Follower",
+      className: "bg-[var(--info-100)] text-[var(--info-700)] border-[var(--info-300)]",
+    },
+    {
+      label: "Initializing",
+      className: "bg-[var(--info-500)] text-white border-[var(--info-500)] animate-pulse",
+    },
+    {
+      label: "Splitting",
+      className: "bg-[var(--warning-100)] text-[var(--warning-700)] border-[var(--warning-300)]",
+    },
+    {
+      label: "Unassigned",
+      className:
+        "bg-[var(--danger-100)] text-[var(--danger-600)] border-[var(--danger-300)] border-dashed",
+    },
   ];
 
   return (
@@ -275,8 +329,8 @@ const ClusterPage: React.FC = () => {
   const [refreshInterval, setRefreshInterval] = useState<number | null>(10000);
   const cluster = useClusterStatus(refreshInterval);
 
-  const storeList = useMemo(() =>
-    Object.values(cluster.stores).sort((a, b) => a.id.localeCompare(b.id)),
+  const storeList = useMemo(
+    () => Object.values(cluster.stores).sort((a, b) => a.id.localeCompare(b.id)),
     [cluster.stores]
   );
 
@@ -345,9 +399,7 @@ const ClusterPage: React.FC = () => {
         </div>
       </div>
 
-      {cluster.message && (
-        <p className="text-sm text-muted-foreground">{cluster.message}</p>
-      )}
+      {cluster.message && <p className="text-sm text-muted-foreground">{cluster.message}</p>}
 
       {/* Loading state */}
       {cluster.isLoading && storeList.length === 0 && (
@@ -404,7 +456,10 @@ const ClusterPage: React.FC = () => {
               </thead>
               <tbody>
                 {tableRows.map((table) => (
-                  <tr key={table.name} className="border-b last:border-b-0 hover:bg-muted/20 transition-colors">
+                  <tr
+                    key={table.name}
+                    className="border-b last:border-b-0 hover:bg-muted/20 transition-colors"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Database className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -443,7 +498,8 @@ const ClusterPage: React.FC = () => {
           </div>
         </div>
       ) : (
-        !cluster.isLoading && storeList.length > 0 && (
+        !cluster.isLoading &&
+        storeList.length > 0 && (
           <div className="flex flex-col items-center justify-center py-16 gap-3 border rounded-lg bg-muted/20">
             <Database className="w-8 h-8 text-muted-foreground" />
             <p className="text-muted-foreground">No tables yet</p>

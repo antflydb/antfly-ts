@@ -73,7 +73,15 @@ const SAMPLE_DOCUMENTS = [
 ];
 
 /** Tiny sparkline for embedding vectors: renders the first N dimensions as vertical bars. */
-function EmbeddingSparkline({ values, width = 120, height = 24 }: { values: number[]; width?: number; height?: number }) {
+function EmbeddingSparkline({
+  values,
+  width = 120,
+  height = 24,
+}: {
+  values: number[];
+  width?: number;
+  height?: number;
+}) {
   const dims = values.slice(0, 60);
   if (dims.length === 0) return null;
 
@@ -82,7 +90,12 @@ function EmbeddingSparkline({ values, width = 120, height = 24 }: { values: numb
   const barW = width / dims.length;
 
   return (
-    <svg width={width} height={height} className="shrink-0 rounded" aria-label="Embedding vector preview">
+    <svg
+      width={width}
+      height={height}
+      className="shrink-0 rounded"
+      aria-label="Embedding vector preview"
+    >
       <rect width={width} height={height} className="fill-muted/50" rx={2} />
       <line x1={0} y1={mid} x2={width} y2={mid} className="stroke-border" strokeWidth={0.5} />
       {dims.map((v, i) => {
@@ -268,9 +281,7 @@ const EmbeddingPlaygroundPage: React.FC = () => {
     setDocuments(updated);
   };
 
-  const maxSimilarity = results
-    ? Math.max(...results.map((r) => r.similarity))
-    : 1;
+  const maxSimilarity = results ? Math.max(...results.map((r) => r.similarity)) : 1;
 
   return (
     <div className="h-full">
@@ -468,7 +479,9 @@ const EmbeddingPlaygroundPage: React.FC = () => {
                 {queryEmbedding && showSparklines && (
                   <div className="p-3 bg-muted/30 rounded-lg border border-dashed space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-muted-foreground">Query vector</span>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Query vector
+                      </span>
                       <EmbeddingSparkline values={queryEmbedding} />
                     </div>
                   </div>
@@ -492,7 +505,12 @@ const EmbeddingPlaygroundPage: React.FC = () => {
                       <div className="flex items-center gap-2 pt-1">
                         <EmbeddingSparkline values={doc.embedding} />
                         <span className="text-[10px] text-muted-foreground/60 font-mono">
-                          [{doc.embedding.slice(0, 3).map((v) => v.toFixed(3)).join(", ")}, ...]
+                          [
+                          {doc.embedding
+                            .slice(0, 3)
+                            .map((v) => v.toFixed(3))
+                            .join(", ")}
+                          , ...]
                         </span>
                       </div>
                     )}

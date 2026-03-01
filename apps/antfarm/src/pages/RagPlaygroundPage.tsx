@@ -1,7 +1,11 @@
-import type { ClassificationTransformationResult, GenerationConfidence, QueryHit } from "@antfly/sdk";
-import { generatorProviders } from "@antfly/sdk";
-import { Antfly, AnswerResults, QueryBox } from "@antfly/components";
 import type { CustomInputProps } from "@antfly/components";
+import { AnswerResults, Antfly, QueryBox } from "@antfly/components";
+import type {
+  ClassificationTransformationResult,
+  GenerationConfidence,
+  QueryHit,
+} from "@antfly/sdk";
+import { generatorProviders } from "@antfly/sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
   BookOpen,
@@ -570,11 +574,7 @@ const RagPlaygroundPage: React.FC = () => {
                   id="rag-query"
                   mode="submit"
                   initialValue={query}
-                  renderInput={({
-                    value,
-                    onChange,
-                    onSubmit,
-                  }: CustomInputProps) => (
+                  renderInput={({ value, onChange, onSubmit }: CustomInputProps) => (
                     <>
                       <Textarea
                         placeholder="Enter your question..."
@@ -599,9 +599,7 @@ const RagPlaygroundPage: React.FC = () => {
                         <Button
                           type="button"
                           onClick={() => onSubmit(value)}
-                          disabled={
-                            !value.trim() || !selectedTable || !selectedIndex || isLoading
-                          }
+                          disabled={!value.trim() || !selectedTable || !selectedIndex || isLoading}
                         >
                           {isLoading ? (
                             <>
@@ -670,9 +668,7 @@ const RagPlaygroundPage: React.FC = () => {
                           <Label className="text-xs text-muted-foreground">Model</Label>
                           <Input
                             value={generator.model}
-                            onChange={(e) =>
-                              setGenerator((g) => ({ ...g, model: e.target.value }))
-                            }
+                            onChange={(e) => setGenerator((g) => ({ ...g, model: e.target.value }))}
                             placeholder="gpt-5-mini"
                           />
                         </div>
@@ -720,9 +716,7 @@ const RagPlaygroundPage: React.FC = () => {
                           <Sparkles className="h-4 w-4 text-muted-foreground" />
                           <div>
                             <p className="text-sm font-medium">Classification</p>
-                            <p className="text-xs text-muted-foreground">
-                              Analyze query strategy
-                            </p>
+                            <p className="text-xs text-muted-foreground">Analyze query strategy</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
@@ -806,9 +800,7 @@ const RagPlaygroundPage: React.FC = () => {
                           <Target className="h-4 w-4 text-muted-foreground" />
                           <div>
                             <p className="text-sm font-medium">Confidence Scores</p>
-                            <p className="text-xs text-muted-foreground">
-                              Rate answer confidence
-                            </p>
+                            <p className="text-xs text-muted-foreground">Rate answer confidence</p>
                           </div>
                         </div>
                         <Switch

@@ -1,5 +1,5 @@
 import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
-import { Search, Maximize2, Minimize2, Monitor } from "lucide-react";
+import { Maximize2, Minimize2, Monitor, Search } from "lucide-react";
 import type * as React from "react";
 import { useCommandPalette } from "@/components/command-palette-provider";
 import { useContentWidth } from "@/components/content-width-provider";

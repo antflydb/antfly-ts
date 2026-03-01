@@ -115,8 +115,7 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
       if (input) {
         const start = input.selectionStart ?? input.value.length;
         const end = input.selectionEnd ?? start;
-        const newValue =
-          input.value.slice(0, start) + template + input.value.slice(end);
+        const newValue = input.value.slice(0, start) + template + input.value.slice(end);
         setValue("idField", newValue, { shouldValidate: true });
         requestAnimationFrame(() => {
           const cursorPos = start + template.length;
@@ -128,7 +127,7 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
         setValue("idField", current + template, { shouldValidate: true });
       }
     },
-    [setValue, form],
+    [setValue, form]
   );
 
   const onSubmit = useCallback(async () => {
@@ -160,25 +159,22 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
           let id: string;
 
           if (isTemplate) {
-            id = idField.replace(
-              /\{\{(\w+)\}\}/g,
-              (_, key: string) => {
-                const val = doc[key];
-                if (val === undefined || val === null) {
-                  throw new Error(
-                    `Template field "{{${key}}}" not found in document: ${line.slice(0, 100)}`,
-                  );
-                }
-                return String(val);
-              },
-            );
+            id = idField.replace(/\{\{(\w+)\}\}/g, (_, key: string) => {
+              const val = doc[key];
+              if (val === undefined || val === null) {
+                throw new Error(
+                  `Template field "{{${key}}}" not found in document: ${line.slice(0, 100)}`
+                );
+              }
+              return String(val);
+            });
           } else {
             id = doc[idField];
           }
 
           if (!id) {
             throw new Error(
-              `ID field "${idField}" produced an empty ID for document: ${line.slice(0, 100)}`,
+              `ID field "${idField}" produced an empty ID for document: ${line.slice(0, 100)}`
             );
           }
           inserts[id] = doc;
@@ -225,7 +221,9 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
               <p className="text-gray-500 mb-4">
                 Upload a newline-delimited JSON file. Each line should be a valid JSON object. The
                 ID field supports Handlebars-style templates like{" "}
-                <code className="text-xs bg-muted px-1 py-0.5 rounded">{"{{category}}-{{slug}}"}</code>{" "}
+                <code className="text-xs bg-muted px-1 py-0.5 rounded">
+                  {"{{category}}-{{slug}}"}
+                </code>{" "}
                 to compose IDs from multiple fields.
               </p>
 
@@ -270,7 +268,9 @@ const BulkInsert: React.FC<BulkInsertProps> = ({ tableName }) => {
                         {...field}
                         ref={(el) => {
                           field.ref(el);
-                          (idFieldInputRef as React.MutableRefObject<HTMLInputElement | null>).current = el;
+                          (
+                            idFieldInputRef as React.MutableRefObject<HTMLInputElement | null>
+                          ).current = el;
                         }}
                         placeholder="e.g. id or {{category}}-{{slug}}"
                       />

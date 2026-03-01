@@ -1,14 +1,5 @@
 import { ReloadIcon } from "@radix-ui/react-icons";
-import {
-  Clock,
-  Copy,
-  Globe,
-  Mic,
-  RotateCcw,
-  Trash2,
-  Upload,
-  Zap,
-} from "lucide-react";
+import { Clock, Copy, Globe, Mic, RotateCcw, Trash2, Upload, Zap } from "lucide-react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BackendInfoBar } from "@/components/playground/BackendInfoBar";

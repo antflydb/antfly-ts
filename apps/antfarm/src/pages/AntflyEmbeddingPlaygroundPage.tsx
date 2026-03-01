@@ -73,9 +73,7 @@ function DocumentPreview({ source }: { source: Record<string, unknown> }) {
 
   return (
     <div className="space-y-1">
-      {title && (
-        <p className="text-sm leading-relaxed line-clamp-3">{title}</p>
-      )}
+      {title && <p className="text-sm leading-relaxed line-clamp-3">{title}</p>}
       {otherFields.map(([key, val]) => (
         <p key={key} className="text-xs text-muted-foreground line-clamp-2">
           <span className="font-medium">{key}:</span> {String(val)}
@@ -163,9 +161,7 @@ const AntflyEmbeddingPlaygroundPage: React.FC = () => {
     setProcessingTime(null);
   };
 
-  const maxScore = results && results.length > 0
-    ? Math.max(...results.map((r) => r.score))
-    : 1;
+  const maxScore = results && results.length > 0 ? Math.max(...results.map((r) => r.score)) : 1;
 
   return (
     <div className="h-full">
@@ -213,9 +209,7 @@ const AntflyEmbeddingPlaygroundPage: React.FC = () => {
                 <SelectTrigger id="index">
                   <SelectValue
                     placeholder={
-                      embeddingIndexes.length === 0
-                        ? "No embedding indexes"
-                        : "Select an index"
+                      embeddingIndexes.length === 0 ? "No embedding indexes" : "Select an index"
                     }
                   />
                 </SelectTrigger>
@@ -357,7 +351,8 @@ const AntflyEmbeddingPlaygroundPage: React.FC = () => {
           )}
         </div>
       ) : (
-        !error && selectedTable && (
+        !error &&
+        selectedTable && (
           <div className="p-12 text-center text-muted-foreground">
             <ArrowDownUp className="h-12 w-12 mx-auto mb-3 opacity-20" />
             <p>Enter a query and click "Search &amp; Analyze" to explore vector similarity</p>
@@ -374,8 +369,9 @@ const AntflyEmbeddingPlaygroundPage: React.FC = () => {
             is normalized relative to the top result.
           </p>
           <p>
-            <strong>Index:</strong> Results come from the "{selectedIndex}" embedding index. Different
-            indexes may use different models and produce different rankings for the same query.
+            <strong>Index:</strong> Results come from the "{selectedIndex}" embedding index.
+            Different indexes may use different models and produce different rankings for the same
+            query.
           </p>
         </div>
       )}

@@ -21,9 +21,9 @@ import {
   Table as TableIcon,
   Tag,
   Upload,
+  Waypoints,
   Wrench,
   X,
-  Waypoints,
 } from "lucide-react";
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";

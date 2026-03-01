@@ -198,7 +198,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
     }
   }, [indexes, queryIndexes.length]);
 
-
   const semanticQueryRequestString = useMemo(() => {
     const queryRequest: QueryRequest = {};
     if (hasSemanticQuery) {
@@ -361,7 +360,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
       console.error(e);
     }
   };
-
 
   const handleQueryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(event.target.value);
@@ -576,7 +574,6 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
           </div>
         )}
 
-
         {/* Search Section */}
         {currentSection === "semantic" && (
           <div className="flex flex-col gap-6">
@@ -667,7 +664,8 @@ const TableDetailsPage: React.FC<TableDetailsPageProps> = ({ currentSection = "i
                         <div className="space-y-2.5">
                           <div>
                             <Label className="text-xs mb-1 block">Vector Index</Label>
-                            {indexes.filter((idx) => idx.config.type === "embeddings").length === 0 ? (
+                            {indexes.filter((idx) => idx.config.type === "embeddings").length ===
+                            0 ? (
                               <p className="text-xs text-muted-foreground">
                                 No vector indexes available. Create one to enable semantic search.
                               </p>

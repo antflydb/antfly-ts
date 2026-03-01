@@ -105,7 +105,11 @@ function RankDelta({ change }: { change: number }) {
     return <span className="text-xs text-muted-foreground font-mono">=</span>;
   }
   if (change > 0) {
-    return <span className="text-xs text-success-600 dark:text-success-400 font-mono font-medium">+{change}</span>;
+    return (
+      <span className="text-xs text-success-600 dark:text-success-400 font-mono font-medium">
+        +{change}
+      </span>
+    );
   }
   return <span className="text-xs text-danger-500 font-mono font-medium">{change}</span>;
 }
@@ -271,13 +275,13 @@ const AntflyRerankingPlaygroundPage: React.FC = () => {
     setRerankTime(null);
   };
 
-  const maxSearchScore = searchResults && searchResults.length > 0
-    ? Math.max(...searchResults.map((r) => r.score))
-    : 1;
+  const maxSearchScore =
+    searchResults && searchResults.length > 0 ? Math.max(...searchResults.map((r) => r.score)) : 1;
 
-  const maxRerankScore = rerankedResults && rerankedResults.length > 0
-    ? Math.max(...rerankedResults.map((r) => r.rerankScore))
-    : 1;
+  const maxRerankScore =
+    rerankedResults && rerankedResults.length > 0
+      ? Math.max(...rerankedResults.map((r) => r.rerankScore))
+      : 1;
 
   return (
     <div className="h-full">
@@ -477,7 +481,9 @@ const AntflyRerankingPlaygroundPage: React.FC = () => {
 
       {/* Side-by-Side Results */}
       {searchResults && searchResults.length > 0 && (
-        <div className={`grid gap-6 ${rerankedResults ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}>
+        <div
+          className={`grid gap-6 ${rerankedResults ? "grid-cols-1 lg:grid-cols-2" : "grid-cols-1"}`}
+        >
           {/* Original Search Results */}
           <Card className="flex flex-col">
             <CardHeader className="pb-3">
@@ -502,7 +508,11 @@ const AntflyRerankingPlaygroundPage: React.FC = () => {
                       {hit.score.toFixed(4)}
                     </span>
                   </div>
-                  <ScoreBar score={hit.score} maxScore={maxSearchScore} color="hsl(210, 70%, 50%)" />
+                  <ScoreBar
+                    score={hit.score}
+                    maxScore={maxSearchScore}
+                    color="hsl(210, 70%, 50%)"
+                  />
                   <DocumentPreview source={hit.source} />
                 </div>
               ))}
@@ -537,7 +547,11 @@ const AntflyRerankingPlaygroundPage: React.FC = () => {
                         {hit.rerankScore.toFixed(4)}
                       </span>
                     </div>
-                    <ScoreBar score={hit.rerankScore} maxScore={maxRerankScore} color="hsl(150, 60%, 40%)" />
+                    <ScoreBar
+                      score={hit.rerankScore}
+                      maxScore={maxRerankScore}
+                      color="hsl(150, 60%, 40%)"
+                    />
                     <DocumentPreview source={hit.source} />
                   </div>
                 ))}
@@ -551,7 +565,9 @@ const AntflyRerankingPlaygroundPage: React.FC = () => {
       {!searchResults && !error && selectedTable && (
         <div className="p-12 text-center text-muted-foreground">
           <ArrowDownUp className="h-12 w-12 mx-auto mb-3 opacity-20" />
-          <p>Search your table, then rerank results to compare retrieval vs. cross-encoder ranking</p>
+          <p>
+            Search your table, then rerank results to compare retrieval vs. cross-encoder ranking
+          </p>
         </div>
       )}
 
@@ -559,9 +575,9 @@ const AntflyRerankingPlaygroundPage: React.FC = () => {
       {rerankedResults && (
         <div className="mt-6 text-xs text-muted-foreground space-y-1">
           <p>
-            <strong>Two-Stage Retrieval:</strong> Initial search uses fast bi-encoder similarity
-            (or BM25) to retrieve candidates. Cross-encoder reranking then scores each document
-            against the query for more accurate relevance ordering.
+            <strong>Two-Stage Retrieval:</strong> Initial search uses fast bi-encoder similarity (or
+            BM25) to retrieve candidates. Cross-encoder reranking then scores each document against
+            the query for more accurate relevance ordering.
           </p>
           <p>
             <strong>Rank Change:</strong> Green values (+N) mean the document moved up in ranking

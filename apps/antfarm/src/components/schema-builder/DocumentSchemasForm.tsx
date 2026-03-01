@@ -29,9 +29,9 @@ import { ImportJsonDialog } from "./ImportJsonDialog";
 import SchemaEditor from "./SchemaEditor";
 import {
   type FieldDetectionInfo,
-  RESERVED_FIELD_NAMES,
   getDefaultAntflyType,
   inferJSONType,
+  RESERVED_FIELD_NAMES,
 } from "./schema-utils";
 
 const antflyTypeEnum = z.enum([
@@ -249,13 +249,14 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
       const reservedNames = new Set(RESERVED_FIELD_NAMES);
       const typeGroups = new Map<string, Record<string, unknown>[]>();
       for (const doc of docs) {
-        const typeName = (typeof doc._type === "string" ? doc._type : "default");
+        const typeName = typeof doc._type === "string" ? doc._type : "default";
         const group = typeGroups.get(typeName) || [];
         group.push(doc);
         typeGroups.set(typeName, group);
       }
 
-      type SchemaProperty = DocumentSchemasFormData["document_schemas"][number]["properties"][number];
+      type SchemaProperty =
+        DocumentSchemasFormData["document_schemas"][number]["properties"][number];
       const schemas = watch("document_schemas") || [];
       const newMetaMap = new Map<string, FieldDetectionInfo>();
 
@@ -263,7 +264,12 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
         // Detect fields for this type
         const fieldMap = new Map<
           string,
-          { name: string; exampleValue: unknown; seenCount: number; inferredType: ReturnType<typeof inferJSONType> }
+          {
+            name: string;
+            exampleValue: unknown;
+            seenCount: number;
+            inferredType: ReturnType<typeof inferJSONType>;
+          }
         >();
 
         for (const doc of typeDocs) {
@@ -305,7 +311,10 @@ const DocumentSchemasForm: React.FC<DocumentSchemasFormProps> = ({
             type: (f.inferredType === "array" ? "array" : f.inferredType) as SchemaProperty["type"],
             description: "",
             "x-antfly-index": true,
-            "x-antfly-types": getDefaultAntflyType(f.inferredType, f.exampleValue) as SchemaProperty["x-antfly-types"],
+            "x-antfly-types": getDefaultAntflyType(
+              f.inferredType,
+              f.exampleValue
+            ) as SchemaProperty["x-antfly-types"],
           }));
 
         if (newFields.length > 0) {

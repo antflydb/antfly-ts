@@ -1,8 +1,8 @@
 import { type Chunk, type ChunkResponse, TermiteClient } from "@antfly/termite-sdk";
 import { ReloadIcon } from "@radix-ui/react-icons";
 import {
-  Clock,
   ClipboardCopy,
+  Clock,
   Database,
   Hash,
   RotateCcw,
@@ -113,7 +113,9 @@ const AntflyChunkingPlaygroundPage: React.FC = () => {
   const [processingTime, setProcessingTime] = useState<number | null>(null);
   const [docSource, setDocSource] = useState<"manual" | "table">("table");
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Array<{ id: string; preview: string }> | null>(null);
+  const [searchResults, setSearchResults] = useState<Array<{ id: string; preview: string }> | null>(
+    null
+  );
   const [isSearching, setIsSearching] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -597,11 +599,7 @@ const AntflyChunkingPlaygroundPage: React.FC = () => {
                     onClick={() => handleFetchDocument(documentId)}
                     disabled={isFetchingDoc || !documentId.trim()}
                   >
-                    {isFetchingDoc ? (
-                      <ReloadIcon className="h-3 w-3 animate-spin" />
-                    ) : (
-                      "Load"
-                    )}
+                    {isFetchingDoc ? <ReloadIcon className="h-3 w-3 animate-spin" /> : "Load"}
                   </Button>
                 </div>
 
@@ -666,7 +664,9 @@ const AntflyChunkingPlaygroundPage: React.FC = () => {
                         className={`p-3 rounded-lg border ${CHUNK_COLORS[colorIndex]}`}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className={`font-semibold text-sm ${CHUNK_TEXT_COLORS[colorIndex]}`}>
+                          <span
+                            className={`font-semibold text-sm ${CHUNK_TEXT_COLORS[colorIndex]}`}
+                          >
                             Chunk {chunk.id}
                           </span>
                           <div className="flex gap-2 text-xs text-muted-foreground">
