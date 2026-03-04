@@ -54,7 +54,7 @@ jobs:
         env:
           BASE_URL: http://localhost:4173
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         if: ${{ !cancelled() }}
         with:
           name: playwright-report
