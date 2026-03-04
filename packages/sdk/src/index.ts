@@ -99,6 +99,10 @@ export type {
   EdgesResponse,
   EdgeTopology,
   EdgeTypeConfig,
+  // Embedding types
+  Embedding,
+  DenseEmbedding,
+  SparseEmbedding,
   // Model and reranker types
   EmbedderConfig,
   EmbedderProvider,

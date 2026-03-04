@@ -2334,6 +2334,10 @@ export interface components {
             /** @description Evaluation results */
             eval_result?: components["schemas"]["EvalResult"];
         };
+        Embedding: number[] | {
+            indices: number[];
+            values: number[];
+        };
         QueryRequest: {
             /**
              * @description Name of the table to query. Optional for global queries.
@@ -2469,12 +2473,15 @@ export interface components {
             };
             /**
              * @description Pre-computed embeddings to use for semantic searches instead of embedding the semantic_search string.
-             *     The keys are the index names, and values are the embedding vectors.
+             *     The keys are the index names. Values can be either:
+             *     - **Dense**: an array of floats, e.g. `[0.1, 0.2, 0.3]`
+             *     - **Sparse**: an object with `indices` (array of ints) and `values` (array of floats),
+             *       e.g. `{"indices": [1, 5, 100], "values": [0.3, 0.7, 0.1]}`
              *
              *     Use when you've already generated embeddings on the client side to avoid redundant embedding calls.
              */
             embeddings?: {
-                [key: string]: number[];
+                [key: string]: components["schemas"]["Embedding"];
             };
             /**
              * @description List of fields to include in the results. If not specified, all fields are returned.

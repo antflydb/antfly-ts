@@ -110,6 +110,11 @@ export type ScanKeysRequest = Omit<components["schemas"]["ScanKeysRequest"], "fi
 // Schema types
 export type DocumentSchema = components["schemas"]["DocumentSchema"];
 
+// Embedding types
+export type Embedding = components["schemas"]["Embedding"];
+export type DenseEmbedding = number[];
+export type SparseEmbedding = { indices: number[]; values: number[] };
+
 // Search and aggregation types
 export type AggregationType = components["schemas"]["AggregationType"];
 export type AggregationRequest = components["schemas"]["AggregationRequest"];
