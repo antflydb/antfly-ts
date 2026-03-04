@@ -8,7 +8,8 @@ export type ModelType =
   | "recognizer"
   | "rewriter"
   | "generator"
-  | "reader";
+  | "reader"
+  | "transcriber";
 
 export type RecognizerCapability = "labels" | "zeroshot" | "relations" | "answers";
 
@@ -205,7 +206,7 @@ export function getQuantizationInfo(
 
 // Shell-safe: only allow alphanumeric, hyphens, underscores, dots, slashes, and colons
 function shellSafe(s: string): string {
-  return s.replace(/[^a-zA-Z0-9\-_./: ]/g, "");
+  return s.replace(/[^a-zA-Z0-9\-_./:]/g, "");
 }
 
 // Generate download command for a model
@@ -241,6 +242,7 @@ export const MODEL_TYPE_PLAYGROUND: Partial<Record<ModelType, string>> = {
   recognizer: "/playground/recognize",
   rewriter: "/playground/rewrite",
   reranker: "/playground/rerank",
+  transcriber: "/playground/transcribe",
 };
 
 // Detailed model type information for educational banners
@@ -250,7 +252,6 @@ export interface ModelTypeDetail {
   description: string;
   useCases: string[];
   pipelineNote: string;
-  playgroundRoute?: string;
 }
 
 export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
@@ -281,7 +282,6 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
     ],
     pipelineNote:
       "Rerankers sit between retrieval and generation. They re-score the top-K results from an embedding search to produce a more accurate ranking.",
-    playgroundRoute: "/playground/rerank",
   },
   chunker: {
     type: "chunker",
@@ -296,7 +296,6 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
     ],
     pipelineNote:
       "Chunkers are the first step in an indexing pipeline. Good chunking directly impacts retrieval quality — chunks that are too large dilute relevance, too small lose context.",
-    playgroundRoute: "/playground/chunking",
   },
   recognizer: {
     type: "recognizer",
@@ -311,7 +310,6 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
     ],
     pipelineNote:
       "Recognizers enhance indexed documents with structured metadata. Entity annotations improve faceted search, filtering, and knowledge graph construction.",
-    playgroundRoute: "/playground/recognize",
   },
   rewriter: {
     type: "rewriter",
@@ -326,7 +324,6 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
     ],
     pipelineNote:
       "Rewriters are used in evaluation pipelines and query augmentation. They can generate synthetic Q&A pairs for testing search quality.",
-    playgroundRoute: "/playground/rewrite",
   },
   generator: {
     type: "generator",
@@ -355,6 +352,20 @@ export const MODEL_TYPE_DETAILS: Record<ModelType, ModelTypeDetail> = {
     ],
     pipelineNote:
       "Readers complement generators in QA pipelines. Where generators synthesize answers, readers extract exact spans — useful for verifiable, citation-backed responses.",
+  },
+  transcriber: {
+    type: "transcriber",
+    tagline: "Convert speech to text with automatic speech recognition",
+    description:
+      "Transcriber models perform speech-to-text (ASR), converting audio into accurate text transcriptions. Whisper-based models support multilingual transcription and can handle noisy audio, accents, and technical vocabulary.",
+    useCases: [
+      "Transcribing meeting recordings and voice memos",
+      "Building voice-driven search and dictation interfaces",
+      "Processing podcast and video audio for indexing",
+      "Real-time speech-to-text with VAD-based chunking",
+    ],
+    pipelineNote:
+      "Transcribers convert audio into text that can then be chunked, embedded, and indexed. Combine with VAD for streaming and LLM cleanup for polished output.",
   },
 };
 

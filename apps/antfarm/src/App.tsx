@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import AntflyChunkingPlaygroundPage from "./pages/AntflyChunkingPlaygroundPage";
 import AntflyEmbeddingPlaygroundPage from "./pages/AntflyEmbeddingPlaygroundPage";
 import AntflyRerankingPlaygroundPage from "./pages/AntflyRerankingPlaygroundPage";
+import ChatPlaygroundPage from "./pages/ChatPlaygroundPage";
 import ChunkingPlaygroundPage from "./pages/ChunkingPlaygroundPage";
 import ClusterPage from "./pages/ClusterPage";
 import CreateTablePage from "./pages/CreateTablePage";
@@ -100,6 +101,7 @@ function AppContent() {
                         <Route path="/cluster" element={<ClusterPage />} />
                         <Route path="/playground/evals" element={<EvalsPlaygroundPage />} />
                         <Route path="/playground/rag" element={<RagPlaygroundPage />} />
+                        <Route path="/playground/chat" element={<ChatPlaygroundPage />} />
                         <Route
                           path="/playground/embedding"
                           element={<AntflyEmbeddingPlaygroundPage />}

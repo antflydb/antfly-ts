@@ -10,6 +10,10 @@ import type {
   AntflyConfig,
   BackupRequest,
   BatchRequest,
+  ChatAgentConfig,
+  ChatAgentTurnResult,
+  ChatMessage,
+  ChatStreamCallbacks,
   CreateTableRequest,
   CreateUserRequest,
   IndexConfig,
@@ -353,6 +357,99 @@ export class AntflyClient {
     callbacks?: RetrievalAgentStreamCallbacks
   ): Promise<RetrievalAgentResult | AbortController> {
     return this.performRetrievalAgent(request, callbacks);
+  }
+
+  /**
+   * Chat Agent - Multi-turn conversational retrieval with message history management.
+   * Wraps the retrieval agent with automatic message accumulation.
+   * @param userMessage - The user's message for this turn
+   * @param config - Chat configuration (generator, table, indexes, etc.)
+   * @param history - Previous conversation messages (pass result.messages from prior turns)
+   * @param callbacks - Optional streaming callbacks including chat-specific events
+   * @returns For streaming: { abortController, messages } where messages is a Promise.
+   *          For non-streaming: { result, messages }
+   */
+  async chatAgent(
+    userMessage: string,
+    config: ChatAgentConfig,
+    history: ChatMessage[] = [],
+    callbacks?: ChatStreamCallbacks
+  ): Promise<
+    ChatAgentTurnResult | { abortController: AbortController; messages: Promise<ChatMessage[]> }
+  > {
+    // Build retrieval agent request with conversation history
+    const request: RetrievalAgentRequest = {
+      query: userMessage,
+      queries: [
+        {
+          table: config.table,
+          semantic_search: userMessage,
+          indexes: config.semanticIndexes,
+          limit: config.limit ?? 10,
+        },
+      ],
+      generator: config.generator,
+      messages: [...history, { role: "user", content: userMessage }],
+      max_iterations: config.maxIterations ?? 5,
+      stream: !!callbacks,
+      agent_knowledge: config.agentKnowledge,
+    };
+
+    if (config.steps) {
+      request.steps = config.steps;
+    }
+
+    if (callbacks) {
+      // Streaming mode: accumulate answer and emit chat-specific callbacks
+      let answerText = "";
+      let resolveMessages: (msgs: ChatMessage[]) => void;
+      const messagesPromise = new Promise<ChatMessage[]>((resolve) => {
+        resolveMessages = resolve;
+      });
+
+      const wrappedCallbacks: RetrievalAgentStreamCallbacks = {
+        ...callbacks,
+        onAnswer: (chunk: string) => {
+          answerText += chunk;
+          callbacks.onAnswer?.(chunk);
+        },
+        onDone: (data) => {
+          // Build updated messages with assistant response
+          const updatedMessages: ChatMessage[] = [
+            ...history,
+            { role: "user", content: userMessage },
+            { role: "assistant", content: answerText },
+          ];
+          callbacks.onAssistantMessage?.(answerText);
+          callbacks.onMessagesUpdated?.(updatedMessages);
+          callbacks.onDone?.(data);
+          resolveMessages(updatedMessages);
+        },
+      };
+
+      const abortController = (await this.performRetrievalAgent(
+        request,
+        wrappedCallbacks
+      )) as AbortController;
+
+      return { abortController, messages: messagesPromise };
+    }
+
+    // Non-streaming mode
+    const result = (await this.performRetrievalAgent(request)) as RetrievalAgentResult;
+
+    // Use server-provided messages or build from response
+    const updatedMessages: ChatMessage[] = result.messages?.length
+      ? result.messages
+      : [
+          ...history,
+          { role: "user", content: userMessage },
+          ...(result.generation
+            ? [{ role: "assistant" as const, content: result.generation }]
+            : []),
+        ];
+
+    return { result, messages: updatedMessages };
   }
 
   /**

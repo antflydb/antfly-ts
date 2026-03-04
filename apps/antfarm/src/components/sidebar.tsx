@@ -8,6 +8,7 @@ import {
   FileText,
   KeyRound,
   Library,
+  MessageCircle,
   MessageSquare,
   Mic,
   Network,
@@ -427,6 +428,30 @@ export function AppSidebar({
                     >
                       <MessageSquare className="size-4" />
                       <span>RAG</span>
+                    </a>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === "/playground/chat"}
+                    tooltip="Chat"
+                    disabled={!selectedTable}
+                    className="disabled:opacity-50"
+                  >
+                    <a
+                      href="/playground/chat"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(
+                          selectedTable
+                            ? `/playground/chat?table=${encodeURIComponent(selectedTable)}`
+                            : "/playground/chat"
+                        );
+                      }}
+                    >
+                      <MessageCircle className="size-4" />
+                      <span>Chat</span>
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

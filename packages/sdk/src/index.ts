@@ -77,8 +77,12 @@ export type {
   BackupRequest,
   BatchRequest, // Now using our custom type
   CalendarInterval,
+  // Chat Agent types
+  ChatAgentConfig,
+  ChatAgentTurnResult,
   ChatMessage,
   ChatMessageRole,
+  ChatStreamCallbacks,
   ChatToolCall,
   ChatToolName,
   ChatToolResult,

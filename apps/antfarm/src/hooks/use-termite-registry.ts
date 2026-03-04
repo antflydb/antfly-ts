@@ -77,6 +77,12 @@ const MODEL_TYPES: ModelTypeInfo[] = [
     description: "Document and image reading models for OCR and text extraction",
     icon: "BookOpen",
   },
+  {
+    type: "transcriber",
+    name: "Transcriber",
+    description: "Speech-to-text models for audio transcription and dictation",
+    icon: "AudioLines",
+  },
 ];
 
 // Static quantization options (not provided by registry)
@@ -227,7 +233,9 @@ export function useTermiteRegistry(): TermiteRegistryState {
 
     // Skip fetch if we have cached data
     if (registryCache) {
-      return;
+      return () => {
+        isMountedRef.current = false;
+      };
     }
 
     const controller = new AbortController();

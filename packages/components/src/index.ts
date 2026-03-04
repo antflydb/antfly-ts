@@ -9,6 +9,10 @@ import Autosuggest, {
   AutosuggestResults,
   useAutosuggestContext,
 } from "./Autosuggest";
+import ChatBar from "./ChatBar";
+import { useChatContext } from "./ChatContext";
+import ChatInput from "./ChatInput";
+import ChatMessages from "./ChatMessages";
 import CustomWidget from "./CustomWidget";
 import {
   getCitedDocumentIds,
@@ -21,6 +25,7 @@ import {
 import Facet from "./Facet";
 import { renderNumeric, renderStars, renderThumbsUpDown } from "./feedback-renderers";
 import { useAnswerStream } from "./hooks/useAnswerStream";
+import { useChatStream } from "./hooks/useChatStream";
 import { useCitations } from "./hooks/useCitations";
 import { useSearchHistory } from "./hooks/useSearchHistory";
 import Listener from "./Listener";
@@ -70,6 +75,11 @@ export {
   useSearchHistory,
   useAnswerStream,
   useCitations,
+  ChatBar,
+  ChatMessages,
+  ChatInput,
+  useChatContext,
+  useChatStream,
 };
 
 export type {
@@ -89,10 +99,15 @@ export type {
   AutosuggestProps,
   AutosuggestResultsProps,
 } from "./Autosuggest";
+export type { ChatBarProps } from "./ChatBar";
+export type { ChatContextValue } from "./ChatContext";
+export type { ChatInputProps } from "./ChatInput";
+export type { ChatMessagesProps } from "./ChatMessages";
 export type { CustomWidgetProps } from "./CustomWidget";
 export type { Citation, CitationRenderOptions } from "./citations";
 export type { FacetProps } from "./Facet";
 export type { QueryClassification } from "./hooks/useAnswerStream";
+export type { ChatConfig, ChatTurn } from "./hooks/useChatStream";
 export type {
   CitationMetadata,
   SearchHistory,

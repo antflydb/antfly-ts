@@ -33,6 +33,7 @@ export const PRODUCTS: Record<ProductId, Product> = {
       "/cluster",
       "/playground/evals",
       "/playground/rag",
+      "/playground/chat",
       "/playground/embedding",
       "/playground/reranking",
       "/playground/chunking",

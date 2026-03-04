@@ -251,6 +251,44 @@ export interface RetrievalAgentStreamCallbacks {
   onError?: (error: string) => void;
 }
 
+// Chat Agent convenience types for multi-turn conversation
+export interface ChatAgentConfig {
+  /** Generator configuration (provider, model, temperature) */
+  generator: GeneratorConfig;
+  /** Table to search */
+  table?: string;
+  /** Semantic indexes to use */
+  semanticIndexes?: string[];
+  /** Domain-specific knowledge for the agent */
+  agentKnowledge?: string;
+  /** System prompt override */
+  systemPrompt?: string;
+  /** Maximum tool iterations per turn */
+  maxIterations?: number;
+  /** Number of follow-up questions to generate */
+  followUpCount?: number;
+  /** Results limit per search */
+  limit?: number;
+  /** Retrieval agent steps configuration */
+  steps?: RetrievalAgentSteps;
+}
+
+/** Callbacks for chat agent streaming, extending retrieval callbacks with chat-specific events */
+export interface ChatStreamCallbacks extends RetrievalAgentStreamCallbacks {
+  /** Called when the assistant's full message is assembled after streaming completes */
+  onAssistantMessage?: (message: string) => void;
+  /** Called with the updated full message history after each turn */
+  onMessagesUpdated?: (messages: ChatMessage[]) => void;
+}
+
+/** Result from a chat agent turn */
+export interface ChatAgentTurnResult {
+  /** The retrieval agent result for this turn */
+  result: RetrievalAgentResult;
+  /** Updated conversation history including this turn */
+  messages: ChatMessage[];
+}
+
 // Web search result from websearch tool
 export interface WebSearchResultItem {
   title: string;

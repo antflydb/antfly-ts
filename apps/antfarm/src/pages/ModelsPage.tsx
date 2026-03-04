@@ -3,6 +3,7 @@ import {
   Apple,
   ArrowRight,
   ArrowUpDown,
+  AudioLines,
   BookOpen,
   Check,
   ChevronDown,
@@ -68,6 +69,7 @@ const MODEL_TYPE_ICONS: Record<ModelType, React.FC<{ className?: string }>> = {
   rewriter: RefreshCw,
   generator: Sparkles,
   reader: BookOpen,
+  transcriber: AudioLines,
 };
 
 // Refined color system - bold accent colors with monochrome base
@@ -116,6 +118,12 @@ const MODEL_TYPE_ACCENT: Record<
     text: "text-orange-500 dark:text-orange-400",
     border: "border-orange-500/20 dark:border-orange-400/20",
     glow: "shadow-orange-500/20",
+  },
+  transcriber: {
+    bg: "bg-teal-500",
+    text: "text-teal-500 dark:text-teal-400",
+    border: "border-teal-500/20 dark:border-teal-400/20",
+    glow: "shadow-teal-500/20",
   },
 };
 
@@ -952,10 +960,10 @@ const TypeContextBanner: React.FC<{
             <div>
               <h4 className="text-xs font-medium text-foreground mb-2">Pipeline context</h4>
               <p className="text-xs text-muted-foreground leading-relaxed">{detail.pipelineNote}</p>
-              {detail.playgroundRoute && (
+              {MODEL_TYPE_PLAYGROUND[detail.type] && (
                 <button
                   type="button"
-                  onClick={() => navigate(detail.playgroundRoute!)}
+                  onClick={() => navigate(MODEL_TYPE_PLAYGROUND[detail.type]!)}
                   className={cn(
                     "mt-3 inline-flex items-center gap-1.5 text-xs font-medium",
                     accent.text,
@@ -1038,6 +1046,7 @@ const ModelsPage: React.FC = () => {
       rewriter: [],
       generator: [],
       reader: [],
+      transcriber: [],
     };
 
     for (const model of filteredModels) {
@@ -1056,6 +1065,7 @@ const ModelsPage: React.FC = () => {
       rewriter: 0,
       generator: 0,
       reader: 0,
+      transcriber: 0,
     };
 
     for (const model of models) {
