@@ -293,6 +293,7 @@ export class AntflyClient {
                       }
                       break;
                     case "generation":
+                    case "answer":
                       if (callbacks.onAnswer) {
                         callbacks.onAnswer(JSON.parse(data));
                       }
@@ -303,6 +304,7 @@ export class AntflyClient {
                       }
                       break;
                     case "followup_question":
+                    case "followup":
                       if (callbacks.onFollowUpQuestion) {
                         callbacks.onFollowUpQuestion(JSON.parse(data));
                       }

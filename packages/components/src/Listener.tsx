@@ -83,10 +83,10 @@ export default function Listener({ children, onChange }: ListenerProps) {
   const facetWidgets = widgetThat("isFacet");
   const searchWidgets = widgetThat("needsQuery");
   const resultWidgets = widgetThat("wantResults");
-  const queries = new Map([...widgets].filter(([, v]) => v.query).map(([k, v]) => [k, v.query]));
+  const queries = new Map([...widgets].filter(([, v]) => v.query && v.needsQuery).map(([k, v]) => [k, v.query]));
   const semanticQueries = new Map(
     [...widgets]
-      .filter(([, v]) => v.semanticQuery && v.isSemantic)
+      .filter(([, v]) => v.semanticQuery && v.isSemantic && v.needsQuery)
       .map(([k, v]) => [
         k,
         {
@@ -133,7 +133,9 @@ export default function Listener({ children, onChange }: ListenerProps) {
     // If you are debugging and your debug path leads you here, you might
     // check configurableWidgets and searchWidgets actually covers
     // the whole list of components that are configurables and queryable.
-    const queriesReady = queries.size + semanticQueries.size === searchWidgets.size;
+    const queriesReady = [...searchWidgets.keys()].every(
+      (id) => queries.has(id) || semanticQueries.has(id)
+    );
     const configurationsReady = configurations.size === configurableWidgets.size;
     const isAtLeastOneWidgetReady = searchWidgets.size + configurableWidgets.size > 0;
 
@@ -199,11 +201,13 @@ export default function Listener({ children, onChange }: ListenerProps) {
                 const tableName = resolveTable(r.table, table);
 
                 // Build the query object
+                const fullTextSearch = filteredQueries.size > 0 ? conjunctsFrom(filteredQueries) : undefined;
+                const resolvedIndexes = semanticQuery && indexes ? indexes : undefined;
                 const queryObj: Record<string, unknown> = {
                   table: tableName,
-                  semantic_search: semanticQuery,
-                  indexes: semanticQuery ? indexes : undefined,
-                  full_text_search: conjunctsFrom(filteredQueries),
+                  semantic_search: semanticQuery || undefined,
+                  indexes: resolvedIndexes && resolvedIndexes.length > 0 ? resolvedIndexes : undefined,
+                  full_text_search: fullTextSearch,
                   limit: itemsPerPage,
                   offset: (page - 1) * itemsPerPage,
                   order_by: sort,
@@ -310,15 +314,16 @@ export default function Listener({ children, onChange }: ListenerProps) {
                     })
                   );
 
-                  const fullTextQuery =
-                    useCustomQuery && f.query
-                      ? conjunctsFrom(new Map([...facetOnlyQueries, [id, f.query]]))
-                      : conjunctsFrom(baseQueries);
+                  const facetTextQueries = useCustomQuery && f.query
+                    ? new Map([...facetOnlyQueries, [id, f.query]])
+                    : baseQueries;
+                  const fullTextQuery = facetTextQueries.size > 0 ? conjunctsFrom(facetTextQueries) : undefined;
 
+                  const resolvedFacetIndexes = semanticQuery && indexes ? indexes : undefined;
                   const facetQueryObj: Record<string, unknown> = {
                     table: tableName,
-                    semantic_search: semanticQuery,
-                    indexes: semanticQuery ? indexes : undefined,
+                    semantic_search: semanticQuery || undefined,
+                    indexes: resolvedFacetIndexes && resolvedFacetIndexes.length > 0 ? resolvedFacetIndexes : undefined,
                     limit: semanticQuery ? limit : 0,
                     full_text_search: fullTextQuery,
                     aggregations: result,
@@ -414,7 +419,8 @@ export default function Listener({ children, onChange }: ListenerProps) {
                     const responses = (result as MultiqueryResult)?.responses;
                     if (responses) {
                       responses.forEach((response: QueryResponse, key: number) => {
-                        const widget = widgets.get(multiqueryData[key].id);
+                        const widgetId = multiqueryData[key].id;
+                        const widget = widgets.get(widgetId);
                         if (widget) {
                           if (response.status !== 200) {
                             console.error("Antfly response error:", response.error);
@@ -434,7 +440,7 @@ export default function Listener({ children, onChange }: ListenerProps) {
                             widget.isLoading = false;
                           }
                           // Update widget
-                          dispatch({ type: "setWidget", key: multiqueryData[key].id, ...widget });
+                          dispatch({ type: "setWidget", key: widgetId, ...widget });
                         }
                       });
                     }
