@@ -218,9 +218,11 @@ const ChunkingPlaygroundPage: React.FC = () => {
         inputText,
         {
           model: config.model,
-          target_tokens: config.target_tokens,
-          overlap_tokens: config.overlap_tokens,
-          separator: actualSeparator,
+          text: {
+            target_tokens: config.target_tokens,
+            overlap_tokens: config.overlap_tokens,
+            separator: actualSeparator,
+          },
           max_chunks: config.max_chunks,
           threshold: config.threshold,
         },

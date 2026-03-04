@@ -89,6 +89,7 @@ export type {
   ClassificationTransformationResult,
   CreateTableRequest,
   CreateUserRequest,
+  DenseEmbedding,
   DistanceRange,
   DistanceUnit,
   // Schema types
@@ -99,13 +100,11 @@ export type {
   EdgesResponse,
   EdgeTopology,
   EdgeTypeConfig,
-  // Embedding types
-  Embedding,
-  DenseEmbedding,
-  SparseEmbedding,
   // Model and reranker types
   EmbedderConfig,
   EmbedderProvider,
+  // Embedding types
+  Embedding,
   // Eval types
   EvalConfig,
   EvalResult,
@@ -162,6 +161,7 @@ export type {
   RouteType,
   SemanticQueryMode,
   SignificanceAlgorithm,
+  SparseEmbedding,
   // Table types
   Table,
   TableSchema,

@@ -147,8 +147,7 @@ export class TermiteClient {
    * ```typescript
    * const result = await client.chunk("This is a long document...", {
    *   model: "fixed",
-   *   target_tokens: 500,
-   *   overlap_tokens: 50
+   *   text: { target_tokens: 500, overlap_tokens: 50 }
    * });
    * for (const chunk of result.chunks) {
    *   console.log(chunk.text, chunk.start_char, chunk.end_char);

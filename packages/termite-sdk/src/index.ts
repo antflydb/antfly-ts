@@ -19,7 +19,7 @@
  * // Chunk text
  * const chunkResult = await client.chunk('Long document text...', {
  *   model: 'fixed',
- *   target_tokens: 500
+ *   text: { target_tokens: 500 }
  * });
  *
  * // Rerank by relevance

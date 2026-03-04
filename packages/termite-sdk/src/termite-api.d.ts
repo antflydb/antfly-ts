@@ -631,10 +631,28 @@ export interface components {
             /** @description MIME type: text/plain, audio/wav, image/png, etc. */
             mime_type: string;
         };
+        /** @description Options for Voice Activity Detection (VAD) based audio segmentation. Termite-specific. */
+        VADOptions: {
+            /** @description Minimum silence duration (ms) to split speech segments. Gaps shorter than this are merged. Higher values produce longer, fewer segments. Default: 300. */
+            min_silence_duration_ms?: number;
+            /** @description Minimum speech duration (ms) for a segment to be kept. Shorter segments are discarded. Default: 250. */
+            min_speech_duration_ms?: number;
+            /** @description Padding (ms) added before and after detected speech. Default: 30. */
+            speech_pad_ms?: number;
+            /** @description Maximum segment duration (ms). Segments longer than this are split. Useful for Whisper-compatible chunking. Default: 30000. */
+            max_segment_duration_ms?: number;
+        };
+        /** @description Audio chunking configuration for Termite, including VAD options. */
+        AudioChunkConfig: {
+            /** @description Window duration in milliseconds for fixed-window audio chunking (default: 30000). */
+            window_duration_ms?: number;
+            /** @description Overlap duration in milliseconds between audio chunks (default: 0). */
+            overlap_duration_ms?: number;
+            vad?: components["schemas"]["VADOptions"];
+        };
         /**
          * @description Configuration for chunking requests to Termite API.
-         *     This is a simplified config for the HTTP API - differs from the full ChunkerConfig
-         *     which includes provider selection and caching configuration.
+         *     Combines shared text options with Termite-specific audio/VAD options.
          */
         ChunkConfig: {
             /**
@@ -643,47 +661,15 @@ export interface components {
              * @example fixed
              */
             model?: string;
-            /**
-             * @description Target number of tokens per chunk
-             * @default 500
-             * @example 500
-             */
-            target_tokens?: number;
-            /**
-             * @description Number of overlapping tokens between chunks
-             * @default 50
-             * @example 50
-             */
-            overlap_tokens?: number;
-            /**
-             * @description Text separator for fixed chunking
-             * @default
-             * @example
-             */
-            separator?: string;
-            /**
-             * @description Maximum number of chunks to return
-             * @default 50
-             * @example 50
-             */
+            /** @description Maximum number of chunks to generate per document. */
             max_chunks?: number;
             /**
              * Format: float
-             * @description Confidence threshold for ONNX models (0.0-1.0)
-             * @default 0.5
-             * @example 0.5
+             * @description Confidence threshold for model-based chunking (0.0-1.0). Used by ONNX text models and VAD audio models.
              */
             threshold?: number;
-            /**
-             * @description Window duration in ms for audio chunking (default: 30000)
-             * @default 30000
-             */
-            window_duration_ms?: number;
-            /**
-             * @description Overlap duration in ms between audio chunks (default: 0)
-             * @default 0
-             */
-            overlap_duration_ms?: number;
+            text?: components["schemas"]["TextChunkOptions"];
+            audio?: components["schemas"]["AudioChunkConfig"];
         };
         ChunkRequest: {
             /**
@@ -1645,6 +1631,15 @@ export interface components {
              * @example true
              */
             allow_downloads?: boolean;
+        };
+        /** @description Options specific to text chunking. */
+        TextChunkOptions: {
+            /** @description Target number of tokens per chunk. */
+            target_tokens?: number;
+            /** @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries. Only used by fixed-size chunkers. */
+            overlap_tokens?: number;
+            /** @description Separator string for splitting (e.g., '\n\n' for paragraphs). Only used by fixed-size chunkers. */
+            separator?: string;
         };
         /** @description Text content with character offsets. */
         TextContent: {

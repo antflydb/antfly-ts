@@ -5776,25 +5776,33 @@ export interface components {
         EmbedderConfig: (components["schemas"]["GoogleEmbedderConfig"] | components["schemas"]["VertexEmbedderConfig"] | components["schemas"]["OllamaEmbedderConfig"] | components["schemas"]["OpenAIEmbedderConfig"] | components["schemas"]["OpenRouterEmbedderConfig"] | components["schemas"]["BedrockEmbedderConfig"] | components["schemas"]["CohereEmbedderConfig"] | components["schemas"]["TermiteEmbedderConfig"] | components["schemas"]["AntflyEmbedderConfig"]) & {
             provider: components["schemas"]["EmbedderProvider"];
         };
-        /** @description Per-request configuration for chunking. All fields are optional - zero/omitted values use chunker defaults. */
-        ChunkOptions: {
-            /** @description Maximum number of chunks to generate per document. */
-            max_chunks?: number;
+        /** @description Options specific to text chunking. */
+        TextChunkOptions: {
+            /** @description Target number of tokens per chunk. */
+            target_tokens?: number;
             /** @description Number of tokens to overlap between consecutive chunks. Helps maintain context across chunk boundaries. Only used by fixed-size chunkers. */
             overlap_tokens?: number;
             /** @description Separator string for splitting (e.g., '\n\n' for paragraphs). Only used by fixed-size chunkers. */
             separator?: string;
-            /**
-             * Format: float
-             * @description Minimum confidence threshold for separator detection (0.0-1.0). Only used by ONNX models.
-             */
-            threshold?: number;
-            /** @description Target number of tokens per chunk. */
-            target_tokens?: number;
-            /** @description Window duration in milliseconds for audio chunking (default: 30000). */
+        };
+        /** @description Options specific to audio chunking. */
+        AudioChunkOptions: {
+            /** @description Window duration in milliseconds for fixed-window audio chunking (default: 30000). */
             window_duration_ms?: number;
             /** @description Overlap duration in milliseconds between audio chunks (default: 0). */
             overlap_duration_ms?: number;
+        };
+        /** @description Per-request configuration for chunking. All fields are optional - zero/omitted values use chunker defaults. */
+        ChunkOptions: {
+            /** @description Maximum number of chunks to generate per document. */
+            max_chunks?: number;
+            /**
+             * Format: float
+             * @description Confidence threshold for model-based chunking (0.0-1.0).
+             */
+            threshold?: number;
+            text?: components["schemas"]["TextChunkOptions"];
+            audio?: components["schemas"]["AudioChunkOptions"];
         };
         /**
          * @description Configuration for the Termite chunking provider.
@@ -5814,10 +5822,12 @@ export interface components {
          *       "provider": "termite",
          *       "api_url": "http://localhost:8080",
          *       "model": "fixed",
-         *       "target_tokens": 500,
-         *       "overlap_tokens": 50,
-         *       "separator": "\n\n",
-         *       "max_chunks": 50
+         *       "max_chunks": 50,
+         *       "text": {
+         *         "target_tokens": 500,
+         *         "overlap_tokens": 50,
+         *         "separator": "\n\n"
+         *       }
          *     }
          */
         TermiteChunkerConfig: components["schemas"]["ChunkOptions"] & {
@@ -5852,10 +5862,12 @@ export interface components {
          *     - You want persistent chunk/embedding caches
          * @example {
          *       "provider": "antfly",
-         *       "target_tokens": 500,
-         *       "overlap_tokens": 50,
-         *       "separator": "\n\n",
-         *       "max_chunks": 50
+         *       "max_chunks": 50,
+         *       "text": {
+         *         "target_tokens": 500,
+         *         "overlap_tokens": 50,
+         *         "separator": "\n\n"
+         *       }
          *     }
          */
         AntflyChunkerConfig: components["schemas"]["ChunkOptions"];
@@ -5869,8 +5881,10 @@ export interface components {
          * @example {
          *       "provider": "termite",
          *       "model": "fixed",
-         *       "target_tokens": 500,
-         *       "overlap_tokens": 50
+         *       "text": {
+         *         "target_tokens": 500,
+         *         "overlap_tokens": 50
+         *       }
          *     }
          */
         ChunkerConfig: (components["schemas"]["TermiteChunkerConfig"] | components["schemas"]["AntflyChunkerConfig"]) & {
