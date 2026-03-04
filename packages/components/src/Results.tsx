@@ -72,7 +72,16 @@ export default function Results({
   // Determine if semantic search is enabled
   const isSemanticEnabled = !!(searchBoxId && semanticIndexes && semanticIndexes.length > 0);
 
+  // Stable serialized keys for array/object props to prevent unnecessary re-renders
+  // These props are often created inline (e.g., semanticIndexes={[tableSlug]}) which
+  // produces new references on every render, causing useEffect/useCallback to re-fire.
+  const fieldsKey = JSON.stringify(fields);
+  const semanticIndexesKey = JSON.stringify(semanticIndexes);
+  const filterQueryKey = JSON.stringify(filterQuery);
+  const exclusionQueryKey = JSON.stringify(exclusionQuery);
+
   // Build a query from the search value
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Using stable serialized fieldsKey instead of fields array reference
   const queryFromValue = useCallback(
     (query: string): unknown => {
       if (isSemanticEnabled) return query;
@@ -95,7 +104,7 @@ export default function Results({
       }
       return { match_all: {} };
     },
-    [isSemanticEnabled, customQuery, fields]
+    [isSemanticEnabled, customQuery, fieldsKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // Create a hash of all search/filter widgets to detect query changes
@@ -163,6 +172,7 @@ export default function Results({
           : { itemsPerPage, page, sort, fields },
       // Don't pass result here - it should only be set by the Listener after fetching
     });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Using stable serialized keys instead of array/object references to prevent infinite re-renders
   }, [
     dispatch,
     id,
@@ -171,12 +181,12 @@ export default function Results({
     itemsPerPage,
     page,
     sort,
-    fields,
+    fieldsKey,
     table,
-    filterQuery,
-    exclusionQuery,
+    filterQueryKey,
+    exclusionQueryKey,
     isSemanticEnabled,
-    semanticIndexes,
+    semanticIndexesKey,
     limit,
     customQuery,
     queryFromValue,
