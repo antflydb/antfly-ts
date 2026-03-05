@@ -3383,6 +3383,75 @@ export interface components {
              *     ]
              */
             on_delete?: components["schemas"]["ReplicationTransformOp"][];
+            /**
+             * @description Bleve-style filter query that gets translated to SQL and applied as a
+             *     WHERE clause on the PostgreSQL publication. This filters rows at the
+             *     source before they are sent over the replication stream, reducing
+             *     network and processing overhead.
+             *
+             *     Only a subset of filter types are supported (term, match, range,
+             *     conjuncts, disjuncts, must_not). The filter is translated to SQL
+             *     with inlined literal values.
+             *
+             *     Example: `{"term": "active", "field": "status"}` becomes
+             *     `WHERE ("status" = 'active')` on the publication.
+             */
+            publication_filter?: components["schemas"]["Query"] & unknown;
+            /**
+             * @description Conditional routes for fan-out replication. Each route evaluates its
+             *     `where` filter against every CDC row and, on match, writes to the
+             *     specified `target_table`. Multiple routes can match the same row.
+             *
+             *     When routes are present, the top-level `on_update`/`on_delete` are
+             *     ignored — each route defines its own transforms.
+             * @example [
+             *       {
+             *         "target_table": "premium_users",
+             *         "where": {
+             *           "term": "premium",
+             *           "field": "tier"
+             *         }
+             *       },
+             *       {
+             *         "target_table": "free_users",
+             *         "where": {
+             *           "term": "free",
+             *           "field": "tier"
+             *         }
+             *       }
+             *     ]
+             */
+            routes?: components["schemas"]["ReplicationRoute"][];
+        };
+        ReplicationRoute: {
+            /**
+             * @description Name of the Antfly table to write matching rows to. The table must
+             *     already exist.
+             * @example premium_users
+             */
+            target_table: string;
+            /**
+             * @description Bleve-style filter query evaluated against each CDC row. Only rows
+             *     matching this filter are written to `target_table`. If omitted,
+             *     all rows match (equivalent to `match_all`).
+             */
+            where?: components["schemas"]["Query"] & unknown;
+            /**
+             * @description Override the source-level `key_template` for this route. If omitted,
+             *     the source-level template is used.
+             * @example {{tenant_id}}:{{user_id}}
+             */
+            key_template?: string;
+            /**
+             * @description Transform operations for INSERT/UPDATE events on this route. If omitted,
+             *     auto-generates `$set` for every column (passthrough mode).
+             */
+            on_update?: components["schemas"]["ReplicationTransformOp"][];
+            /**
+             * @description Transform operations for DELETE events on this route. If omitted,
+             *     auto-derives from this route's `on_update` paths.
+             */
+            on_delete?: components["schemas"]["ReplicationTransformOp"][];
         };
         ReplicationTransformOp: {
             /**

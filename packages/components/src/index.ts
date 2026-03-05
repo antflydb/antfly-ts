@@ -9,6 +9,12 @@ import Autosuggest, {
   AutosuggestResults,
   useAutosuggestContext,
 } from "./Autosuggest";
+import {
+  confidenceLabel,
+  createAIElementsRenderers,
+  hitToSourceProps,
+  turnToStatus,
+} from "./adapters";
 import ChatBar from "./ChatBar";
 import { useChatContext } from "./ChatContext";
 import ChatInput from "./ChatInput";
@@ -80,6 +86,10 @@ export {
   ChatInput,
   useChatContext,
   useChatStream,
+  createAIElementsRenderers,
+  hitToSourceProps,
+  turnToStatus,
+  confidenceLabel,
 };
 
 export type {
@@ -99,6 +109,13 @@ export type {
   AutosuggestProps,
   AutosuggestResultsProps,
 } from "./Autosuggest";
+export type {
+  AIElementsComponents,
+  AIElementsRenderers,
+  AIElementsRenderersOptions,
+  PromptInputStatus,
+  SourceItemProps,
+} from "./adapters";
 export type { ChatBarProps } from "./ChatBar";
 export type { ChatContextValue } from "./ChatContext";
 export type { ChatInputProps } from "./ChatInput";

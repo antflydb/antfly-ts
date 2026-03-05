@@ -16,10 +16,11 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: resolve(__dirname, "src/index.ts"),
-      name: "AntflyComponents",
-      formats: ["es", "umd"],
-      fileName: (format) => `main.${format === "es" ? "js" : "umd.cjs"}`,
+      entry: {
+        main: resolve(__dirname, "src/index.ts"),
+        adapters: resolve(__dirname, "src/adapters/index.ts"),
+      },
+      formats: ["es", "cjs"],
     },
     rollupOptions: {
       // Externalize dependencies that shouldn't be bundled
