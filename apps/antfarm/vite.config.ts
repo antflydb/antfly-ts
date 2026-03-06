@@ -38,6 +38,16 @@ export default defineConfig({
   //   },
   //   include: ["@antfly/components"],
   // },
+  build: {
+    // Produce a single JS + CSS bundle. The dashboard is embedded into the Go
+    // binary via go:embed so code-splitting has no benefit — it only inflates
+    // the binary and git history (shiki alone adds ~390 chunk files).
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true,
+      },
+    },
+  },
   /* shadcn */
   resolve: {
     alias: {

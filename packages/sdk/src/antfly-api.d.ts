@@ -982,6 +982,8 @@ export interface components {
             /** @example An error message */
             error: string;
         };
+        /** @description Sort direction for a single field. true = descending, false = ascending. */
+        SortDirection: boolean;
         /**
          * @description Overall health status of the cluster
          * @enum {string}
@@ -2581,7 +2583,7 @@ export interface components {
              */
             offset?: number;
             /**
-             * @description Sort order for results. Map of field names to boolean (true = descending, false = ascending).
+             * @description Sort order for results. Map of field names to sort direction (true = descending, false = ascending).
              *     Only applicable for full_text_search queries. Semantic searches are always sorted by similarity score.
              * @example {
              *       "created_at": true,
@@ -2589,7 +2591,7 @@ export interface components {
              *     }
              */
             order_by?: {
-                [key: string]: boolean;
+                [key: string]: components["schemas"]["SortDirection"];
             };
             /**
              * Format: float
