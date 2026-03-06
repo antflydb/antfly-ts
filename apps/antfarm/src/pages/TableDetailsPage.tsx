@@ -105,17 +105,24 @@ function Row(props: {
       )}
       {(index.config.type === "embeddings" || index.config.type === "full_text") && (
         <TableCell>
-          {"total_indexed" in (index.status || {})
-            ? (index.status as { total_indexed?: number }).total_indexed
-            : "N/A"}
+          {(() => {
+            const shards = Object.values(index.shard_status || {});
+            const counts = shards
+              .map((s) => (s as { total_indexed?: number }).total_indexed)
+              .filter((v): v is number => v != null);
+            return counts.length > 0 ? counts.reduce((a, b) => a + b, 0) : "N/A";
+          })()}
         </TableCell>
       )}
       {index.config.type === "full_text" && (
         <TableCell>
-          {"disk_usage" in (index.status || {}) &&
-          (index.status as { disk_usage?: number }).disk_usage !== undefined
-            ? formatBytes((index.status as { disk_usage: number }).disk_usage)
-            : "N/A"}
+          {(() => {
+            const shards = Object.values(index.shard_status || {});
+            const sizes = shards
+              .map((s) => (s as { disk_usage?: number }).disk_usage)
+              .filter((v): v is number => v != null);
+            return sizes.length > 0 ? formatBytes(sizes.reduce((a, b) => a + b, 0)) : "N/A";
+          })()}
         </TableCell>
       )}
       <TableCell>
