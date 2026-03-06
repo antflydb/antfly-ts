@@ -242,7 +242,7 @@ export interface RetrievalAgentStreamCallbacks {
   onReasoning?: (chunk: string) => void;
   onHit?: (hit: QueryHit) => void;
   onGeneration?: (chunk: string) => void;
-  onConfidence?: (data: { generation_confidence: number; context_relevance: number }) => void;
+  onConfidence?: (data: GenerationConfidence) => void;
   onFollowup?: (question: string) => void;
   onEvalResult?: (data: EvalResult) => void;
   onClarificationRequired?: (data: ClarificationRequest) => void;

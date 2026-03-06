@@ -1,4 +1,5 @@
 import type { RetrievalReasoningStep } from "@antfly/sdk";
+import type React from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -117,7 +118,6 @@ function ActiveStepItem({ step }: { step: { id: string; step: string; action: st
           <Badge variant="outline" className="text-xs font-mono">
             {step.step}
           </Badge>
-          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
         </div>
         {step.action && (
           <p className="text-xs text-muted-foreground mt-1 truncate">{step.action}</p>

@@ -64,6 +64,16 @@ const DEFAULT_STEPS: StepsConfig = {
   confidence: { enabled: false },
 };
 
+const AVAILABLE_TOOLS = [
+  { name: "semantic_search" as ChatToolName, label: "Semantic Search", desc: "Vector similarity search" },
+  { name: "full_text_search" as ChatToolName, label: "Full-Text Search", desc: "BM25 keyword search" },
+  { name: "add_filter" as ChatToolName, label: "Add Filter", desc: "Field constraints" },
+  { name: "ask_clarification" as ChatToolName, label: "Ask Clarification", desc: "Request user input" },
+  { name: "websearch" as ChatToolName, label: "Web Search", desc: "Search the web" },
+] as const;
+
+const DEFAULT_ENABLED_TOOLS: ChatToolName[] = ["semantic_search", "full_text_search", "add_filter"];
+
 const aiRenderers = createAIElementsRenderers({
   Message,
   MessageContent,
@@ -92,11 +102,7 @@ const ChatPlaygroundPage: React.FC = () => {
   const [agentKnowledge, setAgentKnowledge] = useState("");
   const [agenticEnabled, setAgenticEnabled] = useState(false);
   const [maxIterations, setMaxIterations] = useState(5);
-  const [enabledTools, setEnabledTools] = useState<ChatToolName[]>([
-    "semantic_search",
-    "full_text_search",
-    "add_filter",
-  ]);
+  const [enabledTools, setEnabledTools] = useState<ChatToolName[]>(DEFAULT_ENABLED_TOOLS);
   const [settingsOpen, setSettingsOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1024
   );
@@ -112,7 +118,7 @@ const ChatPlaygroundPage: React.FC = () => {
     setAgentKnowledge("");
     setAgenticEnabled(false);
     setMaxIterations(5);
-    setEnabledTools(["semantic_search", "full_text_search", "add_filter"]);
+    setEnabledTools(DEFAULT_ENABLED_TOOLS);
     setChatKey((k) => k + 1);
   }, []);
 
@@ -374,35 +380,7 @@ const ChatPlaygroundPage: React.FC = () => {
                           <div className="space-y-2">
                             <Label className="text-xs text-muted-foreground">Tools</Label>
                             <div className="space-y-1">
-                              {(
-                                [
-                                  {
-                                    name: "semantic_search" as ChatToolName,
-                                    label: "Semantic Search",
-                                    desc: "Vector similarity search",
-                                  },
-                                  {
-                                    name: "full_text_search" as ChatToolName,
-                                    label: "Full-Text Search",
-                                    desc: "BM25 keyword search",
-                                  },
-                                  {
-                                    name: "add_filter" as ChatToolName,
-                                    label: "Add Filter",
-                                    desc: "Field constraints",
-                                  },
-                                  {
-                                    name: "ask_clarification" as ChatToolName,
-                                    label: "Ask Clarification",
-                                    desc: "Request user input",
-                                  },
-                                  {
-                                    name: "websearch" as ChatToolName,
-                                    label: "Web Search",
-                                    desc: "Search the web",
-                                  },
-                                ] as const
-                              ).map((tool) => (
+                              {AVAILABLE_TOOLS.map((tool) => (
                                 <label
                                   key={tool.name}
                                   className="flex items-center gap-2 text-xs p-1.5 rounded hover:bg-muted cursor-pointer"

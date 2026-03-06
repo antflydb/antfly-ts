@@ -201,7 +201,9 @@ export async function streamAnswer(
       callbacks.onHit ||
       callbacks.onGeneration ||
       callbacks.onConfidence ||
-      callbacks.onFollowup
+      callbacks.onFollowup ||
+      callbacks.onStepStarted ||
+      callbacks.onStepCompleted
     );
 
     // Build the request with streaming flag
@@ -219,11 +221,7 @@ export async function streamAnswer(
           onGeneration: callbacks.onGeneration,
           onStepStarted: callbacks.onStepStarted,
           onStepCompleted: callbacks.onStepCompleted,
-          onConfidence: callbacks.onConfidence
-            ? (data: { generation_confidence: number; context_relevance: number }) => {
-                callbacks.onConfidence?.(data);
-              }
-            : undefined,
+          onConfidence: callbacks.onConfidence,
           onFollowup: callbacks.onFollowup,
           onEvalResult: callbacks.onEvalResult,
           onDone: () => {

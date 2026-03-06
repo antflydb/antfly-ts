@@ -14,8 +14,6 @@ import type {
 import { useCallback, useRef, useState } from "react";
 import { streamAnswer } from "../utils";
 
-let nextTurnId = 0;
-
 /** Per-turn state for a chat conversation */
 export interface ChatTurn {
   /** Unique identifier for this turn */
@@ -80,6 +78,7 @@ export function useChatStream() {
   const [isStreaming, setIsStreaming] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const turnsRef = useRef<ChatTurn[]>([]);
+  const nextTurnIdRef = useRef(0);
 
   // Keep ref in sync with state
   turnsRef.current = turns;
@@ -103,7 +102,7 @@ export function useChatStream() {
 
     // Create new turn
     const newTurn: ChatTurn = {
-      id: `turn-${++nextTurnId}`,
+      id: `turn-${++nextTurnIdRef.current}`,
       userMessage: text,
       assistantMessage: "",
       hits: [],
@@ -120,12 +119,12 @@ export function useChatStream() {
       isStreaming: true,
     };
 
-    const turnIndex = currentTurns.length;
+    const turnId = newTurn.id;
     setTurns((prev) => [...prev, newTurn]);
     setIsStreaming(true);
 
     const updateTurn = (updater: (turn: ChatTurn) => ChatTurn) => {
-      setTurns((prev) => prev.map((t, i) => (i === turnIndex ? updater(t) : t)));
+      setTurns((prev) => prev.map((t) => (t.id === turnId ? updater(t) : t)));
     };
 
     // Build retrieval agent request
@@ -229,7 +228,7 @@ export function useChatStream() {
 
       abortControllerRef.current = controller;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
+      const message = err instanceof Error ? err.message : String(err);
       updateTurn((t) => ({ ...t, error: message, isStreaming: false }));
       setIsStreaming(false);
     }
