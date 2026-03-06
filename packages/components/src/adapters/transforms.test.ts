@@ -1,3 +1,4 @@
+import type { QueryHit } from "@antfly/sdk";
 import { describe, expect, it } from "vitest";
 import { confidenceLabel, hitToSourceProps, turnToStatus } from "./transforms";
 
@@ -72,12 +73,8 @@ describe("hitToSourceProps", () => {
   });
 
   it("handles undefined _source", () => {
-    const hit = { _id: "no-source", _score: 0.5 } as {
-      _id: string;
-      _score: number;
-      _source?: unknown;
-    };
-    const result = hitToSourceProps(hit as any, 0);
+    const hit: QueryHit = { _id: "no-source", _score: 0.5 };
+    const result = hitToSourceProps(hit, 0);
     expect(result.title).toBe("no-source");
     expect(result.href).toBeUndefined();
   });

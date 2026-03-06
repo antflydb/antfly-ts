@@ -1,20 +1,27 @@
 import { Antfly, ChatBar } from "@antfly/components";
-import type { GeneratorConfig, QueryHit } from "@antfly/sdk";
+import { createAIElementsRenderers, turnToStatus } from "@antfly/components/adapters";
+import type { GeneratorConfig } from "@antfly/sdk";
 import { generatorProviders } from "@antfly/sdk";
 import {
-  BookOpen,
   ChevronDown,
   ChevronRight,
   HelpCircle,
   RotateCcw,
-  Send,
   Settings,
   Sparkles,
-  Square,
   Target,
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
+import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  PromptInputFooter,
+  PromptInputSubmit,
+  PromptInputTextarea,
+} from "@/components/ai-elements/prompt-input";
+import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
+import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,87 +61,21 @@ const DEFAULT_STEPS: StepsConfig = {
   confidence: { enabled: false },
 };
 
-// Simple markdown-ish formatter for chat answers
-function formatAnswer(text: string): React.ReactNode {
-  if (!text) return null;
-
-  const lines = text.split("\n");
-  const elements: React.ReactNode[] = [];
-
-  lines.forEach((line, lineIndex) => {
-    const formattedLine = line.split(/(\[resource_id [^\]]+\])/).map((part, i) => {
-      if (part.match(/^\[resource_id [^\]]+\]$/)) {
-        return (
-          <span key={i} className="text-muted-foreground italic text-xs">
-            {part}
-          </span>
-        );
-      }
-      return part;
-    });
-
-    const bulletMatch = line.match(/^(\s*)[-*]\s+(.*)$/);
-    if (bulletMatch) {
-      const [, indent] = bulletMatch;
-      const indentLevel = Math.floor((indent?.length || 0) / 2);
-      elements.push(
-        <div key={lineIndex} className="flex gap-2" style={{ marginLeft: `${indentLevel * 1}rem` }}>
-          <span className="text-muted-foreground">•</span>
-          <span>{formattedLine}</span>
-        </div>
-      );
-    } else if (line.trim() === "") {
-      elements.push(<div key={lineIndex} className="h-3" />);
-    } else {
-      elements.push(
-        <p key={lineIndex} className="leading-relaxed">
-          {formattedLine}
-        </p>
-      );
-    }
-  });
-
-  return <div className="space-y-1">{elements}</div>;
-}
-
-function SourcesCollapsible({ hits }: { hits: QueryHit[] }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger asChild>
-        <Button variant="ghost" size="sm" className="w-full justify-between mt-1 text-xs">
-          <span className="flex items-center gap-2">
-            <BookOpen className="h-3.5 w-3.5" />
-            Sources ({hits.length})
-          </span>
-          {open ? (
-            <ChevronDown className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronRight className="h-3.5 w-3.5" />
-          )}
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="space-y-2 mt-2">
-        {hits.map((hit, i) => (
-          <div key={hit._id || i} className="p-3 rounded-lg border text-xs space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">{hit._id}</span>
-              <Badge variant="secondary" className="text-xs">
-                {hit._score?.toFixed(3)}
-              </Badge>
-            </div>
-            {hit._source && (
-              <pre className="text-muted-foreground overflow-x-auto whitespace-pre-wrap">
-                {JSON.stringify(hit._source, null, 2).slice(0, 500)}
-                {JSON.stringify(hit._source).length > 500 && "..."}
-              </pre>
-            )}
-          </div>
-        ))}
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
+const aiRenderers = createAIElementsRenderers({
+  Message,
+  MessageContent,
+  MessageResponse,
+  Sources,
+  SourcesTrigger,
+  SourcesContent,
+  Source,
+  Suggestions,
+  Suggestion,
+  PromptInput,
+  PromptInputTextarea,
+  PromptInputSubmit,
+  PromptInputFooter,
+});
 
 const ChatPlaygroundPage: React.FC = () => {
   const { apiUrl } = useApiConfig();
@@ -436,103 +377,34 @@ const ChatPlaygroundPage: React.FC = () => {
                   confidence: { enabled: steps.confidence.enabled },
                 }}
                 placeholder="Ask a question..."
-                renderUserMessage={(message) => (
-                  <div className="flex justify-end mb-3">
-                    <div className="bg-primary text-primary-foreground rounded-2xl rounded-tr-sm px-4 py-2.5 max-w-[80%] text-sm shadow-sm">
-                      {message}
-                    </div>
-                  </div>
-                )}
-                renderAssistantMessage={(message, isStreaming) => (
-                  <div className="mb-3">
-                    <div className="bg-muted/40 rounded-2xl rounded-tl-sm px-4 py-3 max-w-[90%] text-sm border border-border/50">
-                      {message ? (
-                        formatAnswer(message)
-                      ) : (
-                        <span className="text-muted-foreground italic">Generating...</span>
-                      )}
-                      {isStreaming && (
-                        <span className="inline-block w-1.5 h-4 bg-foreground/40 animate-pulse ml-0.5 rounded-sm" />
-                      )}
-                    </div>
-                  </div>
-                )}
-                renderFollowUpQuestions={(questions, onSelect) => (
-                  <div className="space-y-2 mt-3 mb-1 px-1">
-                    <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                      <HelpCircle className="h-3 w-3" />
-                      Suggested follow-ups
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {questions.map((q) => (
-                        <Button
-                          key={q}
-                          variant="outline"
-                          size="sm"
-                          className="h-auto py-1.5 px-3 text-xs font-normal"
-                          onClick={() => onSelect(q)}
-                        >
-                          {q}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                renderHits={(hits: QueryHit[]) => <SourcesCollapsible hits={hits} />}
-                renderInput={({ value, onChange, onSubmit, isStreaming: streaming, abort }) => (
-                  <form
-                    className="flex items-end gap-2 border-t px-4 py-3 bg-background"
-                    onSubmit={(e) => {
+                {...aiRenderers}
+                renderInput={({
+                  value,
+                  onChange,
+                  onSubmit,
+                  isStreaming: streaming,
+                  placeholder,
+                  abort,
+                }) => (
+                  <PromptInput
+                    onSubmit={(_msg, e) => {
                       e.preventDefault();
                       onSubmit();
                     }}
                   >
-                    <Textarea
-                      placeholder="Ask a question..."
+                    <PromptInputTextarea
                       value={value}
                       onChange={(e) => onChange(e.target.value)}
-                      className="min-h-[44px] max-h-[120px] resize-none text-sm flex-1"
+                      placeholder={placeholder}
                       disabled={streaming || !selectedTable || !selectedIndex}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          onSubmit();
-                        }
-                      }}
                     />
-                    {streaming ? (
-                      <Button
-                        type="button"
-                        size="icon"
-                        variant="destructive"
-                        className="h-[44px] w-[44px] shrink-0"
-                        aria-label="Stop generating"
-                        onClick={abort}
-                      >
-                        <Square className="h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button
-                        type="submit"
-                        size="icon"
-                        disabled={!value.trim() || !selectedTable || !selectedIndex}
-                        className="h-[44px] w-[44px] shrink-0"
-                        aria-label="Send message"
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </form>
-                )}
-                renderStreamingIndicator={() => (
-                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3 ml-1">
-                    <span className="flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce [animation-delay:0ms]" />
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce [animation-delay:150ms]" />
-                      <span className="w-1.5 h-1.5 bg-foreground/40 rounded-full animate-bounce [animation-delay:300ms]" />
-                    </span>
-                    Thinking...
-                  </div>
+                    <PromptInputFooter>
+                      <PromptInputSubmit
+                        status={turnToStatus(streaming, !!value)}
+                        onClick={streaming ? () => abort() : undefined}
+                      />
+                    </PromptInputFooter>
+                  </PromptInput>
                 )}
                 renderError={(error) => (
                   <div className="mb-3 mx-1 p-3 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive text-sm">
