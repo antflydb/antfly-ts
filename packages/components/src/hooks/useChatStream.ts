@@ -190,7 +190,7 @@ export function useChatStream() {
         onConfidence: (data) => {
           updateTurn((t) => ({ ...t, confidence: data }));
         },
-        onFollowUpQuestion: (question) => {
+        onFollowup: (question) => {
           updateTurn((t) => ({ ...t, followUpQuestions: [...t.followUpQuestions, question] }));
         },
         onComplete: () => {

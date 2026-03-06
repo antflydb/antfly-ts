@@ -124,8 +124,8 @@ streamAnswer(url, request, headers, {
   onClassification: (data) => { /* handle query classification */ },
   onHit: (hit) => { /* handle search hit */ },
   onReasoning: (chunk) => { /* handle reasoning chunk */ },
-  onAnswer: (chunk) => { /* handle answer chunk */ },
-  onFollowUpQuestion: (question) => { /* handle follow-up */ },
+  onGeneration: (chunk) => { /* handle generation chunk */ },
+  onFollowup: (question) => { /* handle follow-up */ },
   onComplete: () => { /* handle completion */ }
 });
 ```

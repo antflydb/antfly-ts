@@ -59,7 +59,7 @@ describe("useAnswerStream", () => {
           callbacks.onGeneration?.("Raft is ");
           callbacks.onGeneration?.("a consensus algorithm.");
 
-          callbacks.onFollowUpQuestion?.("What is Paxos?");
+          callbacks.onFollowup?.("What is Paxos?");
 
           callbacks.onComplete?.();
         }, 10);
@@ -367,9 +367,9 @@ describe("useAnswerStream", () => {
     vi.mocked(utils.streamAnswer).mockImplementation(
       async (_url, _request, _headers, callbacks) => {
         setTimeout(() => {
-          callbacks.onFollowUpQuestion?.("Question 1?");
-          callbacks.onFollowUpQuestion?.("Question 2?");
-          callbacks.onFollowUpQuestion?.("Question 3?");
+          callbacks.onFollowup?.("Question 1?");
+          callbacks.onFollowup?.("Question 2?");
+          callbacks.onFollowup?.("Question 3?");
           callbacks.onComplete?.();
         }, 10);
         return mockController;

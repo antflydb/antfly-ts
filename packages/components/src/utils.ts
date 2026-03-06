@@ -164,7 +164,7 @@ export interface AnswerCallbacks {
   onHit?: (hit: QueryHit) => void;
   onGeneration?: (chunk: string) => void;
   onConfidence?: (data: GenerationConfidence) => void;
-  onFollowUpQuestion?: (question: string) => void;
+  onFollowup?: (question: string) => void;
   onEvalResult?: (data: EvalResult) => void;
   onStepStarted?: (step: { id: string; step: string; action: string }) => void;
   onStepCompleted?: (step: import("@antfly/sdk").RetrievalReasoningStep) => void;
@@ -201,7 +201,7 @@ export async function streamAnswer(
       callbacks.onHit ||
       callbacks.onGeneration ||
       callbacks.onConfidence ||
-      callbacks.onFollowUpQuestion
+      callbacks.onFollowup
     );
 
     // Build the request with streaming flag
@@ -224,7 +224,7 @@ export async function streamAnswer(
                 callbacks.onConfidence?.(data);
               }
             : undefined,
-          onFollowUpQuestion: callbacks.onFollowUpQuestion,
+          onFollowup: callbacks.onFollowup,
           onEvalResult: callbacks.onEvalResult,
           onDone: () => {
             if (callbacks.onComplete) {

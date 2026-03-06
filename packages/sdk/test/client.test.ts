@@ -542,10 +542,10 @@ describe("AntflyClient", () => {
         mockFetch.mockRestore();
       });
 
-      it("should JSON-parse followup_question events to preserve newlines", async () => {
+      it("should JSON-parse followup events to preserve newlines", async () => {
         const followupWithNewlines = "Would you like to know more about:\n- Option A\n- Option B";
         const events = [
-          { event: "followup_question", data: JSON.stringify(followupWithNewlines) },
+          { event: "followup", data: JSON.stringify(followupWithNewlines) },
           { event: "done", data: JSON.stringify({ success: true }) },
         ];
 
@@ -558,7 +558,7 @@ describe("AntflyClient", () => {
         await client.retrievalAgent(
           { table: "test", query: "test query" },
           {
-            onFollowUpQuestion: (text) => receivedFollowups.push(text),
+            onFollowup: (text) => receivedFollowups.push(text),
             onDone: () => {
               doneReceived = true;
             },

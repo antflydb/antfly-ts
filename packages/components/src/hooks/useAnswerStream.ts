@@ -104,7 +104,7 @@ export function useAnswerStream() {
           onGeneration: (chunk) => {
             setAnswer((prev) => prev + chunk);
           },
-          onFollowUpQuestion: (question) => {
+          onFollowup: (question) => {
             setFollowUpQuestions((prev) => [...prev, question]);
           },
           onComplete: () => {

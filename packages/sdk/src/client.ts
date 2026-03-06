@@ -316,9 +316,9 @@ export class AntflyClient {
                         callbacks.onConfidence(JSON.parse(data));
                       }
                       break;
-                    case "followup_question":
-                      if (callbacks.onFollowUpQuestion) {
-                        callbacks.onFollowUpQuestion(JSON.parse(data));
+                    case "followup":
+                      if (callbacks.onFollowup) {
+                        callbacks.onFollowup(JSON.parse(data));
                       }
                       break;
                     case "eval":

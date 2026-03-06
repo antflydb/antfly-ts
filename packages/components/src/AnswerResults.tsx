@@ -62,7 +62,7 @@ export interface AnswerResultsProps {
   onHit?: (hit: QueryHit) => void;
   onGenerationChunk?: (chunk: string) => void;
   onConfidence?: (data: GenerationConfidence) => void;
-  onFollowUpQuestion?: (question: string) => void;
+  onFollowup?: (question: string) => void;
 
   children?: ReactNode;
 }
@@ -103,7 +103,7 @@ export default function AnswerResults({
   onHit: onHitCallback,
   onGenerationChunk: onGenerationChunkCallback,
   onConfidence: onConfidenceCallback,
-  onFollowUpQuestion: onFollowUpQuestionCallback,
+  onFollowup: onFollowupCallback,
   children,
 }: AnswerResultsProps) {
   const [{ widgets, url, table: defaultTable, headers }, dispatch] = useSharedContext();
@@ -235,9 +235,9 @@ export default function AnswerResults({
             setConfidence(data);
             onConfidenceCallback?.(data);
           },
-          onFollowUpQuestion: (question) => {
+          onFollowup: (question) => {
             setFollowUpQuestions((prev) => [...prev, question]);
-            onFollowUpQuestionCallback?.(question);
+            onFollowupCallback?.(question);
           },
           onEvalResult: (data) => {
             setEvalResult(data);
@@ -330,7 +330,7 @@ export default function AnswerResults({
     onHitCallback,
     onGenerationChunkCallback,
     onConfidenceCallback,
-    onFollowUpQuestionCallback,
+    onFollowupCallback,
   ]);
 
   // Register this component as a widget (for consistency with other components)
@@ -516,7 +516,7 @@ export default function AnswerResults({
           generation: answer,
           hits,
           followup_questions: followUpQuestions,
-          state: "complete",
+          status: "completed",
         } as RetrievalAgentResult)
       : null;
 
