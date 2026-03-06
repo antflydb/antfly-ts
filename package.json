@@ -19,8 +19,8 @@
     "ci-check": "bash scripts/ci-check.sh"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.4",
-    "turbo": "^2.8.12",
+    "@biomejs/biome": "^2.4.6",
+    "turbo": "^2.8.13",
     "typescript": "^5.9.3"
   },
   "engines": {
