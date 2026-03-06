@@ -1,4 +1,4 @@
-import type { GeneratorConfig, RetrievalAgentSteps } from "@antfly/sdk";
+import type { ChatToolsConfig, GeneratorConfig, RetrievalAgentSteps } from "@antfly/sdk";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { ChatContext, type ChatContextValue } from "./ChatContext";
@@ -30,6 +30,8 @@ export interface ChatBarProps extends ChatMessagesProps, ChatInputProps {
   limit?: number;
   /** Retrieval agent steps configuration */
   steps?: RetrievalAgentSteps;
+  /** Tool configuration for agentic mode */
+  tools?: ChatToolsConfig;
   /** Fields to include in results */
   fields?: string[];
   /** Filter query to constrain results */
@@ -59,6 +61,7 @@ export default function ChatBar({
   followUpCount,
   limit,
   steps,
+  tools,
   fields,
   filterQuery,
   exclusionQuery,
@@ -100,6 +103,7 @@ export default function ChatBar({
       followUpCount,
       limit,
       steps,
+      tools,
       fields,
       filterQuery,
       exclusionQuery,
@@ -116,6 +120,7 @@ export default function ChatBar({
       followUpCount,
       limit,
       steps,
+      tools,
       fields,
       filterQuery,
       exclusionQuery,

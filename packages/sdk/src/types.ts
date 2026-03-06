@@ -234,19 +234,22 @@ export interface AntflyConfig {
 export type RetrievalAgentRequest = components["schemas"]["RetrievalAgentRequest"];
 export type RetrievalAgentResult = components["schemas"]["RetrievalAgentResult"];
 export type RetrievalAgentSteps = components["schemas"]["RetrievalAgentSteps"];
+export type RetrievalReasoningStep = components["schemas"]["RetrievalReasoningStep"];
 
 // Retrieval Agent streaming callbacks for structured SSE events
 export interface RetrievalAgentStreamCallbacks {
   onClassification?: (data: ClassificationTransformationResult) => void;
   onReasoning?: (chunk: string) => void;
   onHit?: (hit: QueryHit) => void;
-  onAnswer?: (chunk: string) => void;
+  onGeneration?: (chunk: string) => void;
   onConfidence?: (data: { generation_confidence: number; context_relevance: number }) => void;
   onFollowUpQuestion?: (question: string) => void;
   onEvalResult?: (data: EvalResult) => void;
   onClarificationRequired?: (data: ClarificationRequest) => void;
   onFilterApplied?: (filter: FilterSpec) => void;
   onSearchExecuted?: (data: { query: string }) => void;
+  onStepStarted?: (step: { id: string; step: string; action: string }) => void;
+  onStepCompleted?: (step: RetrievalReasoningStep) => void;
   onDone?: (data?: { complete: boolean }) => void;
   onError?: (error: string) => void;
 }

@@ -15,6 +15,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
   const [tables, setTables] = useState<TableStatus[]>([]);
   const [isLoadingTables, setIsLoadingTables] = useState(false);
   const [embeddingIndexes, setEmbeddingIndexes] = useState<string[]>([]);
+  const [chatIndexes, setChatIndexes] = useState<string[]>([]);
   const [isLoadingIndexes, setIsLoadingIndexes] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState("");
 
@@ -107,20 +108,33 @@ export function TableProvider({ children }: { children: ReactNode }) {
     const fetchIndexes = async () => {
       if (!selectedTable) {
         setEmbeddingIndexes([]);
+        setChatIndexes([]);
         setSelectedIndex("");
         return;
       }
       setIsLoadingIndexes(true);
       try {
         const response = await apiClient.indexes.list(selectedTable);
-        const embeddingIdxs = (response || [])
+        const indexes = response || [];
+        const embeddingIdxs = indexes
           .filter(
             (idx: { config?: { type?: string } }) =>
               idx.config?.type?.includes("aknn") || idx.config?.type?.includes("embedding")
           )
           .map((idx: { config?: { name?: string } }) => idx.config?.name || "")
           .filter(Boolean);
+        // Chat indexes include both embedding and full-text indexes
+        const chatIdxs = indexes
+          .filter(
+            (idx: { config?: { type?: string } }) =>
+              idx.config?.type?.includes("aknn") ||
+              idx.config?.type?.includes("embedding") ||
+              idx.config?.type?.includes("full_text")
+          )
+          .map((idx: { config?: { name?: string } }) => idx.config?.name || "")
+          .filter(Boolean);
         setEmbeddingIndexes(embeddingIdxs);
+        setChatIndexes(chatIdxs);
         if (embeddingIdxs.length > 0) {
           setSelectedIndex(embeddingIdxs[0]);
         } else {
@@ -128,6 +142,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
         }
       } catch {
         setEmbeddingIndexes([]);
+        setChatIndexes([]);
         setSelectedIndex("");
       } finally {
         setIsLoadingIndexes(false);
@@ -144,6 +159,7 @@ export function TableProvider({ children }: { children: ReactNode }) {
         selectedTable,
         setSelectedTable,
         embeddingIndexes,
+        chatIndexes,
         isLoadingIndexes,
         selectedIndex,
         setSelectedIndex,

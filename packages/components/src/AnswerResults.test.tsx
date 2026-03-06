@@ -98,8 +98,8 @@ describe("AnswerResults", () => {
     it("should stream answer chunks progressively", async () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Hello ");
-        callbacks.onAnswer?.("world");
+        callbacks.onGeneration?.("Hello ");
+        callbacks.onGeneration?.("world");
         callbacks.onComplete?.();
         return new AbortController();
       });
@@ -185,7 +185,7 @@ describe("AnswerResults", () => {
     it("should display eval results when eval config is provided", async () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Test answer");
+        callbacks.onGeneration?.("Test answer");
         callbacks.onEvalResult?.(mockEvalResult);
         callbacks.onComplete?.();
         return new AbortController();
@@ -228,7 +228,7 @@ describe("AnswerResults", () => {
     it("should not display eval results when no eval config provided", async () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Test answer");
+        callbacks.onGeneration?.("Test answer");
         callbacks.onComplete?.();
         return new AbortController();
       });
@@ -266,7 +266,7 @@ describe("AnswerResults", () => {
     it("should use custom renderEvalResult when provided", async () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Test answer");
+        callbacks.onGeneration?.("Test answer");
         callbacks.onEvalResult?.(mockEvalResult);
         callbacks.onComplete?.();
         return new AbortController();
@@ -316,7 +316,7 @@ describe("AnswerResults", () => {
       let completeCallback: (() => void) | undefined;
 
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Streaming...");
+        callbacks.onGeneration?.("Streaming...");
         callbacks.onEvalResult?.(mockEvalResult);
         // Don't call onComplete yet - keep streaming
         completeCallback = callbacks.onComplete;
@@ -371,7 +371,7 @@ describe("AnswerResults", () => {
     it("should display retrieval and generation metrics separately", async () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Test answer");
+        callbacks.onGeneration?.("Test answer");
         callbacks.onEvalResult?.(mockEvalResult);
         callbacks.onComplete?.();
         return new AbortController();
@@ -421,7 +421,7 @@ describe("AnswerResults", () => {
     it("should display eval duration when available", async () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Test answer");
+        callbacks.onGeneration?.("Test answer");
         callbacks.onEvalResult?.(mockEvalResult);
         callbacks.onComplete?.();
         return new AbortController();
@@ -498,7 +498,7 @@ describe("AnswerResults", () => {
     it("should call onStreamStart and onStreamEnd", async () => {
       const mockStreamAnswer = vi.mocked(utils.streamAnswer);
       mockStreamAnswer.mockImplementation(async (_url, _request, _headers, callbacks) => {
-        callbacks.onAnswer?.("Test");
+        callbacks.onGeneration?.("Test");
         callbacks.onComplete?.();
         return new AbortController();
       });

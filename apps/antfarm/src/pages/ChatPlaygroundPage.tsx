@@ -1,8 +1,10 @@
 import { Antfly, ChatBar } from "@antfly/components";
+import type { ChatTurn } from "@antfly/components";
 import { createAIElementsRenderers, turnToStatus } from "@antfly/components/adapters";
-import type { GeneratorConfig } from "@antfly/sdk";
+import type { ChatToolName, GeneratorConfig } from "@antfly/sdk";
 import { generatorProviders } from "@antfly/sdk";
 import {
+  Bot,
   ChevronDown,
   ChevronRight,
   HelpCircle,
@@ -13,6 +15,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
+import { ReasoningChainCollapsible } from "@/components/playground/ReasoningChainCollapsible";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
   PromptInput,
@@ -79,7 +82,7 @@ const aiRenderers = createAIElementsRenderers({
 
 const ChatPlaygroundPage: React.FC = () => {
   const { apiUrl } = useApiConfig();
-  const { selectedTable, selectedIndex } = useTable();
+  const { selectedTable, chatIndexes } = useTable();
 
   // Config state
   const [generator, setGenerator] = useState<GeneratorConfig>(DEFAULT_GENERATOR);
@@ -87,6 +90,13 @@ const ChatPlaygroundPage: React.FC = () => {
   const [steps, setSteps] = useState<StepsConfig>(DEFAULT_STEPS);
   const [systemPrompt, setSystemPrompt] = useState("");
   const [agentKnowledge, setAgentKnowledge] = useState("");
+  const [agenticEnabled, setAgenticEnabled] = useState(false);
+  const [maxIterations, setMaxIterations] = useState(5);
+  const [enabledTools, setEnabledTools] = useState<ChatToolName[]>([
+    "semantic_search",
+    "full_text_search",
+    "add_filter",
+  ]);
   const [settingsOpen, setSettingsOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1024
   );
@@ -100,6 +110,9 @@ const ChatPlaygroundPage: React.FC = () => {
     setSteps(DEFAULT_STEPS);
     setSystemPrompt("");
     setAgentKnowledge("");
+    setAgenticEnabled(false);
+    setMaxIterations(5);
+    setEnabledTools(["semantic_search", "full_text_search", "add_filter"]);
     setChatKey((k) => k + 1);
   }, []);
 
@@ -124,11 +137,13 @@ const ChatPlaygroundPage: React.FC = () => {
         {selectedTable ? (
           <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
             <Badge variant="secondary">{selectedTable}</Badge>
-            {selectedIndex ? (
-              <Badge variant="outline">{selectedIndex}</Badge>
+            {chatIndexes.length > 0 ? (
+              <Badge variant="outline">
+                {chatIndexes.length} index{chatIndexes.length !== 1 ? "es" : ""}
+              </Badge>
             ) : (
               <span className="text-amber-600 dark:text-amber-400 text-xs">
-                No semantic index selected — chat requires a semantic index
+                No searchable index found
               </span>
             )}
           </div>
@@ -317,6 +332,107 @@ const ChatPlaygroundPage: React.FC = () => {
                       </div>
                     </div>
 
+                    <Separator />
+
+                    {/* Agentic Mode */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 rounded-lg border">
+                        <div className="flex items-center gap-3">
+                          <Bot className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="text-sm font-medium">Agentic Mode</p>
+                            <p className="text-xs text-muted-foreground">
+                              LLM autonomously picks tools
+                            </p>
+                          </div>
+                        </div>
+                        <Switch
+                          checked={agenticEnabled}
+                          onCheckedChange={setAgenticEnabled}
+                        />
+                      </div>
+
+                      {agenticEnabled && (
+                        <div className="space-y-3 pl-2">
+                          <div className="space-y-2">
+                            <Label className="text-xs text-muted-foreground">
+                              Max Iterations
+                            </Label>
+                            <Input
+                              type="number"
+                              value={maxIterations}
+                              onChange={(e) =>
+                                setMaxIterations(
+                                  Math.max(1, Math.min(20, parseInt(e.target.value) || 5))
+                                )
+                              }
+                              min={1}
+                              max={20}
+                              className="w-20 h-7 text-xs"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs text-muted-foreground">Tools</Label>
+                            <div className="space-y-1">
+                              {(
+                                [
+                                  {
+                                    name: "semantic_search" as ChatToolName,
+                                    label: "Semantic Search",
+                                    desc: "Vector similarity search",
+                                  },
+                                  {
+                                    name: "full_text_search" as ChatToolName,
+                                    label: "Full-Text Search",
+                                    desc: "BM25 keyword search",
+                                  },
+                                  {
+                                    name: "add_filter" as ChatToolName,
+                                    label: "Add Filter",
+                                    desc: "Field constraints",
+                                  },
+                                  {
+                                    name: "ask_clarification" as ChatToolName,
+                                    label: "Ask Clarification",
+                                    desc: "Request user input",
+                                  },
+                                  {
+                                    name: "websearch" as ChatToolName,
+                                    label: "Web Search",
+                                    desc: "Search the web",
+                                  },
+                                ] as const
+                              ).map((tool) => (
+                                <label
+                                  key={tool.name}
+                                  className="flex items-center gap-2 text-xs p-1.5 rounded hover:bg-muted cursor-pointer"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={enabledTools.includes(tool.name)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setEnabledTools((t) => [...t, tool.name]);
+                                      } else {
+                                        setEnabledTools((t) =>
+                                          t.filter((n) => n !== tool.name)
+                                        );
+                                      }
+                                    }}
+                                    className="rounded"
+                                  />
+                                  <span className="font-medium">{tool.label}</span>
+                                  <span className="text-muted-foreground">— {tool.desc}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
                     {/* System Prompt */}
                     <div className="space-y-2">
                       <Label>System Prompt (optional)</Label>
@@ -359,9 +475,10 @@ const ChatPlaygroundPage: React.FC = () => {
                   temperature: generator.temperature,
                 }}
                 table={selectedTable}
-                semanticIndexes={selectedIndex ? [selectedIndex] : undefined}
+                semanticIndexes={chatIndexes.length > 0 ? chatIndexes : undefined}
                 agentKnowledge={agentKnowledge || undefined}
                 systemPrompt={systemPrompt || undefined}
+                maxIterations={agenticEnabled ? maxIterations : undefined}
                 limit={limit}
                 followUpCount={steps.followup.enabled ? steps.followup.count : undefined}
                 showFollowUpQuestions={steps.followup.enabled}
@@ -376,8 +493,38 @@ const ChatPlaygroundPage: React.FC = () => {
                   },
                   confidence: { enabled: steps.confidence.enabled },
                 }}
+                tools={
+                  agenticEnabled
+                    ? {
+                        enabled_tools: enabledTools,
+                        max_tool_iterations: maxIterations,
+                      }
+                    : undefined
+                }
                 placeholder="Ask a question..."
                 {...aiRenderers}
+                renderAssistantMessage={(
+                  message: string,
+                  isStreaming: boolean,
+                  turn: ChatTurn
+                ) => (
+                  <>
+                    {aiRenderers.renderAssistantMessage?.(message, isStreaming, turn)}
+                    {(turn.reasoningChain.length > 0 ||
+                      turn.activeSteps.length > 0 ||
+                      turn.reasoningText) && (
+                      <div className="mt-1 ml-1">
+                        <ReasoningChainCollapsible
+                          chain={turn.reasoningChain}
+                          activeSteps={turn.activeSteps}
+                          toolCallsMade={turn.toolCallsMade}
+                          reasoningText={turn.reasoningText}
+                          isStreaming={turn.isStreaming}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
                 renderInput={({
                   value,
                   onChange,
@@ -396,7 +543,7 @@ const ChatPlaygroundPage: React.FC = () => {
                       value={value}
                       onChange={(e) => onChange(e.target.value)}
                       placeholder={placeholder}
-                      disabled={streaming || !selectedTable || !selectedIndex}
+                      disabled={streaming || !selectedTable || chatIndexes.length === 0}
                     />
                     <PromptInputFooter>
                       <PromptInputSubmit

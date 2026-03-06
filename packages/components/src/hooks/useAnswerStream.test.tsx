@@ -56,8 +56,8 @@ describe("useAnswerStream", () => {
           callbacks.onReasoning?.("Thinking about ");
           callbacks.onReasoning?.("the problem...");
 
-          callbacks.onAnswer?.("Raft is ");
-          callbacks.onAnswer?.("a consensus algorithm.");
+          callbacks.onGeneration?.("Raft is ");
+          callbacks.onGeneration?.("a consensus algorithm.");
 
           callbacks.onFollowUpQuestion?.("What is Paxos?");
 
@@ -191,7 +191,7 @@ describe("useAnswerStream", () => {
     vi.mocked(utils.streamAnswer).mockImplementation(
       async (_url, _request, _headers, callbacks) => {
         setTimeout(() => {
-          callbacks.onAnswer?.("First answer");
+          callbacks.onGeneration?.("First answer");
           callbacks.onComplete?.();
         }, 10);
         return mockController;
@@ -220,7 +220,7 @@ describe("useAnswerStream", () => {
     vi.mocked(utils.streamAnswer).mockImplementation(
       async (_url, _request, _headers, callbacks) => {
         setTimeout(() => {
-          callbacks.onAnswer?.("Second answer");
+          callbacks.onGeneration?.("Second answer");
           callbacks.onComplete?.();
         }, 10);
         return mockController;
@@ -282,7 +282,7 @@ describe("useAnswerStream", () => {
     vi.mocked(utils.streamAnswer).mockImplementation(
       async (_url, _request, _headers, callbacks) => {
         setTimeout(() => {
-          callbacks.onAnswer?.("Test answer");
+          callbacks.onGeneration?.("Test answer");
           callbacks.onReasoning?.("Test reasoning");
           callbacks.onHit?.({
             _id: "doc1",

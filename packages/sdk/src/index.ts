@@ -162,6 +162,7 @@ export type {
   RetrievalAgentResult,
   RetrievalAgentSteps,
   RetrievalAgentStreamCallbacks,
+  RetrievalReasoningStep,
   RouteType,
   SemanticQueryMode,
   SignificanceAlgorithm,

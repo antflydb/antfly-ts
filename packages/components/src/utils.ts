@@ -162,10 +162,12 @@ export interface AnswerCallbacks {
   onClassification?: (data: ClassificationTransformationResult) => void;
   onReasoning?: (chunk: string) => void;
   onHit?: (hit: QueryHit) => void;
-  onAnswer?: (chunk: string) => void;
+  onGeneration?: (chunk: string) => void;
   onConfidence?: (data: GenerationConfidence) => void;
   onFollowUpQuestion?: (question: string) => void;
   onEvalResult?: (data: EvalResult) => void;
+  onStepStarted?: (step: { id: string; step: string; action: string }) => void;
+  onStepCompleted?: (step: import("@antfly/sdk").RetrievalReasoningStep) => void;
   onComplete?: () => void;
   onError?: (error: Error | string) => void;
   onRetrievalAgentResult?: (result: RetrievalAgentResult) => void;
@@ -197,7 +199,7 @@ export async function streamAnswer(
       callbacks.onClassification ||
       callbacks.onReasoning ||
       callbacks.onHit ||
-      callbacks.onAnswer ||
+      callbacks.onGeneration ||
       callbacks.onConfidence ||
       callbacks.onFollowUpQuestion
     );
@@ -214,7 +216,9 @@ export async function streamAnswer(
           onClassification: callbacks.onClassification,
           onReasoning: callbacks.onReasoning,
           onHit: callbacks.onHit,
-          onAnswer: callbacks.onAnswer,
+          onGeneration: callbacks.onGeneration,
+          onStepStarted: callbacks.onStepStarted,
+          onStepCompleted: callbacks.onStepCompleted,
           onConfidence: callbacks.onConfidence
             ? (data: { generation_confidence: number; context_relevance: number }) => {
                 callbacks.onConfidence?.(data);

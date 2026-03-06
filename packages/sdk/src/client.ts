@@ -297,8 +297,18 @@ export class AntflyClient {
                       }
                       break;
                     case "generation":
-                      if (callbacks.onAnswer) {
-                        callbacks.onAnswer(JSON.parse(data));
+                      if (callbacks.onGeneration) {
+                        callbacks.onGeneration(JSON.parse(data));
+                      }
+                      break;
+                    case "step_started":
+                      if (callbacks.onStepStarted) {
+                        callbacks.onStepStarted(JSON.parse(data));
+                      }
+                      break;
+                    case "step_completed":
+                      if (callbacks.onStepCompleted) {
+                        callbacks.onStepCompleted(JSON.parse(data));
                       }
                       break;
                     case "confidence":
@@ -409,9 +419,9 @@ export class AntflyClient {
 
       const wrappedCallbacks: RetrievalAgentStreamCallbacks = {
         ...callbacks,
-        onAnswer: (chunk: string) => {
+        onGeneration: (chunk: string) => {
           answerText += chunk;
-          callbacks.onAnswer?.(chunk);
+          callbacks.onGeneration?.(chunk);
         },
         onDone: (data) => {
           // Build updated messages with assistant response

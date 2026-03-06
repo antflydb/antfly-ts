@@ -504,7 +504,7 @@ const RagPlaygroundPage: React.FC = () => {
           onError={handleError}
           onClassification={handleClassification}
           onHit={handleHit}
-          onAnswerChunk={handleAnswerChunk}
+          onGenerationChunk={handleAnswerChunk}
           onConfidence={handleConfidence}
           onFollowUpQuestion={handleFollowUpQuestion}
         />

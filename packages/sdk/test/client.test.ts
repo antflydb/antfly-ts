@@ -525,7 +525,7 @@ describe("AntflyClient", () => {
         await client.retrievalAgent(
           { table: "test", query: "test query" },
           {
-            onAnswer: (text) => receivedAnswers.push(text),
+            onGeneration: (text) => receivedAnswers.push(text),
             onDone: () => {
               doneReceived = true;
             },
@@ -593,7 +593,7 @@ describe("AntflyClient", () => {
         await client.retrievalAgent(
           { table: "test", query: "test query" },
           {
-            onAnswer: (text) => receivedAnswers.push(text),
+            onGeneration: (text) => receivedAnswers.push(text),
             onDone: () => {
               doneReceived = true;
             },

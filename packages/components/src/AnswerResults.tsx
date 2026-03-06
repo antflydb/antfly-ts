@@ -60,7 +60,7 @@ export interface AnswerResultsProps {
   // Detailed streaming callbacks
   onClassification?: (data: ClassificationTransformationResult) => void;
   onHit?: (hit: QueryHit) => void;
-  onAnswerChunk?: (chunk: string) => void;
+  onGenerationChunk?: (chunk: string) => void;
   onConfidence?: (data: GenerationConfidence) => void;
   onFollowUpQuestion?: (question: string) => void;
 
@@ -101,7 +101,7 @@ export default function AnswerResults({
   onError: onErrorCallback,
   onClassification: onClassificationCallback,
   onHit: onHitCallback,
-  onAnswerChunk: onAnswerChunkCallback,
+  onGenerationChunk: onGenerationChunkCallback,
   onConfidence: onConfidenceCallback,
   onFollowUpQuestion: onFollowUpQuestionCallback,
   children,
@@ -227,9 +227,9 @@ export default function AnswerResults({
             setHits((prev) => [...prev, hit]);
             onHitCallback?.(hit);
           },
-          onAnswer: (chunk) => {
+          onGeneration: (chunk) => {
             setAnswer((prev) => prev + chunk);
-            onAnswerChunkCallback?.(chunk);
+            onGenerationChunkCallback?.(chunk);
           },
           onConfidence: (data) => {
             setConfidence(data);
@@ -328,7 +328,7 @@ export default function AnswerResults({
     onErrorCallback,
     onClassificationCallback,
     onHitCallback,
-    onAnswerChunkCallback,
+    onGenerationChunkCallback,
     onConfidenceCallback,
     onFollowUpQuestionCallback,
   ]);

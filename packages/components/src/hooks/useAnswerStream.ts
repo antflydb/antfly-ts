@@ -101,7 +101,7 @@ export function useAnswerStream() {
           onReasoning: (chunk) => {
             setReasoning((prev) => prev + chunk);
           },
-          onAnswer: (chunk) => {
+          onGeneration: (chunk) => {
             setAnswer((prev) => prev + chunk);
           },
           onFollowUpQuestion: (question) => {

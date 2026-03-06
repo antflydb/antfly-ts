@@ -1,5 +1,6 @@
 import type {
   ChatMessage,
+  ChatToolsConfig,
   ClarificationRequest,
   ClassificationTransformationResult,
   FilterSpec,
@@ -8,6 +9,7 @@ import type {
   QueryHit,
   RetrievalAgentRequest,
   RetrievalAgentSteps,
+  RetrievalReasoningStep,
 } from "@antfly/sdk";
 import { useCallback, useRef, useState } from "react";
 import { streamAnswer } from "../utils";
@@ -34,6 +36,14 @@ export interface ChatTurn {
   clarification: ClarificationRequest | null;
   /** Filters applied during retrieval */
   appliedFilters: FilterSpec[];
+  /** Accumulated reasoning text */
+  reasoningText: string;
+  /** Completed reasoning steps from the agent */
+  reasoningChain: RetrievalReasoningStep[];
+  /** Steps currently in progress (during streaming) */
+  activeSteps: { id: string; step: string; action: string }[];
+  /** Number of tool calls made by the agent */
+  toolCallsMade: number;
   /** Error for this turn */
   error: string | null;
   /** Whether this turn is currently streaming */
@@ -53,6 +63,7 @@ export interface ChatConfig {
   followUpCount?: number;
   limit?: number;
   steps?: RetrievalAgentSteps;
+  tools?: ChatToolsConfig;
   fields?: string[];
   filterQuery?: Record<string, unknown>;
   exclusionQuery?: Record<string, unknown>;
@@ -101,6 +112,10 @@ export function useChatStream() {
       confidence: null,
       clarification: null,
       appliedFilters: [],
+      reasoningText: "",
+      reasoningChain: [],
+      activeSteps: [],
+      toolCallsMade: 0,
       error: null,
       isStreaming: true,
     };
@@ -142,6 +157,7 @@ export function useChatStream() {
           ...(config.followUpCount ? { count: config.followUpCount } : {}),
         },
         confidence: { enabled: true },
+        ...(config.tools ? { tools: config.tools } : {}),
       },
       ...(config.maxIterations ? { max_iterations: config.maxIterations } : {}),
     };
@@ -154,10 +170,21 @@ export function useChatStream() {
         onHit: (hit) => {
           updateTurn((t) => ({ ...t, hits: [...t.hits, hit] }));
         },
-        onReasoning: () => {
-          // Reasoning is available but not exposed per-turn in chat mode
+        onReasoning: (chunk) => {
+          updateTurn((t) => ({ ...t, reasoningText: t.reasoningText + chunk }));
         },
-        onAnswer: (chunk) => {
+        onStepStarted: (step) => {
+          updateTurn((t) => ({ ...t, activeSteps: [...t.activeSteps, step] }));
+        },
+        onStepCompleted: (step) => {
+          updateTurn((t) => ({
+            ...t,
+            reasoningChain: [...t.reasoningChain, step],
+            activeSteps: t.activeSteps.filter((s) => s.id !== step.id),
+            toolCallsMade: t.toolCallsMade + 1,
+          }));
+        },
+        onGeneration: (chunk) => {
           updateTurn((t) => ({ ...t, assistantMessage: t.assistantMessage + chunk }));
         },
         onConfidence: (data) => {
@@ -184,6 +211,9 @@ export function useChatStream() {
             classification: result.classification || null,
             clarification: result.clarification_request || null,
             appliedFilters: result.applied_filters || [],
+            reasoningChain: result.reasoning_chain || t.reasoningChain,
+            toolCallsMade: result.tool_calls_made ?? t.toolCallsMade,
+            activeSteps: [],
             confidence:
               result.generation_confidence !== undefined && result.context_relevance !== undefined
                 ? {

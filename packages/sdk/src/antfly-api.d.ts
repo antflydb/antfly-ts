@@ -1956,13 +1956,26 @@ export interface components {
             warnings?: string[];
         };
         /**
-         * @description Current state of the retrieval agent:
-         *     - tool_calling: Agent is actively calling tools to find documents
-         *     - complete: Retrieval finished
-         *     - awaiting_clarification: Paused waiting for user input
+         * @description Current status of the retrieval agent execution:
+         *     - completed: Agent finished successfully
+         *     - in_progress: Agent is still executing (streaming context)
+         *     - incomplete: Agent stopped before completion (see incomplete_details)
+         *     - failed: Error occurred during execution
          * @enum {string}
          */
-        RetrievalAgentState: "tool_calling" | "complete" | "awaiting_clarification";
+        RetrievalAgentStatus: "completed" | "in_progress" | "incomplete" | "failed";
+        /** @description Explains why the agent stopped before completion. Present when status is "incomplete". */
+        IncompleteDetails: {
+            /**
+             * @description Why the agent stopped:
+             *     - max_iterations: Hit the configured max_iterations limit
+             *     - max_tokens: LLM output was truncated
+             *     - no_tools: No tools were available for agentic mode
+             *     - clarification_needed: Agent needs user input to proceed
+             * @enum {string}
+             */
+            reason: "max_iterations" | "max_tokens" | "no_tools" | "clarification_needed";
+        };
         /**
          * @description Strategy for document retrieval:
          *     - semantic: Vector similarity search using embeddings
@@ -2040,6 +2053,11 @@ export interface components {
         /** @description A step in the retrieval reasoning chain */
         RetrievalReasoningStep: {
             /**
+             * @description Unique step ID for correlation and tracing
+             * @example step_cr3ig20h5tbs73e3ahrg
+             */
+            id?: string;
+            /**
              * @description Name of the tool call or action taken
              * @example semantic_search
              */
@@ -2049,10 +2067,47 @@ export interface components {
              * @example Searched for OAuth configuration in doc_embeddings index
              */
             action: string;
+            /**
+             * @description Outcome of this step
+             * @enum {string}
+             */
+            status?: "success" | "error" | "skipped";
+            /** @description Error details when status is "error" */
+            error_message?: string;
+            /** @description Server-side execution time in milliseconds */
+            duration_ms?: number;
             /** @description Additional details about the step (e.g., tool arguments, result count) */
             details?: {
                 [key: string]: unknown;
             };
+        };
+        /** @description Statistics from token-based document pruning */
+        PruneStats: {
+            /** @description Number of resources kept after pruning */
+            resources_kept?: number;
+            /** @description Number of resources pruned to fit token budget */
+            resources_pruned?: number;
+            /** @description Estimated tokens in kept resources */
+            tokens_kept?: number;
+            /** @description Estimated tokens in pruned resources */
+            tokens_pruned?: number;
+        };
+        /** @description Token usage and resource statistics from the retrieval agent execution */
+        RetrievalAgentUsage: {
+            /** @description Total input tokens across all LLM calls */
+            input_tokens?: number;
+            /** @description Total output tokens across all LLM calls */
+            output_tokens?: number;
+            /** @description Sum of input + output tokens */
+            total_tokens?: number;
+            /** @description Input tokens served from cache */
+            cached_input_tokens?: number;
+            /** @description Number of LLM invocations made */
+            llm_calls?: number;
+            /** @description Total resources found across all search queries */
+            resources_retrieved?: number;
+            /** @description Token pruning statistics, present when max_context_tokens was configured */
+            prune_stats?: components["schemas"]["PruneStats"];
         };
         /**
          * @description Configuration for the retrieval agent's pipeline steps and tool-use behavior.
@@ -2190,15 +2245,34 @@ export interface components {
         };
         /** @description Result from the retrieval agent */
         RetrievalAgentResult: {
+            /**
+             * @description Unique response ID for logging and tracing
+             * @example ragr_cr3ig20h5tbs73e3ahrg
+             */
+            id?: string;
+            /**
+             * @description LLM model used for generation
+             * @example gemini-2.0-flash
+             */
+            model?: string;
+            /**
+             * Format: int64
+             * @description Unix timestamp (seconds) when the response was created
+             */
+            created_at?: number;
+            /** @description Current status of the agent execution */
+            status: components["schemas"]["RetrievalAgentStatus"];
+            /** @description Present when status is "incomplete" — explains why */
+            incomplete_details?: components["schemas"]["IncompleteDetails"];
+            /** @description Token usage and resource statistics from this execution */
+            usage?: components["schemas"]["RetrievalAgentUsage"];
             /** @description Retrieved query hits */
             hits: components["schemas"]["QueryHit"][];
             /** @description Steps taken during retrieval (tool calls, actions) */
             reasoning_chain?: components["schemas"]["RetrievalReasoningStep"][];
             /** @description Primary strategy that was used (optional in agentic mode) */
             strategy_used?: components["schemas"]["RetrievalStrategy"];
-            /** @description Final state of the agent */
-            state: components["schemas"]["RetrievalAgentState"];
-            /** @description Present if state is awaiting_clarification */
+            /** @description Present when status is "incomplete" with reason "clarification_needed" */
             clarification_request?: components["schemas"]["ClarificationRequest"];
             /** @description Filters that were applied during retrieval */
             applied_filters?: components["schemas"]["FilterSpec"][];
