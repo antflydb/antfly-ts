@@ -27,6 +27,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Address code review findings across SDK
 
+## [@antfly/components@0.0.11] - 2026-03-09
+
+### Added
+- ChatBar component library and chat playground
+- AI Elements adapters integration
+- Tabbed Pipeline/Response view using AnswerResults component
+- Step lifecycle SSE events in Answer Agent streaming
+
+### Changed
+- Rename `onAnswer` to `onGeneration` in Answer Agent streaming
+- Standardize followup SSE event name and rename `onFollowUpQuestion` to `onFollowup`
+- Consolidate Vite chunks to single file
+- Update dependencies
+
+### Fixed
+- Prevent stale closure from overwriting widget state in Listener
+- Address code review findings across components
+
 ## [@antfly/sdk@0.0.12] - 2025-12-29
 
 ## [@antfly/sdk@0.0.11] - 2025-12-22
