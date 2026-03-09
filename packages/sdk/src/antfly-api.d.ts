@@ -497,7 +497,7 @@ export interface paths {
          *       },
          *       "indexes": {
          *         "search_idx": {
-         *           "type": "full_text_v0"
+         *           "type": "full_text"
          *         }
          *       }
          *     }
@@ -539,7 +539,7 @@ export interface paths {
          *       },
          *       "indexes": {
          *         "semantic_idx": {
-         *           "type": "aknn_v0",
+         *           "type": "embeddings",
          *           "field": "description",
          *           "embedder": {
          *             "provider": "ollama",
@@ -1087,10 +1087,10 @@ export interface components {
              *     You can add multiple indexes to support different query patterns.
              * @example {
              *       "search_index": {
-             *         "type": "full_text_v0"
+             *         "type": "full_text"
              *       },
              *       "embedding_index": {
-             *         "type": "aknn_v0",
+             *         "type": "embeddings",
              *         "dimension": 384,
              *         "embedder": {
              *           "provider": "ollama",
@@ -5451,6 +5451,12 @@ export interface components {
             mem_only?: boolean;
         };
         /**
+         * @description Distance metric for the vector index (dense only). Use "cosine" for models trained with cosine similarity (e.g. CLIP, OpenAI). Use "inner_product" for models trained with dot product similarity. Use "l2_squared" (default) for models trained with Euclidean distance.
+         * @default l2_squared
+         * @enum {string}
+         */
+        DistanceMetric: "l2_squared" | "inner_product" | "cosine";
+        /**
          * @description Configuration for the Google AI (Gemini) embedding provider.
          *
          *     API key via `api_key` field or `GEMINI_API_KEY` environment variable.
@@ -6064,6 +6070,7 @@ export interface components {
              * @example Hello, {{#if (eq Name "John")}}Johnathan{{else}}{{Name}}{{/if}}! You are {{Age}} years old.
              */
             template?: string;
+            distance_metric?: components["schemas"]["DistanceMetric"];
             /** @description Whether to use in-memory only storage (dense only) */
             mem_only?: boolean;
             /** @description Configuration for the embeddings plugin */
@@ -6297,6 +6304,16 @@ export interface components {
             disk_usage?: number;
             /** @description Whether the index is currently rebuilding */
             rebuilding?: boolean;
+            /**
+             * Format: double
+             * @description Progress of ongoing rebuild as fraction [0.0, 1.0]
+             */
+            backfill_progress?: number;
+            /**
+             * Format: uint64
+             * @description Number of documents indexed during current rebuild
+             */
+            backfill_items_processed?: number;
         };
         /** @description Statistics for an embeddings index (dense or sparse) */
         EmbeddingsIndexStats: {
@@ -6322,6 +6339,23 @@ export interface components {
              * @description Number of unique terms in the inverted index (sparse only)
              */
             total_terms?: number;
+            /** @description Whether the index enricher is currently backfilling */
+            rebuilding?: boolean;
+            /**
+             * Format: uint64
+             * @description Number of documents pending enrichment in the WAL
+             */
+            wal_backlog?: number;
+            /**
+             * Format: double
+             * @description Backfill progress as a ratio from 0.0 to 1.0
+             */
+            backfill_progress?: number;
+            /**
+             * Format: uint64
+             * @description Total items processed during backfill
+             */
+            backfill_items_processed?: number;
         };
         /** @description Statistics for graph index */
         GraphIndexStats: {
@@ -6336,6 +6370,18 @@ export interface components {
             edge_types?: {
                 [key: string]: number;
             };
+            /** @description Whether the index is currently rebuilding */
+            rebuilding?: boolean;
+            /**
+             * Format: double
+             * @description Rebuild progress as a ratio from 0.0 to 1.0
+             */
+            backfill_progress?: number;
+            /**
+             * Format: uint64
+             * @description Number of edges indexed during current rebuild
+             */
+            backfill_items_processed?: number;
         };
         /** @description Statistics for an index */
         IndexStats: components["schemas"]["FullTextIndexStats"] | components["schemas"]["EmbeddingsIndexStats"] | components["schemas"]["GraphIndexStats"];

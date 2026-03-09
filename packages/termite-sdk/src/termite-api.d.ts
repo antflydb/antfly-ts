@@ -1713,6 +1713,11 @@ export interface components {
              *     ]
              */
             allowed_paths?: string[];
+            /**
+             * @description User-Agent header for HTTP downloads. Defaults to 'AntflyDB/1.0' if not set. Some servers (e.g., Wikipedia) reject requests without a User-Agent.
+             * @example AntflyDB/1.0
+             */
+            user_agent?: string;
         };
         Credentials: {
             /**

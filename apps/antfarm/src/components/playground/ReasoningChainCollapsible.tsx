@@ -1,5 +1,4 @@
 import type { RetrievalReasoningStep } from "@antfly/sdk";
-import type React from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -10,6 +9,7 @@ import {
   TreePine,
   Waypoints,
 } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -36,7 +36,9 @@ function getStepIcon(stepName: string) {
   return STEP_ICONS[stepName] ?? <Search className="h-3.5 w-3.5" />;
 }
 
-function getStatusBadgeVariant(status?: string): "default" | "secondary" | "destructive" | "outline" {
+function getStatusBadgeVariant(
+  status?: string
+): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
     case "success":
       return "secondary";
@@ -49,7 +51,13 @@ function getStatusBadgeVariant(status?: string): "default" | "secondary" | "dest
   }
 }
 
-function StepItem({ step, defaultOpen = false }: { step: RetrievalReasoningStep; defaultOpen?: boolean }) {
+function StepItem({
+  step,
+  defaultOpen = false,
+}: {
+  step: RetrievalReasoningStep;
+  defaultOpen?: boolean;
+}) {
   const [open, setOpen] = useState(defaultOpen);
   const hasDetails = step.details && Object.keys(step.details).length > 0;
 

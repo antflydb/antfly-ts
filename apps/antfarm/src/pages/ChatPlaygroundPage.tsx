@@ -1,5 +1,5 @@
-import { Antfly, ChatBar } from "@antfly/components";
 import type { ChatTurn } from "@antfly/components";
+import { Antfly, ChatBar } from "@antfly/components";
 import { createAIElementsRenderers, turnToStatus } from "@antfly/components/adapters";
 import type { ChatToolName, GeneratorConfig } from "@antfly/sdk";
 import { generatorProviders } from "@antfly/sdk";
@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useCallback, useState } from "react";
-import { ReasoningChainCollapsible } from "@/components/playground/ReasoningChainCollapsible";
 import { Message, MessageContent, MessageResponse } from "@/components/ai-elements/message";
 import {
   PromptInput,
@@ -25,6 +24,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { Source, Sources, SourcesContent, SourcesTrigger } from "@/components/ai-elements/sources";
 import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
+import { ReasoningChainCollapsible } from "@/components/playground/ReasoningChainCollapsible";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,10 +65,22 @@ const DEFAULT_STEPS: StepsConfig = {
 };
 
 const AVAILABLE_TOOLS = [
-  { name: "semantic_search" as ChatToolName, label: "Semantic Search", desc: "Vector similarity search" },
-  { name: "full_text_search" as ChatToolName, label: "Full-Text Search", desc: "BM25 keyword search" },
+  {
+    name: "semantic_search" as ChatToolName,
+    label: "Semantic Search",
+    desc: "Vector similarity search",
+  },
+  {
+    name: "full_text_search" as ChatToolName,
+    label: "Full-Text Search",
+    desc: "BM25 keyword search",
+  },
   { name: "add_filter" as ChatToolName, label: "Add Filter", desc: "Field constraints" },
-  { name: "ask_clarification" as ChatToolName, label: "Ask Clarification", desc: "Request user input" },
+  {
+    name: "ask_clarification" as ChatToolName,
+    label: "Ask Clarification",
+    desc: "Request user input",
+  },
   { name: "websearch" as ChatToolName, label: "Web Search", desc: "Search the web" },
 ] as const;
 
@@ -352,18 +364,13 @@ const ChatPlaygroundPage: React.FC = () => {
                             </p>
                           </div>
                         </div>
-                        <Switch
-                          checked={agenticEnabled}
-                          onCheckedChange={setAgenticEnabled}
-                        />
+                        <Switch checked={agenticEnabled} onCheckedChange={setAgenticEnabled} />
                       </div>
 
                       {agenticEnabled && (
                         <div className="space-y-3 pl-2">
                           <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground">
-                              Max Iterations
-                            </Label>
+                            <Label className="text-xs text-muted-foreground">Max Iterations</Label>
                             <Input
                               type="number"
                               value={maxIterations}
@@ -392,9 +399,7 @@ const ChatPlaygroundPage: React.FC = () => {
                                       if (e.target.checked) {
                                         setEnabledTools((t) => [...t, tool.name]);
                                       } else {
-                                        setEnabledTools((t) =>
-                                          t.filter((n) => n !== tool.name)
-                                        );
+                                        setEnabledTools((t) => t.filter((n) => n !== tool.name));
                                       }
                                     }}
                                     className="rounded"
@@ -481,11 +486,7 @@ const ChatPlaygroundPage: React.FC = () => {
                 }
                 placeholder="Ask a question..."
                 {...aiRenderers}
-                renderAssistantMessage={(
-                  message: string,
-                  isStreaming: boolean,
-                  turn: ChatTurn
-                ) => (
+                renderAssistantMessage={(message: string, isStreaming: boolean, turn: ChatTurn) => (
                   <>
                     {aiRenderers.renderAssistantMessage?.(message, isStreaming, turn)}
                     {(turn.reasoningChain.length > 0 ||

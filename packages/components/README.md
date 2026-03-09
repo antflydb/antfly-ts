@@ -124,10 +124,10 @@ npm install @antfly/components
 
 ### Backend Setup
 
-Before using the React components, you need to create a table in your Antfly instance with the appropriate schema. Here's an example using `antflycli` to create the "example" table used in our storybook:
+Before using the React components, you need to create a table in your Antfly instance with the appropriate schema. Here's an example using the Antfly CLI to create the "example" table used in our storybook:
 
 ```bash
-antflycli table create --table example \
+antfly cli table create --table example \
   --schema "$(cat storybook-schema.json)" \
   --index '{
     "name": "tico_embeddings",
@@ -151,7 +151,7 @@ This creates a table with:
 You can then load sample data from `storybook-testdata.jsonl` using:
 
 ```bash
-antflycli load --table example --file storybook-testdata.jsonl --id-field _id
+antfly cli load --table example --file storybook-testdata.jsonl --id-field _id
 ```
 
 ### Run Storybook
