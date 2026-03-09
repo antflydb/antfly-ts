@@ -64,6 +64,17 @@ export default function Antfly({ children, url, table, onChange, headers = {} }:
         newWidgets.set(action.key, widget);
         return { ...state, widgets: newWidgets };
       }
+      case "setWidgetResult": {
+        const existingWidget = state.widgets.get(action.key);
+        if (!existingWidget) return state;
+        const newWidgets = new Map(state.widgets);
+        newWidgets.set(action.key, {
+          ...existingWidget,
+          isLoading: action.isLoading,
+          result: action.result !== undefined ? action.result : existingWidget.result,
+        });
+        return { ...state, widgets: newWidgets };
+      }
       case "deleteWidget": {
         // Create a new Map to maintain immutability
         const newWidgets = new Map(state.widgets);

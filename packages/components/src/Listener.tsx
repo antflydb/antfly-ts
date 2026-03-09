@@ -201,7 +201,7 @@ export default function Listener({ children, onChange }: ListenerProps) {
                 // Build the query object
                 const queryObj: Record<string, unknown> = {
                   table: tableName,
-                  semantic_search: semanticQuery,
+                  semantic_search: semanticQuery || undefined,
                   indexes: semanticQuery ? indexes : undefined,
                   full_text_search: conjunctsFrom(filteredQueries),
                   limit: itemsPerPage,
@@ -317,7 +317,7 @@ export default function Listener({ children, onChange }: ListenerProps) {
 
                   const facetQueryObj: Record<string, unknown> = {
                     table: tableName,
-                    semantic_search: semanticQuery,
+                    semantic_search: semanticQuery || undefined,
                     indexes: semanticQuery ? indexes : undefined,
                     limit: semanticQuery ? limit : 0,
                     full_text_search: fullTextQuery,
@@ -396,17 +396,17 @@ export default function Listener({ children, onChange }: ListenerProps) {
                       console.error("Antfly connection error:", (result as ErrorResult).message);
                       // Set error state for all widgets
                       multiqueryData.forEach(({ id }) => {
-                        const widget = widgets.get(id);
-                        if (widget) {
-                          widget.result = {
+                        dispatch({
+                          type: "setWidgetResult",
+                          key: id,
+                          isLoading: false,
+                          result: {
                             data: [],
                             facetData: [],
                             total: 0,
                             error: (result as ErrorResult).message,
-                          };
-                          widget.isLoading = false;
-                          dispatch({ type: "setWidget", key: id, ...widget });
-                        }
+                          },
+                        });
                       });
                       return;
                     }
@@ -414,27 +414,31 @@ export default function Listener({ children, onChange }: ListenerProps) {
                     const responses = (result as MultiqueryResult)?.responses;
                     if (responses) {
                       responses.forEach((response: QueryResponse, key: number) => {
-                        const widget = widgets.get(multiqueryData[key].id);
-                        if (widget) {
-                          if (response.status !== 200) {
-                            console.error("Antfly response error:", response.error);
-                            widget.result = {
+                        const id = multiqueryData[key].id;
+                        if (response.status !== 200) {
+                          console.error("Antfly response error:", response.error);
+                          dispatch({
+                            type: "setWidgetResult",
+                            key: id,
+                            isLoading: false,
+                            result: {
                               data: [],
                               facetData: [],
                               total: 0,
                               error: response.error || "Query failed",
-                            };
-                            widget.isLoading = false;
-                          } else {
-                            widget.result = {
+                            },
+                          });
+                        } else {
+                          dispatch({
+                            type: "setWidgetResult",
+                            key: id,
+                            isLoading: false,
+                            result: {
                               data: multiqueryData[key].data(response),
                               facetData: multiqueryData[key].facetData(response),
                               total: multiqueryData[key].total(response),
-                            };
-                            widget.isLoading = false;
-                          }
-                          // Update widget
-                          dispatch({ type: "setWidget", key: multiqueryData[key].id, ...widget });
+                            },
+                          });
                         }
                       });
                     }
@@ -442,17 +446,17 @@ export default function Listener({ children, onChange }: ListenerProps) {
                     console.error("Unexpected error during Antfly query:", error);
                     // Set error state for all widgets
                     multiqueryData.forEach(({ id }) => {
-                      const widget = widgets.get(id);
-                      if (widget) {
-                        widget.result = {
+                      dispatch({
+                        type: "setWidgetResult",
+                        key: id,
+                        isLoading: false,
+                        result: {
                           data: [],
                           facetData: [],
                           total: 0,
                           error: "Unexpected error occurred",
-                        };
-                        widget.isLoading = false;
-                        dispatch({ type: "setWidget", key: id, ...widget });
-                      }
+                        },
+                      });
                     });
                   }
                 }

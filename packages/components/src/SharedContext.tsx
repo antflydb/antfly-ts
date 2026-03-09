@@ -68,6 +68,12 @@ export type SharedAction =
       result?: Widget["result"];
     }
   | {
+      type: "setWidgetResult";
+      key: string;
+      isLoading: boolean;
+      result?: Widget["result"];
+    }
+  | {
       type: "deleteWidget";
       key: string;
     }
