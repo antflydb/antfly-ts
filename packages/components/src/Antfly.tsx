@@ -51,13 +51,14 @@ export default function Antfly({ children, url, table, onChange, headers = {} }:
           facetOptions: action.facetOptions,
           isLoading: action.isLoading,
           configuration: action.configuration,
-          // Preserve previous result if isLoading and no new result provided
+          // Preserve previous result if no new result provided.
+          // setWidgetResult is the dedicated action for updating results;
+          // setWidget should never clear results as a side effect of
+          // re-registering configuration (e.g. from unstable useEffect deps).
           result:
             action.result !== undefined
               ? action.result
-              : action.isLoading && existingWidget?.result
-                ? existingWidget.result
-                : undefined,
+              : existingWidget?.result,
         };
         // Create a new Map to maintain immutability
         const newWidgets = new Map(state.widgets);

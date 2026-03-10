@@ -17,6 +17,19 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/** Mock `multiquery` to return a single response with the given hits. */
+function mockMultiquery(hits: Array<Record<string, unknown>> = []) {
+  return vi.spyOn(utils, "multiquery").mockResolvedValue({
+    responses: [
+      {
+        status: 200,
+        took: 10,
+        hits: { hits, total: hits.length },
+      },
+    ],
+  });
+}
+
 describe("Integration Tests", () => {
   describe("SearchBox + Autosuggest integration", () => {
     it("should render SearchBox with Autosuggest child", () => {
@@ -363,15 +376,7 @@ describe("Integration Tests", () => {
       // queries.size + semanticQueries.size !== searchWidgets.size
 
       // Spy on the msearch function to verify it gets called
-      const msearchSpy = vi.spyOn(utils, "multiquery").mockResolvedValue({
-        responses: [
-          {
-            status: 200,
-            took: 10,
-            hits: { hits: [], total: 0 },
-          },
-        ],
-      });
+      const msearchSpy = mockMultiquery();
 
       const { container } = render(
         <TestWrapper>
@@ -690,15 +695,7 @@ describe("Integration Tests", () => {
 
   describe("filterQuery integration", () => {
     it("should filter search results using filterQuery prop", async () => {
-      const msearchSpy = vi.spyOn(utils, "multiquery").mockResolvedValue({
-        responses: [
-          {
-            status: 200,
-            took: 10,
-            hits: { hits: [], total: 0 },
-          },
-        ],
-      });
+      const msearchSpy = mockMultiquery();
 
       const filterQuery = { match: "active", field: "status" };
 
@@ -831,17 +828,75 @@ describe("Integration Tests", () => {
     });
   });
 
+  describe("setWidget should not clear results (regression)", () => {
+    it("should preserve semantic search results when Results re-registers config", async () => {
+      // Regression test for: semantic search results arrive from server but
+      // don't render because Results' useEffect re-fires (due to unstable
+      // prop references like `semanticIndexes={[tableSlug]}`) and dispatches
+      // setWidget without result, which the old reducer interpreted as
+      // "clear result" (result: undefined).
+      //
+      // The fix: setWidget always preserves existingWidget.result when
+      // action.result is undefined, since setWidgetResult is the dedicated
+      // action for updating results.
+
+      const mockHits = [
+        { _id: "doc_1", _source: { title: "Result 1" } },
+        { _id: "doc_2", _source: { title: "Result 2" } },
+      ];
+
+      const msearchSpy = mockMultiquery(mockHits);
+
+      const { container } = render(
+        <TestWrapper>
+          <QueryBox id="search" mode="submit" />
+          <Results
+            id="results-semantic"
+            searchBoxId="search"
+            semanticIndexes={["test-index"]}
+            limit={10}
+            items={(data) => (
+              <div className="hit-list">
+                {data.map((item) => (
+                  <div key={item._id} className="hit-item">
+                    {item._id}
+                  </div>
+                ))}
+              </div>
+            )}
+          />
+        </TestWrapper>
+      );
+
+      const input = container.querySelector("input") as HTMLInputElement;
+
+      // Submit a search query
+      await userEvent.type(input, "test query{enter}");
+
+      // Wait for results to render
+      await waitFor(
+        () => {
+          const hitItems = container.querySelectorAll(".hit-item");
+          expect(hitItems.length).toBe(2);
+        },
+        { timeout: 3000 }
+      );
+
+      // Results should persist — the old bug would clear them synchronously
+      // in the same render batch because setWidget (from Results' useEffect)
+      // would overwrite the result set by setWidgetResult.
+      const hitItems = container.querySelectorAll(".hit-item");
+      expect(hitItems.length).toBe(2);
+      expect(hitItems[0].textContent).toBe("doc_1");
+      expect(hitItems[1].textContent).toBe("doc_2");
+
+      msearchSpy.mockRestore();
+    });
+  });
+
   describe("exclusionQuery integration", () => {
     it("should exclude results using exclusionQuery prop", async () => {
-      const msearchSpy = vi.spyOn(utils, "multiquery").mockResolvedValue({
-        responses: [
-          {
-            status: 200,
-            took: 10,
-            hits: { hits: [], total: 0 },
-          },
-        ],
-      });
+      const msearchSpy = mockMultiquery();
 
       const exclusionQuery = { match: "archived", field: "status" };
 
@@ -878,15 +933,7 @@ describe("Integration Tests", () => {
     });
 
     it("should work with both filterQuery and exclusionQuery", async () => {
-      const msearchSpy = vi.spyOn(utils, "multiquery").mockResolvedValue({
-        responses: [
-          {
-            status: 200,
-            took: 10,
-            hits: { hits: [], total: 0 },
-          },
-        ],
-      });
+      const msearchSpy = mockMultiquery();
 
       const filterQuery = { match: "active", field: "status" };
       const exclusionQuery = { match: "spam", field: "category" };
